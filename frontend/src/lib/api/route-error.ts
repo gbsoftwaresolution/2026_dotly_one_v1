@@ -10,7 +10,6 @@ export function createRouteErrorResponse(
     return NextResponse.json(
       {
         message: error.message,
-        details: error.details,
       },
       {
         status: error.status,

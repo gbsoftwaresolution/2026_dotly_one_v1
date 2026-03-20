@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Card } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
+import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { eventApi } from "@/lib/api/event-api";
 import type {
@@ -216,8 +217,8 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-36 animate-pulse rounded-3xl bg-slate-100 dark:bg-zinc-900" />
-        <div className="h-24 animate-pulse rounded-3xl bg-slate-100 dark:bg-zinc-900" />
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
     );
   }

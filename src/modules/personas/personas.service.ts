@@ -82,6 +82,7 @@ export class PersonasService {
       select: {
         id: true,
         userId: true,
+        fullName: true,
       },
     });
 
@@ -95,6 +96,7 @@ export class PersonasService {
 
     return {
       id: persona.id,
+      fullName: persona.fullName,
     };
   }
 
@@ -160,7 +162,7 @@ export class PersonasService {
     });
 
     return {
-      success: true,
+      removed: true,
     };
   }
 

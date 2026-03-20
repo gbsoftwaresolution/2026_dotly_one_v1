@@ -29,7 +29,7 @@ export function EmptyState({ title, description, action }: EmptyStateProps) {
           <h2 className="font-sans text-base font-semibold text-foreground">
             {title}
           </h2>
-          <p className="font-sans text-sm leading-6 text-muted">
+          <p className="font-mono text-xs leading-6 text-muted">
             {description}
           </p>
         </div>

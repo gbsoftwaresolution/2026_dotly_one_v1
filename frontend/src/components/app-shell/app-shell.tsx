@@ -1,6 +1,7 @@
 import type { PropsWithChildren, ReactNode } from "react";
 
 import { BottomNav } from "@/components/navigation/bottom-nav";
+import { NotificationBadge } from "@/components/notifications/notification-badge";
 import { SessionStatus } from "./session-status";
 import { ThemeSwitcher } from "./theme-switcher";
 
@@ -18,7 +19,7 @@ export function AppShell({
 }: AppShellProps) {
   return (
     <div className="mx-auto flex min-h-screen max-w-app flex-col bg-transparent">
-      <header className="sticky top-0 z-10 border-b border-border/80 bg-background/95 px-4 py-4 backdrop-blur dark:border-zinc-900 dark:bg-bgOnyx/95">
+      <header className="sticky top-0 z-10 border-b border-border/80 bg-background/95 px-5 py-4 backdrop-blur dark:border-zinc-900 dark:bg-bgOnyx/95">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -26,6 +27,7 @@ export function AppShell({
                 Dotly
               </p>
               <ThemeSwitcher />
+              <NotificationBadge />
             </div>
             <h1 className="text-xl font-semibold text-foreground dark:text-white">
               {title}
@@ -40,7 +42,7 @@ export function AppShell({
           {headerAction ? <div className="shrink-0">{headerAction}</div> : null}
         </div>
       </header>
-      <main className="flex-1 px-4 py-5">
+      <main className="flex-1 px-5 py-6">
         <div className="space-y-4">{children}</div>
       </main>
       <BottomNav />

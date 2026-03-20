@@ -13,9 +13,11 @@ import {
 } from "@prisma/client";
 import { randomBytes } from "crypto";
 
+import { NotificationType } from "../../common/enums/notification-type.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { BlocksService } from "../blocks/blocks.service";
 import { ContactMemoryService } from "../contact-memory/contact-memory.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { PersonasService } from "../personas/personas.service";
 import { RelationshipsService } from "../relationships/relationships.service";
 
@@ -27,6 +29,10 @@ import {
   toQrResolutionView,
 } from "./qr.presenter";
 
+const noopNotificationsService: Pick<NotificationsService, "createSafe"> = {
+  createSafe: async () => undefined,
+};
+
 @Injectable()
 export class QrService {
   constructor(
@@ -36,6 +42,10 @@ export class QrService {
     private readonly blocksService: BlocksService,
     private readonly relationshipsService: RelationshipsService,
     private readonly contactMemoryService: ContactMemoryService,
+    private readonly notificationsService: Pick<
+      NotificationsService,
+      "createSafe"
+    > = noopNotificationsService,
   ) {}
 
   async createProfileQr(userId: string, personaId: string) {
@@ -337,6 +347,35 @@ export class QrService {
         metAt: now,
         sourceLabel: "Quick Connect QR",
       });
+
+      await Promise.all([
+        this.notificationsService.createSafe(
+          {
+            userId,
+            type: NotificationType.InstantConnect,
+            title: "Instant connect",
+            body: `You connected instantly with ${token.persona.fullName}`,
+            data: {
+              relationshipId: relationship.id,
+              targetPersonaId: token.persona.id,
+            },
+          },
+          tx,
+        ),
+        this.notificationsService.createSafe(
+          {
+            userId: token.persona.userId,
+            type: NotificationType.InstantConnect,
+            title: "Instant connect",
+            body: `${fromPersona.fullName ?? "Someone"} connected with your QR`,
+            data: {
+              relationshipId: relationship.id,
+              sourcePersonaId: fromPersona.id,
+            },
+          },
+          tx,
+        ),
+      ]);
 
       if (token.maxUses !== null && token.usedCount + 1 >= token.maxUses) {
         await this.markTokenExpired(tx, token.id);

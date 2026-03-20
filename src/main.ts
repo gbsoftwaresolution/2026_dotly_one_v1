@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 
 import { AppModule } from "./app.module";
+import { ResponseEnvelopeInterceptor } from "./common/interceptors/response-envelope.interceptor";
 import { PrismaService } from "./infrastructure/database/prisma.service";
 import { AppLoggerService } from "./infrastructure/logging/logging.service";
 
@@ -25,6 +26,7 @@ async function bootstrap(): Promise<void> {
       },
     }),
   );
+  app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
   app.enableShutdownHooks();
 
   const configService = app.get(ConfigService);

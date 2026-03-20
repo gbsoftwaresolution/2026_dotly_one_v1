@@ -9,6 +9,7 @@ import {
 } from "@/components/requests/request-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PrimaryButton } from "@/components/shared/primary-button";
+import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
@@ -157,9 +158,9 @@ export function RequestsScreen() {
 
       {isLoading ? (
         <div className="space-y-3">
-          <div className="rounded-3xl border border-border bg-surface/70 px-5 py-6 text-center text-sm text-muted">
-            Loading...
-          </div>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
       ) : loadError ? (
         <EmptyState

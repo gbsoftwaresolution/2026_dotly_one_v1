@@ -18,6 +18,12 @@ export type {
   UpdateRelationshipStateResult,
 } from "./contact";
 export type {
+  MarkAllReadResult,
+  Notification,
+  NotificationListResult,
+  NotificationType,
+} from "./notification";
+export type {
   ConnectQuickConnectQrInput,
   ConnectQuickConnectQrResult,
   CreatePersonaInput,

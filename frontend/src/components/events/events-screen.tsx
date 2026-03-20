@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PrimaryButton } from "@/components/shared/primary-button";
+import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { eventApi } from "@/lib/api/event-api";
 import { personaApi } from "@/lib/api/persona-api";
 import type { PersonaSummary } from "@/types/persona";
@@ -230,10 +231,7 @@ export function EventsScreen() {
     return (
       <div className="space-y-3">
         {[...Array(3)].map((_, i) => (
-          <div
-            key={i}
-            className="h-24 animate-pulse rounded-3xl bg-slate-100 dark:bg-zinc-900"
-          />
+          <SkeletonCard key={i} />
         ))}
       </div>
     );

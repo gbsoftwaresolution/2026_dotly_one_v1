@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { ContactCard } from "@/components/contacts/contact-card";
 import { EmptyState } from "@/components/shared/empty-state";
+import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { contactsApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { cn } from "@/lib/utils/cn";
@@ -77,8 +78,10 @@ export function ContactsScreen() {
       </div>
 
       {isLoading ? (
-        <div className="rounded-3xl border border-border bg-surface/70 px-5 py-6 text-center font-sans text-sm text-muted">
-          Loading your contacts...
+        <div className="space-y-3">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
       ) : loadError ? (
         <EmptyState

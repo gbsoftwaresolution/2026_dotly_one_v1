@@ -13,8 +13,10 @@ import {
 
 import { EventParticipantRole } from "../../common/enums/event-participant-role.enum";
 import { EventStatus } from "../../common/enums/event-status.enum";
+import { NotificationType } from "../../common/enums/notification-type.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { BlocksService } from "../blocks/blocks.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { PersonasService } from "../personas/personas.service";
 
 import { CreateEventDto } from "./dto/create-event.dto";
@@ -56,12 +58,20 @@ const eventParticipantSelect = {
   },
 } satisfies Prisma.EventParticipantSelect;
 
+const noopNotificationsService: Pick<NotificationsService, "createSafe"> = {
+  createSafe: async () => undefined,
+};
+
 @Injectable()
 export class EventsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly personasService: PersonasService,
     private readonly blocksService: BlocksService,
+    private readonly notificationsService: Pick<
+      NotificationsService,
+      "createSafe"
+    > = noopNotificationsService,
   ) {}
 
   async create(userId: string, createEventDto: CreateEventDto) {
@@ -189,6 +199,17 @@ export class EventsService {
           ),
         },
         select: eventParticipantSelect,
+      });
+
+      await this.notificationsService.createSafe({
+        userId,
+        type: NotificationType.EventJoined,
+        title: "Event joined",
+        body: `You joined ${event.name}`,
+        data: {
+          eventId: event.id,
+          personaId: persona.id,
+        },
       });
 
       return this.findOne(userId, event.id);

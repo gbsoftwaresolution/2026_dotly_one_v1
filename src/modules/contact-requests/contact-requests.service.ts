@@ -14,10 +14,12 @@ import {
 
 import { ContactRequestSourceType } from "../../common/enums/contact-request-source-type.enum";
 import { ContactRequestStatus } from "../../common/enums/contact-request-status.enum";
+import { NotificationType } from "../../common/enums/notification-type.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { BlocksService } from "../blocks/blocks.service";
 import { ContactMemoryService } from "../contact-memory/contact-memory.service";
 import { EventsService } from "../events/events.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { PersonasService } from "../personas/personas.service";
 import { RelationshipsService } from "../relationships/relationships.service";
 
@@ -30,6 +32,10 @@ const REQUEST_RETRY_COOLDOWN_IN_MS =
 
 const noopEventsService: Pick<EventsService, "validateEventRequestAccess"> = {
   validateEventRequestAccess: async () => undefined,
+};
+
+const noopNotificationsService: Pick<NotificationsService, "createSafe"> = {
+  createSafe: async () => undefined,
 };
 
 const incomingContactRequestSelect = {
@@ -92,6 +98,10 @@ export class ContactRequestsService {
       EventsService,
       "validateEventRequestAccess"
     > = noopEventsService,
+    private readonly notificationsService: Pick<
+      NotificationsService,
+      "createSafe"
+    > = noopNotificationsService,
   ) {}
 
   async create(
@@ -227,6 +237,30 @@ export class ContactRequestsService {
         select: sendContactRequestSelect,
       });
 
+      await this.notificationsService.createSafe({
+        userId: targetPersona.userId,
+        type:
+          createContactRequestDto.sourceType === ContactRequestSourceType.Event
+            ? NotificationType.EventRequest
+            : NotificationType.RequestReceived,
+        title:
+          createContactRequestDto.sourceType === ContactRequestSourceType.Event
+            ? "Event request"
+            : "New request",
+        body: buildRequestReceivedBody(
+          createContactRequestDto.sourceType,
+          fromPersona.fullName ?? "Someone",
+        ),
+        data: {
+          requestId: contactRequest.id,
+          fromPersonaId: fromPersona.id,
+          sourceType: createContactRequestDto.sourceType,
+          ...(createContactRequestDto.sourceId
+            ? { sourceId: createContactRequestDto.sourceId }
+            : {}),
+        },
+      });
+
       return {
         id: contactRequest.id,
         status: toApiContactRequestStatus(contactRequest.status),
@@ -303,6 +337,11 @@ export class ContactRequestsService {
           toPersonaId: true,
           sourceType: true,
           sourceId: true,
+          toPersona: {
+            select: {
+              fullName: true,
+            },
+          },
         },
       });
 
@@ -361,6 +400,21 @@ export class ContactRequestsService {
         metAt: respondedAt,
         sourceLabel: toSourceLabel(contactRequest.sourceType),
       });
+
+      await this.notificationsService.createSafe(
+        {
+          userId: contactRequest.fromUserId,
+          type: NotificationType.RequestApproved,
+          title: "Request approved",
+          body: `${contactRequest.toPersona.fullName} approved your request`,
+          data: {
+            requestId: contactRequest.id,
+            relationshipId: relationship.id,
+            toPersonaId: contactRequest.toPersonaId,
+          },
+        },
+        tx,
+      );
 
       return {
         requestId: contactRequest.id,
@@ -486,4 +540,15 @@ function toSourceLabel(
   }
 
   throw new Error("Unsupported contact request source type");
+}
+
+function buildRequestReceivedBody(
+  sourceType: ContactRequestSourceType,
+  senderDisplayName: string,
+): string {
+  if (sourceType === ContactRequestSourceType.Event) {
+    return `${senderDisplayName} sent an event request`;
+  }
+
+  return `${senderDisplayName} requested to connect`;
 }

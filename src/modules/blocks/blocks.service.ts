@@ -123,7 +123,7 @@ export class BlocksService {
     });
 
     return {
-      success: true,
+      removed: true,
     };
   }
 
