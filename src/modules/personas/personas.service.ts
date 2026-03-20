@@ -2,7 +2,6 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 
@@ -74,22 +73,18 @@ export class PersonasService {
   }
 
   async findOwnedPersonaIdentity(userId: string, personaId: string) {
-    const persona = await this.prismaService.persona.findUnique({
+    const persona = await this.prismaService.persona.findFirst({
       where: {
         id: personaId,
+        userId,
       },
       select: {
         id: true,
-        userId: true,
       },
     });
 
     if (!persona) {
       throw new NotFoundException("Persona not found");
-    }
-
-    if (persona.userId !== userId) {
-      throw new UnauthorizedException("You do not have access to this persona");
     }
 
     return persona;

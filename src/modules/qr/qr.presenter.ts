@@ -16,6 +16,7 @@ export const qrResolutionSelect = {
       companyName: true,
       tagline: true,
       profilePhotoUrl: true,
+      accessMode: true,
     },
   },
 } as const;
@@ -35,7 +36,20 @@ export interface QrResolutionRecord {
     companyName: string;
     tagline: string;
     profilePhotoUrl: string | null;
+    accessMode: "OPEN" | "REQUEST" | "PRIVATE";
   };
+}
+
+function toPersonaAccessMode(accessMode: "OPEN" | "REQUEST" | "PRIVATE") {
+  switch (accessMode) {
+    case "OPEN":
+      return PersonaAccessMode.Open;
+    case "PRIVATE":
+      return PersonaAccessMode.Private;
+    case "REQUEST":
+    default:
+      return PersonaAccessMode.Request;
+  }
 }
 
 export function toQrLink(baseUrl: string, code: string): string {
@@ -51,7 +65,7 @@ function toResolvedPersonaView(record: QrResolutionRecord) {
     companyName: record.persona.companyName,
     tagline: record.persona.tagline,
     profilePhotoUrl: record.persona.profilePhotoUrl,
-    accessMode: PersonaAccessMode.Request,
+    accessMode: toPersonaAccessMode(record.persona.accessMode),
   };
 }
 
