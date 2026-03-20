@@ -15,7 +15,9 @@ export class ProfilesService {
     const persona = await this.prismaService.persona.findFirst({
       where: {
         username: username.trim().toLowerCase(),
-        accessMode: PrismaPersonaAccessMode.OPEN,
+        accessMode: {
+          in: [PrismaPersonaAccessMode.OPEN, PrismaPersonaAccessMode.REQUEST],
+        },
       },
       select: publicPersonaSelect,
     });

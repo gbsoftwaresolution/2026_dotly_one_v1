@@ -1,8 +1,10 @@
 import { PublicProfileCard } from "@/components/profile/public-profile-card";
 import { RequestAccessPanel } from "@/components/profile/request-access-panel";
 import { Card } from "@/components/shared/card";
-import { publicApi } from "@/lib/api";
+import { personaApi, publicApi, userApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
+import { getServerAccessToken } from "@/lib/auth/server-session";
+import type { PersonaSummary } from "@/types";
 import { notFound } from "next/navigation";
 
 export default async function PublicUserPage({
@@ -14,12 +16,42 @@ export default async function PublicUserPage({
 
   try {
     const profile = await publicApi.getProfile(username);
+    const accessToken = await getServerAccessToken();
+
+    let isAuthenticated = false;
+    let personas: PersonaSummary[] = [];
+    let personaLoadError: string | null = null;
+
+    if (accessToken) {
+      try {
+        await userApi.me(accessToken);
+        isAuthenticated = true;
+
+        try {
+          personas = await personaApi.list(accessToken);
+        } catch (error) {
+          personaLoadError =
+            error instanceof ApiError
+              ? error.message
+              : "We could not load your personas right now.";
+        }
+      } catch (error) {
+        if (!(error instanceof ApiError && error.status === 401)) {
+          isAuthenticated = false;
+        }
+      }
+    }
 
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-xl items-center px-4 py-8 sm:px-6">
         <div className="w-full space-y-4">
           <PublicProfileCard profile={profile} />
-          <RequestAccessPanel profile={profile} />
+          <RequestAccessPanel
+            profile={profile}
+            initialPersonas={personas}
+            isAuthenticated={isAuthenticated}
+            personaLoadError={personaLoadError}
+          />
         </div>
       </main>
     );

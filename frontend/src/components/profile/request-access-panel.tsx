@@ -1,20 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Card } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
-import { personaApi, requestApi } from "@/lib/api";
-import { ApiError, isApiError } from "@/lib/api/client";
-import { useAuthState } from "@/hooks/use-auth-state";
+import { requestApi } from "@/lib/api";
+import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
 import type { PersonaSummary, PublicProfile } from "@/types";
 
 interface RequestAccessPanelProps {
   profile: PublicProfile;
+  initialPersonas: PersonaSummary[];
+  isAuthenticated: boolean;
+  personaLoadError?: string | null;
 }
 
 function buildLoginHref(username: string): string {
@@ -41,74 +43,31 @@ function toFriendlyMessage(error: unknown): string {
   return "We could not send your request right now. Please try again.";
 }
 
-export function RequestAccessPanel({ profile }: RequestAccessPanelProps) {
-  const session = useAuthState();
-  const [personas, setPersonas] = useState<PersonaSummary[]>([]);
-  const [isLoadingPersonas, setIsLoadingPersonas] = useState(false);
-  const [personaLoadError, setPersonaLoadError] = useState<string | null>(null);
-  const [selectedPersonaId, setSelectedPersonaId] = useState("");
+export function RequestAccessPanel({
+  profile,
+  initialPersonas,
+  isAuthenticated,
+  personaLoadError = null,
+}: RequestAccessPanelProps) {
+  const [selectedPersonaId, setSelectedPersonaId] = useState(
+    initialPersonas[0]?.id ?? "",
+  );
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!session.isAuthenticated) {
-      setPersonas([]);
-      setSelectedPersonaId("");
-      return;
-    }
-
-    let isActive = true;
-    setIsLoadingPersonas(true);
-    setPersonaLoadError(null);
-
-    void personaApi
-      .list()
-      .then((nextPersonas) => {
-        if (!isActive) {
-          return;
-        }
-
-        setPersonas(nextPersonas);
-        setSelectedPersonaId((currentSelectedPersonaId) => {
-          if (
-            currentSelectedPersonaId &&
-            nextPersonas.some(
-              (persona) => persona.id === currentSelectedPersonaId,
-            )
-          ) {
-            return currentSelectedPersonaId;
-          }
-
-          return nextPersonas[0]?.id ?? "";
-        });
-      })
-      .catch((personaError) => {
-        if (!isActive) {
-          return;
-        }
-
-        setPersonaLoadError(
-          isApiError(personaError)
-            ? personaError.message
-            : "We could not load your personas right now.",
-        );
-      })
-      .finally(() => {
-        if (isActive) {
-          setIsLoadingPersonas(false);
-        }
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, [session.isAuthenticated]);
-
   const loginHref = useMemo(
     () => buildLoginHref(profile.username),
     [profile.username],
+  );
+  const isOwnProfile = useMemo(
+    () =>
+      initialPersonas.some(
+        (persona) =>
+          persona.id === profile.id || persona.username === profile.username,
+      ),
+    [initialPersonas, profile.id, profile.username],
   );
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -156,32 +115,19 @@ export function RequestAccessPanel({ profile }: RequestAccessPanelProps) {
     );
   }
 
-  if (session.isLoading) {
+  if (!isAuthenticated) {
     return (
       <Card className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
           Request access
         </p>
-        <p className="text-sm text-muted">Checking your session...</p>
-      </Card>
-    );
-  }
-
-  if (!session.isAuthenticated) {
-    return (
-      <Card className="space-y-4">
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
-            Request access
-          </p>
-          <h2 className="text-lg font-semibold text-foreground">
-            Log in to request access
-          </h2>
-          <p className="text-sm leading-6 text-muted">
-            Choose one of your personas and send a short introduction to connect
-            with {profile.fullName}.
-          </p>
-        </div>
+        <h2 className="text-lg font-semibold text-foreground">
+          Log in to request access
+        </h2>
+        <p className="text-sm leading-6 text-muted">
+          Choose one of your personas and send a short introduction to connect
+          with {profile.fullName}.
+        </p>
         <Link href={loginHref} className="block">
           <PrimaryButton className="w-full">Log in to continue</PrimaryButton>
         </Link>
@@ -189,13 +135,22 @@ export function RequestAccessPanel({ profile }: RequestAccessPanelProps) {
     );
   }
 
-  if (isLoadingPersonas) {
+  if (isOwnProfile) {
     return (
-      <Card className="space-y-3">
+      <Card className="space-y-3 border-slate-200 bg-slate-50/80">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
-          Request access
+          Your profile
         </p>
-        <p className="text-sm text-muted">Loading your personas...</p>
+        <h2 className="text-lg font-semibold text-foreground">
+          This persona belongs to you
+        </h2>
+        <p className="text-sm leading-6 text-muted">
+          Contact requests are only for reaching other people. Manage your own
+          personas from the workspace.
+        </p>
+        <Link href={routes.app.personas} className="block">
+          <SecondaryButton className="w-full">Open personas</SecondaryButton>
+        </Link>
       </Card>
     );
   }
@@ -211,7 +166,7 @@ export function RequestAccessPanel({ profile }: RequestAccessPanelProps) {
     );
   }
 
-  if (personas.length === 0) {
+  if (initialPersonas.length === 0) {
     return (
       <EmptyState
         title="Create a persona to send requests"
@@ -255,7 +210,7 @@ export function RequestAccessPanel({ profile }: RequestAccessPanelProps) {
             onChange={(event) => setSelectedPersonaId(event.target.value)}
             disabled={isSubmitting || Boolean(successMessage)}
           >
-            {personas.map((persona) => (
+            {initialPersonas.map((persona) => (
               <option key={persona.id} value={persona.id}>
                 {persona.fullName} - @{persona.username}
               </option>

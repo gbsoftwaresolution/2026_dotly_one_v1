@@ -41,7 +41,10 @@ export function RequestsScreen() {
   const [outgoing, setOutgoing] = useState<OutgoingRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{
+    tone: "success" | "error";
+    message: string;
+  } | null>(null);
   const [actionState, setActionState] = useState<{
     requestId: string;
     action: "approve" | "reject";
@@ -89,10 +92,10 @@ export function RequestsScreen() {
     try {
       if (action === "approve") {
         await requestApi.approve(requestId);
-        setFeedback("Request approved.");
+        setFeedback({ tone: "success", message: "Request approved." });
       } else {
         await requestApi.reject(requestId);
-        setFeedback("Request rejected.");
+        setFeedback({ tone: "success", message: "Request rejected." });
       }
 
       const [nextIncoming, nextOutgoing] = await Promise.all([
@@ -103,7 +106,10 @@ export function RequestsScreen() {
       setIncoming(nextIncoming);
       setOutgoing(nextOutgoing);
     } catch (error) {
-      setFeedback(toFriendlyActionError(error, action));
+      setFeedback({
+        tone: "error",
+        message: toFriendlyActionError(error, action),
+      });
     } finally {
       setActionState(null);
     }
@@ -137,8 +143,15 @@ export function RequestsScreen() {
       </div>
 
       {feedback ? (
-        <p className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-foreground">
-          {feedback}
+        <p
+          className={cn(
+            "rounded-2xl px-4 py-3 text-sm",
+            feedback.tone === "success"
+              ? "border border-green-200 bg-green-50 text-green-700"
+              : "border border-rose-200 bg-rose-50 text-rose-700",
+          )}
+        >
+          {feedback.message}
         </p>
       ) : null}
 
