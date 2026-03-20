@@ -17,6 +17,7 @@ import { ContactRequestStatus } from "../../common/enums/contact-request-status.
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { BlocksService } from "../blocks/blocks.service";
 import { ContactMemoryService } from "../contact-memory/contact-memory.service";
+import { EventsService } from "../events/events.service";
 import { PersonasService } from "../personas/personas.service";
 import { RelationshipsService } from "../relationships/relationships.service";
 
@@ -26,6 +27,10 @@ import { RequestRateLimitService } from "./request-rate-limit.service";
 const REQUEST_RETRY_COOLDOWN_HOURS = 24;
 const REQUEST_RETRY_COOLDOWN_IN_MS =
   REQUEST_RETRY_COOLDOWN_HOURS * 60 * 60 * 1000;
+
+const noopEventsService: Pick<EventsService, "validateEventRequestAccess"> = {
+  validateEventRequestAccess: async () => undefined,
+};
 
 const incomingContactRequestSelect = {
   id: true,
@@ -83,6 +88,10 @@ export class ContactRequestsService {
     private readonly relationshipsService: RelationshipsService,
     private readonly contactMemoryService: ContactMemoryService,
     private readonly requestRateLimitService: RequestRateLimitService,
+    private readonly eventsService: Pick<
+      EventsService,
+      "validateEventRequestAccess"
+    > = noopEventsService,
   ) {}
 
   async create(
@@ -188,6 +197,18 @@ export class ContactRequestsService {
     await this.requestRateLimitService.consume(userId);
 
     const reason = createContactRequestDto.reason ?? null;
+
+    if (createContactRequestDto.sourceType === ContactRequestSourceType.Event) {
+      if (!createContactRequestDto.sourceId) {
+        throw new BadRequestException("Event source requires an event id");
+      }
+
+      await this.eventsService.validateEventRequestAccess(
+        userId,
+        createContactRequestDto.sourceId,
+        targetPersona.id,
+      );
+    }
 
     try {
       const contactRequest = await this.prismaService.contactRequest.create({
@@ -411,6 +432,8 @@ function toPrismaContactRequestSourceType(
       return PrismaContactRequestSourceType.PROFILE;
     case ContactRequestSourceType.Qr:
       return PrismaContactRequestSourceType.QR;
+    case ContactRequestSourceType.Event:
+      return PrismaContactRequestSourceType.EVENT;
   }
 
   throw new Error("Unsupported contact request source type");
@@ -424,6 +447,8 @@ function toApiContactRequestSourceType(
       return ContactRequestSourceType.Profile;
     case PrismaContactRequestSourceType.QR:
       return ContactRequestSourceType.Qr;
+    case PrismaContactRequestSourceType.EVENT:
+      return ContactRequestSourceType.Event;
   }
 
   throw new Error("Unsupported contact request source type");
@@ -456,6 +481,8 @@ function toSourceLabel(
       return "Profile";
     case PrismaContactRequestSourceType.QR:
       return "QR";
+    case PrismaContactRequestSourceType.EVENT:
+      return "Event";
   }
 
   throw new Error("Unsupported contact request source type");

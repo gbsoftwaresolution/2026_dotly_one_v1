@@ -1,4 +1,4 @@
-export type ContactRequestSourceType = "profile" | "qr";
+export type ContactRequestSourceType = "profile" | "qr" | "event";
 
 export type ContactRequestStatus =
   | "pending"

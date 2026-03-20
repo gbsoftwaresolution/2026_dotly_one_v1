@@ -33,6 +33,20 @@ enum PersonaAccessMode {
 enum ContactRequestSourceType {
   PROFILE @map("profile")
   QR      @map("qr")
+  EVENT   @map("event")
+}
+
+enum EventStatus {
+  DRAFT     @map("draft")
+  PUBLISHED @map("published")
+  LIVE      @map("live")
+  ENDED     @map("ended")
+}
+
+enum EventParticipantRole {
+  ATTENDEE  @map("attendee")
+  SPEAKER   @map("speaker")
+  ORGANIZER @map("organizer")
 }
 
 enum ContactRequestStatus {
@@ -55,6 +69,8 @@ model User {
   passwordHash            String
   isVerified              Boolean               @default(false)
   personas                Persona[]
+  createdEvents           Event[]
+  eventParticipants       EventParticipant[]
   outgoingContactRequests ContactRequest[]      @relation("ContactRequestFromUser")
   incomingContactRequests ContactRequest[]      @relation("ContactRequestToUser")
   ownedRelationships      ContactRelationship[] @relation("ContactRelationshipOwnerUser")
@@ -80,6 +96,7 @@ model Persona {
   verifiedOnly             Boolean               @default(false)
   user                     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   qrAccessTokens           QRAccessToken[]
+  eventParticipations      EventParticipant[]
   outgoingContactRequests  ContactRequest[]      @relation("ContactRequestFromPersona")
   incomingContactRequests  ContactRequest[]      @relation("ContactRequestToPersona")
   ownedRelationships       ContactRelationship[] @relation("ContactRelationshipOwnerPersona")
@@ -107,6 +124,43 @@ model QRAccessToken {
 
   @@index([personaId])
   @@index([status])
+}
+
+model Event {
+  id                String             @id @default(uuid()) @db.Uuid
+  name              String             @db.VarChar(160)
+  slug              String             @unique @db.VarChar(160)
+  description       String?            @db.Text
+  startsAt          DateTime
+  endsAt            DateTime
+  location          String             @db.VarChar(200)
+  status            EventStatus        @default(DRAFT)
+  createdByUserId   String             @db.Uuid
+  createdByUser     User               @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  participants      EventParticipant[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([status, startsAt])
+  @@index([createdByUserId, createdAt])
+}
+
+model EventParticipant {
+  id                String               @id @default(uuid()) @db.Uuid
+  eventId           String               @db.Uuid
+  userId            String               @db.Uuid
+  personaId         String               @db.Uuid
+  role              EventParticipantRole @default(ATTENDEE)
+  discoveryEnabled  Boolean              @default(false)
+  joinedAt          DateTime             @default(now())
+  event             Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  persona           Persona              @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@unique([eventId, personaId])
+  @@index([eventId, discoveryEnabled, joinedAt])
+  @@index([userId, joinedAt])
 }
 
 model ContactRequest {

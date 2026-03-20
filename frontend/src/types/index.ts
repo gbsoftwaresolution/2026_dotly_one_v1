@@ -44,3 +44,12 @@ export type {
   SendContactRequestResult,
 } from "./request";
 export type { UserProfile } from "./user";
+export type {
+  CreateEventInput,
+  EventParticipant,
+  EventParticipantRole,
+  EventParticipationSummary,
+  EventStatus,
+  EventSummary,
+  JoinEventInput,
+} from "./event";

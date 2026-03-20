@@ -291,6 +291,8 @@ function toPrismaContactRequestSourceType(
       return PrismaContactRequestSourceType.PROFILE;
     case ContactRequestSourceType.Qr:
       return PrismaContactRequestSourceType.QR;
+    case ContactRequestSourceType.Event:
+      return PrismaContactRequestSourceType.EVENT;
   }
 
   throw new Error("Unsupported contact request source type");
@@ -304,6 +306,8 @@ function toApiContactRequestSourceType(
       return ContactRequestSourceType.Profile;
     case PrismaContactRequestSourceType.QR:
       return ContactRequestSourceType.Qr;
+    case PrismaContactRequestSourceType.EVENT:
+      return ContactRequestSourceType.Event;
   }
 
   throw new Error("Unsupported contact request source type");
@@ -347,6 +351,8 @@ function toSourceLabel(
       return "Profile";
     case PrismaContactRequestSourceType.QR:
       return "QR";
+    case PrismaContactRequestSourceType.EVENT:
+      return "Event";
   }
 
   throw new Error("Unsupported contact request source type");

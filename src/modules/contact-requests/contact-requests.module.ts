@@ -3,6 +3,7 @@ import { Module } from "@nestjs/common";
 import { BlocksModule } from "../blocks/blocks.module";
 import { ContactMemoryModule } from "../contact-memory/contact-memory.module";
 import { DatabaseModule } from "../../infrastructure/database/database.module";
+import { EventsModule } from "../events/events.module";
 import { PersonasModule } from "../personas/personas.module";
 import { RelationshipsModule } from "../relationships/relationships.module";
 
@@ -17,6 +18,7 @@ import { RequestRateLimitService } from "./request-rate-limit.service";
     RelationshipsModule,
     ContactMemoryModule,
     BlocksModule,
+    EventsModule,
   ],
   controllers: [ContactRequestsController],
   providers: [ContactRequestsService, RequestRateLimitService],

@@ -15,5 +15,7 @@ export const routes = {
     contacts: "/app/contacts",
     contactDetail: (relationshipId: string) =>
       `/app/contacts/${relationshipId}`,
+    events: "/app/events",
+    eventDetail: (eventId: string) => `/app/events/${eventId}`,
   },
 } as const;
