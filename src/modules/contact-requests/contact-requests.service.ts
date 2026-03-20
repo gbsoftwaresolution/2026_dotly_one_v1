@@ -185,7 +185,7 @@ export class ContactRequestsService {
       });
 
     if (existingPendingRequest) {
-      throw new BadRequestException(
+      throw new ConflictException(
         "A pending contact request already exists for this persona",
       );
     }
@@ -212,8 +212,6 @@ export class ContactRequestsService {
       throw new ForbiddenException("Cooldown active");
     }
 
-    await this.requestRateLimitService.consume(userId);
-
     const reason = createContactRequestDto.reason ?? null;
 
     if (createContactRequestDto.sourceType === ContactRequestSourceType.Event) {
@@ -224,6 +222,7 @@ export class ContactRequestsService {
       await this.eventsService.validateEventRequestAccess(
         userId,
         createContactRequestDto.sourceId,
+        fromPersona.id,
         targetPersona.id,
       );
     }
@@ -233,19 +232,25 @@ export class ContactRequestsService {
         createContactRequestDto.sourceType,
       );
 
-      const contactRequest = await this.prismaService.contactRequest.create({
-        data: {
-          fromUserId: userId,
-          toUserId: targetPersona.userId,
-          fromPersonaId: fromPersona.id,
-          toPersonaId: targetPersona.id,
-          reason,
-          sourceType,
-          sourceId: createContactRequestDto.sourceId ?? null,
-          status: PrismaContactRequestStatus.PENDING,
-        },
-        select: sendContactRequestSelect,
-      });
+      const contactRequest =
+        await this.requestRateLimitService.reserveAndCreate(
+          userId,
+          async (tx: Prisma.TransactionClient) => {
+            return tx.contactRequest.create({
+              data: {
+                fromUserId: userId,
+                toUserId: targetPersona.userId,
+                fromPersonaId: fromPersona.id,
+                toPersonaId: targetPersona.id,
+                reason,
+                sourceType,
+                sourceId: createContactRequestDto.sourceId ?? null,
+                status: PrismaContactRequestStatus.PENDING,
+              },
+              select: sendContactRequestSelect,
+            });
+          },
+        );
 
       await this.analyticsService.trackRequestSent({
         actorUserId: userId,
@@ -290,7 +295,7 @@ export class ContactRequestsService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === "P2002"
       ) {
-        throw new BadRequestException(
+        throw new ConflictException(
           "A pending contact request already exists for this persona",
         );
       }

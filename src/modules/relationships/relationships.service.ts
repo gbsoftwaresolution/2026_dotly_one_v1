@@ -100,25 +100,38 @@ export class RelationshipsService {
     });
 
     if (!existingRelationship) {
-      return tx.contactRelationship.create({
-        data: {
-          ownerUserId: data.ownerUserId,
-          targetUserId: data.targetUserId,
-          ownerPersonaId: data.ownerPersonaId,
-          targetPersonaId: data.targetPersonaId,
-          state: PrismaContactRelationshipState.INSTANT_ACCESS,
-          sourceType: PrismaContactRequestSourceType.QR,
-          sourceId: data.sourceId,
-          accessStartAt: data.accessStartAt,
-          accessEndAt: data.accessEndAt,
-        },
-        select: {
-          id: true,
-          state: true,
-          accessStartAt: true,
-          accessEndAt: true,
-        },
-      });
+      try {
+        return await tx.contactRelationship.create({
+          data: {
+            ownerUserId: data.ownerUserId,
+            targetUserId: data.targetUserId,
+            ownerPersonaId: data.ownerPersonaId,
+            targetPersonaId: data.targetPersonaId,
+            state: PrismaContactRelationshipState.INSTANT_ACCESS,
+            sourceType: PrismaContactRequestSourceType.QR,
+            sourceId: data.sourceId,
+            accessStartAt: data.accessStartAt,
+            accessEndAt: data.accessEndAt,
+          },
+          select: {
+            id: true,
+            state: true,
+            accessStartAt: true,
+            accessEndAt: true,
+          },
+        });
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002"
+        ) {
+          throw new ConflictException(
+            "An active instant access relationship already exists",
+          );
+        }
+
+        throw error;
+      }
     }
 
     const normalizedRelationship = await this.expireRelationshipIfNeeded(

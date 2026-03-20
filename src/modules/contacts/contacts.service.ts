@@ -139,6 +139,12 @@ export class ContactsService {
         relationship,
       );
 
+    if (
+      normalizedRelationship.state === PrismaContactRelationshipState.EXPIRED
+    ) {
+      throw new NotFoundException("Contact not found");
+    }
+
     return this.toContactDetail(normalizedRelationship);
   }
 

@@ -1,0 +1,43 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: postgresql://dotly:dotly@localhost:5432/dotly_test
+      JWT_SECRET: test-secret
+      JWT_ISSUER: dotly-backend
+      JWT_AUDIENCE: dotly-clients
+      CORS_ORIGINS: http://localhost:3001
+      REDIS_URL: redis://localhost:6379
+      QR_BASE_URL: https://dotly.id/q
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test

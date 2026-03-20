@@ -182,6 +182,7 @@ export class EventsService {
 
   async join(userId: string, eventId: string, joinEventDto: JoinEventDto) {
     const event = await this.getEventOrThrow(eventId);
+    this.assertJoinWindowOpen(event);
 
     const persona = await this.personasService.findOwnedPersonaIdentity(
       userId,
@@ -300,26 +301,53 @@ export class EventsService {
       select: eventParticipantSelect,
     });
 
-    const visibleParticipants = [] as Array<
-      ReturnType<EventsService["toVisibleParticipantView"]>
-    >;
+    if (participants.length === 0) {
+      return [];
+    }
 
-    for (const participant of participants) {
-      const blocked = await this.isBlockedEitherWay(userId, participant.userId);
+    const blockedUsers = await this.prismaService.block.findMany({
+      where: {
+        OR: [
+          {
+            blockerUserId: userId,
+            blockedUserId: {
+              in: participants.map((participant) => participant.userId),
+            },
+          },
+          {
+            blockerUserId: {
+              in: participants.map((participant) => participant.userId),
+            },
+            blockedUserId: userId,
+          },
+        ],
+      },
+      select: {
+        blockerUserId: true,
+        blockedUserId: true,
+      },
+    });
 
-      if (blocked) {
+    const excludedUserIds = new Set<string>();
+
+    for (const block of blockedUsers) {
+      if (block.blockerUserId === userId) {
+        excludedUserIds.add(block.blockedUserId);
         continue;
       }
 
-      visibleParticipants.push(this.toVisibleParticipantView(participant));
+      excludedUserIds.add(block.blockerUserId);
     }
 
-    return visibleParticipants;
+    return participants
+      .filter((participant) => !excludedUserIds.has(participant.userId))
+      .map((participant) => this.toVisibleParticipantView(participant));
   }
 
   async validateEventRequestAccess(
     actorUserId: string,
     eventId: string,
+    actorPersonaId: string,
     targetPersonaId: string,
   ) {
     const eventParticipant =
@@ -327,6 +355,7 @@ export class EventsService {
         where: {
           eventId,
           userId: actorUserId,
+          personaId: actorPersonaId,
           discoveryEnabled: true,
         },
         select: {
@@ -419,20 +448,26 @@ export class EventsService {
   private assertDiscoveryWindowOpen(event: { startsAt: Date; endsAt: Date }) {
     const now = new Date();
 
-    if (event.startsAt > now || event.endsAt < now) {
+    if (event.startsAt > now || event.endsAt <= now) {
       throw new ForbiddenException("Event discovery is not active");
     }
   }
 
-  private async isBlockedEitherWay(userId: string, otherUserId: string) {
-    const [blockedByOtherUser, blockedByCurrentUser] = await Promise.all([
-      this.blocksService.isBlockedByUser(otherUserId, userId),
-      this.blocksService.isBlockedByUser(userId, otherUserId),
-    ]);
+  private assertJoinWindowOpen(event: {
+    startsAt: Date;
+    endsAt: Date;
+    status?: PrismaEventStatus;
+  }) {
+    const now = new Date();
 
-    return blockedByOtherUser || blockedByCurrentUser;
+    if (
+      event.status === PrismaEventStatus.DRAFT ||
+      event.endsAt <= now ||
+      event.startsAt > now
+    ) {
+      throw new ForbiddenException("Event join is not active");
+    }
   }
-
   private toParticipantView(
     participant: Prisma.EventParticipantGetPayload<{
       select: typeof eventParticipantSelect;

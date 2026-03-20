@@ -26,14 +26,11 @@ export const privatePersonaSelect = {
 export const publicPersonaSelect = {
   id: true,
   username: true,
-  publicUrl: true,
   fullName: true,
   jobTitle: true,
   companyName: true,
   tagline: true,
   profilePhotoUrl: true,
-  accessMode: true,
-  verifiedOnly: true,
 } satisfies Prisma.PersonaSelect;
 
 export type PrivatePersonaRecord = Prisma.PersonaGetPayload<{
@@ -99,16 +96,12 @@ export function toPrivatePersonaView(persona: PrivatePersonaRecord) {
 
 export function toPublicPersonaView(persona: PublicPersonaRecord) {
   return {
-    id: persona.id,
     username: persona.username,
-    publicUrl: persona.publicUrl,
     fullName: persona.fullName,
     jobTitle: persona.jobTitle,
     companyName: persona.companyName,
     tagline: persona.tagline,
     profilePhotoUrl: persona.profilePhotoUrl,
-    accessMode: apiAccessModeMap[persona.accessMode],
-    verifiedOnly: persona.verifiedOnly,
   };
 }
 

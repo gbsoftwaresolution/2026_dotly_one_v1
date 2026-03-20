@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
+  PersonaAccessMode as PrismaPersonaAccessMode,
   Prisma,
   QrStatus as PrismaQrStatus,
   QrType as PrismaQrType,
@@ -61,6 +62,7 @@ export class QrService {
       userId,
       personaId,
     );
+    await this.assertPersonaCanHavePublicQr(persona.id);
     const existingToken = await this.prismaService.qRAccessToken.findFirst({
       where: {
         personaId: persona.id,
@@ -201,11 +203,10 @@ export class QrService {
       }
 
       if (
-        resolvedToken.maxUses !== null &&
-        resolvedToken.usedCount >= resolvedToken.maxUses &&
-        resolvedToken.status === PrismaQrStatus.active
+        resolvedToken.type === PrismaQrType.profile &&
+        token.type === PrismaQrType.profile
       ) {
-        await this.markTokenExpired(tx, token.id);
+        await this.assertProfileQrPersonaIsPublic(tx, token.id);
       }
 
       void this.analyticsService.trackQrScan({
@@ -455,7 +456,7 @@ export class QrService {
       throw new ConflictException("QR code is not active yet");
     }
 
-    if (token.endsAt && now > token.endsAt) {
+    if (token.endsAt && now >= token.endsAt) {
       await this.markTokenExpired(tx, token.id);
       throw new ConflictException("QR code has expired");
     }
@@ -525,5 +526,53 @@ export class QrService {
     }
 
     throw new ConflictException("Unable to generate a unique QR code");
+  }
+
+  private async assertPersonaCanHavePublicQr(personaId: string): Promise<void> {
+    const persona = await this.prismaService.persona.findUnique({
+      where: {
+        id: personaId,
+      },
+      select: {
+        id: true,
+        accessMode: true,
+      },
+    });
+
+    if (!persona) {
+      throw new NotFoundException("Persona not found");
+    }
+
+    if (persona.accessMode === PrismaPersonaAccessMode.PRIVATE) {
+      throw new ConflictException(
+        "Private personas cannot create public QR codes",
+      );
+    }
+  }
+
+  private async assertProfileQrPersonaIsPublic(
+    tx: Prisma.TransactionClient,
+    tokenId: string,
+  ): Promise<void> {
+    const token = await tx.qRAccessToken.findUnique({
+      where: {
+        id: tokenId,
+      },
+      select: {
+        persona: {
+          select: {
+            accessMode: true,
+          },
+        },
+      },
+    });
+
+    if (!token) {
+      throw new NotFoundException("QR code not found");
+    }
+
+    if (token.persona.accessMode === PrismaPersonaAccessMode.PRIVATE) {
+      throw new NotFoundException("QR code not found");
+    }
   }
 }

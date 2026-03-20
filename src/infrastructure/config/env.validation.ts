@@ -8,6 +8,8 @@ export const envValidationSchema = Joi.object({
   DATABASE_URL: Joi.string().min(1).required(),
   JWT_SECRET: Joi.string().min(1).required(),
   JWT_EXPIRES_IN: Joi.string().min(1).default("7d"),
+  JWT_ISSUER: Joi.string().min(1).default("dotly-backend"),
+  JWT_AUDIENCE: Joi.string().min(1).default("dotly-clients"),
   CORS_ORIGINS: Joi.string().allow("").default(""),
   REDIS_URL: Joi.string().min(1).default("redis://localhost:6379"),
   STORAGE_BUCKET: Joi.string().allow("").default(""),

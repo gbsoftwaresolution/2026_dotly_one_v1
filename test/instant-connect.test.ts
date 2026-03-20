@@ -5,6 +5,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  NotFoundException,
 } from "@nestjs/common";
 import {
   ContactRelationshipState as PrismaContactRelationshipState,
@@ -533,6 +534,69 @@ describe("ContactsService", () => {
     assert.equal(
       ((findManyPayload as any)?.where?.OR?.[1]?.state as string) ?? "",
       INSTANT_ACCESS_STATE,
+    );
+  });
+
+  it("denies fetching expired instant access contact details", async () => {
+    const service = new ContactsService(
+      {
+        contactRelationship: {
+          findFirst: async () => ({
+            id: "relationship-id",
+            ownerUserId: "owner-user",
+            state: INSTANT_ACCESS_STATE,
+            accessStartAt: new Date("2026-03-20T08:00:00.000Z"),
+            accessEndAt: new Date("2026-03-20T09:00:00.000Z"),
+            createdAt: new Date("2026-03-20T08:00:00.000Z"),
+            sourceType: PrismaContactRequestSourceType.QR,
+            targetPersona: {
+              id: "persona-id",
+              username: "expired",
+              publicUrl: "dotly.id/expired",
+              fullName: "Expired User",
+              jobTitle: "Engineer",
+              companyName: "Dotly",
+              tagline: "Expired",
+              profilePhotoUrl: null,
+              accessMode: PrismaPersonaAccessMode.OPEN,
+            },
+            memories: [],
+          }),
+        },
+      } as any,
+      {} as any,
+      {
+        expireRelationshipIfNeeded: async () => ({
+          id: "relationship-id",
+          ownerUserId: "owner-user",
+          state: EXPIRED_STATE,
+          accessStartAt: new Date("2026-03-20T08:00:00.000Z"),
+          accessEndAt: new Date("2026-03-20T09:00:00.000Z"),
+          createdAt: new Date("2026-03-20T08:00:00.000Z"),
+          sourceType: PrismaContactRequestSourceType.QR,
+          targetPersona: {
+            id: "persona-id",
+            username: "expired",
+            publicUrl: "dotly.id/expired",
+            fullName: "Expired User",
+            jobTitle: "Engineer",
+            companyName: "Dotly",
+            tagline: "Expired",
+            profilePhotoUrl: null,
+            accessMode: PrismaPersonaAccessMode.OPEN,
+          },
+          memories: [],
+        }),
+      } as any,
+    );
+
+    await assert.rejects(
+      service.findOne("owner-user", "relationship-id"),
+      (error: unknown) => {
+        assert.ok(error instanceof NotFoundException);
+        assert.equal(error.message, "Contact not found");
+        return true;
+      },
     );
   });
 });

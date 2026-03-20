@@ -40,3 +40,8 @@ npm run dev
 - Default backend URL: `http://localhost:3000/v1`
 - Expected frontend URL for local dev CORS: `http://localhost:3001`
 - Run `npm run typecheck && npm run build` in both backend and `frontend` before shipping changes
+
+## Quality Gates
+
+- Backend CI now runs `npm run prisma:generate`, `npm run typecheck`, and `npm test` on pull requests and pushes to `main` or `master` via `.github/workflows/backend-ci.yml`.
+- Use `docs/staging-launch-checklist.md` before promoting staging to production.

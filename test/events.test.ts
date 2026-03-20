@@ -22,8 +22,8 @@ describe("EventsService", () => {
             name: "Dotly Summit",
             slug: "dotly-summit",
             description: null,
-            startsAt: new Date("2099-03-20T10:00:00.000Z"),
-            endsAt: new Date("2099-03-20T18:00:00.000Z"),
+            startsAt: new Date(Date.now() - 60_000),
+            endsAt: new Date(Date.now() + 60_000),
             location: "Chennai",
             status: LIVE_STATUS,
             createdByUserId: "organizer-user",
@@ -53,6 +53,44 @@ describe("EventsService", () => {
       (error: unknown) => {
         assert.ok(error instanceof ConflictException);
         assert.equal(error.message, "You have already joined this event");
+        return true;
+      },
+    );
+  });
+
+  it("rejects joining events outside the active window", async () => {
+    const service = new EventsService(
+      {
+        event: {
+          findUnique: async () => ({
+            id: "event-id",
+            name: "Dotly Summit",
+            slug: "dotly-summit",
+            description: null,
+            startsAt: new Date(Date.now() + 60_000),
+            endsAt: new Date(Date.now() + 120_000),
+            location: "Chennai",
+            status: LIVE_STATUS,
+            createdByUserId: "organizer-user",
+            createdAt: new Date("2099-03-01T10:00:00.000Z"),
+            updatedAt: new Date("2099-03-01T10:00:00.000Z"),
+          }),
+        },
+      } as any,
+      {
+        findOwnedPersonaIdentity: async () => ({ id: "persona-id" }),
+      } as any,
+      {} as any,
+    );
+
+    await assert.rejects(
+      service.join("user-id", "event-id", {
+        personaId: "persona-id",
+        role: EventParticipantRole.Attendee,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(error.message, "Event join is not active");
         return true;
       },
     );
@@ -125,12 +163,17 @@ describe("EventsService", () => {
             },
           ],
         },
+        block: {
+          findMany: async () => [
+            {
+              blockerUserId: "viewer-user",
+              blockedUserId: "blocked-user",
+            },
+          ],
+        },
       } as any,
       {} as any,
-      {
-        isBlockedByUser: async (blockerUserId: string, blockedUserId: string) =>
-          blockerUserId === "viewer-user" && blockedUserId === "blocked-user",
-      } as any,
+      {} as any,
     );
 
     const result = await service.findVisibleParticipants(
@@ -236,16 +279,38 @@ describe("ContactRequestsService event source", () => {
         createInitialMemory: async () => ({ id: "memory-id" }),
       } as any,
       {
-        consume: async () => undefined,
+        reserveAndCreate: async (
+          _userId: string,
+          callback: (tx: any) => Promise<any>,
+        ) =>
+          callback({
+            contactRequest: {
+              create: async (payload: any) => {
+                createPayload = payload;
+                return {
+                  id: "request-id",
+                  status: "PENDING",
+                  createdAt: new Date("2099-03-20T12:00:00.000Z"),
+                  toPersona: {
+                    id: "target-persona",
+                    username: "target",
+                    fullName: "Target User",
+                  },
+                };
+              },
+            },
+          }),
       } as any,
       {
         validateEventRequestAccess: async (
           actorUserId: string,
           eventId: string,
+          actorPersonaId: string,
           targetPersonaId: string,
         ) => {
           assert.equal(actorUserId, "sender-user");
           assert.equal(eventId, "event-id");
+          assert.equal(actorPersonaId, "from-persona");
           assert.equal(targetPersonaId, "target-persona");
         },
       } as any,

@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   HttpException,
 } from "@nestjs/common";
@@ -114,7 +115,7 @@ describe("ContactRequestsService", () => {
         sourceType: ContactRequestSourceType.Profile,
       }),
       (error: unknown) => {
-        assert.ok(error instanceof BadRequestException);
+        assert.ok(error instanceof ConflictException);
         assert.equal(
           error.message,
           "A pending contact request already exists for this persona",
@@ -237,7 +238,7 @@ describe("ContactRequestsService", () => {
         sourceType: ContactRequestSourceType.Profile,
       }),
       (error: unknown) => {
-        assert.ok(error instanceof BadRequestException);
+        assert.ok(error instanceof ConflictException);
         assert.equal(
           error.message,
           "A pending contact request already exists for this persona",
@@ -446,6 +447,30 @@ describe("RequestRateLimitService", () => {
 
     return assert.rejects(
       service.consume("sender-user", new Date()),
+      (error: unknown) => {
+        assert.ok(error instanceof HttpException);
+        assert.equal(error.message, "Requests are temporarily limited");
+        assert.equal(error.getStatus(), 429);
+        return true;
+      },
+    );
+  });
+
+  it("returns 429 from the atomic reservation path after the hourly cap is reached", () => {
+    const service = new RequestRateLimitService({
+      $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+        callback({
+          $executeRaw: async () => undefined,
+          contactRequest: {
+            count: async () => 20,
+          },
+        }),
+    } as any);
+
+    return assert.rejects(
+      service.reserveAndCreate("sender-user", async () => ({
+        id: "request-id",
+      })),
       (error: unknown) => {
         assert.ok(error instanceof HttpException);
         assert.equal(error.message, "Requests are temporarily limited");

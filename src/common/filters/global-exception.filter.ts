@@ -60,10 +60,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     }
 
-    if (exception instanceof Error) {
-      return exception.message;
-    }
-
     return "Internal server error";
   }
 }

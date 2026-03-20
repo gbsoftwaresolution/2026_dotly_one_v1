@@ -20,6 +20,8 @@ import { AuthService } from "./auth.service";
             "jwt.expiresIn",
             "7d",
           ) as StringValue,
+          issuer: configService.get<string>("jwt.issuer", "dotly-backend"),
+          audience: configService.get<string>("jwt.audience", "dotly-clients"),
         },
       }),
     }),

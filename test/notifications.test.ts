@@ -164,6 +164,36 @@ describe("Notification response polish", () => {
     assert.equal(payload.path, "/notifications");
     assert.ok(Date.parse(payload.timestamp));
   });
+
+  it("does not expose raw internal error messages", () => {
+    let statusCode = 0;
+    let payload: any;
+
+    const filter = new GlobalExceptionFilter({
+      error: () => undefined,
+    } as any);
+
+    filter.catch(new Error("database exploded"), {
+      switchToHttp: () => ({
+        getResponse: () => ({
+          status(code: number) {
+            statusCode = code;
+            return this;
+          },
+          json(value: unknown) {
+            payload = value;
+          },
+        }),
+        getRequest: () => ({
+          method: "GET",
+          url: "/notifications",
+        }),
+      }),
+    } as any);
+
+    assert.equal(statusCode, 500);
+    assert.equal(payload.message, "Internal server error");
+  });
 });
 
 describe("NotificationsService", () => {
@@ -262,7 +292,24 @@ describe("Notification hooks", () => {
       {} as any,
       {} as any,
       {
-        consume: async () => undefined,
+        reserveAndCreate: async (
+          _userId: string,
+          callback: (tx: any) => Promise<any>,
+        ) =>
+          callback({
+            contactRequest: {
+              create: async () => ({
+                id: "request-id",
+                status: "PENDING",
+                createdAt: new Date("2026-03-21T10:00:00.000Z"),
+                toPersona: {
+                  id: "target-persona",
+                  username: "target",
+                  fullName: "Target User",
+                },
+              }),
+            },
+          }),
       } as any,
       {
         validateEventRequestAccess: async () => undefined,

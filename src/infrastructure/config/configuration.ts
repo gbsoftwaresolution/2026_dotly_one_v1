@@ -13,6 +13,8 @@ export const configuration = () => ({
   jwt: {
     secret: process.env.JWT_SECRET ?? "",
     expiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
+    issuer: process.env.JWT_ISSUER ?? "dotly-backend",
+    audience: process.env.JWT_AUDIENCE ?? "dotly-clients",
   },
   redis: {
     url: process.env.REDIS_URL ?? "redis://localhost:6379",

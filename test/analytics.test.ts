@@ -178,8 +178,17 @@ describe("ProfilesService analytics hook", () => {
       } as any,
     );
 
-    await service.getPublicProfile("alice", {
+    const result = await service.getPublicProfile("alice", {
       idempotencyKey: "request-key",
+    });
+
+    assert.deepEqual(result, {
+      username: "alice",
+      fullName: "Alice Demo",
+      jobTitle: "Founder",
+      companyName: "Dotly",
+      tagline: "Connect fast",
+      profilePhotoUrl: null,
     });
 
     assert.deepEqual(tracked[0], {
@@ -295,6 +304,71 @@ describe("QrService analytics hook", () => {
       idempotencyKey: "scan-key",
     });
   });
+
+  it("does not expose internal QR metadata in resolve responses", async () => {
+    const service = new QrService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            qRAccessToken: {
+              findUnique: async (args: any) => {
+                if (args.where.code) {
+                  return {
+                    id: "qr-token-id",
+                    code: "qr-code",
+                    type: "quick_connect",
+                    startsAt: null,
+                    endsAt: new Date("2099-03-20T15:00:00.000Z"),
+                    maxUses: 5,
+                    usedCount: 1,
+                    status: "active",
+                  };
+                }
+
+                return {
+                  code: "qr-code",
+                  type: "quick_connect",
+                  persona: {
+                    id: "persona-id",
+                    username: "alice",
+                    fullName: "Alice Demo",
+                    jobTitle: "Founder",
+                    companyName: "Dotly",
+                    tagline: "Connect fast",
+                    profilePhotoUrl: null,
+                  },
+                };
+              },
+            },
+          }),
+      } as any,
+      { get: () => "https://dotly.id/q" } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      { trackQrScan: async () => true } as any,
+    );
+
+    const result = await service.resolveQr("qr-code", {
+      idempotencyKey: "scan-key",
+    });
+
+    assert.deepEqual(result, {
+      type: "quick_connect",
+      code: "qr-code",
+      persona: {
+        username: "alice",
+        fullName: "Alice Demo",
+        jobTitle: "Founder",
+        companyName: "Dotly",
+        tagline: "Connect fast",
+        profilePhotoUrl: null,
+      },
+    });
+    assert.equal((result as any).quickConnect, undefined);
+  });
 });
 
 describe("ContactRequestsService analytics hooks", () => {
@@ -345,7 +419,24 @@ describe("ContactRequestsService analytics hooks", () => {
       {} as any,
       {} as any,
       {
-        consume: async () => undefined,
+        reserveAndCreate: async (
+          _userId: string,
+          callback: (tx: any) => Promise<any>,
+        ) =>
+          callback({
+            contactRequest: {
+              create: async () => ({
+                id: "request-id",
+                status: "PENDING",
+                createdAt: new Date("2026-03-21T10:00:00.000Z"),
+                toPersona: {
+                  id: "target-persona",
+                  username: "target",
+                  fullName: "Target User",
+                },
+              }),
+            },
+          }),
       } as any,
       {
         validateEventRequestAccess: async () => undefined,
