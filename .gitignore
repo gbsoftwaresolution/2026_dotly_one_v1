@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.DS_Store
+coverage
+.turbo
+.idea
+.vscode
+.next
+frontend/.next
+frontend/node_modules

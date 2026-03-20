@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PersonaType {
+  PERSONAL     @map("personal")
+  PROFESSIONAL @map("professional")
+  BUSINESS     @map("business")
+}
+
+enum PersonaAccessMode {
+  OPEN    @map("open")
+  REQUEST @map("request")
+  PRIVATE @map("private")
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  passwordHash String
+  personas     Persona[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Persona {
+  id              String            @id @default(uuid()) @db.Uuid
+  userId          String            @db.Uuid
+  type            PersonaType
+  username        String            @unique
+  publicUrl       String            @unique
+  fullName        String
+  jobTitle        String
+  companyName     String
+  tagline         String
+  profilePhotoUrl String?
+  accessMode      PersonaAccessMode
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([userId])
+}
