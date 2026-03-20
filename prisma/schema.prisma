@@ -7,6 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum QrType {
+  profile
+  quick_connect
+}
+
+enum QrStatus {
+  active
+  expired
+  disabled
+}
+
 enum PersonaType {
   PERSONAL     @map("personal")
   PROFESSIONAL @map("professional")
@@ -41,8 +52,28 @@ model Persona {
   profilePhotoUrl String?
   accessMode      PersonaAccessMode
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  qrAccessTokens  QRAccessToken[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
   @@index([userId])
+}
+
+model QRAccessToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  personaId String   @db.Uuid
+  type      QrType
+  code      String   @unique
+  rules     Json
+  startsAt  DateTime?
+  endsAt    DateTime?
+  maxUses   Int?
+  usedCount Int      @default(0)
+  status    QrStatus @default(active)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  persona   Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@index([personaId])
+  @@index([status])
 }

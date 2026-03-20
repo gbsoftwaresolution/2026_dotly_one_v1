@@ -73,6 +73,28 @@ export class PersonasService {
     return toPrivatePersonaView(persona);
   }
 
+  async findOwnedPersonaIdentity(userId: string, personaId: string) {
+    const persona = await this.prismaService.persona.findUnique({
+      where: {
+        id: personaId,
+      },
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
+
+    if (!persona) {
+      throw new NotFoundException("Persona not found");
+    }
+
+    if (persona.userId !== userId) {
+      throw new UnauthorizedException("You do not have access to this persona");
+    }
+
+    return persona;
+  }
+
   async update(
     userId: string,
     personaId: string,
@@ -152,22 +174,6 @@ export class PersonasService {
   }
 
   private async assertOwner(userId: string, personaId: string): Promise<void> {
-    const persona = await this.prismaService.persona.findUnique({
-      where: {
-        id: personaId,
-      },
-      select: {
-        id: true,
-        userId: true,
-      },
-    });
-
-    if (!persona) {
-      throw new NotFoundException("Persona not found");
-    }
-
-    if (persona.userId !== userId) {
-      throw new UnauthorizedException("You do not have access to this persona");
-    }
+    await this.findOwnedPersonaIdentity(userId, personaId);
   }
 }

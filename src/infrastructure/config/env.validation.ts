@@ -11,4 +11,7 @@ export const envValidationSchema = Joi.object({
   CORS_ORIGINS: Joi.string().allow("").default(""),
   REDIS_URL: Joi.string().min(1).default("redis://localhost:6379"),
   STORAGE_BUCKET: Joi.string().allow("").default(""),
+  QR_BASE_URL: Joi.string()
+    .uri({ scheme: [/https?/] })
+    .default("https://dotly.id/q"),
 });

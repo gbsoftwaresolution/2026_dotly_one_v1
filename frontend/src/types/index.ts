@@ -12,5 +12,11 @@ export type {
   PersonaSummary,
   PersonaType,
   PublicProfile,
+  QrTokenSummary,
+  QrType,
+  QuickConnectQrInput,
+  QuickConnectQrSummary,
+  ResolvedQr,
+  ResolvedQrPersonaPreview,
 } from "./persona";
 export type { UserProfile } from "./user";

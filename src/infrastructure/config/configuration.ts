@@ -20,4 +20,7 @@ export const configuration = () => ({
   storage: {
     bucket: process.env.STORAGE_BUCKET ?? "",
   },
+  qr: {
+    baseUrl: process.env.QR_BASE_URL ?? "https://dotly.id/q",
+  },
 });
