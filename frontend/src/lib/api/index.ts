@@ -1,4 +1,5 @@
 export { authApi } from "./auth-api";
+export { blocksApi } from "./blocks-api";
 export { contactsApi } from "./contacts-api";
 export { eventApi } from "./event-api";
 export { personaApi } from "./persona-api";

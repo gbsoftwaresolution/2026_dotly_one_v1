@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { BlockUserButton } from "@/components/contacts/block-user-button";
 import { NoteEditor } from "@/components/contacts/note-editor";
 import { Card } from "@/components/shared/card";
 import { PageHeader } from "@/components/shared/page-header";
@@ -75,7 +76,8 @@ export default async function ContactDetailPage({
     notFound();
   }
 
-  const { targetPersona, memory, sourceType, createdAt } = contact;
+  const { targetPersona, targetUserId, memory, sourceType, createdAt } =
+    contact;
 
   return (
     <section className="space-y-4">
@@ -148,6 +150,22 @@ export default async function ContactDetailPage({
       {/* Note editor */}
       <Card>
         <NoteEditor relationshipId={relationshipId} initialNote={memory.note} />
+      </Card>
+
+      {/* Danger zone */}
+      <Card className="space-y-4">
+        <div className="space-y-1">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+            Actions
+          </p>
+          <p className="font-sans text-sm text-muted">
+            Blocking removes this contact and prevents future requests.
+          </p>
+        </div>
+        <BlockUserButton
+          userId={targetUserId}
+          displayName={targetPersona.fullName}
+        />
       </Card>
     </section>
   );

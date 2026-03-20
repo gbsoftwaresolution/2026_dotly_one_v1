@@ -148,8 +148,8 @@ export class ContactRequestsService {
     const existingPendingRequest =
       await this.prismaService.contactRequest.findFirst({
         where: {
-          fromPersonaId: fromPersona.id,
-          toPersonaId: targetPersona.id,
+          fromUserId: userId,
+          toUserId: targetPersona.userId,
           status: PrismaContactRequestStatus.PENDING,
         },
         select: {
@@ -166,8 +166,8 @@ export class ContactRequestsService {
     const latestRejectedRequest =
       await this.prismaService.contactRequest.findFirst({
         where: {
-          fromPersonaId: fromPersona.id,
-          toPersonaId: targetPersona.id,
+          fromUserId: userId,
+          toUserId: targetPersona.userId,
           status: PrismaContactRequestStatus.REJECTED,
           respondedAt: {
             gte: new Date(Date.now() - REQUEST_RETRY_COOLDOWN_IN_MS),
@@ -185,7 +185,7 @@ export class ContactRequestsService {
       throw new ForbiddenException("Cooldown active");
     }
 
-    this.requestRateLimitService.consume(userId);
+    await this.requestRateLimitService.consume(userId);
 
     const reason = createContactRequestDto.reason ?? null;
 

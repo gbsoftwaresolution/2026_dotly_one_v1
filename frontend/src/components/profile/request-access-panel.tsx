@@ -30,12 +30,37 @@ function toFriendlyMessage(error: unknown): string {
       return "Log in to send a request from one of your personas.";
     }
 
+    if (error.status === 429) {
+      return "Too many attempts. Please wait a few minutes.";
+    }
+
     if (error.status === 403) {
-      return "This profile is not accepting requests right now.";
+      const msg = error.message ?? "";
+
+      if (
+        msg.includes("blocked") ||
+        msg.toLowerCase().includes("you have blocked") ||
+        msg.toLowerCase().includes("has blocked you")
+      ) {
+        return "You cannot contact this user.";
+      }
+
+      if (
+        msg.toLowerCase().includes("private") ||
+        msg.toLowerCase().includes("not accepting")
+      ) {
+        return "This profile is not accepting requests at this time.";
+      }
+
+      if (msg.toLowerCase().includes("cooldown")) {
+        return "Cooldown Required. Try again later.";
+      }
+
+      return "This profile is not accepting requests at this time.";
     }
 
     if (error.status === 409) {
-      return "Request already pending";
+      return "Request already pending.";
     }
 
     return error.message;
@@ -242,9 +267,9 @@ export function RequestAccessPanel({
         </div>
 
         {error ? (
-          <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {error}
-          </p>
+          <div className="rounded-2xl border border-rose-500 bg-rose-500/10 px-4 py-3">
+            <p className="font-mono text-sm text-rose-500">{error}</p>
+          </div>
         ) : null}
 
         <div className="pt-2">

@@ -86,6 +86,21 @@ export class BlocksService {
         },
       });
 
+      await tx.contactRelationship.deleteMany({
+        where: {
+          OR: [
+            {
+              ownerUserId: userId,
+              targetUserId: blockedUserId,
+            },
+            {
+              ownerUserId: blockedUserId,
+              targetUserId: userId,
+            },
+          ],
+        },
+      });
+
       return createdBlock;
     });
 

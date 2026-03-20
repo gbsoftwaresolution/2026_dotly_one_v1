@@ -1,31 +1,30 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 
+import { PrismaService } from "../../infrastructure/database/prisma.service";
+
 const REQUESTS_PER_HOUR_LIMIT = 20;
 const ONE_HOUR_IN_MS = 60 * 60 * 1000;
 
 @Injectable()
 export class RequestRateLimitService {
-  private readonly attemptsByUser = new Map<string, number[]>();
+  constructor(private readonly prismaService: PrismaService) {}
 
-  consume(userId: string, now = Date.now()): void {
-    const attempts = this.pruneExpiredAttempts(
-      this.attemptsByUser.get(userId) ?? [],
-      now,
-    );
+  async consume(userId: string, now = new Date()): Promise<void> {
+    const windowStart = new Date(now.getTime() - ONE_HOUR_IN_MS);
+    const attempts = await this.prismaService.contactRequest.count({
+      where: {
+        fromUserId: userId,
+        createdAt: {
+          gte: windowStart,
+        },
+      },
+    });
 
-    if (attempts.length >= REQUESTS_PER_HOUR_LIMIT) {
-      this.attemptsByUser.set(userId, attempts);
+    if (attempts >= REQUESTS_PER_HOUR_LIMIT) {
       throw new HttpException(
         "Requests are temporarily limited",
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
-
-    attempts.push(now);
-    this.attemptsByUser.set(userId, attempts);
-  }
-
-  private pruneExpiredAttempts(attempts: number[], now: number): number[] {
-    return attempts.filter((timestamp) => now - timestamp < ONE_HOUR_IN_MS);
   }
 }

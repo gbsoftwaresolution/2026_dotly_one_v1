@@ -32,6 +32,7 @@ export interface Contact {
 
 export interface ContactDetail {
   relationshipId: string;
+  targetUserId: string;
   state: "approved";
   createdAt: string;
   sourceType: ContactRequestSourceType;

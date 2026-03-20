@@ -19,7 +19,7 @@ export class RelationshipsService {
     },
   ) {
     try {
-      return await tx.contactRelationship.create({
+      const relationship = await tx.contactRelationship.create({
         data: {
           ownerUserId: data.ownerUserId,
           targetUserId: data.targetUserId,
@@ -33,6 +33,23 @@ export class RelationshipsService {
           id: true,
         },
       });
+
+      await tx.contactRelationship.create({
+        data: {
+          ownerUserId: data.targetUserId,
+          targetUserId: data.ownerUserId,
+          ownerPersonaId: data.targetPersonaId,
+          targetPersonaId: data.ownerPersonaId,
+          state: PrismaContactRelationshipState.APPROVED,
+          sourceType: data.sourceType,
+          sourceId: data.sourceId ?? null,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      return relationship;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&

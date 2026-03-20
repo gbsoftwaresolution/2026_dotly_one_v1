@@ -1,4 +1,8 @@
-import type { CreatePersonaInput, PersonaSummary } from "@/types/persona";
+import type {
+  CreatePersonaInput,
+  PersonaSummary,
+  UpdatePersonaInput,
+} from "@/types/persona";
 
 import { apiRequest } from "./client";
 
@@ -9,9 +13,28 @@ export const personaApi = {
       baseUrl: token ? undefined : "",
       credentials: token ? undefined : "same-origin",
     }),
+
+  get: (personaId: string, token?: string) =>
+    apiRequest<PersonaSummary>(
+      token ? `/personas/${personaId}` : `/api/personas/${personaId}`,
+      {
+        token,
+        baseUrl: token ? undefined : "",
+        credentials: token ? undefined : "same-origin",
+      },
+    ),
+
   create: (input: CreatePersonaInput) =>
     apiRequest<PersonaSummary>("/api/personas", {
       method: "POST",
+      body: input,
+      baseUrl: "",
+      credentials: "same-origin",
+    }),
+
+  update: (personaId: string, input: UpdatePersonaInput) =>
+    apiRequest<PersonaSummary>(`/api/personas/${personaId}`, {
+      method: "PATCH",
       body: input,
       baseUrl: "",
       credentials: "same-origin",

@@ -28,6 +28,7 @@ const contactTargetPersonaSelect = {
 const contactRelationshipSelect = {
   id: true,
   ownerUserId: true,
+  targetUserId: true,
   state: true,
   createdAt: true,
   sourceType: true,
@@ -201,6 +202,7 @@ export class ContactsService {
 
     return {
       relationshipId: relationship.id,
+      targetUserId: relationship.targetUserId,
       state: toApiRelationshipState(relationship.state),
       createdAt: relationship.createdAt,
       sourceType: toApiContactRequestSourceType(relationship.sourceType),

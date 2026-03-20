@@ -13,6 +13,7 @@ export interface PersonaSummary {
   tagline: string;
   profilePhotoUrl?: string | null;
   accessMode: PersonaAccessMode;
+  verifiedOnly: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,6 +26,16 @@ export interface CreatePersonaInput {
   companyName: string;
   tagline: string;
   accessMode: PersonaAccessMode;
+  verifiedOnly?: boolean;
+}
+
+export interface UpdatePersonaInput {
+  fullName?: string;
+  jobTitle?: string;
+  companyName?: string;
+  tagline?: string;
+  accessMode?: PersonaAccessMode;
+  verifiedOnly?: boolean;
 }
 
 export interface PublicProfile {

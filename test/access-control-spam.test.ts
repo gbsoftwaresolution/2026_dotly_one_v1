@@ -42,7 +42,9 @@ describe("ContactRequestsService", () => {
       } as any,
       {} as any,
       {} as any,
-      new RequestRateLimitService(),
+      {
+        consume: async () => undefined,
+      } as any,
     );
 
     await assert.rejects(
@@ -100,7 +102,9 @@ describe("ContactRequestsService", () => {
       } as any,
       {} as any,
       {} as any,
-      new RequestRateLimitService(),
+      {
+        consume: async () => undefined,
+      } as any,
     );
 
     await assert.rejects(
@@ -161,7 +165,9 @@ describe("ContactRequestsService", () => {
       } as any,
       {} as any,
       {} as any,
-      new RequestRateLimitService(),
+      {
+        consume: async () => undefined,
+      } as any,
     );
 
     await assert.rejects(
@@ -177,19 +183,269 @@ describe("ContactRequestsService", () => {
       },
     );
   });
+
+  it("enforces duplicate prevention across multiple personas for the same sender and target users", async () => {
+    const service = new ContactRequestsService(
+      {
+        persona: {
+          findUnique: async () => ({
+            id: "target-persona",
+            userId: "target-user",
+            username: "target",
+            fullName: "Target User",
+            accessMode: PrismaPersonaAccessMode.REQUEST,
+            verifiedOnly: false,
+          }),
+        },
+        user: {
+          findUnique: async () => ({
+            id: "sender-user",
+            isVerified: false,
+          }),
+        },
+        contactRequest: {
+          findFirst: async (args: any) => {
+            if (args.where.status === PrismaContactRequestStatus.PENDING) {
+              assert.equal(args.where.fromUserId, "sender-user");
+              assert.equal(args.where.toUserId, "target-user");
+              return { id: "pending-request" };
+            }
+
+            return null;
+          },
+        },
+      } as any,
+      {
+        findOwnedPersonaIdentity: async () => ({
+          id: "alternate-from-persona",
+        }),
+      } as any,
+      {
+        assertNoInteractionBlock: async () => undefined,
+      } as any,
+      {} as any,
+      {} as any,
+      {
+        consume: async () => undefined,
+      } as any,
+    );
+
+    await assert.rejects(
+      service.create("sender-user", {
+        fromPersonaId: "alternate-from-persona",
+        toPersonaId: "target-persona",
+        sourceType: ContactRequestSourceType.Profile,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof BadRequestException);
+        assert.equal(
+          error.message,
+          "A pending contact request already exists for this persona",
+        );
+        return true;
+      },
+    );
+  });
+
+  it("enforces cooldown across multiple personas for the same sender and target users", async () => {
+    const service = new ContactRequestsService(
+      {
+        persona: {
+          findUnique: async () => ({
+            id: "target-persona",
+            userId: "target-user",
+            username: "target",
+            fullName: "Target User",
+            accessMode: PrismaPersonaAccessMode.OPEN,
+            verifiedOnly: false,
+          }),
+        },
+        user: {
+          findUnique: async () => ({
+            id: "sender-user",
+            isVerified: false,
+          }),
+        },
+        contactRequest: {
+          findFirst: async (args: any) => {
+            if (args.where.status === PrismaContactRequestStatus.PENDING) {
+              return null;
+            }
+
+            assert.equal(args.where.fromUserId, "sender-user");
+            assert.equal(args.where.toUserId, "target-user");
+            return { id: "recent-rejection" };
+          },
+        },
+      } as any,
+      {
+        findOwnedPersonaIdentity: async () => ({
+          id: "alternate-from-persona",
+        }),
+      } as any,
+      {
+        assertNoInteractionBlock: async () => undefined,
+      } as any,
+      {} as any,
+      {} as any,
+      {
+        consume: async () => undefined,
+      } as any,
+    );
+
+    await assert.rejects(
+      service.create("sender-user", {
+        fromPersonaId: "alternate-from-persona",
+        toPersonaId: "target-persona",
+        sourceType: ContactRequestSourceType.Profile,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(error.message, "Cooldown active");
+        return true;
+      },
+    );
+  });
+
+  it("rejects requests to verified-only personas from unverified users", async () => {
+    const service = new ContactRequestsService(
+      {
+        persona: {
+          findUnique: async () => ({
+            id: "target-persona",
+            userId: "target-user",
+            username: "target",
+            fullName: "Target User",
+            accessMode: PrismaPersonaAccessMode.REQUEST,
+            verifiedOnly: true,
+          }),
+        },
+        user: {
+          findUnique: async () => ({
+            id: "sender-user",
+            isVerified: false,
+          }),
+        },
+      } as any,
+      {
+        findOwnedPersonaIdentity: async () => ({ id: "from-persona" }),
+      } as any,
+      {
+        assertNoInteractionBlock: async () => undefined,
+      } as any,
+      {} as any,
+      {} as any,
+      {
+        consume: async () => undefined,
+      } as any,
+    );
+
+    await assert.rejects(
+      service.create("sender-user", {
+        fromPersonaId: "from-persona",
+        toPersonaId: "target-persona",
+        sourceType: ContactRequestSourceType.Profile,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(error.message, "Verified profiles only");
+        return true;
+      },
+    );
+  });
+
+  it("rejects requests to private personas server-side", async () => {
+    const service = new ContactRequestsService(
+      {
+        persona: {
+          findUnique: async () => ({
+            id: "target-persona",
+            userId: "target-user",
+            username: "target",
+            fullName: "Target User",
+            accessMode: PrismaPersonaAccessMode.PRIVATE,
+            verifiedOnly: false,
+          }),
+        },
+      } as any,
+      {
+        findOwnedPersonaIdentity: async () => ({ id: "from-persona" }),
+      } as any,
+      {
+        assertNoInteractionBlock: async () => undefined,
+      } as any,
+      {} as any,
+      {} as any,
+      {
+        consume: async () => undefined,
+      } as any,
+    );
+
+    await assert.rejects(
+      service.create("sender-user", {
+        fromPersonaId: "from-persona",
+        toPersonaId: "target-persona",
+        sourceType: ContactRequestSourceType.Profile,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(error.message, "Cannot request private profile");
+        return true;
+      },
+    );
+  });
+
+  it("blocks approval when a block exists before approval", async () => {
+    const service = new ContactRequestsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            contactRequest: {
+              findUnique: async () => ({
+                id: "request-id",
+                status: PrismaContactRequestStatus.PENDING,
+                fromUserId: "sender-user",
+                toUserId: "receiver-user",
+                fromPersonaId: "from-persona",
+                toPersonaId: "to-persona",
+                sourceType: PrismaContactRequestSourceType.PROFILE,
+                sourceId: null,
+              }),
+            },
+          }),
+      } as any,
+      {} as any,
+      {
+        assertNoInteractionBlock: async () => {
+          throw new ForbiddenException("User has blocked you");
+        },
+      } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+
+    await assert.rejects(
+      service.approve("receiver-user", "request-id"),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(error.message, "User has blocked you");
+        return true;
+      },
+    );
+  });
 });
 
 describe("RequestRateLimitService", () => {
   it("returns 429 after the hourly request cap is reached", () => {
-    const service = new RequestRateLimitService();
-    const start = Date.now();
+    const service = new RequestRateLimitService({
+      contactRequest: {
+        count: async () => 20,
+      },
+    } as any);
 
-    for (let index = 0; index < 20; index += 1) {
-      service.consume("sender-user", start + index);
-    }
-
-    assert.throws(
-      () => service.consume("sender-user", start + 21),
+    return assert.rejects(
+      service.consume("sender-user", new Date()),
       (error: unknown) => {
         assert.ok(error instanceof HttpException);
         assert.equal(error.message, "Requests are temporarily limited");
@@ -203,6 +459,7 @@ describe("RequestRateLimitService", () => {
 describe("BlocksService", () => {
   it("cancels pending requests when a block is created", async () => {
     let updateManyPayload: Record<string, unknown> | null = null;
+    let deleteManyPayload: Record<string, unknown> | null = null;
 
     const service = new BlocksService({
       user: {
@@ -223,6 +480,12 @@ describe("BlocksService", () => {
             updateMany: async (payload: Record<string, unknown>) => {
               updateManyPayload = payload;
               return { count: 1 };
+            },
+          },
+          contactRelationship: {
+            deleteMany: async (payload: Record<string, unknown>) => {
+              deleteManyPayload = payload;
+              return { count: 2 };
             },
           },
         }),
@@ -250,6 +513,18 @@ describe("BlocksService", () => {
       (updateManyPayload as any).data.status,
       PrismaContactRequestStatus.CANCELLED,
     );
+    assert.deepEqual((deleteManyPayload as any).where, {
+      OR: [
+        {
+          ownerUserId: "blocker-user",
+          targetUserId: "blocked-user",
+        },
+        {
+          ownerUserId: "blocked-user",
+          targetUserId: "blocker-user",
+        },
+      ],
+    });
   });
 
   it("returns the correct error when the sender has blocked the receiver", async () => {

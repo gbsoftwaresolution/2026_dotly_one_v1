@@ -14,6 +14,19 @@ export function ContactsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check if redirected from a block action
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("message") === "node-removed") {
+        setSuccessMessage("Node Removed");
+        window.history.replaceState({}, "", url.pathname);
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
+    }
+  }, []);
 
   async function loadContacts(query?: string) {
     setIsLoading(true);
@@ -43,6 +56,14 @@ export function ContactsScreen() {
 
   return (
     <section className="space-y-4">
+      {successMessage && (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-400">
+          <p className="font-mono text-xs font-semibold uppercase tracking-widest">
+            {successMessage}
+          </p>
+        </div>
+      )}
+
       <div className="relative">
         <input
           type="search"
