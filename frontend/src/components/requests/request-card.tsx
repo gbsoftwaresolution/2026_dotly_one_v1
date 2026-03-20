@@ -1,6 +1,4 @@
 import { Card } from "@/components/shared/card";
-import { PrimaryButton } from "@/components/shared/primary-button";
-import { SecondaryButton } from "@/components/shared/secondary-button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import type { IncomingRequest, OutgoingRequest } from "@/types/request";
 
@@ -60,10 +58,10 @@ export function IncomingRequestCard({
         )}
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-base font-semibold text-foreground">
+            <h2 className="font-sans text-base font-semibold text-foreground">
               {request.fromPersona.fullName}
             </h2>
-            <span className="text-xs text-muted">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-muted">
               {formatTimestamp(request.createdAt)}
             </span>
           </div>
@@ -79,7 +77,7 @@ export function IncomingRequestCard({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-slate-50/80 px-4 py-3">
+      <div className="rounded-2xl border border-border bg-slate-50/80 px-4 py-3 dark:bg-zinc-900/50">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
           Reason
         </p>
@@ -89,20 +87,20 @@ export function IncomingRequestCard({
       </div>
 
       <div className="flex gap-3">
-        <PrimaryButton
-          className="w-full"
-          disabled={isApproving || isRejecting}
-          onClick={() => onApprove(request.id)}
-        >
-          {isApproving ? "Approving..." : "Approve"}
-        </PrimaryButton>
-        <SecondaryButton
-          className="w-full"
+        <button
+          className="flex h-[60px] flex-1 items-center justify-center rounded-2xl bg-slate-100 px-5 text-sm font-bold text-slate-900 transition-all hover:bg-slate-200 active:scale-95 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
           disabled={isApproving || isRejecting}
           onClick={() => onReject(request.id)}
         >
           {isRejecting ? "Rejecting..." : "Reject"}
-        </SecondaryButton>
+        </button>
+        <button
+          className="flex h-[60px] flex-1 items-center justify-center rounded-2xl bg-slate-900 px-5 text-sm font-bold text-white transition-all hover:bg-slate-800 active:scale-95 disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100"
+          disabled={isApproving || isRejecting}
+          onClick={() => onApprove(request.id)}
+        >
+          {isApproving ? "Approving..." : "Approve"}
+        </button>
       </div>
     </Card>
   );
@@ -130,10 +128,10 @@ export function OutgoingRequestCard({ request }: OutgoingRequestCardProps) {
         )}
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-base font-semibold text-foreground">
+            <h2 className="font-sans text-base font-semibold text-foreground">
               {request.toPersona.fullName}
             </h2>
-            <span className="text-xs text-muted">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-muted">
               {formatTimestamp(request.createdAt)}
             </span>
           </div>
@@ -152,7 +150,7 @@ export function OutgoingRequestCard({ request }: OutgoingRequestCardProps) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-slate-50/80 px-4 py-3">
+      <div className="rounded-2xl border border-border bg-slate-50/80 px-4 py-3 dark:bg-zinc-900/50">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
           Reason
         </p>

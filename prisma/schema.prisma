@@ -155,7 +155,7 @@ model ContactMemory {
   relationshipId String              @db.Uuid
   sourceLabel    String?             @db.VarChar(120)
   metAt          DateTime
-  note           String?             @db.VarChar(500)
+  note           String?             @db.Text
   relationship   ContactRelationship @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
 
   @@index([relationshipId])

@@ -33,6 +33,9 @@ export default async function AppHomePage() {
           <Link href="/app/personas" className="w-full sm:w-auto">
             <SecondaryButton className="w-full">Go to personas</SecondaryButton>
           </Link>
+          <Link href="/app/contacts" className="w-full sm:w-auto">
+            <SecondaryButton className="w-full">View contacts</SecondaryButton>
+          </Link>
           <Link href="/app/requests" className="w-full sm:w-auto">
             <SecondaryButton className="w-full">Open requests</SecondaryButton>
           </Link>

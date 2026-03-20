@@ -15,6 +15,7 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { BlocksModule } from "./modules/blocks/blocks.module";
 import { ContactMemoryModule } from "./modules/contact-memory/contact-memory.module";
 import { ContactRequestsModule } from "./modules/contact-requests/contact-requests.module";
+import { ContactsModule } from "./modules/contacts/contacts.module";
 import { EventsModule } from "./modules/events/events.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { PersonasModule } from "./modules/personas/personas.module";
@@ -43,6 +44,7 @@ import { UsersModule } from "./modules/users/users.module";
     ProfilesModule,
     QrModule,
     ContactRequestsModule,
+    ContactsModule,
     RelationshipsModule,
     ContactMemoryModule,
     EventsModule,

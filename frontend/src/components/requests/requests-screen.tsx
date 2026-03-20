@@ -117,7 +117,7 @@ export function RequestsScreen() {
 
   return (
     <section className="space-y-4">
-      <div className="rounded-3xl border border-border bg-surface/80 p-1 shadow-sm">
+      <div className="rounded-[1.75rem] border border-border bg-surface/80 p-1 shadow-sm">
         <div className="grid grid-cols-2 gap-1">
           {(
             [
@@ -130,10 +130,10 @@ export function RequestsScreen() {
               type="button"
               onClick={() => setActiveTab(tab)}
               className={cn(
-                "min-h-12 rounded-[1.25rem] px-4 text-sm font-semibold transition",
+                "min-h-12 rounded-[1.25rem] px-4 font-mono text-[11px] font-semibold uppercase tracking-widest transition-all",
                 activeTab === tab
-                  ? "bg-slate-900 text-white"
-                  : "text-muted hover:bg-slate-100 hover:text-foreground",
+                  ? "bg-slate-900 text-white shadow-sm dark:bg-white dark:text-zinc-950"
+                  : "text-muted hover:bg-slate-100 hover:text-foreground dark:hover:bg-zinc-800",
               )}
             >
               {label}
@@ -157,8 +157,8 @@ export function RequestsScreen() {
 
       {isLoading ? (
         <div className="space-y-3">
-          <div className="rounded-3xl border border-border bg-surface/70 px-5 py-6 text-sm text-muted">
-            Loading your requests...
+          <div className="rounded-3xl border border-border bg-surface/70 px-5 py-6 text-center text-sm text-muted">
+            Loading...
           </div>
         </div>
       ) : loadError ? (
@@ -177,7 +177,7 @@ export function RequestsScreen() {
       ) : activeTab === "incoming" ? (
         incoming.length === 0 ? (
           <EmptyState
-            title="No incoming requests"
+            title="No Handshakes Pending"
             description="When someone requests access to one of your public personas, it will appear here."
           />
         ) : (
@@ -206,7 +206,7 @@ export function RequestsScreen() {
         )
       ) : visibleRequests.length === 0 ? (
         <EmptyState
-          title="No outgoing requests"
+          title="No Handshakes Pending"
           description="Requests you send from your personas will appear here with their latest status."
           action={
             <Link href={routes.app.personas} className="block">

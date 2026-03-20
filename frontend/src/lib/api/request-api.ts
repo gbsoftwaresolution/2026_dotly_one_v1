@@ -10,7 +10,7 @@ import type {
 import { apiRequest } from "./client";
 
 export const requestApi = {
-  sendRequest: (input: SendContactRequestInput) =>
+  send: (input: SendContactRequestInput) =>
     apiRequest<SendContactRequestResult>("/api/contact-requests", {
       method: "POST",
       body: input,

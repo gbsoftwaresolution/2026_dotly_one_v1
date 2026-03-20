@@ -11,5 +11,8 @@ export const routes = {
     createPersona: "/app/personas/create",
     requests: "/app/requests",
     qr: "/app/qr",
+    contacts: "/app/contacts",
+    contactDetail: (relationshipId: string) =>
+      `/app/contacts/${relationshipId}`,
   },
 } as const;

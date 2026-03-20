@@ -10,6 +10,7 @@ import { SecondaryButton } from "@/components/shared/secondary-button";
 import { requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
+import { cn } from "@/lib/utils/cn";
 import type { PersonaSummary, PublicProfile } from "@/types";
 
 interface RequestAccessPanelProps {
@@ -34,7 +35,7 @@ function toFriendlyMessage(error: unknown): string {
     }
 
     if (error.status === 409) {
-      return "You already have a pending request for this profile.";
+      return "Request already pending";
     }
 
     return error.message;
@@ -83,7 +84,7 @@ export function RequestAccessPanel({
     setIsSubmitting(true);
 
     try {
-      await requestApi.sendRequest({
+      await requestApi.send({
         toPersonaId: profile.id,
         fromPersonaId: selectedPersonaId,
         reason: reason.trim() || undefined,
@@ -91,7 +92,7 @@ export function RequestAccessPanel({
         sourceId: null,
       });
 
-      setSuccessMessage(`Request sent to ${profile.fullName}.`);
+      setSuccessMessage(`Request Sent`);
     } catch (submissionError) {
       setError(toFriendlyMessage(submissionError));
     } finally {
@@ -101,14 +102,14 @@ export function RequestAccessPanel({
 
   if (profile.accessMode === "private") {
     return (
-      <Card className="space-y-3 border-amber-200 bg-amber-50/80">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-          Requests unavailable
+      <Card className="space-y-3">
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-brandRose dark:text-brandCyan">
+          Requests Restricted
         </p>
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="font-sans text-lg font-semibold text-foreground">
           This profile is private
         </h2>
-        <p className="text-sm leading-6 text-slate-700">
+        <p className="text-sm leading-6 text-muted">
           The owner is not accepting access requests from public profile links.
         </p>
       </Card>
@@ -117,19 +118,20 @@ export function RequestAccessPanel({
 
   if (!isAuthenticated) {
     return (
-      <Card className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
-          Request access
-        </p>
-        <h2 className="text-lg font-semibold text-foreground">
-          Log in to request access
-        </h2>
-        <p className="text-sm leading-6 text-muted">
-          Choose one of your personas and send a short introduction to connect
-          with {profile.fullName}.
-        </p>
+      <Card className="space-y-4">
+        <div className="space-y-2">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+            Request access
+          </p>
+          <h2 className="font-sans text-lg font-semibold text-foreground">
+            Log in to connect
+          </h2>
+          <p className="text-sm leading-6 text-muted">
+            Connect with {profile.fullName} using your own Dotly personas.
+          </p>
+        </div>
         <Link href={loginHref} className="block">
-          <PrimaryButton className="w-full">Log in to continue</PrimaryButton>
+          <PrimaryButton className="w-full">Login to Connect</PrimaryButton>
         </Link>
       </Card>
     );
@@ -137,17 +139,19 @@ export function RequestAccessPanel({
 
   if (isOwnProfile) {
     return (
-      <Card className="space-y-3 border-slate-200 bg-slate-50/80">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
-          Your profile
-        </p>
-        <h2 className="text-lg font-semibold text-foreground">
-          This persona belongs to you
-        </h2>
-        <p className="text-sm leading-6 text-muted">
-          Contact requests are only for reaching other people. Manage your own
-          personas from the workspace.
-        </p>
+      <Card className="space-y-4">
+        <div className="space-y-2">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+            Your profile
+          </p>
+          <h2 className="font-sans text-lg font-semibold text-foreground">
+            This persona belongs to you
+          </h2>
+          <p className="text-sm leading-6 text-muted">
+            Contact requests are only for reaching other people. Manage your own
+            personas from the workspace.
+          </p>
+        </div>
         <Link href={routes.app.personas} className="block">
           <SecondaryButton className="w-full">Open personas</SecondaryButton>
         </Link>
@@ -158,7 +162,7 @@ export function RequestAccessPanel({
   if (personaLoadError) {
     return (
       <Card className="space-y-3 border-rose-200 bg-rose-50/80">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-rose-700">
           Unable to continue
         </p>
         <p className="text-sm leading-6 text-rose-700">{personaLoadError}</p>
@@ -183,10 +187,10 @@ export function RequestAccessPanel({
   return (
     <Card className="space-y-5">
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-brandRose dark:text-brandCyan">
           Request access
         </p>
-        <h2 className="text-lg font-semibold text-foreground">
+        <h2 className="font-sans text-lg font-semibold text-foreground">
           Reach out from one of your personas
         </h2>
         <p className="text-sm leading-6 text-muted">
@@ -199,13 +203,13 @@ export function RequestAccessPanel({
         <div className="space-y-2">
           <label
             htmlFor="fromPersonaId"
-            className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted"
+            className="block font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
           >
             Send from
           </label>
           <select
             id="fromPersonaId"
-            className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-blue-100"
+            className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 font-sans text-sm text-foreground outline-none transition focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
             value={selectedPersonaId}
             onChange={(event) => setSelectedPersonaId(event.target.value)}
             disabled={isSubmitting || Boolean(successMessage)}
@@ -221,21 +225,20 @@ export function RequestAccessPanel({
         <div className="space-y-2">
           <label
             htmlFor="reason"
-            className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-muted"
+            className="block font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
           >
-            Reason (optional)
+            Add Context
           </label>
           <textarea
             id="reason"
             maxLength={280}
-            rows={4}
-            className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-blue-100"
-            placeholder="Tell them why you'd like to connect."
+            rows={3}
+            className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 font-sans text-sm text-foreground outline-none transition focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+            placeholder="Tell them why you'd like to connect (optional)"
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             disabled={isSubmitting || Boolean(successMessage)}
           />
-          <p className="text-right text-xs text-muted">{reason.length}/280</p>
         </div>
 
         {error ? (
@@ -244,27 +247,20 @@ export function RequestAccessPanel({
           </p>
         ) : null}
 
-        {successMessage ? (
-          <p className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-            {successMessage}
-          </p>
-        ) : null}
-
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <PrimaryButton
-            type="submit"
-            className="w-full"
-            disabled={isSubmitting || Boolean(successMessage)}
-          >
-            {successMessage
-              ? "Request sent"
-              : isSubmitting
-                ? "Sending request..."
-                : "Request Access"}
-          </PrimaryButton>
-          <Link href={routes.app.requests} className="w-full sm:w-auto">
-            <SecondaryButton className="w-full">View requests</SecondaryButton>
-          </Link>
+        <div className="pt-2">
+          {successMessage ? (
+            <div className="flex h-[60px] w-full items-center justify-center rounded-2xl bg-brandRose/10 px-5 font-sans text-sm font-bold text-brandRose dark:bg-brandCyan/10 dark:text-brandCyan">
+              Request Sent
+            </div>
+          ) : (
+            <PrimaryButton
+              type="submit"
+              className="h-[60px] w-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Sending request..." : "Request Access"}
+            </PrimaryButton>
+          )}
         </div>
       </form>
     </Card>
