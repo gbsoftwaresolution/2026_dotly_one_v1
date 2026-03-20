@@ -8,6 +8,7 @@
     "start": "node dist/main.js",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
+    "test": "node -r ts-node/register --test test/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\" \"prisma/**/*.prisma\"",
     "prisma:generate": "prisma generate",

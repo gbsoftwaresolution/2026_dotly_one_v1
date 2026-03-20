@@ -51,6 +51,7 @@ model User {
   id                      String                @id @default(uuid()) @db.Uuid
   email                   String                @unique
   passwordHash            String
+  isVerified              Boolean               @default(false)
   personas                Persona[]
   outgoingContactRequests ContactRequest[]      @relation("ContactRequestFromUser")
   incomingContactRequests ContactRequest[]      @relation("ContactRequestToUser")
@@ -74,6 +75,7 @@ model Persona {
   tagline                  String
   profilePhotoUrl          String?
   accessMode               PersonaAccessMode
+  verifiedOnly             Boolean               @default(false)
   user                     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   qrAccessTokens           QRAccessToken[]
   outgoingContactRequests  ContactRequest[]      @relation("ContactRequestFromPersona")

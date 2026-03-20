@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -20,6 +21,11 @@ import { PersonasService } from "../personas/personas.service";
 import { RelationshipsService } from "../relationships/relationships.service";
 
 import { CreateContactRequestDto } from "./dto/create-contact-request.dto";
+import { RequestRateLimitService } from "./request-rate-limit.service";
+
+const REQUEST_RETRY_COOLDOWN_HOURS = 24;
+const REQUEST_RETRY_COOLDOWN_IN_MS =
+  REQUEST_RETRY_COOLDOWN_HOURS * 60 * 60 * 1000;
 
 const incomingContactRequestSelect = {
   id: true,
@@ -76,6 +82,7 @@ export class ContactRequestsService {
     private readonly blocksService: BlocksService,
     private readonly relationshipsService: RelationshipsService,
     private readonly contactMemoryService: ContactMemoryService,
+    private readonly requestRateLimitService: RequestRateLimitService,
   ) {}
 
   async create(
@@ -97,6 +104,7 @@ export class ContactRequestsService {
         username: true,
         fullName: true,
         accessMode: true,
+        verifiedOnly: true,
       },
     });
 
@@ -105,24 +113,36 @@ export class ContactRequestsService {
     }
 
     if (targetPersona.userId === userId) {
-      throw new ConflictException(
+      throw new BadRequestException(
         "You cannot send a contact request to your own persona",
       );
     }
 
     if (targetPersona.accessMode === PrismaPersonaAccessMode.PRIVATE) {
-      throw new ForbiddenException("Target persona is private");
+      throw new ForbiddenException("Cannot request private profile");
     }
 
-    const isBlocked = await this.blocksService.isBlockedByUser(
-      targetPersona.userId,
+    await this.blocksService.assertNoInteractionBlock(
       userId,
+      targetPersona.userId,
     );
 
-    if (isBlocked) {
-      throw new ForbiddenException(
-        "You cannot send a contact request to this persona",
-      );
+    const senderUser = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        isVerified: true,
+      },
+    });
+
+    if (!senderUser) {
+      throw new NotFoundException("User not found");
+    }
+
+    if (targetPersona.verifiedOnly && !senderUser.isVerified) {
+      throw new ForbiddenException("Verified profiles only");
     }
 
     const existingPendingRequest =
@@ -138,10 +158,34 @@ export class ContactRequestsService {
       });
 
     if (existingPendingRequest) {
-      throw new ConflictException(
+      throw new BadRequestException(
         "A pending contact request already exists for this persona",
       );
     }
+
+    const latestRejectedRequest =
+      await this.prismaService.contactRequest.findFirst({
+        where: {
+          fromPersonaId: fromPersona.id,
+          toPersonaId: targetPersona.id,
+          status: PrismaContactRequestStatus.REJECTED,
+          respondedAt: {
+            gte: new Date(Date.now() - REQUEST_RETRY_COOLDOWN_IN_MS),
+          },
+        },
+        orderBy: {
+          respondedAt: "desc",
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    if (latestRejectedRequest) {
+      throw new ForbiddenException("Cooldown active");
+    }
+
+    this.requestRateLimitService.consume(userId);
 
     const reason = createContactRequestDto.reason ?? null;
 
@@ -173,7 +217,7 @@ export class ContactRequestsService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === "P2002"
       ) {
-        throw new ConflictException(
+        throw new BadRequestException(
           "A pending contact request already exists for this persona",
         );
       }
@@ -256,6 +300,11 @@ export class ContactRequestsService {
           "Only pending contact requests can be approved",
         );
       }
+
+      await this.blocksService.assertNoInteractionBlock(
+        userId,
+        contactRequest.fromUserId,
+      );
 
       const respondedAt = new Date();
       const updateResult = await tx.contactRequest.updateMany({

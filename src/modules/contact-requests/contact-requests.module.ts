@@ -7,6 +7,7 @@ import { RelationshipsModule } from "../relationships/relationships.module";
 
 import { ContactRequestsController } from "./contact-requests.controller";
 import { ContactRequestsService } from "./contact-requests.service";
+import { RequestRateLimitService } from "./request-rate-limit.service";
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { ContactRequestsService } from "./contact-requests.service";
     BlocksModule,
   ],
   controllers: [ContactRequestsController],
-  providers: [ContactRequestsService],
+  providers: [ContactRequestsService, RequestRateLimitService],
   exports: [ContactRequestsService],
 })
 export class ContactRequestsModule {}

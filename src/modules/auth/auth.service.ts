@@ -44,6 +44,7 @@ export class AuthService {
         select: {
           id: true,
           email: true,
+          isVerified: true,
         },
       });
 

@@ -18,6 +18,7 @@ export const privatePersonaSelect = {
   tagline: true,
   profilePhotoUrl: true,
   accessMode: true,
+  verifiedOnly: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.PersonaSelect;
@@ -32,6 +33,7 @@ export const publicPersonaSelect = {
   tagline: true,
   profilePhotoUrl: true,
   accessMode: true,
+  verifiedOnly: true,
 } satisfies Prisma.PersonaSelect;
 
 export type PrivatePersonaRecord = Prisma.PersonaGetPayload<{
@@ -89,6 +91,7 @@ export function toPrivatePersonaView(persona: PrivatePersonaRecord) {
     tagline: persona.tagline,
     profilePhotoUrl: persona.profilePhotoUrl,
     accessMode: apiAccessModeMap[persona.accessMode],
+    verifiedOnly: persona.verifiedOnly,
     createdAt: persona.createdAt,
     updatedAt: persona.updatedAt,
   };
@@ -105,6 +108,7 @@ export function toPublicPersonaView(persona: PublicPersonaRecord) {
     tagline: persona.tagline,
     profilePhotoUrl: persona.profilePhotoUrl,
     accessMode: apiAccessModeMap[persona.accessMode],
+    verifiedOnly: persona.verifiedOnly,
   };
 }
 

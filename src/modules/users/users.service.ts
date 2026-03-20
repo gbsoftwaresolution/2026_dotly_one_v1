@@ -14,6 +14,7 @@ export class UsersService {
       select: {
         id: true,
         email: true,
+        isVerified: true,
       },
     });
 

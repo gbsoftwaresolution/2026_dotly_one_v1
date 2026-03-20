@@ -36,6 +36,7 @@ export class PersonasService {
           tagline: createPersonaDto.tagline,
           profilePhotoUrl: createPersonaDto.profilePhotoUrl ?? null,
           accessMode: toPrismaAccessMode(createPersonaDto.accessMode),
+          verifiedOnly: createPersonaDto.verifiedOnly ?? false,
         },
         select: privatePersonaSelect,
       });
@@ -132,6 +133,10 @@ export class PersonasService {
 
     if (updatePersonaDto.accessMode) {
       data.accessMode = toPrismaAccessMode(updatePersonaDto.accessMode);
+    }
+
+    if (updatePersonaDto.verifiedOnly !== undefined) {
+      data.verifiedOnly = updatePersonaDto.verifiedOnly;
     }
 
     const persona = await this.prismaService.persona.update({

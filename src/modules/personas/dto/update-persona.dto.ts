@@ -1,5 +1,6 @@
 import { Transform } from "class-transformer";
 import {
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -72,4 +73,8 @@ export class UpdatePersonaDto {
   @IsOptional()
   @IsEnum(PersonaAccessMode)
   accessMode?: PersonaAccessMode;
+
+  @IsOptional()
+  @IsBoolean()
+  verifiedOnly?: boolean;
 }
