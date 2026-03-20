@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 
+import { AnalyticsModule } from "../analytics/analytics.module";
 import { BlocksModule } from "../blocks/blocks.module";
 import { ContactMemoryModule } from "../contact-memory/contact-memory.module";
 import { DatabaseModule } from "../../infrastructure/database/database.module";
@@ -15,6 +16,7 @@ import { RequestRateLimitService } from "./request-rate-limit.service";
 @Module({
   imports: [
     DatabaseModule,
+    AnalyticsModule,
     PersonasModule,
     RelationshipsModule,
     ContactMemoryModule,

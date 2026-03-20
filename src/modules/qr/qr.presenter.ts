@@ -10,6 +10,7 @@ export const qrResolutionSelect = {
   usedCount: true,
   persona: {
     select: {
+      id: true,
       username: true,
       publicUrl: true,
       fullName: true,
@@ -31,6 +32,7 @@ export interface QrResolutionRecord {
   maxUses: number | null;
   usedCount: number;
   persona: {
+    id: string;
     username: string;
     publicUrl: string;
     fullName: string;

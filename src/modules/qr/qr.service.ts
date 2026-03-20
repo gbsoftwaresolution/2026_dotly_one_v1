@@ -15,6 +15,10 @@ import { randomBytes } from "crypto";
 
 import { NotificationType } from "../../common/enums/notification-type.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
+import {
+  AnalyticsService,
+  noopAnalyticsService,
+} from "../analytics/analytics.service";
 import { BlocksService } from "../blocks/blocks.service";
 import { ContactMemoryService } from "../contact-memory/contact-memory.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -46,6 +50,10 @@ export class QrService {
       NotificationsService,
       "createSafe"
     > = noopNotificationsService,
+    private readonly analyticsService: Pick<
+      AnalyticsService,
+      "trackQrScan" | "trackContactCreated"
+    > = noopAnalyticsService,
   ) {}
 
   async createProfileQr(userId: string, personaId: string) {
@@ -150,7 +158,13 @@ export class QrService {
     };
   }
 
-  async resolveQr(code: string) {
+  async resolveQr(
+    code: string,
+    tracking?: {
+      scannerUserId?: string | null;
+      idempotencyKey?: string | null;
+    },
+  ) {
     return this.prismaService.$transaction(async (tx) => {
       const now = new Date();
       const token = await tx.qRAccessToken.findUnique({
@@ -193,6 +207,13 @@ export class QrService {
       ) {
         await this.markTokenExpired(tx, token.id);
       }
+
+      void this.analyticsService.trackQrScan({
+        personaId: resolvedToken.persona.id,
+        scannerUserId: tracking?.scannerUserId ?? null,
+        qrTokenId: token.id,
+        idempotencyKey: tracking?.idempotencyKey ?? null,
+      });
 
       return toQrResolutionView(resolvedToken);
     });
@@ -347,6 +368,17 @@ export class QrService {
         metAt: now,
         sourceLabel: "Quick Connect QR",
       });
+
+      await this.analyticsService.trackContactCreated(
+        {
+          actorUserId: userId,
+          personaId: token.persona.id,
+          relationshipId: relationship.id,
+          sourceType: "qr",
+          sourceId: token.id,
+        },
+        tx,
+      );
 
       await Promise.all([
         this.notificationsService.createSafe(

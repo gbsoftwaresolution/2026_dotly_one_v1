@@ -8,4 +8,5 @@ export const appNavItems = [
   { href: routes.app.requests, label: "Requests" },
   { href: routes.app.qr, label: "My QR" },
   { href: routes.app.notifications, label: "Alerts" },
+  { href: routes.app.analytics, label: "Analytics" },
 ] as const;

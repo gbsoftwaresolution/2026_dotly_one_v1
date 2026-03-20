@@ -80,6 +80,7 @@ export async function apiRequest<T>(
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
     cache: options.cache || "no-store",
     credentials: options.credentials,
+    next: options.next,
   });
 
   const rawBody = await response.text();

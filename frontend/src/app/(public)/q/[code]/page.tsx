@@ -8,6 +8,7 @@ import { personaApi } from "@/lib/api/persona-api";
 import { ApiError } from "@/lib/api/client";
 import { getServerAccessToken } from "@/lib/auth/server-session";
 import { routes } from "@/lib/constants/routes";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Identity Card",
@@ -166,7 +167,13 @@ export default async function QrLandingPage({
   const { code } = await params;
 
   try {
-    const qr = await qrApi.resolveQr(code);
+    const requestHeaders = await headers();
+    const qr = await qrApi.resolveQr(code, {
+      "user-agent": requestHeaders.get("user-agent") ?? "",
+      "accept-language": requestHeaders.get("accept-language") ?? "",
+      "x-forwarded-for": requestHeaders.get("x-forwarded-for") ?? "",
+      "x-idempotency-key": requestHeaders.get("x-idempotency-key") ?? "",
+    });
     const isQuickConnect = qr.type === "quick_connect";
 
     // For profile QRs preserve Phase 2 behavior unchanged

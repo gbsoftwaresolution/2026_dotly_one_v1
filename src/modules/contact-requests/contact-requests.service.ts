@@ -16,6 +16,10 @@ import { ContactRequestSourceType } from "../../common/enums/contact-request-sou
 import { ContactRequestStatus } from "../../common/enums/contact-request-status.enum";
 import { NotificationType } from "../../common/enums/notification-type.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
+import {
+  AnalyticsService,
+  noopAnalyticsService,
+} from "../analytics/analytics.service";
 import { BlocksService } from "../blocks/blocks.service";
 import { ContactMemoryService } from "../contact-memory/contact-memory.service";
 import { EventsService } from "../events/events.service";
@@ -102,6 +106,10 @@ export class ContactRequestsService {
       NotificationsService,
       "createSafe"
     > = noopNotificationsService,
+    private readonly analyticsService: Pick<
+      AnalyticsService,
+      "trackRequestSent" | "trackRequestApproved" | "trackContactCreated"
+    > = noopAnalyticsService,
   ) {}
 
   async create(
@@ -221,6 +229,10 @@ export class ContactRequestsService {
     }
 
     try {
+      const sourceType = toPrismaContactRequestSourceType(
+        createContactRequestDto.sourceType,
+      );
+
       const contactRequest = await this.prismaService.contactRequest.create({
         data: {
           fromUserId: userId,
@@ -228,13 +240,19 @@ export class ContactRequestsService {
           fromPersonaId: fromPersona.id,
           toPersonaId: targetPersona.id,
           reason,
-          sourceType: toPrismaContactRequestSourceType(
-            createContactRequestDto.sourceType,
-          ),
+          sourceType,
           sourceId: createContactRequestDto.sourceId ?? null,
           status: PrismaContactRequestStatus.PENDING,
         },
         select: sendContactRequestSelect,
+      });
+
+      await this.analyticsService.trackRequestSent({
+        actorUserId: userId,
+        personaId: targetPersona.id,
+        requestId: contactRequest.id,
+        sourceType: sourceType.toLowerCase(),
+        sourceId: createContactRequestDto.sourceId ?? null,
       });
 
       await this.notificationsService.createSafe({
@@ -400,6 +418,27 @@ export class ContactRequestsService {
         metAt: respondedAt,
         sourceLabel: toSourceLabel(contactRequest.sourceType),
       });
+
+      await Promise.all([
+        this.analyticsService.trackRequestApproved(
+          {
+            actorUserId: userId,
+            personaId: contactRequest.toPersonaId,
+            requestId: contactRequest.id,
+          },
+          tx,
+        ),
+        this.analyticsService.trackContactCreated(
+          {
+            actorUserId: userId,
+            personaId: contactRequest.toPersonaId,
+            relationshipId: relationship.id,
+            sourceType: contactRequest.sourceType.toLowerCase(),
+            sourceId: contactRequest.sourceId,
+          },
+          tx,
+        ),
+      ]);
 
       await this.notificationsService.createSafe(
         {

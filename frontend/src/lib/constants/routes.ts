@@ -18,5 +18,6 @@ export const routes = {
     events: "/app/events",
     eventDetail: (eventId: string) => `/app/events/${eventId}`,
     notifications: "/app/notifications",
+    analytics: "/app/analytics",
   },
 } as const;

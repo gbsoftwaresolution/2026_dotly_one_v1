@@ -5,6 +5,7 @@ import { personaApi, publicApi, userApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { getServerAccessToken } from "@/lib/auth/server-session";
 import type { PersonaSummary } from "@/types";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 export default async function PublicUserPage({
@@ -15,7 +16,13 @@ export default async function PublicUserPage({
   const { username } = await params;
 
   try {
-    const profile = await publicApi.getProfile(username);
+    const requestHeaders = await headers();
+    const profile = await publicApi.getProfile(username, {
+      "user-agent": requestHeaders.get("user-agent") ?? "",
+      "accept-language": requestHeaders.get("accept-language") ?? "",
+      "x-forwarded-for": requestHeaders.get("x-forwarded-for") ?? "",
+      "x-idempotency-key": requestHeaders.get("x-idempotency-key") ?? "",
+    });
     const accessToken = await getServerAccessToken();
 
     let isAuthenticated = false;

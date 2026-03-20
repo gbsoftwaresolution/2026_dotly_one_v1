@@ -1,3 +1,4 @@
+export { analyticsApi } from "./analytics-api";
 export { authApi } from "./auth-api";
 export { blocksApi } from "./blocks-api";
 export { contactsApi } from "./contacts-api";

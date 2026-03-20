@@ -5,12 +5,15 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Req,
   UseGuards,
 } from "@nestjs/common";
+import type { Request } from "express";
 
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import type { AuthenticatedUser } from "../../common/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { buildAnalyticsRequestKey } from "../analytics/analytics-request.util";
 
 import { ConnectQuickConnectQrDto } from "./dto/connect-quick-connect-qr.dto";
 import { CreateQuickConnectQrDto } from "./dto/create-quick-connect-qr.dto";
@@ -45,8 +48,10 @@ export class QrController {
   }
 
   @Get("qr/:code")
-  resolveQr(@Param("code") code: string) {
-    return this.qrService.resolveQr(code);
+  resolveQr(@Param("code") code: string, @Req() request: Request) {
+    return this.qrService.resolveQr(code, {
+      idempotencyKey: buildAnalyticsRequestKey(request, `qr:${code}`),
+    });
   }
 
   @UseGuards(JwtAuthGuard)

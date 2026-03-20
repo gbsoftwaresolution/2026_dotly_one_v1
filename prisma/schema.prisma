@@ -72,12 +72,21 @@ enum NotificationType {
   SYSTEM           @map("system")
 }
 
+enum AnalyticsEventType {
+  PROFILE_VIEW    @map("profile_view")
+  QR_SCAN         @map("qr_scan")
+  REQUEST_SENT    @map("request_sent")
+  REQUEST_APPROVED @map("request_approved")
+  CONTACT_CREATED @map("contact_created")
+}
+
 model User {
   id                      String                @id @default(uuid()) @db.Uuid
   email                   String                @unique
   passwordHash            String
   isVerified              Boolean               @default(false)
   personas                Persona[]
+  analyticsEvents         AnalyticsEvent[]
   createdEvents           Event[]
   eventParticipants       EventParticipant[]
   outgoingContactRequests ContactRequest[]      @relation("ContactRequestFromUser")
@@ -106,6 +115,8 @@ model Persona {
   verifiedOnly             Boolean               @default(false)
   user                     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   qrAccessTokens           QRAccessToken[]
+  analyticsEvents          AnalyticsEvent[]
+  analytics                PersonaAnalytics?
   eventParticipations      EventParticipant[]
   outgoingContactRequests  ContactRequest[]      @relation("ContactRequestFromPersona")
   incomingContactRequests  ContactRequest[]      @relation("ContactRequestToPersona")
@@ -256,4 +267,35 @@ model Notification {
 
   @@index([userId, createdAt])
   @@index([userId, isRead, createdAt])
+}
+
+model AnalyticsEvent {
+  id        String             @id @default(uuid()) @db.Uuid
+  userId    String?            @db.Uuid
+  personaId String?            @db.Uuid
+  eventType AnalyticsEventType
+  entityId  String?            @db.Uuid
+  metadata  Json?
+  createdAt DateTime           @default(now())
+  user      User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  persona   Persona?           @relation(fields: [personaId], references: [id], onDelete: SetNull)
+
+  @@index([personaId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([eventType, entityId])
+  // Partial unique index for idempotent event entity keys is added in SQL migration.
+}
+
+model PersonaAnalytics {
+  id               String   @id @default(uuid()) @db.Uuid
+  personaId        String   @unique @db.Uuid
+  profileViews     Int      @default(0)
+  qrScans          Int      @default(0)
+  requestsReceived Int      @default(0)
+  requestsApproved Int      @default(0)
+  contactsCreated  Int      @default(0)
+  updatedAt        DateTime @updatedAt
+  persona          Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@index([updatedAt])
 }

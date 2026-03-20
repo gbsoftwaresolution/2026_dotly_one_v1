@@ -26,8 +26,10 @@ export const qrApi = {
         credentials: "same-origin",
       },
     ),
-  resolveQr: (code: string) =>
-    apiRequest<ResolvedQr>(`/qr/${encodeURIComponent(code)}`),
+  resolveQr: (code: string, headers?: HeadersInit) =>
+    apiRequest<ResolvedQr>(`/qr/${encodeURIComponent(code)}`, {
+      headers,
+    }),
   connectQuick: (code: string, payload: ConnectQuickConnectQrInput) =>
     apiRequest<ConnectQuickConnectQrResult>(
       `/api/qr/${encodeURIComponent(code)}/connect`,

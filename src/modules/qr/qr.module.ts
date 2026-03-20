@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 
+import { AnalyticsModule } from "../analytics/analytics.module";
 import { BlocksModule } from "../blocks/blocks.module";
 import { ContactMemoryModule } from "../contact-memory/contact-memory.module";
 import { NotificationsModule } from "../notifications/notifications.module";
@@ -11,6 +12,7 @@ import { QrService } from "./qr.service";
 
 @Module({
   imports: [
+    AnalyticsModule,
     PersonasModule,
     BlocksModule,
     RelationshipsModule,
