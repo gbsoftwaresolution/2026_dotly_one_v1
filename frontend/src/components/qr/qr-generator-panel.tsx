@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import QRCode from "qrcode";
 
 import { QrCodeCard } from "@/components/qr/qr-code-card";
 import { QrModeToggle, type QrMode } from "@/components/qr/qr-mode-toggle";
@@ -33,7 +32,6 @@ export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
   const [durationHours, setDurationHours] = useState("24");
   const [maxUses, setMaxUses] = useState("50");
   const [generatedQr, setGeneratedQr] = useState<GeneratedQr | null>(null);
-  const [qrImageSrc, setQrImageSrc] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copyState, setCopyState] = useState<"idle" | "success" | "error">(
@@ -44,17 +42,6 @@ export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
     () => personas.find((persona) => persona.id === selectedPersonaId) ?? null,
     [personas, selectedPersonaId],
   );
-
-  async function generateQrImage(url: string) {
-    return QRCode.toDataURL(url, {
-      margin: 1,
-      width: 512,
-      color: {
-        dark: "#0f172a",
-        light: "#ffffff",
-      },
-    });
-  }
 
   async function handleGenerate() {
     if (!selectedPersonaId) {
@@ -75,10 +62,7 @@ export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
               ...(maxUses.trim() ? { maxUses: Number(maxUses) } : {}),
             });
 
-      const nextImageSrc = await generateQrImage(nextQr.url);
-
       setGeneratedQr(nextQr);
-      setQrImageSrc(nextImageSrc);
     } catch (submissionError) {
       if (isApiError(submissionError) && submissionError.status === 401) {
         router.replace(
@@ -113,16 +97,16 @@ export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <Card className="space-y-5">
+    <div className="space-y-4 font-sans">
+      <Card className="space-y-5 bg-[#F8FAFC] dark:bg-[#050505] border-slate-200 dark:border-zinc-900 text-slate-900 dark:text-white rounded-[2rem]">
         <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted">
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400">
             Persona
           </p>
           <select
             value={selectedPersonaId}
             onChange={(event) => setSelectedPersonaId(event.target.value)}
-            className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm outline-none transition focus:border-accent"
+            className="min-h-[60px] w-full rounded-2xl border border-slate-200 dark:border-zinc-900 bg-white dark:bg-[#0A0A0A] px-4 text-sm outline-none transition focus:border-black dark:focus:border-white text-slate-900 dark:text-white font-mono"
           >
             {personas.map((persona) => (
               <option key={persona.id} value={persona.id}>
@@ -133,7 +117,7 @@ export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted">
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400">
             Mode
           </p>
           <QrModeToggle value={mode} onChange={setMode} />
@@ -141,7 +125,7 @@ export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
 
         {mode === "quick_connect" ? (
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-2 text-sm font-medium text-foreground">
+            <label className="space-y-2 text-sm font-medium text-slate-900 dark:text-white">
               <span>Duration hours</span>
               <input
                 type="number"
@@ -149,11 +133,11 @@ export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
                 max={168}
                 value={durationHours}
                 onChange={(event) => setDurationHours(event.target.value)}
-                className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm outline-none transition focus:border-accent"
+                className="min-h-[60px] w-full rounded-2xl border border-slate-200 dark:border-zinc-900 bg-white dark:bg-[#0A0A0A] px-4 text-sm outline-none transition focus:border-black dark:focus:border-white font-mono"
               />
             </label>
 
-            <label className="space-y-2 text-sm font-medium text-foreground">
+            <label className="space-y-2 text-sm font-medium text-slate-900 dark:text-white">
               <span>Max uses</span>
               <input
                 type="number"
@@ -161,7 +145,7 @@ export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
                 value={maxUses}
                 onChange={(event) => setMaxUses(event.target.value)}
                 placeholder="Optional"
-                className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm outline-none transition focus:border-accent"
+                className="min-h-[60px] w-full rounded-2xl border border-slate-200 dark:border-zinc-900 bg-white dark:bg-[#0A0A0A] px-4 text-sm outline-none transition focus:border-black dark:focus:border-white font-mono"
               />
             </label>
           </div>
@@ -173,10 +157,10 @@ export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
           </p>
         ) : null}
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 pt-2">
           <PrimaryButton
             type="button"
-            className="w-full"
+            className="w-full py-5 h-[60px] active:scale-95 text-sm font-bold"
             disabled={isSubmitting || !selectedPersonaId}
             onClick={() => void handleGenerate()}
           >
@@ -185,7 +169,7 @@ export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
 
           <SecondaryButton
             type="button"
-            className="w-full"
+            className="w-full py-5 h-[60px] active:scale-95 text-sm font-bold"
             disabled={!generatedQr}
             onClick={() => void handleCopyLink()}
           >
@@ -194,29 +178,30 @@ export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
         </div>
 
         {copyState === "success" ? (
-          <p className="text-sm text-emerald-700">Share link copied.</p>
+          <p className="text-sm text-emerald-700 font-mono">
+            Share link copied.
+          </p>
         ) : null}
         {copyState === "error" ? (
-          <p className="text-sm text-amber-700">
+          <p className="text-sm text-amber-700 font-mono">
             Unable to copy the link right now.
           </p>
         ) : null}
       </Card>
 
-      {generatedQr && qrImageSrc && selectedPersona ? (
+      {generatedQr && selectedPersona ? (
         <QrCodeCard
           persona={selectedPersona}
           qr={generatedQr}
-          qrImageSrc={qrImageSrc}
           modeLabel={mode === "standard" ? "Standard QR" : "Quick Connect QR"}
         />
       ) : (
-        <Card className="border-dashed bg-white/30 text-center">
-          <div className="space-y-2 py-8">
-            <h2 className="text-lg font-semibold text-foreground">
+        <Card className="border-dashed bg-[#F8FAFC] dark:bg-[#050505] border-slate-200 dark:border-zinc-800 text-center rounded-[2rem]">
+          <div className="space-y-2 py-10">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               Generate a shareable QR
             </h2>
-            <p className="text-sm leading-6 text-muted">
+            <p className="text-sm leading-6 text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
               Choose a persona, pick a mode, and create a QR code to share your
               safe public preview.
             </p>

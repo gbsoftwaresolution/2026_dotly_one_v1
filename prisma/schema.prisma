@@ -30,31 +30,58 @@ enum PersonaAccessMode {
   PRIVATE @map("private")
 }
 
+enum ContactRequestSourceType {
+  PROFILE @map("profile")
+  QR      @map("qr")
+}
+
+enum ContactRequestStatus {
+  PENDING   @map("pending")
+  APPROVED  @map("approved")
+  REJECTED  @map("rejected")
+  EXPIRED   @map("expired")
+  CANCELLED @map("cancelled")
+}
+
+enum ContactRelationshipState {
+  APPROVED @map("approved")
+}
+
 model User {
-  id           String    @id @default(uuid()) @db.Uuid
-  email        String    @unique
-  passwordHash String
-  personas     Persona[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id                      String                @id @default(uuid()) @db.Uuid
+  email                   String                @unique
+  passwordHash            String
+  personas                Persona[]
+  outgoingContactRequests ContactRequest[]      @relation("ContactRequestFromUser")
+  incomingContactRequests ContactRequest[]      @relation("ContactRequestToUser")
+  ownedRelationships      ContactRelationship[] @relation("ContactRelationshipOwnerUser")
+  targetRelationships     ContactRelationship[] @relation("ContactRelationshipTargetUser")
+  initiatedBlocks         Block[]               @relation("BlockerUser")
+  receivedBlocks          Block[]               @relation("BlockedUser")
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
 }
 
 model Persona {
-  id              String            @id @default(uuid()) @db.Uuid
-  userId          String            @db.Uuid
-  type            PersonaType
-  username        String            @unique
-  publicUrl       String            @unique
-  fullName        String
-  jobTitle        String
-  companyName     String
-  tagline         String
-  profilePhotoUrl String?
-  accessMode      PersonaAccessMode
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  qrAccessTokens  QRAccessToken[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id                       String                @id @default(uuid()) @db.Uuid
+  userId                   String                @db.Uuid
+  type                     PersonaType
+  username                 String                @unique
+  publicUrl                String                @unique
+  fullName                 String
+  jobTitle                 String
+  companyName              String
+  tagline                  String
+  profilePhotoUrl          String?
+  accessMode               PersonaAccessMode
+  user                     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  qrAccessTokens           QRAccessToken[]
+  outgoingContactRequests  ContactRequest[]      @relation("ContactRequestFromPersona")
+  incomingContactRequests  ContactRequest[]      @relation("ContactRequestToPersona")
+  ownedRelationships       ContactRelationship[] @relation("ContactRelationshipOwnerPersona")
+  targetRelationships      ContactRelationship[] @relation("ContactRelationshipTargetPersona")
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
 
   @@index([userId])
 }
@@ -76,4 +103,72 @@ model QRAccessToken {
 
   @@index([personaId])
   @@index([status])
+}
+
+model ContactRequest {
+  id            String               @id @default(uuid()) @db.Uuid
+  fromUserId    String               @db.Uuid
+  toUserId      String               @db.Uuid
+  fromPersonaId String               @db.Uuid
+  toPersonaId   String               @db.Uuid
+  reason        String?              @db.VarChar(280)
+  sourceType    ContactRequestSourceType
+  sourceId      String?              @db.Uuid
+  status        ContactRequestStatus @default(PENDING)
+  createdAt     DateTime             @default(now())
+  respondedAt   DateTime?
+  fromUser      User                 @relation("ContactRequestFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser        User                 @relation("ContactRequestToUser", fields: [toUserId], references: [id], onDelete: Cascade)
+  fromPersona   Persona              @relation("ContactRequestFromPersona", fields: [fromPersonaId], references: [id], onDelete: Cascade)
+  toPersona     Persona              @relation("ContactRequestToPersona", fields: [toPersonaId], references: [id], onDelete: Cascade)
+
+  @@index([fromUserId, createdAt])
+  @@index([toUserId, status, createdAt])
+  @@index([fromPersonaId, toPersonaId, status])
+  // Partial unique index for pending requests is added in SQL migration.
+}
+
+model ContactRelationship {
+  id             String                   @id @default(uuid()) @db.Uuid
+  ownerUserId    String                   @db.Uuid
+  targetUserId   String                   @db.Uuid
+  ownerPersonaId String                   @db.Uuid
+  targetPersonaId String                  @db.Uuid
+  state          ContactRelationshipState @default(APPROVED)
+  sourceType     ContactRequestSourceType
+  sourceId       String?                  @db.Uuid
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  ownerUser      User                     @relation("ContactRelationshipOwnerUser", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  targetUser     User                     @relation("ContactRelationshipTargetUser", fields: [targetUserId], references: [id], onDelete: Cascade)
+  ownerPersona   Persona                  @relation("ContactRelationshipOwnerPersona", fields: [ownerPersonaId], references: [id], onDelete: Cascade)
+  targetPersona  Persona                  @relation("ContactRelationshipTargetPersona", fields: [targetPersonaId], references: [id], onDelete: Cascade)
+  memories       ContactMemory[]
+
+  @@unique([ownerUserId, targetUserId, ownerPersonaId, targetPersonaId])
+  @@index([ownerUserId, state, createdAt])
+  @@index([targetUserId, createdAt])
+}
+
+model ContactMemory {
+  id             String              @id @default(uuid()) @db.Uuid
+  relationshipId String              @db.Uuid
+  sourceLabel    String?             @db.VarChar(120)
+  metAt          DateTime
+  note           String?             @db.VarChar(500)
+  relationship   ContactRelationship @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
+
+  @@index([relationshipId])
+}
+
+model Block {
+  id            String   @id @default(uuid()) @db.Uuid
+  blockerUserId String   @db.Uuid
+  blockedUserId String   @db.Uuid
+  createdAt     DateTime @default(now())
+  blockerUser   User     @relation("BlockerUser", fields: [blockerUserId], references: [id], onDelete: Cascade)
+  blockedUser   User     @relation("BlockedUser", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerUserId, blockedUserId])
+  @@index([blockedUserId])
 }

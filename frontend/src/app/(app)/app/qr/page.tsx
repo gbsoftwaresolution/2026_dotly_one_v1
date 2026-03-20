@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 
 import { QrGeneratorPanel } from "@/components/qr/qr-generator-panel";
 import { EmptyState } from "@/components/shared/empty-state";
-import { PageHeader } from "@/components/shared/page-header";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { personaApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
@@ -17,11 +16,15 @@ export default async function QrPage() {
     const personas = await personaApi.list(accessToken);
 
     return (
-      <section className="space-y-4">
-        <PageHeader
-          title="My QR"
-          description="Generate a standard or quick-connect QR for the persona you want to share right now."
-        />
+      <section className="mx-auto flex w-full max-w-xl flex-col items-center justify-center space-y-8 py-12">
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Bridge
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-zinc-400">
+            Select a persona to generate a standard or quick-connect QR.
+          </p>
+        </div>
 
         {personas.length === 0 ? (
           <EmptyState
@@ -29,14 +32,16 @@ export default async function QrPage() {
             description="You need at least one persona before you can generate a QR code for sharing."
             action={
               <Link href={routes.app.createPersona}>
-                <SecondaryButton className="w-full">
+                <SecondaryButton className="w-full py-5 h-[60px] active:scale-95">
                   Create persona
                 </SecondaryButton>
               </Link>
             }
           />
         ) : (
-          <QrGeneratorPanel personas={personas} />
+          <div className="w-full">
+            <QrGeneratorPanel personas={personas} />
+          </div>
         )}
       </section>
     );
@@ -46,11 +51,15 @@ export default async function QrPage() {
     }
 
     return (
-      <section className="space-y-4">
-        <PageHeader
-          title="My QR"
-          description="Generate a standard or quick-connect QR for the persona you want to share right now."
-        />
+      <section className="mx-auto flex w-full max-w-xl flex-col items-center justify-center space-y-8 py-12">
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Bridge
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-zinc-400">
+            Select a persona to generate a standard or quick-connect QR.
+          </p>
+        </div>
         <EmptyState
           title="QR is unavailable"
           description="We could not load your personas right now. Refresh the page and try again in a moment."

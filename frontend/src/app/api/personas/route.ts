@@ -8,7 +8,7 @@ import {
 } from "@/lib/auth/server-session";
 import type { CreatePersonaInput, PersonaSummary } from "@/types/persona";
 
-export async function POST(request: Request) {
+async function requireAccessToken() {
   const accessToken = await getServerAccessToken();
 
   if (!accessToken) {
@@ -22,12 +22,49 @@ export async function POST(request: Request) {
     );
   }
 
+  return accessToken;
+}
+
+export async function GET() {
+  const accessTokenOrResponse = await requireAccessToken();
+
+  if (accessTokenOrResponse instanceof NextResponse) {
+    return accessTokenOrResponse;
+  }
+
+  try {
+    const personas = await apiRequest<PersonaSummary[]>("/personas", {
+      token: accessTokenOrResponse,
+    });
+
+    return NextResponse.json(personas);
+  } catch (error) {
+    const response = createRouteErrorResponse(
+      error,
+      "Unable to load personas right now.",
+    );
+
+    if (response.status === 401) {
+      clearAuthCookie(response);
+    }
+
+    return response;
+  }
+}
+
+export async function POST(request: Request) {
+  const accessTokenOrResponse = await requireAccessToken();
+
+  if (accessTokenOrResponse instanceof NextResponse) {
+    return accessTokenOrResponse;
+  }
+
   try {
     const input = (await request.json()) as CreatePersonaInput;
     const persona = await apiRequest<PersonaSummary>("/personas", {
       method: "POST",
       body: input,
-      token: accessToken,
+      token: accessTokenOrResponse,
     });
 
     return NextResponse.json(persona, { status: 201 });

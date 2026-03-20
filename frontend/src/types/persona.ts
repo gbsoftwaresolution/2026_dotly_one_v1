@@ -28,6 +28,7 @@ export interface CreatePersonaInput {
 }
 
 export interface PublicProfile {
+  id: string;
   username: string;
   publicUrl: string;
   fullName: string;

@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -73,13 +74,13 @@ export class PersonasService {
   }
 
   async findOwnedPersonaIdentity(userId: string, personaId: string) {
-    const persona = await this.prismaService.persona.findFirst({
+    const persona = await this.prismaService.persona.findUnique({
       where: {
         id: personaId,
-        userId,
       },
       select: {
         id: true,
+        userId: true,
       },
     });
 
@@ -87,7 +88,13 @@ export class PersonasService {
       throw new NotFoundException("Persona not found");
     }
 
-    return persona;
+    if (persona.userId !== userId) {
+      throw new ForbiddenException("You do not own this persona");
+    }
+
+    return {
+      id: persona.id,
+    };
   }
 
   async update(

@@ -23,6 +23,7 @@ export const privatePersonaSelect = {
 } satisfies Prisma.PersonaSelect;
 
 export const publicPersonaSelect = {
+  id: true,
   username: true,
   publicUrl: true,
   fullName: true,
@@ -95,6 +96,7 @@ export function toPrivatePersonaView(persona: PrivatePersonaRecord) {
 
 export function toPublicPersonaView(persona: PublicPersonaRecord) {
   return {
+    id: persona.id,
     username: persona.username,
     publicUrl: persona.publicUrl,
     fullName: persona.fullName,

@@ -19,4 +19,14 @@ export type {
   ResolvedQr,
   ResolvedQrPersonaPreview,
 } from "./persona";
+export type {
+  ApproveRequestResult,
+  ContactRequestSourceType,
+  ContactRequestStatus,
+  IncomingRequest,
+  OutgoingRequest,
+  RejectRequestResult,
+  SendContactRequestInput,
+  SendContactRequestResult,
+} from "./request";
 export type { UserProfile } from "./user";
