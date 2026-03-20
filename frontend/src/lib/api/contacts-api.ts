@@ -3,6 +3,7 @@ import type {
   ContactDetail,
   UpdateContactNoteInput,
   UpdateContactNoteResult,
+  UpdateRelationshipStateResult,
 } from "@/types/contact";
 
 import { apiRequest } from "./client";
@@ -40,6 +41,26 @@ export const contactsApi = {
       {
         method: "PATCH",
         body: input,
+        baseUrl: "",
+        credentials: "same-origin",
+      },
+    ),
+
+  upgrade: (relationshipId: string) =>
+    apiRequest<UpdateRelationshipStateResult>(
+      `/api/contacts/${relationshipId}/upgrade`,
+      {
+        method: "POST",
+        baseUrl: "",
+        credentials: "same-origin",
+      },
+    ),
+
+  expire: (relationshipId: string) =>
+    apiRequest<UpdateRelationshipStateResult>(
+      `/api/contacts/${relationshipId}/expire`,
+      {
+        method: "POST",
         baseUrl: "",
         credentials: "same-origin",
       },

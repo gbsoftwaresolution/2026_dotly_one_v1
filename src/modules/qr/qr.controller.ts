@@ -12,6 +12,7 @@ import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import type { AuthenticatedUser } from "../../common/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 
+import { ConnectQuickConnectQrDto } from "./dto/connect-quick-connect-qr.dto";
 import { CreateQuickConnectQrDto } from "./dto/create-quick-connect-qr.dto";
 
 import { QrService } from "./qr.service";
@@ -46,5 +47,19 @@ export class QrController {
   @Get("qr/:code")
   resolveQr(@Param("code") code: string) {
     return this.qrService.resolveQr(code);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("qr/:code/connect")
+  connectQuickConnectQr(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("code") code: string,
+    @Body() connectQuickConnectQrDto: ConnectQuickConnectQrDto,
+  ) {
+    return this.qrService.connectQuickConnectQr(
+      user.id,
+      code,
+      connectQuickConnectQrDto,
+    );
   }
 }

@@ -1,4 +1,6 @@
 import type {
+  ConnectQuickConnectQrInput,
+  ConnectQuickConnectQrResult,
   QrTokenSummary,
   QuickConnectQrInput,
   QuickConnectQrSummary,
@@ -26,4 +28,14 @@ export const qrApi = {
     ),
   resolveQr: (code: string) =>
     apiRequest<ResolvedQr>(`/qr/${encodeURIComponent(code)}`),
+  connectQuick: (code: string, payload: ConnectQuickConnectQrInput) =>
+    apiRequest<ConnectQuickConnectQrResult>(
+      `/api/qr/${encodeURIComponent(code)}/connect`,
+      {
+        method: "POST",
+        body: payload,
+        baseUrl: "",
+        credentials: "same-origin",
+      },
+    ),
 };

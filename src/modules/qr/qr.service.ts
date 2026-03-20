@@ -1,5 +1,7 @@
 import {
+  BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -12,8 +14,12 @@ import {
 import { randomBytes } from "crypto";
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
+import { BlocksService } from "../blocks/blocks.service";
+import { ContactMemoryService } from "../contact-memory/contact-memory.service";
 import { PersonasService } from "../personas/personas.service";
+import { RelationshipsService } from "../relationships/relationships.service";
 
+import { ConnectQuickConnectQrDto } from "./dto/connect-quick-connect-qr.dto";
 import { CreateQuickConnectQrDto } from "./dto/create-quick-connect-qr.dto";
 import {
   qrResolutionSelect,
@@ -27,6 +33,9 @@ export class QrService {
     private readonly prismaService: PrismaService,
     private readonly configService: ConfigService,
     private readonly personasService: PersonasService,
+    private readonly blocksService: BlocksService,
+    private readonly relationshipsService: RelationshipsService,
+    private readonly contactMemoryService: ContactMemoryService,
   ) {}
 
   async createProfileQr(userId: string, personaId: string) {
@@ -156,9 +165,117 @@ export class QrService {
 
       await this.assertResolvableToken(tx, token, now);
 
+      const resolvedToken = await tx.qRAccessToken.findUnique({
+        where: {
+          id: token.id,
+        },
+        select: qrResolutionSelect,
+      });
+
+      if (!resolvedToken) {
+        throw new NotFoundException("QR code not found");
+      }
+
+      if (
+        resolvedToken.maxUses !== null &&
+        resolvedToken.usedCount >= resolvedToken.maxUses &&
+        resolvedToken.status === PrismaQrStatus.active
+      ) {
+        await this.markTokenExpired(tx, token.id);
+      }
+
+      return toQrResolutionView(resolvedToken);
+    });
+  }
+
+  async connectQuickConnectQr(
+    userId: string,
+    code: string,
+    connectQuickConnectQrDto: ConnectQuickConnectQrDto,
+  ) {
+    const fromPersona = await this.personasService.findOwnedPersonaIdentity(
+      userId,
+      connectQuickConnectQrDto.fromPersonaId,
+    );
+
+    return this.prismaService.$transaction(async (tx) => {
+      const now = new Date();
+      const senderUser = await tx.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          isVerified: true,
+        },
+      });
+
+      if (!senderUser) {
+        throw new NotFoundException("User not found");
+      }
+
+      const token = await tx.qRAccessToken.findUnique({
+        where: {
+          code,
+        },
+        select: {
+          id: true,
+          type: true,
+          startsAt: true,
+          endsAt: true,
+          maxUses: true,
+          usedCount: true,
+          status: true,
+          rules: true,
+          persona: {
+            select: {
+              id: true,
+              userId: true,
+              username: true,
+              fullName: true,
+              jobTitle: true,
+              companyName: true,
+              tagline: true,
+              profilePhotoUrl: true,
+              verifiedOnly: true,
+            },
+          },
+        },
+      });
+
+      if (!token) {
+        throw new NotFoundException("QR code not found");
+      }
+
+      if (token.type !== PrismaQrType.quick_connect) {
+        throw new ConflictException("QR code does not support instant connect");
+      }
+
+      await this.assertResolvableToken(tx, token, now);
+
+      if (token.persona.userId === userId) {
+        throw new BadRequestException("You cannot connect to your own persona");
+      }
+
+      await this.blocksService.assertNoInteractionBlockInTransaction(
+        tx,
+        userId,
+        token.persona.userId,
+      );
+
+      if (token.persona.verifiedOnly && !senderUser.isVerified) {
+        throw new ForbiddenException("Verified profiles only");
+      }
+
+      const durationHours = this.getQuickConnectDurationHours(token.rules);
+      const accessEndAt = new Date(
+        now.getTime() + durationHours * 60 * 60 * 1000,
+      );
+
       const consumeResult = await tx.qRAccessToken.updateMany({
         where: {
           id: token.id,
+          type: PrismaQrType.quick_connect,
           status: PrismaQrStatus.active,
           OR: [{ startsAt: null }, { startsAt: { lte: now } }],
           AND: [
@@ -184,8 +301,6 @@ export class QrService {
           },
           select: {
             id: true,
-            code: true,
-            type: true,
             startsAt: true,
             endsAt: true,
             maxUses: true,
@@ -203,25 +318,45 @@ export class QrService {
         throw new ConflictException("QR code is no longer available");
       }
 
-      const resolvedToken = await tx.qRAccessToken.findUnique({
-        where: {
-          id: token.id,
-        },
-        select: qrResolutionSelect,
+      const relationship =
+        await this.relationshipsService.createOrRefreshInstantAccessRelationship(
+          tx,
+          {
+            ownerUserId: userId,
+            targetUserId: token.persona.userId,
+            ownerPersonaId: fromPersona.id,
+            targetPersonaId: token.persona.id,
+            sourceId: token.id,
+            accessStartAt: now,
+            accessEndAt,
+          },
+        );
+
+      await this.contactMemoryService.createInitialMemory(tx, {
+        relationshipId: relationship.id,
+        metAt: now,
+        sourceLabel: "Quick Connect QR",
       });
 
-      if (!resolvedToken) {
-        throw new NotFoundException("QR code not found");
-      }
-
-      if (
-        resolvedToken.maxUses !== null &&
-        resolvedToken.usedCount >= resolvedToken.maxUses
-      ) {
+      if (token.maxUses !== null && token.usedCount + 1 >= token.maxUses) {
         await this.markTokenExpired(tx, token.id);
       }
 
-      return toQrResolutionView(resolvedToken);
+      return {
+        relationshipId: relationship.id,
+        state: "instant_access" as const,
+        accessStartAt: relationship.accessStartAt,
+        accessEndAt: relationship.accessEndAt,
+        targetPersona: {
+          id: token.persona.id,
+          username: token.persona.username,
+          fullName: token.persona.fullName,
+          jobTitle: token.persona.jobTitle,
+          companyName: token.persona.companyName,
+          tagline: token.persona.tagline,
+          profilePhotoUrl: token.persona.profilePhotoUrl,
+        },
+      };
     });
   }
 
@@ -258,6 +393,21 @@ export class QrService {
       await this.markTokenExpired(tx, token.id);
       throw new ConflictException("QR code usage limit reached");
     }
+  }
+
+  private getQuickConnectDurationHours(rules: Prisma.JsonValue): number {
+    if (
+      rules === null ||
+      typeof rules !== "object" ||
+      Array.isArray(rules) ||
+      typeof rules.durationHours !== "number" ||
+      !Number.isInteger(rules.durationHours) ||
+      rules.durationHours < 1
+    ) {
+      throw new ConflictException("QR code has invalid quick connect rules");
+    }
+
+    return rules.durationHours;
   }
 
   private async markTokenExpired(

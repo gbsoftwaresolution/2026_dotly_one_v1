@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import {
   ContactRelationshipState as PrismaContactRelationshipState,
   ContactRequestSourceType as PrismaContactRequestSourceType,
@@ -10,6 +14,7 @@ import { ContactRequestSourceType } from "../../common/enums/contact-request-sou
 import { PersonaAccessMode } from "../../common/enums/persona-access-mode.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { ContactMemoryService } from "../contact-memory/contact-memory.service";
+import { RelationshipsService } from "../relationships/relationships.service";
 
 import { ListContactsQueryDto } from "./dto/list-contacts-query.dto";
 import { UpdateContactNoteDto } from "./dto/update-contact-note.dto";
@@ -28,8 +33,9 @@ const contactTargetPersonaSelect = {
 const contactRelationshipSelect = {
   id: true,
   ownerUserId: true,
-  targetUserId: true,
   state: true,
+  accessStartAt: true,
+  accessEndAt: true,
   createdAt: true,
   sourceType: true,
   targetPersona: {
@@ -61,14 +67,27 @@ export class ContactsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly contactMemoryService: ContactMemoryService,
+    private readonly relationshipsService: RelationshipsService,
   ) {}
 
   async findAll(userId: string, query: ListContactsQueryDto) {
+    await this.relationshipsService.expireOwnedExpiredRelationships(userId);
+    const now = new Date();
     const relationships = await this.prismaService.contactRelationship.findMany(
       {
         where: {
           ownerUserId: userId,
-          state: PrismaContactRelationshipState.APPROVED,
+          OR: [
+            {
+              state: PrismaContactRelationshipState.APPROVED,
+            },
+            {
+              state: PrismaContactRelationshipState.INSTANT_ACCESS,
+              accessEndAt: {
+                gt: now,
+              },
+            },
+          ],
           ...(query.sourceType
             ? {
                 sourceType: toPrismaContactRequestSourceType(query.sourceType),
@@ -110,12 +129,17 @@ export class ContactsService {
   }
 
   async findOne(userId: string, relationshipId: string) {
-    const relationship = await this.getOwnedApprovedRelationship(
+    const relationship = await this.getOwnedRelationship(
       userId,
       relationshipId,
     );
+    const normalizedRelationship =
+      await this.relationshipsService.expireRelationshipIfNeeded(
+        this.prismaService,
+        relationship,
+      );
 
-    return this.toContactDetail(relationship);
+    return this.toContactDetail(normalizedRelationship);
   }
 
   async updateNote(
@@ -124,32 +148,62 @@ export class ContactsService {
     updateContactNoteDto: UpdateContactNoteDto,
   ) {
     return this.prismaService.$transaction(async (tx) => {
-      const relationship = await this.getOwnedApprovedRelationship(
+      const relationship = await this.getOwnedRelationship(
         userId,
         relationshipId,
         tx,
       );
+      const normalizedRelationship =
+        await this.relationshipsService.expireRelationshipIfNeeded(
+          tx,
+          relationship,
+        );
+
+      if (
+        normalizedRelationship.state === PrismaContactRelationshipState.EXPIRED
+      ) {
+        throw new ConflictException(
+          "Expired instant access relationships cannot be updated",
+        );
+      }
 
       const note = updateContactNoteDto.note;
 
       await this.contactMemoryService.updateNote(tx, {
-        memoryId: relationship.memories[0]?.id,
-        relationshipId: relationship.id,
-        metAt: relationship.createdAt,
+        memoryId: normalizedRelationship.memories[0]?.id,
+        relationshipId: normalizedRelationship.id,
+        metAt:
+          normalizedRelationship.memories[0]?.metAt ??
+          normalizedRelationship.accessStartAt ??
+          normalizedRelationship.createdAt,
         sourceLabel:
-          relationship.memories[0]?.sourceLabel ??
-          toSourceLabel(relationship.sourceType),
+          normalizedRelationship.memories[0]?.sourceLabel ??
+          toSourceLabel(normalizedRelationship.sourceType),
         note,
       });
 
       return {
-        relationshipId: relationship.id,
+        relationshipId: normalizedRelationship.id,
         note,
       };
     });
   }
 
-  private async getOwnedApprovedRelationship(
+  async upgrade(userId: string, relationshipId: string) {
+    return this.relationshipsService.upgradeOwnedRelationship(
+      userId,
+      relationshipId,
+    );
+  }
+
+  async expire(userId: string, relationshipId: string) {
+    return this.relationshipsService.expireOwnedRelationship(
+      userId,
+      relationshipId,
+    );
+  }
+
+  private async getOwnedRelationship(
     userId: string,
     relationshipId: string,
     prisma: Prisma.TransactionClient | PrismaService = this.prismaService,
@@ -158,7 +212,6 @@ export class ContactsService {
       where: {
         id: relationshipId,
         ownerUserId: userId,
-        state: PrismaContactRelationshipState.APPROVED,
       },
       select: contactRelationshipSelect,
     });
@@ -177,6 +230,7 @@ export class ContactsService {
       relationshipId: relationship.id,
       state: toApiRelationshipState(relationship.state),
       createdAt: relationship.createdAt,
+      accessEndAt: relationship.accessEndAt,
       sourceType: toApiContactRequestSourceType(relationship.sourceType),
       targetPersona: {
         id: relationship.targetPersona.id,
@@ -202,8 +256,10 @@ export class ContactsService {
 
     return {
       relationshipId: relationship.id,
-      targetUserId: relationship.targetUserId,
       state: toApiRelationshipState(relationship.state),
+      accessStartAt: relationship.accessStartAt,
+      accessEndAt: relationship.accessEndAt,
+      isExpired: relationship.state === PrismaContactRelationshipState.EXPIRED,
       createdAt: relationship.createdAt,
       sourceType: toApiContactRequestSourceType(relationship.sourceType),
       targetPersona: {
@@ -255,10 +311,14 @@ function toApiContactRequestSourceType(
 
 function toApiRelationshipState(
   state: PrismaContactRelationshipState,
-): "approved" {
+): "approved" | "instant_access" | "expired" {
   switch (state) {
+    case PrismaContactRelationshipState.INSTANT_ACCESS:
+      return "instant_access";
     case PrismaContactRelationshipState.APPROVED:
       return "approved";
+    case PrismaContactRelationshipState.EXPIRED:
+      return "expired";
   }
 
   throw new Error("Unsupported relationship state");

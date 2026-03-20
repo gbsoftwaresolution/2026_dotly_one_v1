@@ -3,6 +3,7 @@ import { PersonaAccessMode } from "../../common/enums/persona-access-mode.enum";
 export const qrResolutionSelect = {
   code: true,
   type: true,
+  status: true,
   startsAt: true,
   endsAt: true,
   maxUses: true,
@@ -24,6 +25,7 @@ export const qrResolutionSelect = {
 export interface QrResolutionRecord {
   code: string;
   type: "profile" | "quick_connect";
+  status: "active" | "expired" | "disabled";
   startsAt: Date | null;
   endsAt: Date | null;
   maxUses: number | null;

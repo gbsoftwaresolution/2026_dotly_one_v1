@@ -5,6 +5,7 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
+  Post,
   Query,
   UseGuards,
 } from "@nestjs/common";
@@ -49,5 +50,21 @@ export class ContactsController {
       relationshipId,
       updateContactNoteDto,
     );
+  }
+
+  @Post(":relationshipId/upgrade")
+  upgrade(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("relationshipId", new ParseUUIDPipe()) relationshipId: string,
+  ) {
+    return this.contactsService.upgrade(user.id, relationshipId);
+  }
+
+  @Post(":relationshipId/expire")
+  expire(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("relationshipId", new ParseUUIDPipe()) relationshipId: string,
+  ) {
+    return this.contactsService.expire(user.id, relationshipId);
   }
 }

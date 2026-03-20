@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
-import { BlockUserButton } from "@/components/contacts/block-user-button";
 import { NoteEditor } from "@/components/contacts/note-editor";
+import { RelationshipActions } from "@/components/contacts/relationship-actions";
 import { Card } from "@/components/shared/card";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -20,6 +20,24 @@ function formatTimestamp(value: string): string {
     day: "numeric",
     year: "numeric",
   }).format(new Date(value));
+}
+
+function isNearExpiry(accessEndAt: string): boolean {
+  const hoursUntilExpiry =
+    (new Date(accessEndAt).getTime() - Date.now()) / (1000 * 60 * 60);
+  return hoursUntilExpiry <= 24;
+}
+
+function getStateBadge(state: ContactDetail["state"]) {
+  switch (state) {
+    case "instant_access":
+      return <StatusBadge label="Instant Access" tone="warning" />;
+    case "expired":
+      return <StatusBadge label="Expired" tone="neutral" />;
+    case "approved":
+    default:
+      return <StatusBadge label="Approved" tone="success" />;
+  }
 }
 
 export default async function ContactDetailPage({
@@ -76,8 +94,19 @@ export default async function ContactDetailPage({
     notFound();
   }
 
-  const { targetPersona, targetUserId, memory, sourceType, createdAt } =
-    contact;
+  const {
+    targetPersona,
+    memory,
+    sourceType,
+    createdAt,
+    state,
+    accessStartAt,
+    accessEndAt,
+    isExpired,
+  } = contact;
+
+  const nearExpiry =
+    !isExpired && accessEndAt ? isNearExpiry(accessEndAt) : false;
 
   return (
     <section className="space-y-4">
@@ -86,8 +115,32 @@ export default async function ContactDetailPage({
         description={`${targetPersona.jobTitle} at ${targetPersona.companyName}`}
       />
 
+      {state === "instant_access" && !isExpired && (
+        <div className="rounded-2xl border border-brandRose/50 bg-brandRose/10 px-4 py-3 dark:border-brandCyan/50 dark:bg-brandCyan/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 animate-pulse">
+          <p className="font-mono text-xs font-bold text-brandRose dark:text-brandCyan uppercase tracking-widest flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brandRose dark:bg-brandCyan opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-brandRose dark:bg-brandCyan"></span>
+            </span>
+            Temporary Access
+          </p>
+          {accessEndAt && (
+            <p className="font-mono text-[11px] text-brandRose/80 dark:text-brandCyan/80 font-medium">
+              Expires {formatTimestamp(accessEndAt)}
+            </p>
+          )}
+        </div>
+      )}
+      {isExpired && (
+        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/50 flex items-center justify-between">
+          <p className="font-mono text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">
+            Access Revoked
+          </p>
+        </div>
+      )}
+
       {/* Identity card */}
-      <Card className="space-y-6">
+      <Card className={`space-y-6 ${isExpired ? "opacity-50 grayscale" : ""}`}>
         <div className="flex flex-col items-center text-center gap-4 pt-2">
           {targetPersona.profilePhotoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -120,11 +173,9 @@ export default async function ContactDetailPage({
         <div className="grid grid-cols-2 gap-px bg-border overflow-hidden rounded-2xl border border-border">
           <div className="bg-surface p-4 space-y-1">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-              Connected Since
+              Relationship State
             </p>
-            <p className="font-mono text-sm text-foreground">
-              {formatTimestamp(createdAt)}
-            </p>
+            <div className="pt-0.5">{getStateBadge(state)}</div>
           </div>
           <div className="bg-surface p-4 space-y-1">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
@@ -134,6 +185,46 @@ export default async function ContactDetailPage({
               <StatusBadge label={formatSourceType(sourceType)} />
             </div>
           </div>
+          <div className="bg-surface p-4 space-y-1">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+              Connected Since
+            </p>
+            <p className="font-mono text-sm text-foreground">
+              {formatTimestamp(createdAt)}
+            </p>
+          </div>
+          {state === "instant_access" && accessEndAt ? (
+            <div
+              className={`bg-surface p-4 space-y-1 ${
+                nearExpiry ? "bg-amber-50/60 dark:bg-amber-950/20" : ""
+              }`}
+            >
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+                Access Ends
+              </p>
+              <p
+                className={`font-mono text-sm ${
+                  nearExpiry
+                    ? "text-amber-700 dark:text-amber-400 font-semibold"
+                    : "text-foreground"
+                }`}
+              >
+                {formatTimestamp(accessEndAt)}
+                {nearExpiry ? " (soon)" : ""}
+              </p>
+            </div>
+          ) : null}
+          {state === "instant_access" && accessStartAt ? (
+            <div className="bg-surface p-4 space-y-1 col-span-2">
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+                Access Window
+              </p>
+              <p className="font-sans text-sm text-foreground">
+                Started {formatTimestamp(accessStartAt)}
+                {accessEndAt ? ` and ends ${formatTimestamp(accessEndAt)}` : ""}
+              </p>
+            </div>
+          ) : null}
           {memory.sourceLabel ? (
             <div className="bg-surface p-4 space-y-1 col-span-2">
               <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
@@ -147,24 +238,19 @@ export default async function ContactDetailPage({
         </div>
       </Card>
 
+      {/* Interactive upgrade / expire actions */}
+      <RelationshipActions
+        relationshipId={relationshipId}
+        initialState={state}
+        isExpired={isExpired}
+      />
+
       {/* Note editor */}
       <Card>
-        <NoteEditor relationshipId={relationshipId} initialNote={memory.note} />
-      </Card>
-
-      {/* Danger zone */}
-      <Card className="space-y-4">
-        <div className="space-y-1">
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-            Actions
-          </p>
-          <p className="font-sans text-sm text-muted">
-            Blocking removes this contact and prevents future requests.
-          </p>
-        </div>
-        <BlockUserButton
-          userId={targetUserId}
-          displayName={targetPersona.fullName}
+        <NoteEditor
+          relationshipId={relationshipId}
+          initialNote={memory.note}
+          disabled={isExpired}
         />
       </Card>
     </section>

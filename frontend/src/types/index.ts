@@ -7,6 +7,19 @@ export type {
   SignupResult,
 } from "./auth";
 export type {
+  Contact,
+  ContactDetail,
+  ContactMemory,
+  ContactRelationshipState,
+  ContactTargetPersona,
+  ContactTargetPersonaDetail,
+  UpdateContactNoteInput,
+  UpdateContactNoteResult,
+  UpdateRelationshipStateResult,
+} from "./contact";
+export type {
+  ConnectQuickConnectQrInput,
+  ConnectQuickConnectQrResult,
   CreatePersonaInput,
   PersonaAccessMode,
   PersonaSummary,
@@ -16,6 +29,7 @@ export type {
   QrType,
   QuickConnectQrInput,
   QuickConnectQrSummary,
+  QuickConnectTargetPersona,
   ResolvedQr,
   ResolvedQrPersonaPreview,
 } from "./persona";

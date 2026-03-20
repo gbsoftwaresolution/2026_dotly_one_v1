@@ -4,7 +4,10 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { ContactRequestStatus as PrismaContactRequestStatus } from "@prisma/client";
+import {
+  ContactRequestStatus as PrismaContactRequestStatus,
+  Prisma,
+} from "@prisma/client";
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 
@@ -162,7 +165,19 @@ export class BlocksService {
   }
 
   async assertNoInteractionBlock(actorUserId: string, otherUserId: string) {
-    const blocks = await this.prismaService.block.findMany({
+    return this.assertNoInteractionBlockInTransaction(
+      this.prismaService,
+      actorUserId,
+      otherUserId,
+    );
+  }
+
+  async assertNoInteractionBlockInTransaction(
+    prisma: Prisma.TransactionClient | PrismaService,
+    actorUserId: string,
+    otherUserId: string,
+  ) {
+    const blocks = await prisma.block.findMany({
       where: {
         OR: [
           {

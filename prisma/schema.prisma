@@ -44,7 +44,9 @@ enum ContactRequestStatus {
 }
 
 enum ContactRelationshipState {
+  INSTANT_ACCESS @map("instant_access")
   APPROVED @map("approved")
+  EXPIRED        @map("expired")
 }
 
 model User {
@@ -131,24 +133,26 @@ model ContactRequest {
 }
 
 model ContactRelationship {
-  id             String                   @id @default(uuid()) @db.Uuid
-  ownerUserId    String                   @db.Uuid
-  targetUserId   String                   @db.Uuid
-  ownerPersonaId String                   @db.Uuid
-  targetPersonaId String                  @db.Uuid
-  state          ContactRelationshipState @default(APPROVED)
-  sourceType     ContactRequestSourceType
-  sourceId       String?                  @db.Uuid
-  createdAt      DateTime                 @default(now())
-  updatedAt      DateTime                 @updatedAt
-  ownerUser      User                     @relation("ContactRelationshipOwnerUser", fields: [ownerUserId], references: [id], onDelete: Cascade)
-  targetUser     User                     @relation("ContactRelationshipTargetUser", fields: [targetUserId], references: [id], onDelete: Cascade)
-  ownerPersona   Persona                  @relation("ContactRelationshipOwnerPersona", fields: [ownerPersonaId], references: [id], onDelete: Cascade)
-  targetPersona  Persona                  @relation("ContactRelationshipTargetPersona", fields: [targetPersonaId], references: [id], onDelete: Cascade)
-  memories       ContactMemory[]
+  id              String                   @id @default(uuid()) @db.Uuid
+  ownerUserId     String                   @db.Uuid
+  targetUserId    String                   @db.Uuid
+  ownerPersonaId  String                   @db.Uuid
+  targetPersonaId String                   @db.Uuid
+  state           ContactRelationshipState @default(APPROVED)
+  sourceType      ContactRequestSourceType
+  sourceId        String?                  @db.Uuid
+  accessStartAt   DateTime?
+  accessEndAt     DateTime?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  ownerUser       User                     @relation("ContactRelationshipOwnerUser", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  targetUser      User                     @relation("ContactRelationshipTargetUser", fields: [targetUserId], references: [id], onDelete: Cascade)
+  ownerPersona    Persona                  @relation("ContactRelationshipOwnerPersona", fields: [ownerPersonaId], references: [id], onDelete: Cascade)
+  targetPersona   Persona                  @relation("ContactRelationshipTargetPersona", fields: [targetPersonaId], references: [id], onDelete: Cascade)
+  memories        ContactMemory[]
 
   @@unique([ownerUserId, targetUserId, ownerPersonaId, targetPersonaId])
-  @@index([ownerUserId, state, createdAt])
+  @@index([ownerUserId, state, accessEndAt, createdAt])
   @@index([targetUserId, createdAt])
 }
 

@@ -12,9 +12,14 @@ const MAX_NOTE_LENGTH = 1000;
 interface NoteEditorProps {
   relationshipId: string;
   initialNote: string | null;
+  disabled?: boolean;
 }
 
-export function NoteEditor({ relationshipId, initialNote }: NoteEditorProps) {
+export function NoteEditor({
+  relationshipId,
+  initialNote,
+  disabled = false,
+}: NoteEditorProps) {
   const [value, setValue] = useState(initialNote ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState<{
@@ -35,7 +40,7 @@ export function NoteEditor({ relationshipId, initialNote }: NoteEditorProps) {
   }, [feedback]);
 
   const handleSave = useCallback(async () => {
-    if (!isDirty || isSaving) return;
+    if (!isDirty || isSaving || disabled) return;
     setFeedback(null);
     setIsSaving(true);
 
@@ -57,7 +62,7 @@ export function NoteEditor({ relationshipId, initialNote }: NoteEditorProps) {
     } finally {
       setIsSaving(false);
     }
-  }, [isDirty, isSaving, relationshipId, value]);
+  }, [disabled, isDirty, isSaving, relationshipId, value]);
 
   const charsLeft = MAX_NOTE_LENGTH - value.length;
   const isOverLimit = charsLeft < 0;
@@ -78,6 +83,7 @@ export function NoteEditor({ relationshipId, initialNote }: NoteEditorProps) {
             setValue(e.target.value);
             setFeedback(null);
           }}
+          disabled={disabled}
           placeholder="Add relationship memory..."
           rows={5}
           maxLength={MAX_NOTE_LENGTH + 1} // allow typing past limit to show error
@@ -105,6 +111,10 @@ export function NoteEditor({ relationshipId, initialNote }: NoteEditorProps) {
       {feedback?.tone === "error" ? (
         <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 font-sans text-sm text-rose-700">
           {feedback.message}
+        </p>
+      ) : disabled ? (
+        <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 font-sans text-sm text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
+          Notes are locked because this instant access relationship has expired.
         </p>
       ) : null}
 

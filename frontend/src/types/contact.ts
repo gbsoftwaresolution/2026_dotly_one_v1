@@ -1,5 +1,10 @@
 import type { ContactRequestSourceType } from "./request";
 
+export type ContactRelationshipState =
+  | "approved"
+  | "instant_access"
+  | "expired";
+
 export interface ContactTargetPersona {
   id: string;
   username: string;
@@ -23,8 +28,9 @@ export interface ContactMemory {
 
 export interface Contact {
   relationshipId: string;
-  state: "approved";
+  state: ContactRelationshipState;
   createdAt: string;
+  accessEndAt: string | null;
   sourceType: ContactRequestSourceType;
   targetPersona: ContactTargetPersona;
   memory: ContactMemory;
@@ -32,9 +38,11 @@ export interface Contact {
 
 export interface ContactDetail {
   relationshipId: string;
-  targetUserId: string;
-  state: "approved";
+  state: ContactRelationshipState;
   createdAt: string;
+  accessStartAt: string | null;
+  accessEndAt: string | null;
+  isExpired: boolean;
   sourceType: ContactRequestSourceType;
   targetPersona: ContactTargetPersonaDetail;
   memory: ContactMemory;
@@ -47,4 +55,9 @@ export interface UpdateContactNoteInput {
 export interface UpdateContactNoteResult {
   relationshipId: string;
   note: string | null;
+}
+
+export interface UpdateRelationshipStateResult {
+  relationshipId: string;
+  state: ContactRelationshipState;
 }

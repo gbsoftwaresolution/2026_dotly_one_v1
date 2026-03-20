@@ -70,6 +70,28 @@ export interface QuickConnectQrSummary extends QrTokenSummary {
   maxUses: number | null;
 }
 
+export interface ConnectQuickConnectQrInput {
+  fromPersonaId: string;
+}
+
+export interface QuickConnectTargetPersona {
+  id: string;
+  username: string;
+  fullName: string;
+  jobTitle: string;
+  companyName: string;
+  tagline: string;
+  profilePhotoUrl?: string | null;
+}
+
+export interface ConnectQuickConnectQrResult {
+  relationshipId: string;
+  state: "instant_access";
+  accessStartAt: string;
+  accessEndAt: string;
+  targetPersona: QuickConnectTargetPersona;
+}
+
 export interface ResolvedQrPersonaPreview {
   username: string;
   publicUrl: string;
