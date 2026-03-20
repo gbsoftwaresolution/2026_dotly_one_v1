@@ -49,7 +49,6 @@ export class AuthService {
       });
 
       return {
-        success: true,
         user,
       };
     } catch (error) {
