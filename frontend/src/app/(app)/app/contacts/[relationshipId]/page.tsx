@@ -11,7 +11,15 @@ import { routes } from "@/lib/constants/routes";
 import type { ContactDetail } from "@/types/contact";
 
 function formatSourceType(sourceType: ContactDetail["sourceType"]): string {
-  return sourceType === "qr" ? "QR" : "Profile";
+  switch (sourceType) {
+    case "qr":
+      return "QR";
+    case "event":
+      return "Event";
+    case "profile":
+    default:
+      return "Profile";
+  }
 }
 
 function formatTimestamp(value: string): string {
@@ -243,6 +251,8 @@ export default async function ContactDetailPage({
         relationshipId={relationshipId}
         initialState={state}
         isExpired={isExpired}
+        targetPersonaId={targetPersona.id}
+        displayName={targetPersona.fullName}
       />
 
       {/* Note editor */}

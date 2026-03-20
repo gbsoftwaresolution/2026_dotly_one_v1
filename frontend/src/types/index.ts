@@ -31,6 +31,7 @@ export type {
   PersonaSummary,
   PersonaType,
   PublicProfile,
+  PublicProfileRequestTarget,
   QrTokenSummary,
   QrType,
   QuickConnectQrInput,

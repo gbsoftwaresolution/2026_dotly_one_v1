@@ -45,6 +45,14 @@ export class PersonasController {
     return this.personasService.findOneById(user.id, id);
   }
 
+  @Get(":id/user-identity")
+  findUserIdentity(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id", new ParseUUIDPipe()) id: string,
+  ) {
+    return this.personasService.findOwnedPersonaUserIdentity(user.id, id);
+  }
+
   @Patch(":id")
   update(
     @CurrentUser() user: AuthenticatedUser,

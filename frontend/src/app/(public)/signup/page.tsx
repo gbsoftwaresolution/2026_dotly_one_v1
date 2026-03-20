@@ -15,7 +15,7 @@ export default async function SignupPage({
     <section className="space-y-5">
       <PageHeader
         title="Sign up"
-        description="Create your Dotly account to manage personas and publish open public profiles."
+        description="Create your Dotly account to manage personas and share permissioned identity cards safely."
       />
       <Card className="space-y-5">
         <AuthForm mode="signup" redirectTo={redirectTo} />

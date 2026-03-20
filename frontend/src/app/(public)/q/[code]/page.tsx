@@ -113,7 +113,7 @@ function LoginPrompt({
       <p className="font-sans text-sm leading-6 text-muted">
         {invalidSession
           ? "Your session has expired. Log in again to continue this instant connection."
-          : "Log in or create a Dotly account to connect instantly and save this contact to your network."}
+          : "Log in or create a Dotly account to start a temporary, permissioned connection from one of your personas."}
       </p>
 
       <div className="space-y-3">

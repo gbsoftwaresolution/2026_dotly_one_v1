@@ -19,7 +19,7 @@ const initialFormState: CreatePersonaInput = {
   jobTitle: "",
   companyName: "",
   tagline: "",
-  accessMode: "open",
+  accessMode: "request",
 };
 
 export function PersonaForm() {

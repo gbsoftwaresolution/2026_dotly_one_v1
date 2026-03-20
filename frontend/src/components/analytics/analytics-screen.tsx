@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   PersonaInsightRow,
@@ -10,6 +11,8 @@ import { StatCard } from "@/components/analytics/stat-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { analyticsApi, personaApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
+import { routes } from "@/lib/constants/routes";
+import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import type { AnalyticsSummary } from "@/types/analytics";
 
 interface PersonaRowState extends PersonaWithAnalytics {
@@ -33,6 +36,7 @@ function SummarySkeleton() {
 }
 
 export function AnalyticsScreen() {
+  const router = useRouter();
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
@@ -60,6 +64,14 @@ export function AnalyticsScreen() {
         ),
       );
     } catch (error) {
+      if (isExpiredSessionError(error)) {
+        router.replace(
+          `/login?next=${encodeURIComponent(routes.app.analytics)}&reason=expired`,
+        );
+        router.refresh();
+        return;
+      }
+
       setPersonaRows((prev) =>
         prev.map((row) =>
           row.persona.id === personaId
@@ -84,6 +96,14 @@ export function AnalyticsScreen() {
         const result = await analyticsApi.getSummary();
         setSummary(result);
       } catch (error) {
+        if (isExpiredSessionError(error)) {
+          router.replace(
+            `/login?next=${encodeURIComponent(routes.app.analytics)}&reason=expired`,
+          );
+          router.refresh();
+          return;
+        }
+
         setSummaryError(
           error instanceof ApiError
             ? error.message
@@ -95,7 +115,7 @@ export function AnalyticsScreen() {
     }
 
     void loadSummary();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     async function loadPersonas() {
@@ -138,6 +158,14 @@ export function AnalyticsScreen() {
           }),
         );
       } catch (error) {
+        if (isExpiredSessionError(error)) {
+          router.replace(
+            `/login?next=${encodeURIComponent(routes.app.analytics)}&reason=expired`,
+          );
+          router.refresh();
+          return;
+        }
+
         setPersonasError(
           error instanceof ApiError
             ? error.message
@@ -148,7 +176,7 @@ export function AnalyticsScreen() {
     }
 
     void loadPersonas();
-  }, []);
+  }, [router]);
 
   const hasSummaryData =
     summary &&

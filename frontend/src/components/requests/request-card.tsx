@@ -3,7 +3,15 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import type { IncomingRequest, OutgoingRequest } from "@/types/request";
 
 function formatSourceType(sourceType: IncomingRequest["sourceType"]): string {
-  return sourceType === "qr" ? "QR" : "Profile";
+  switch (sourceType) {
+    case "qr":
+      return "QR";
+    case "event":
+      return "Event";
+    case "profile":
+    default:
+      return "Profile";
+  }
 }
 
 function formatTimestamp(value: string): string {

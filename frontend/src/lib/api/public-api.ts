@@ -1,4 +1,7 @@
-import type { PublicProfile } from "@/types/persona";
+import type {
+  PublicProfile,
+  PublicProfileRequestTarget,
+} from "@/types/persona";
 
 import { apiRequest } from "./client";
 
@@ -7,4 +10,12 @@ export const publicApi = {
     apiRequest<PublicProfile>(`/public/${encodeURIComponent(username)}`, {
       headers,
     }),
+  getRequestTarget: (username: string) =>
+    apiRequest<PublicProfileRequestTarget>(
+      `/api/public/${encodeURIComponent(username)}/request-target`,
+      {
+        baseUrl: "",
+        credentials: "same-origin",
+      },
+    ),
 };

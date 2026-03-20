@@ -7,11 +7,15 @@ import { Card } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
-import { requestApi } from "@/lib/api";
+import { publicApi, requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
 import { cn } from "@/lib/utils/cn";
-import type { PersonaSummary, PublicProfile } from "@/types";
+import type {
+  PersonaSummary,
+  PublicProfile,
+  PublicProfileRequestTarget,
+} from "@/types";
 
 interface RequestAccessPanelProps {
   profile: PublicProfile;
@@ -82,6 +86,8 @@ export function RequestAccessPanel({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [requestTarget, setRequestTarget] =
+    useState<PublicProfileRequestTarget | null>(null);
 
   const loginHref = useMemo(
     () => buildLoginHref(profile.username),
@@ -89,17 +95,14 @@ export function RequestAccessPanel({
   );
   const isOwnProfile = useMemo(
     () =>
-      initialPersonas.some(
-        (persona) =>
-          persona.id === profile.id || persona.username === profile.username,
-      ),
-    [initialPersonas, profile.id, profile.username],
+      initialPersonas.some((persona) => persona.username === profile.username),
+    [initialPersonas, profile.username],
   );
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!selectedPersonaId || !profile.id) {
+    if (!selectedPersonaId) {
       setError("Choose a persona before sending your request.");
       return;
     }
@@ -109,8 +112,13 @@ export function RequestAccessPanel({
     setIsSubmitting(true);
 
     try {
+      const target =
+        requestTarget ?? (await publicApi.getRequestTarget(profile.username));
+
+      setRequestTarget(target);
+
       await requestApi.send({
-        toPersonaId: profile.id,
+        toPersonaId: target.id,
         fromPersonaId: selectedPersonaId,
         reason: reason.trim() || undefined,
         sourceType: "profile",
@@ -125,22 +133,6 @@ export function RequestAccessPanel({
     }
   }
 
-  if (profile.accessMode === "private") {
-    return (
-      <Card className="space-y-3">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-brandRose dark:text-brandCyan">
-          Requests Restricted
-        </p>
-        <h2 className="font-sans text-lg font-semibold text-foreground">
-          This profile is private
-        </h2>
-        <p className="text-sm leading-6 text-muted">
-          The owner is not accepting access requests from public profile links.
-        </p>
-      </Card>
-    );
-  }
-
   if (!isAuthenticated) {
     return (
       <Card className="space-y-4">
@@ -152,7 +144,8 @@ export function RequestAccessPanel({
             Log in to connect
           </h2>
           <p className="text-sm leading-6 text-muted">
-            Connect with {profile.fullName} using your own Dotly personas.
+            Use one of your personas to request access in a permissioned,
+            approval-based flow.
           </p>
         </div>
         <Link href={loginHref} className="block">
@@ -219,8 +212,8 @@ export function RequestAccessPanel({
           Reach out from one of your personas
         </h2>
         <p className="text-sm leading-6 text-muted">
-          Send a request to {profile.fullName}. They can approve or reject it
-          from their requests screen.
+          Send a permission request to {profile.fullName}. They can approve or
+          reject it from their requests screen.
         </p>
       </div>
 

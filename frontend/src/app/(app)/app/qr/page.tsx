@@ -19,7 +19,7 @@ export default async function QrPage() {
       <section className="mx-auto flex w-full max-w-xl flex-col items-center justify-center space-y-8 py-12">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Bridge
+            QR Sharing
           </h1>
           <p className="text-sm text-slate-500 dark:text-zinc-400">
             Select a persona to generate a standard or quick-connect QR.
@@ -54,7 +54,7 @@ export default async function QrPage() {
       <section className="mx-auto flex w-full max-w-xl flex-col items-center justify-center space-y-8 py-12">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Bridge
+            QR Sharing
           </h1>
           <p className="text-sm text-slate-500 dark:text-zinc-400">
             Select a persona to generate a standard or quick-connect QR.

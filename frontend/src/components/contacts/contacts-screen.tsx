@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { ContactCard } from "@/components/contacts/contact-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { contactsApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
+import { routes } from "@/lib/constants/routes";
+import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import { cn } from "@/lib/utils/cn";
 import type { Contact } from "@/types/contact";
+import { useRouter } from "next/navigation";
 
 export function ContactsScreen() {
+  const router = useRouter();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -22,30 +26,43 @@ export function ContactsScreen() {
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
       if (url.searchParams.get("message") === "node-removed") {
-        setSuccessMessage("Node Removed");
+        setSuccessMessage("Contact blocked and removed");
         window.history.replaceState({}, "", url.pathname);
         setTimeout(() => setSuccessMessage(null), 3000);
       }
     }
   }, []);
 
-  async function loadContacts(query?: string) {
-    setIsLoading(true);
-    setLoadError(null);
+  const loadContacts = useCallback(
+    async (query?: string) => {
+      setIsLoading(true);
+      setLoadError(null);
 
-    try {
-      const result = await contactsApi.list({ q: query?.trim() || undefined });
-      setContacts(result);
-    } catch (error) {
-      setLoadError(
-        error instanceof ApiError
-          ? error.message
-          : "We could not load your contacts right now.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }
+      try {
+        const result = await contactsApi.list({
+          q: query?.trim() || undefined,
+        });
+        setContacts(result);
+      } catch (error) {
+        if (isExpiredSessionError(error)) {
+          router.replace(
+            `/login?next=${encodeURIComponent(routes.app.contacts)}&reason=expired`,
+          );
+          router.refresh();
+          return;
+        }
+
+        setLoadError(
+          error instanceof ApiError
+            ? error.message
+            : "We could not load your contacts right now.",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [router],
+  );
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -53,7 +70,7 @@ export function ContactsScreen() {
     }, 250);
 
     return () => window.clearTimeout(timeoutId);
-  }, [search]);
+  }, [loadContacts, search]);
 
   return (
     <section className="space-y-4">
@@ -99,11 +116,11 @@ export function ContactsScreen() {
         />
       ) : contacts.length === 0 ? (
         <EmptyState
-          title={search.trim() ? "No results" : "No Nodes in Ledger"}
+          title={search.trim() ? "No results" : "No contacts yet"}
           description={
             search.trim()
               ? `No contacts match "${search}".`
-              : "Connections will appear here once your permissioned handshakes are approved in the request cycle."
+              : "Approved and active temporary relationships will appear here once a permissioned connection is established."
           }
         />
       ) : (

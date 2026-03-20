@@ -1,6 +1,5 @@
 import { Card } from "@/components/shared/card";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { formatAccessMode } from "@/lib/persona/labels";
 import type { ResolvedQr } from "@/types/persona";
 
 interface PublicQrPreviewCardProps {
@@ -24,7 +23,9 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
                 {qr.persona.fullName}
               </h1>
               <p className="text-base text-white/75">
-                {qr.persona.jobTitle} at {qr.persona.companyName}
+                {[qr.persona.jobTitle, qr.persona.companyName]
+                  .filter(Boolean)
+                  .join(" at ")}
               </p>
             </div>
           </div>
@@ -40,44 +41,26 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
             About
           </p>
           <p className="text-base leading-7 text-foreground">
-            {qr.persona.tagline}
+            {qr.persona.tagline || "No public tagline available."}
           </p>
         </div>
 
-        <dl className="grid gap-4 rounded-3xl border border-border bg-slate-50/70 p-4 text-sm sm:grid-cols-2">
+        <dl className="grid gap-4 rounded-3xl border border-border bg-slate-50/70 p-4 text-sm">
           <div className="space-y-1">
             <dt className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
               Username
             </dt>
             <dd className="text-foreground">@{qr.persona.username}</dd>
           </div>
-          <div className="space-y-1">
-            <dt className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
-              Access mode
-            </dt>
-            <dd className="text-foreground">
-              {formatAccessMode(qr.persona.accessMode)}
-            </dd>
-          </div>
           {isQuickConnect ? (
-            <>
-              <div className="space-y-1">
-                <dt className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
-                  Ends at
-                </dt>
-                <dd className="text-foreground">
-                  {new Date(qr.quickConnect.endsAt).toLocaleString()}
-                </dd>
-              </div>
-              <div className="space-y-1">
-                <dt className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
-                  Max uses
-                </dt>
-                <dd className="text-foreground">
-                  {qr.quickConnect.maxUses ?? "Unlimited"}
-                </dd>
-              </div>
-            </>
+            <div className="space-y-1">
+              <dt className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
+                Access type
+              </dt>
+              <dd className="text-foreground">
+                Temporary, permissioned access
+              </dd>
+            </div>
           ) : null}
         </dl>
       </div>

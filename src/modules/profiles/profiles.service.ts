@@ -8,6 +8,13 @@ import {
   toPublicPersonaView,
 } from "../personas/persona.presenter";
 
+const authenticatedRequestTargetSelect = {
+  id: true,
+  username: true,
+  fullName: true,
+  accessMode: true,
+} as const;
+
 @Injectable()
 export class ProfilesService {
   constructor(
@@ -43,5 +50,28 @@ export class ProfilesService {
     });
 
     return toPublicPersonaView(persona);
+  }
+
+  async getRequestTarget(username: string) {
+    const persona = await this.prismaService.persona.findFirst({
+      where: {
+        username: username.trim().toLowerCase(),
+        accessMode: {
+          in: [PrismaPersonaAccessMode.OPEN, PrismaPersonaAccessMode.REQUEST],
+        },
+      },
+      select: authenticatedRequestTargetSelect,
+    });
+
+    if (!persona) {
+      throw new NotFoundException("Public profile not found");
+    }
+
+    return {
+      id: persona.id,
+      username: persona.username,
+      fullName: persona.fullName,
+      accessMode: persona.accessMode.toLowerCase(),
+    };
   }
 }

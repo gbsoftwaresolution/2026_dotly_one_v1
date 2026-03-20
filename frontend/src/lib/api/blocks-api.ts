@@ -15,6 +15,13 @@ export const blocksApi = {
       credentials: "same-origin",
     }),
 
+  blockByPersona: (personaId: string) =>
+    apiRequest<{ blocked: boolean }>(`/api/blocks/by-persona/${personaId}`, {
+      method: "POST",
+      baseUrl: "",
+      credentials: "same-origin",
+    }),
+
   list: () =>
     apiRequest<{ blockedUserId: string }[]>("/api/blocks", {
       baseUrl: "",

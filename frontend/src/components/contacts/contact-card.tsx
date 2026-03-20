@@ -7,7 +7,15 @@ import { routes } from "@/lib/constants/routes";
 import type { Contact } from "@/types/contact";
 
 function formatSourceType(sourceType: Contact["sourceType"]): string {
-  return sourceType === "qr" ? "QR" : "Profile";
+  switch (sourceType) {
+    case "qr":
+      return "QR";
+    case "event":
+      return "Event";
+    case "profile":
+    default:
+      return "Profile";
+  }
 }
 
 function formatDate(value: string): string {

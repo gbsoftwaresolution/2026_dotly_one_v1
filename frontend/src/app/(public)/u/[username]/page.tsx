@@ -37,6 +37,11 @@ export default async function PublicUserPage({
         try {
           personas = await personaApi.list(accessToken);
         } catch (error) {
+          if (error instanceof ApiError && error.status === 401) {
+            isAuthenticated = false;
+            personas = [];
+          }
+
           personaLoadError =
             error instanceof ApiError
               ? error.message

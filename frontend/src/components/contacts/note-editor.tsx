@@ -74,7 +74,7 @@ export function NoteEditor({
           htmlFor="contact-note"
           className="font-mono text-[10px] font-semibold uppercase tracking-widest text-brandRose dark:text-brandCyan"
         >
-          Neural Note
+          Relationship note
         </label>
         <textarea
           id="contact-note"
@@ -130,7 +130,7 @@ export function NoteEditor({
             onClick={() => void handleSave()}
             className="h-[60px] w-full"
           >
-            {isSaving ? "SYNCING..." : "SAVE CONTEXT"}
+            {isSaving ? "Saving..." : "Save note"}
           </PrimaryButton>
         ) : null}
       </div>

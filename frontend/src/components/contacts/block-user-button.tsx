@@ -8,11 +8,14 @@ import { blocksApi } from "@/lib/api";
 import { isApiError } from "@/lib/api/client";
 
 interface BlockUserButtonProps {
-  userId: string;
+  personaId: string;
   displayName: string;
 }
 
-export function BlockUserButton({ userId, displayName }: BlockUserButtonProps) {
+export function BlockUserButton({
+  personaId,
+  displayName,
+}: BlockUserButtonProps) {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [isBlocking, setIsBlocking] = useState(false);
@@ -23,7 +26,7 @@ export function BlockUserButton({ userId, displayName }: BlockUserButtonProps) {
     setIsBlocking(true);
 
     try {
-      await blocksApi.block(userId);
+      await blocksApi.blockByPersona(personaId);
       setShowModal(false);
       router.replace("/app/contacts?message=node-removed");
       router.refresh();
@@ -54,8 +57,8 @@ export function BlockUserButton({ userId, displayName }: BlockUserButtonProps) {
 
       <ConfirmModal
         open={showModal}
-        title="Sever Connection?"
-        description="This user will be removed from your ledger and blocked from future requests."
+        title={`Block ${displayName}?`}
+        description="This person will be removed from your contacts and future requests will be denied."
         confirmLabel="Block user"
         cancelLabel="Cancel"
         destructive

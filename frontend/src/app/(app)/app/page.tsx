@@ -24,8 +24,8 @@ export default async function AppHomePage() {
             Logged in as {user.email}
           </h2>
           <p className="text-sm leading-6 text-muted">
-            Create personas, control who can discover them, and decide which
-            identity should be public.
+            Create personas, control access, and manage permissioned connections
+            from one private workspace.
           </p>
         </div>
 

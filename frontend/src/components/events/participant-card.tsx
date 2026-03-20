@@ -38,8 +38,7 @@ export function ParticipantCard({
   const tone = roleTone(participant.role);
 
   return (
-    // 85% scale persona card
-    <div className="scale-[0.85] origin-top">
+    <div>
       <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:border-zinc-900 dark:bg-zinc-950 dark:shadow-none">
         <div className="flex items-start gap-4">
           {/* Avatar */}

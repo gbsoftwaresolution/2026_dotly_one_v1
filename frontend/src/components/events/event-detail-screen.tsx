@@ -1,12 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Card } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { eventApi } from "@/lib/api/event-api";
+import { routes } from "@/lib/constants/routes";
+import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import type {
   EventParticipant,
   EventStatus,
@@ -102,6 +105,7 @@ function StealthShield() {
 // EventDetailScreen
 // ---------------------------------------------------------------------------
 export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
+  const router = useRouter();
   const [event, setEvent] = useState<EventSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -127,6 +131,14 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
         if (!cancelled) setEvent(data);
       })
       .catch((err: unknown) => {
+        if (isExpiredSessionError(err)) {
+          router.replace(
+            `/login?next=${encodeURIComponent(routes.app.eventDetail(eventId))}&reason=expired`,
+          );
+          router.refresh();
+          return;
+        }
+
         if (!cancelled)
           setLoadError(
             err instanceof Error ? err.message : "Unable to load event.",
@@ -139,7 +151,7 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
     return () => {
       cancelled = true;
     };
-  }, [eventId]);
+  }, [eventId, router]);
 
   // Load participants — only called when discovery is ON and event is live
   const loadParticipants = useCallback(() => {
@@ -149,12 +161,20 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
       .listParticipants(eventId)
       .then(setParticipants)
       .catch((err: unknown) => {
+        if (isExpiredSessionError(err)) {
+          router.replace(
+            `/login?next=${encodeURIComponent(routes.app.eventDetail(eventId))}&reason=expired`,
+          );
+          router.refresh();
+          return;
+        }
+
         setParticipantsError(
           err instanceof Error ? err.message : "Unable to load participants.",
         );
       })
       .finally(() => setParticipantsLoading(false));
-  }, [eventId]);
+  }, [eventId, router]);
 
   // Spec requirement: participants are NOT fetched until the user toggles ON
   // Therefore we do NOT auto-load on mount even if discoverable === true.
@@ -168,7 +188,7 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
       loadParticipants();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event?.id]); // Only on initial load of the event — not on every toggle
+  }, [event?.id, loadParticipants]);
 
   // Discovery toggle handler
   async function handleDiscoveryToggle(enable: boolean) {
@@ -205,6 +225,14 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
         }
       }
     } catch (err: unknown) {
+      if (isExpiredSessionError(err)) {
+        router.replace(
+          `/login?next=${encodeURIComponent(routes.app.eventDetail(eventId))}&reason=expired`,
+        );
+        router.refresh();
+        return;
+      }
+
       setDiscoveryError(
         err instanceof Error ? err.message : "Could not update discovery.",
       );

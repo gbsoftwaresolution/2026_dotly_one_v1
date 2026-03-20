@@ -7,12 +7,16 @@ import { PrimaryButton } from "@/components/shared/primary-button";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { notificationApi } from "@/lib/api/notification-api";
 import { ApiError } from "@/lib/api/client";
+import { routes } from "@/lib/constants/routes";
 import { publishUnreadCount } from "@/lib/notifications/unread-count";
+import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import type { Notification } from "@/types/notification";
+import { useRouter } from "next/navigation";
 
 import { NotificationItem } from "./notification-item";
 
 export function NotificationsScreen() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,6 +43,14 @@ export function NotificationsScreen() {
         publishUnreadCount(data.unreadCount);
         return data;
       } catch (err: unknown) {
+        if (isExpiredSessionError(err)) {
+          router.replace(
+            `/login?next=${encodeURIComponent(routes.app.notifications)}&reason=expired`,
+          );
+          router.refresh();
+          return null;
+        }
+
         if (options?.clearError ?? true) {
           const message =
             err instanceof Error
@@ -54,7 +66,7 @@ export function NotificationsScreen() {
         }
       }
     },
-    [],
+    [router],
   );
 
   useEffect(() => {
@@ -98,6 +110,14 @@ export function NotificationsScreen() {
         return nextNotifications;
       });
     } catch (error) {
+      if (isExpiredSessionError(error)) {
+        router.replace(
+          `/login?next=${encodeURIComponent(routes.app.notifications)}&reason=expired`,
+        );
+        router.refresh();
+        return;
+      }
+
       setMarkReadError(getMarkReadErrorMessage(error));
 
       if (
@@ -122,6 +142,14 @@ export function NotificationsScreen() {
       setUnreadCount(0);
       publishUnreadCount(0);
     } catch (err: unknown) {
+      if (isExpiredSessionError(err)) {
+        router.replace(
+          `/login?next=${encodeURIComponent(routes.app.notifications)}&reason=expired`,
+        );
+        router.refresh();
+        return;
+      }
+
       setMarkAllError(
         err instanceof Error ? err.message : "Could not mark all as read.",
       );

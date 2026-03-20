@@ -95,6 +95,25 @@ export class PersonasService {
     };
   }
 
+  async findOwnedPersonaUserIdentity(userId: string, personaId: string) {
+    const persona = await this.prismaService.persona.findFirst({
+      where: {
+        id: personaId,
+        userId,
+      },
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
+
+    if (!persona) {
+      throw new NotFoundException("Persona not found");
+    }
+
+    return persona;
+  }
+
   async update(
     userId: string,
     personaId: string,

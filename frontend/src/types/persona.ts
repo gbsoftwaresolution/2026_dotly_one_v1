@@ -39,14 +39,18 @@ export interface UpdatePersonaInput {
 }
 
 export interface PublicProfile {
-  id: string;
   username: string;
-  publicUrl: string;
   fullName: string;
   jobTitle: string;
   companyName: string;
   tagline: string;
   profilePhotoUrl?: string | null;
+}
+
+export interface PublicProfileRequestTarget {
+  id: string;
+  username: string;
+  fullName: string;
   accessMode: PersonaAccessMode;
 }
 
@@ -94,13 +98,11 @@ export interface ConnectQuickConnectQrResult {
 
 export interface ResolvedQrPersonaPreview {
   username: string;
-  publicUrl: string;
   fullName: string;
   jobTitle: string;
   companyName: string;
   tagline: string;
   profilePhotoUrl?: string | null;
-  accessMode: PersonaAccessMode;
 }
 
 export interface ResolvedProfileQr {
@@ -113,12 +115,6 @@ export interface ResolvedQuickConnectQr {
   type: "quick_connect";
   code: string;
   persona: ResolvedQrPersonaPreview;
-  quickConnect: {
-    startsAt: string;
-    endsAt: string;
-    maxUses: number | null;
-    usedCount: number;
-  };
 }
 
 export type ResolvedQr = ResolvedProfileQr | ResolvedQuickConnectQr;

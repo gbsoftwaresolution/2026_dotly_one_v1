@@ -1,6 +1,4 @@
 import { Card } from "@/components/shared/card";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { formatAccessMode } from "@/lib/persona/labels";
 import type { PublicProfile } from "@/types/persona";
 
 interface PublicProfileCardProps {
@@ -13,13 +11,14 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
       <div className="bg-gradient-to-br from-slate-100 via-white to-blue-50 px-6 py-7">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-3">
-            <StatusBadge label={formatAccessMode(profile.accessMode)} />
             <div className="space-y-1">
               <h2 className="text-3xl font-semibold tracking-tight text-foreground">
                 {profile.fullName}
               </h2>
               <p className="text-base text-muted">
-                {profile.jobTitle} at {profile.companyName}
+                {[profile.jobTitle, profile.companyName]
+                  .filter(Boolean)
+                  .join(" at ")}
               </p>
             </div>
           </div>
@@ -44,22 +43,16 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
             About
           </p>
           <p className="text-base leading-7 text-foreground">
-            {profile.tagline}
+            {profile.tagline || "No public tagline available."}
           </p>
         </div>
 
-        <dl className="grid gap-4 rounded-3xl border border-border bg-slate-50/70 p-4 text-sm sm:grid-cols-2">
+        <dl className="grid gap-4 rounded-3xl border border-border bg-slate-50/70 p-4 text-sm">
           <div className="space-y-1">
             <dt className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
               Username
             </dt>
             <dd className="text-foreground">@{profile.username}</dd>
-          </div>
-          <div className="space-y-1">
-            <dt className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
-              Public link
-            </dt>
-            <dd className="break-all text-foreground">{profile.publicUrl}</dd>
           </div>
         </dl>
       </div>

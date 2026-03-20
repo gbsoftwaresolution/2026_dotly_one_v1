@@ -25,7 +25,7 @@ export default async function LoginPage({
       <ResetSessionOnLoad enabled={shouldResetSession} />
       <PageHeader
         title="Login"
-        description="Log in to manage your personas and the public profiles you publish."
+        description="Log in to manage your personas, access controls, and permissioned connections."
       />
       <Card className="space-y-5">
         {shouldResetSession ? (

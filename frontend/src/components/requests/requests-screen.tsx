@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   IncomingRequestCard,
@@ -13,8 +13,10 @@ import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
+import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import { cn } from "@/lib/utils/cn";
 import type { IncomingRequest, OutgoingRequest } from "@/types/request";
+import { useRouter } from "next/navigation";
 
 type RequestTab = "incoming" | "outgoing";
 
@@ -37,6 +39,7 @@ function toFriendlyActionError(error: unknown, action: "approve" | "reject") {
 }
 
 export function RequestsScreen() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<RequestTab>("incoming");
   const [incoming, setIncoming] = useState<IncomingRequest[]>([]);
   const [outgoing, setOutgoing] = useState<OutgoingRequest[]>([]);
@@ -51,7 +54,7 @@ export function RequestsScreen() {
     action: "approve" | "reject";
   } | null>(null);
 
-  async function loadRequests() {
+  const loadRequests = useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
 
@@ -64,6 +67,14 @@ export function RequestsScreen() {
       setIncoming(nextIncoming);
       setOutgoing(nextOutgoing);
     } catch (error) {
+      if (isExpiredSessionError(error)) {
+        router.replace(
+          `/login?next=${encodeURIComponent(routes.app.requests)}&reason=expired`,
+        );
+        router.refresh();
+        return;
+      }
+
       setLoadError(
         error instanceof ApiError
           ? error.message
@@ -72,11 +83,11 @@ export function RequestsScreen() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [router]);
 
   useEffect(() => {
     void loadRequests();
-  }, []);
+  }, [loadRequests]);
 
   const visibleRequests = useMemo(
     () => (activeTab === "incoming" ? incoming : outgoing),
@@ -107,6 +118,14 @@ export function RequestsScreen() {
       setIncoming(nextIncoming);
       setOutgoing(nextOutgoing);
     } catch (error) {
+      if (isExpiredSessionError(error)) {
+        router.replace(
+          `/login?next=${encodeURIComponent(routes.app.requests)}&reason=expired`,
+        );
+        router.refresh();
+        return;
+      }
+
       setFeedback({
         tone: "error",
         message: toFriendlyActionError(error, action),

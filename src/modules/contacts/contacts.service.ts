@@ -33,6 +33,7 @@ const contactTargetPersonaSelect = {
 const contactRelationshipSelect = {
   id: true,
   ownerUserId: true,
+  targetUserId: true,
   state: true,
   accessStartAt: true,
   accessEndAt: true,

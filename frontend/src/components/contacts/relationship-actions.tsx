@@ -9,10 +9,14 @@ import { contactsApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import type { ContactRelationshipState } from "@/types/contact";
 
+import { BlockUserButton } from "./block-user-button";
+
 interface RelationshipActionsProps {
   relationshipId: string;
   initialState: ContactRelationshipState;
   isExpired: boolean;
+  targetPersonaId: string;
+  displayName: string;
 }
 
 function getStateBadge(state: ContactRelationshipState) {
@@ -31,6 +35,8 @@ export function RelationshipActions({
   relationshipId,
   initialState,
   isExpired: initialIsExpired,
+  targetPersonaId,
+  displayName,
 }: RelationshipActionsProps) {
   const router = useRouter();
   const [state, setState] = useState<ContactRelationshipState>(initialState);
@@ -92,6 +98,8 @@ export function RelationshipActions({
 
   return (
     <div className="space-y-3">
+      <BlockUserButton personaId={targetPersonaId} displayName={displayName} />
+
       {/* Upgraded success confirmation */}
       {upgradedViaAction ? (
         <div className="flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50/80 px-4 py-3 dark:border-green-900 dark:bg-green-950/30">

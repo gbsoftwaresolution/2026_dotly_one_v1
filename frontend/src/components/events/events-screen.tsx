@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Card } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -8,6 +9,8 @@ import { PrimaryButton } from "@/components/shared/primary-button";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { eventApi } from "@/lib/api/event-api";
 import { personaApi } from "@/lib/api/persona-api";
+import { routes } from "@/lib/constants/routes";
+import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import type { PersonaSummary } from "@/types/persona";
 import type { EventSummary } from "@/types/event";
 
@@ -118,7 +121,7 @@ function JoinPanel({ onJoined }: JoinPanelProps) {
                 type="text"
                 value={eventCode}
                 onChange={(e) => setEventCode(e.target.value)}
-                placeholder="Paste the event ID or code"
+                placeholder="Paste the event access code"
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-sm text-foreground placeholder:text-slate-400 focus:border-brandRose focus:outline-none focus:ring-2 focus:ring-brandRose/20 dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-600 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
                 autoComplete="off"
                 spellCheck={false}
@@ -193,6 +196,7 @@ function JoinPanel({ onJoined }: JoinPanelProps) {
 // ---------------------------------------------------------------------------
 
 export function EventsScreen() {
+  const router = useRouter();
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -208,6 +212,14 @@ export function EventsScreen() {
         if (!cancelled) setEvents(data);
       })
       .catch((err: unknown) => {
+        if (isExpiredSessionError(err)) {
+          router.replace(
+            `/login?next=${encodeURIComponent(routes.app.events)}&reason=expired`,
+          );
+          router.refresh();
+          return;
+        }
+
         if (!cancelled)
           setLoadError(
             err instanceof Error ? err.message : "Unable to load events.",
@@ -220,7 +232,7 @@ export function EventsScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [router]);
 
   function handleJoined(event: EventSummary) {
     // Prepend the newly joined event and avoid duplicates
