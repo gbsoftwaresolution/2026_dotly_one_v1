@@ -73,8 +73,7 @@ function matchesTokenWhere(
     typeof where.expiresAt === "object" &&
     where.expiresAt !== null &&
     "gt" in where.expiresAt &&
-    token.expiresAt.getTime() <=
-      (where.expiresAt as { gt: Date }).gt.getTime()
+    token.expiresAt.getTime() <= (where.expiresAt as { gt: Date }).gt.getTime()
   ) {
     return false;
   }
@@ -84,8 +83,7 @@ function matchesTokenWhere(
     typeof where.createdAt === "object" &&
     where.createdAt !== null &&
     "gte" in where.createdAt &&
-    token.createdAt.getTime() <
-      (where.createdAt as { gte: Date }).gte.getTime()
+    token.createdAt.getTime() < (where.createdAt as { gte: Date }).gte.getTime()
   ) {
     return false;
   }
@@ -102,7 +100,10 @@ function createAuthServiceHarness(options?: {
     users: [...(options?.users ?? [])],
     tokens: [...(options?.tokens ?? [])],
     sentMails: [] as Array<{ to: string; token: string; expiresAt: Date }>,
-    analyticsEvents: [] as Array<{ type: string; payload: Record<string, unknown> }>,
+    analyticsEvents: [] as Array<{
+      type: string;
+      payload: Record<string, unknown>;
+    }>,
     mailDeliveryEnabled: options?.mailDeliveryEnabled ?? true,
   };
 
@@ -192,7 +193,9 @@ function createAuthServiceHarness(options?: {
         state.tokens.filter((token) => matchesTokenWhere(token, where ?? {}))
           .length,
       update: async ({ where, data }: any) => {
-        const token = state.tokens.find((candidate) => candidate.id === where.id);
+        const token = state.tokens.find(
+          (candidate) => candidate.id === where.id,
+        );
 
         if (!token) {
           throw new Error("Token not found");
@@ -237,6 +240,7 @@ function createAuthServiceHarness(options?: {
   };
 
   const mailService = {
+    isConfigured: () => state.mailDeliveryEnabled,
     sendEmailVerification: async ({
       to,
       token,
@@ -258,7 +262,9 @@ function createAuthServiceHarness(options?: {
     } as any,
     mailService as any,
     {
-      trackVerificationEmailIssued: async (payload: Record<string, unknown>) => {
+      trackVerificationEmailIssued: async (
+        payload: Record<string, unknown>,
+      ) => {
         state.analyticsEvents.push({
           type: "EMAIL_VERIFICATION_ISSUED",
           payload,
@@ -280,6 +286,10 @@ function createAuthServiceHarness(options?: {
         return true;
       },
     } as any,
+    undefined as any,
+    undefined as any,
+    undefined as any,
+    undefined as any,
   );
 
   return {
@@ -304,7 +314,10 @@ describe("AuthService email verification hardening", () => {
     assert.equal(state.tokens.length, 1);
     assert.equal(state.sentMails.length, 1);
     assert.notEqual(state.tokens[0]?.tokenHash, state.sentMails[0]?.token);
-    assert.equal(state.tokens[0]?.tokenHash, hashToken(state.sentMails[0]!.token));
+    assert.equal(
+      state.tokens[0]?.tokenHash,
+      hashToken(state.sentMails[0]!.token),
+    );
     assert.deepEqual(state.analyticsEvents[0], {
       type: "EMAIL_VERIFICATION_ISSUED",
       payload: {
@@ -468,7 +481,10 @@ describe("AuthService email verification hardening", () => {
     assert.equal(state.tokens.length, 2);
     assert.ok(state.tokens[0]?.supersededAt instanceof Date);
     assert.equal(state.sentMails.length, 1);
-    assert.equal(state.tokens[1]?.tokenHash, hashToken(state.sentMails[0]!.token));
+    assert.equal(
+      state.tokens[1]?.tokenHash,
+      hashToken(state.sentMails[0]!.token),
+    );
     assert.deepEqual(state.analyticsEvents, [
       {
         type: "EMAIL_VERIFICATION_ISSUED",

@@ -60,4 +60,19 @@ describe("LoginPage", () => {
       }),
     );
   });
+
+  it("shows the password reset completion banner", async () => {
+    const page = await LoginPage({
+      searchParams: Promise.resolve({
+        reason: "password-reset",
+      }),
+    });
+
+    render(page);
+
+    expect(
+      screen.getByText(/password reset complete\. log in with your new password\./i),
+    ).toBeInTheDocument();
+    expect(mocks.resetSessionOnLoad).toHaveBeenCalledWith(false);
+  });
 });

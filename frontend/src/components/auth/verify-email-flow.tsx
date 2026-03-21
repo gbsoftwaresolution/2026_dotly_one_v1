@@ -105,7 +105,9 @@ export function VerifyEmailFlow({
       setFeedback(
         result.verificationEmailSent
           ? "A new link is on the way. Check your inbox and spam folder."
-          : "Delivery is disabled, but a new link would be sent in production.",
+          : result.mailDeliveryAvailable
+            ? "Verification is still pending. Check your inbox for the latest message from Dotly."
+            : "Delivery is disabled in this environment, but the resend flow is ready for production mail.",
       );
     } catch (resendError) {
       setError(getResendErrorMessage(resendError));

@@ -84,12 +84,22 @@ enum AnalyticsEventType {
   VERIFICATION_REQUIREMENT_BLOCKED @map("verification_requirement_blocked")
 }
 
+enum MobileOtpPurpose {
+  ENROLLMENT @map("enrollment")
+}
+
 model User {
   id                      String                @id @default(uuid()) @db.Uuid
   email                   String                @unique
   passwordHash            String
   isVerified              Boolean               @default(false)
+  phoneNumber             String?               @unique @db.VarChar(32)
+  pendingPhoneNumber      String?               @db.VarChar(32)
+  phoneVerifiedAt         DateTime?
   emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  mobileOtpChallenges     MobileOtpChallenge[]
+  authSessions            AuthSession[]
   personas                Persona[]
   analyticsEvents         AnalyticsEvent[]
   createdEvents           Event[]
@@ -117,6 +127,59 @@ model EmailVerificationToken {
 
   @@index([userId, createdAt])
   @@index([userId, expiresAt])
+}
+
+model PasswordResetToken {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  tokenHash    String   @unique @db.VarChar(64)
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  supersededAt DateTime?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, expiresAt])
+}
+
+model MobileOtpChallenge {
+  id                  String           @id @default(uuid()) @db.Uuid
+  userId              String           @db.Uuid
+  phoneNumber         String           @db.VarChar(32)
+  purpose             MobileOtpPurpose @default(ENROLLMENT)
+  codeHash            String           @db.VarChar(64)
+  expiresAt           DateTime
+  consumedAt          DateTime?
+  supersededAt        DateTime?
+  invalidAttemptCount Int              @default(0)
+  lastAttemptAt       DateTime?
+  resendAvailableAt   DateTime
+  createdAt           DateTime         @default(now())
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, expiresAt])
+  @@index([userId, phoneNumber, createdAt])
+}
+
+model AuthSession {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  userAgent     String?  @db.VarChar(512)
+  deviceLabel   String   @db.VarChar(160)
+  platformLabel String   @db.VarChar(80)
+  ipAddressHash String?  @db.VarChar(64)
+  createdAt     DateTime @default(now())
+  lastActiveAt  DateTime @default(now())
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  revokedReason String?  @db.VarChar(120)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, revokedAt, createdAt])
+  @@index([expiresAt])
 }
 
 model Persona {

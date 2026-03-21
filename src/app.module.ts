@@ -10,6 +10,7 @@ import { DatabaseModule } from "./infrastructure/database/database.module";
 import { LoggingModule } from "./infrastructure/logging/logging.module";
 import { MailModule } from "./infrastructure/mail/mail.module";
 import { StorageModule } from "./infrastructure/storage/storage.module";
+import { SmsModule } from "./infrastructure/sms/sms.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { BlocksModule } from "./modules/blocks/blocks.module";
@@ -39,6 +40,7 @@ import { UsersModule } from "./modules/users/users.module";
     CacheInfrastructureModule,
     StorageModule,
     MailModule,
+    SmsModule,
     AuthModule,
     UsersModule,
     PersonasModule,

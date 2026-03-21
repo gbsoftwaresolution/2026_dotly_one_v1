@@ -18,6 +18,9 @@ import { QrService } from "../src/modules/qr/qr.service";
 describe("JwtAuthGuard hardening", () => {
   it("verifies tokens with issuer and audience constraints", async () => {
     let verifyOptions: Record<string, unknown> | null = null;
+    let validateSessionArgs:
+      | { userId: string; sessionId: string }
+      | null = null;
 
     const guard = new JwtAuthGuard(
       {
@@ -29,6 +32,7 @@ describe("JwtAuthGuard hardening", () => {
           return {
             sub: "user-1",
             email: "user@example.com",
+            sessionId: "session-1",
           };
         },
       } as any,
@@ -42,6 +46,14 @@ describe("JwtAuthGuard hardening", () => {
             email: "user@example.com",
             isVerified: false,
           }),
+        },
+      } as any,
+      {
+        validateSession: async (userId: string, sessionId: string) => {
+          validateSessionArgs = { userId, sessionId };
+          return {
+            id: sessionId,
+          };
         },
       } as any,
     );
@@ -63,10 +75,15 @@ describe("JwtAuthGuard hardening", () => {
       issuer: "dotly-backend",
       audience: "dotly-clients",
     });
+    assert.deepEqual(validateSessionArgs, {
+      userId: "user-1",
+      sessionId: "session-1",
+    });
     assert.deepEqual(request.user, {
       id: "user-1",
       email: "user@example.com",
       isVerified: false,
+      sessionId: "session-1",
     });
   });
 
@@ -76,6 +93,7 @@ describe("JwtAuthGuard hardening", () => {
         verifyAsync: async () => ({
           sub: "",
           email: "user@example.com",
+          sessionId: "session-1",
         }),
       } as any,
       {
@@ -89,6 +107,55 @@ describe("JwtAuthGuard hardening", () => {
             isVerified: false,
           }),
         },
+      } as any,
+      {
+        validateSession: async () => ({
+          id: "session-1",
+        }),
+      } as any,
+    );
+
+    await assert.rejects(
+      guard.canActivate({
+        switchToHttp: () => ({
+          getRequest: () => ({
+            headers: {
+              authorization: "Bearer token",
+            },
+          }),
+        }),
+      } as any),
+      (error: unknown) => {
+        assert.ok(error instanceof UnauthorizedException);
+        assert.equal(error.message, "Invalid authentication token");
+        return true;
+      },
+    );
+  });
+
+  it("rejects revoked or missing tracked sessions", async () => {
+    const guard = new JwtAuthGuard(
+      {
+        verifyAsync: async () => ({
+          sub: "user-1",
+          email: "user@example.com",
+          sessionId: "session-revoked",
+        }),
+      } as any,
+      {
+        get: (_key: string, fallback: string) => fallback,
+      } as any,
+      {
+        user: {
+          findUnique: async () => ({
+            id: "user-1",
+            email: "user@example.com",
+            isVerified: false,
+          }),
+        },
+      } as any,
+      {
+        validateSession: async () => null,
       } as any,
     );
 

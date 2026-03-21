@@ -9,6 +9,7 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
+import { DeviceSessionService } from "../../modules/auth/device-session.service";
 import type { JwtPayload } from "../../modules/auth/interfaces/jwt-payload.interface";
 import type { AuthenticatedUser } from "../decorators/current-user.decorator";
 
@@ -29,6 +30,8 @@ export class JwtAuthGuard implements CanActivate {
     private readonly configService: ConfigService,
     @Optional()
     private readonly prismaService?: PrismaService,
+    @Optional()
+    private readonly deviceSessionService?: DeviceSessionService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -60,6 +63,33 @@ export class JwtAuthGuard implements CanActivate {
         throw new UnauthorizedException("Invalid authentication token");
       }
 
+      if (payload.sessionId) {
+        const session = this.deviceSessionService
+          ? await this.deviceSessionService.validateSession(
+              payload.sub,
+              payload.sessionId,
+            )
+          : await (this.prismaService as any)?.authSession?.findFirst?.({
+              where: {
+                id: payload.sessionId,
+                userId: payload.sub,
+              },
+              select: {
+                id: true,
+                revokedAt: true,
+                expiresAt: true,
+              },
+            });
+
+        if (
+          !session ||
+          ("revokedAt" in session && session.revokedAt) ||
+          ("expiresAt" in session && session.expiresAt.getTime() <= Date.now())
+        ) {
+          throw new UnauthorizedException("Invalid authentication token");
+        }
+      }
+
       const user = await (
         this.prismaService ?? (noopPrismaService as unknown as PrismaService)
       ).user.findUnique({
@@ -81,6 +111,7 @@ export class JwtAuthGuard implements CanActivate {
         id: payload.sub,
         email: payload.email,
         isVerified: user.isVerified,
+        sessionId: payload.sessionId,
       };
 
       return true;

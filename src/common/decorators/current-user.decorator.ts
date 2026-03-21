@@ -4,6 +4,7 @@ export interface AuthenticatedUser {
   id: string;
   email: string;
   isVerified?: boolean;
+  sessionId?: string;
 }
 
 export const CurrentUser = createParamDecorator(

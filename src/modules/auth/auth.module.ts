@@ -8,6 +8,8 @@ import { AnalyticsModule } from "../analytics/analytics.module";
 
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
+import { DeviceSessionService } from "./device-session.service";
+import { PasswordPolicyService } from "./password-policy.service";
 import { VerificationDiagnosticsService } from "./verification-diagnostics.service";
 import { VerificationPolicyService } from "./verification-policy.service";
 
@@ -34,6 +36,8 @@ import { VerificationPolicyService } from "./verification-policy.service";
   providers: [
     AuthService,
     JwtAuthGuard,
+    PasswordPolicyService,
+    DeviceSessionService,
     VerificationPolicyService,
     VerificationDiagnosticsService,
   ],

@@ -8,7 +8,7 @@ Dotly is a permissioned identity and contact platform built around personas, app
 - Data layer: Prisma + PostgreSQL for persistence, with advisory-lock-backed request throttling and Redis as an optional fail-soft cache/runtime dependency
 - Frontend: Next.js App Router + TypeScript + Tailwind CSS, same-origin route handlers, protected `/app` surfaces, and client-side tests around auth, analytics, QR, request, and route-guard flows
 - Observability: structured JSON logs, request ID propagation via `x-request-id`, global exception envelopes, liveness at `/v1/health`, and readiness at `/v1/health/ready`
-- Metrics: Prometheus-style gauges are exposed at `/v1/metrics` for service, database, and cache readiness integration
+- Metrics: Prometheus-style gauges are exposed at `/v1/metrics` for service, database, cache, and auth security state integration
 - Verification diagnostics: `/v1/health/verification` exposes non-PII verification runtime state for staging and support debugging
 - Domain modules: auth, personas, profiles, QR, contact requests, contacts, relationships, contact memory, events, notifications, analytics, blocks, trust-abuse, and users
 
@@ -23,6 +23,8 @@ Dotly is a permissioned identity and contact platform built around personas, app
 - Account-level verification analytics for issued links, resend usage, completed verification, and trust-policy blocks
 - Blocking and verified-only safeguards to preserve privacy and abuse boundaries
 - Email verification for new accounts, resend guardrails, and Mailgun-backed delivery when configured
+- Password change, password reset, Twilio-backed mobile OTP enrollment, and revocable device sessions in the account security center
+- Dedicated in-app settings controls for account trust, verification management, password recovery, mobile OTP, and active devices
 
 ## Current Repository Layout
 
@@ -54,6 +56,10 @@ Backend mail env:
 - `MAILGUN_DOMAIN`: Mailgun sending domain
 - `MAIL_FROM_EMAIL`: verified sender address, for example `Dotly <hello@dotly.one>`
 - `FRONTEND_VERIFICATION_URL_BASE`: full public verify route, for example `http://localhost:3001/verify-email`
+- `FRONTEND_PASSWORD_RESET_URL_BASE`: full public reset route, for example `http://localhost:3001/reset-password`
+- `TWILIO_ACCOUNT_SID`: Twilio account SID for SMS OTP delivery
+- `TWILIO_AUTH_TOKEN`: Twilio auth token for SMS OTP delivery
+- `TWILIO_FROM_PHONE_NUMBER`: Twilio phone number used to send verification codes
 
 Frontend:
 
@@ -100,12 +106,18 @@ CI workflows:
 - Redis connectivity is fail-soft: startup attempts a background connection when `REDIS_ENABLED=true`, request handling continues without Redis, and readiness reports degraded or disabled cache state without forcing reconnect storms
 - Email verification is required for trust-aware features that depend on `isVerified`; unverified users can still log in and continue basic setup
 - Verified email is currently required for sending contact requests, creating shareable profile QR codes, creating Quick Connect QR codes, joining events, enabling event discovery, and viewing discoverable event participants
+- Mobile OTP is now the next active trust factor and satisfies the same trust-sensitive policy seam once verified
 - Unverified users can still sign up, log in, create personas, browse protected screens, and complete basic onboarding without being locked out of the workspace
 - Frontend verification UX now exposes session verification state with badges, an in-app unverified banner, resend verification actions, and clear trust-language guidance on blocked request, QR, and event flows
-- The trust-policy layer now evaluates allowed trust factors per action. Email verification satisfies all current trust-sensitive requirements, and the same policy seam is ready for later mobile OTP or additional identity factors without changing call sites.
+- Account trust management now has a dedicated settings surface where authenticated users can review verification status, rotate passwords, enroll mobile OTP, inspect active sessions, revoke devices, and trigger recovery-friendly flows
+- Password reset links are hashed, one-time, and time-limited. Completing a reset revokes all active sessions.
+- Mobile OTP verification enforces resend guardrails, a short retry cooldown between incorrect code attempts, and terminal lockout after repeated failures.
+- The trust-policy layer now evaluates allowed trust factors per action. Email verification and verified mobile OTP satisfy trust-sensitive requirements without changing downstream call sites.
+- Each successful login creates a stored session record with device metadata so current-device badges and remote sign-out can work predictably.
 - Resend verification accepts the request when the account is still pending, applies cooldown feedback when retried too quickly, and records verification analytics for issued links, resend usage, successful verification, and blocked trust actions.
+- Session-management endpoints require a tracked current session context, reject malformed revoke targets, and emit structured auth-security logs for device sign-out actions.
 - When `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, `MAIL_FROM_EMAIL`, or `FRONTEND_VERIFICATION_URL_BASE` are missing, signup still creates a pending account but verification email delivery is skipped safely
 - Browser clients can supply and read `x-request-id` for correlation across backend responses
-- `GET /v1/metrics` is safe for infrastructure scraping and returns plain-text gauges for service/database/cache health
+- `GET /v1/metrics` is safe for infrastructure scraping and returns plain-text gauges for service/database/cache health plus active password reset tokens, active OTP challenges, and active/recently revoked sessions
 - `GET /v1/health/verification` is safe for staging and support diagnostics and returns runtime verification readiness, trust-factor availability, required migration status, and token volume counters without exposing user emails or token values
 - Use `docs/staging-launch-checklist.md` before promoting staging to production

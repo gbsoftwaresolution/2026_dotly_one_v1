@@ -4,6 +4,8 @@ export const routes = {
     login: "/login",
     signup: "/signup",
     verifyEmail: "/verify-email",
+    forgotPassword: "/forgot-password",
+    resetPassword: "/reset-password",
     terms: "/terms",
     privacy: "/privacy",
     qrLanding: "/q",
@@ -22,5 +24,6 @@ export const routes = {
     eventDetail: (eventId: string) => `/app/events/${eventId}`,
     notifications: "/app/notifications",
     analytics: "/app/analytics",
+    settings: "/app/settings",
   },
 } as const;

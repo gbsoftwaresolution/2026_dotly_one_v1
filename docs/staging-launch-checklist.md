@@ -33,6 +33,9 @@ Use this checklist before promoting the backend to production.
 - Verify invalid JWTs and wrong `iss` or `aud` claims are rejected with `401`.
 - Verify unverified users still can sign up and log in successfully.
 - Verify trust-sensitive actions return user-friendly `403` responses for unverified accounts.
+- Verify password reset throttling still applies when the same email is retried with different casing or extra whitespace.
+- Verify mobile OTP incorrect-code retries hit a short cooldown and fully lock the challenge after the configured failure threshold.
+- Verify session revoke endpoints reject malformed session ids and requests that do not carry a tracked current session id.
 - Verify public profile responses expose only `username`, `fullName`, `jobTitle`, `companyName`, `tagline`, and `profilePhotoUrl`.
 - Verify QR resolve responses do not expose private persona fields, internal IDs, usage counts, or token state.
 - Verify private personas cannot create public profile QR codes.
@@ -69,6 +72,7 @@ Use this checklist before promoting the backend to production.
 - Verify analytics endpoints only return owned persona aggregates.
 - Verify analytics conversions handle zero denominators safely.
 - Verify analytics summary now includes verification issuance, resend, completion, and blocked-action counts after exercising those flows in staging.
+- Verify `/v1/metrics` now reports auth security gauges for active password reset tokens, active OTP challenges, and active or recently revoked sessions.
 
 ## Rate Limiting And Concurrency
 

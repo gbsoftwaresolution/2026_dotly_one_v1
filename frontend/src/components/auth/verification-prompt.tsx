@@ -58,7 +58,9 @@ export function VerificationPrompt({
         tone: "success",
         message: result.verificationEmailSent
           ? "Verification email sent. Open the latest message from Dotly, or check your spam folder."
-          : "Verification is still pending. If email delivery is enabled, Dotly will send a fresh link.",
+          : result.mailDeliveryAvailable
+            ? "Verification is still pending. If email delivery is enabled, Dotly will send a fresh link."
+            : "Email delivery is unavailable in this environment. Dotly is ready to send a fresh link as soon as mail is configured.",
       });
     } catch (error) {
       setFeedback({

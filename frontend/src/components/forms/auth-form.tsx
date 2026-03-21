@@ -88,9 +88,9 @@ export function AuthForm({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(
-    null,
-  );
+  const [confirmPasswordError, setConfirmPasswordError] = useState<
+    string | null
+  >(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -157,8 +157,13 @@ export function AuthForm({
 
     try {
       if (mode === "signup") {
-        const result = await authApi.signup({ email: normalizedEmail, password });
-        const deliveryState = result.verificationEmailSent ? "sent" : "disabled";
+        const result = await authApi.signup({
+          email: normalizedEmail,
+          password,
+        });
+        const deliveryState = result.verificationEmailSent
+          ? "sent"
+          : "disabled";
 
         setSuccessMessage(
           result.verificationEmailSent
@@ -183,11 +188,11 @@ export function AuthForm({
   }
 
   return (
-    <motion.form 
+    <motion.form
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="space-y-6 form-apple" 
+      className="space-y-6 form-apple"
       onSubmit={handleSubmit}
     >
       <div className="space-y-1.5 text-center">
@@ -219,92 +224,105 @@ export function AuthForm({
       </div>
 
       <div className="pt-2">
-      <PasswordField
-        id="password"
-        label="Password"
-        value={password}
-        minLength={6}
-        maxLength={72}
-        autoComplete={mode === "login" ? "current-password" : "new-password"}
-        placeholder={
-          mode === "signup" ? "Use a strong password" : "Enter your password"
-        }
-        error={passwordError}
-        footer={
-          mode === "signup" ? (
-            <div className="space-y-2">
-              <p>{SIGNUP_PASSWORD_HELPER}</p>
-              {passwordStrength ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted/80">
-                    Password strength
-                  </span>
-                  <span
-                    className={cn(
-                      "inline-flex rounded-full border px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em]",
-                      passwordStrength.className,
-                    )}
-                  >
-                    {passwordStrength.label}
-                  </span>
-                </div>
-              ) : null}
-            </div>
-          ) : (
-            <p>Use the password associated with your Dotly account.</p>
-          )
-        }
-        onChange={(nextPassword) => {
-          resetFormFeedback();
-          setPassword(nextPassword);
-
-          if (passwordError) {
-            setPasswordError(null);
+        <PasswordField
+          id="password"
+          label="Password"
+          value={password}
+          minLength={6}
+          maxLength={72}
+          autoComplete={mode === "login" ? "current-password" : "new-password"}
+          placeholder={
+            mode === "signup" ? "Use a strong password" : "Enter your password"
           }
-
-          if (confirmPasswordError && confirmPassword.length > 0) {
-            setConfirmPasswordError(
-              nextPassword === confirmPassword
-                ? null
-                : "Passwords must match to continue.",
-            );
+          error={passwordError}
+          footer={
+            mode === "signup" ? (
+              <div className="space-y-2">
+                <p>{SIGNUP_PASSWORD_HELPER}</p>
+                {passwordStrength ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted/80">
+                      Password strength
+                    </span>
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full border px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em]",
+                        passwordStrength.className,
+                      )}
+                    >
+                      {passwordStrength.label}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <p>Use the password associated with your Dotly account.</p>
+            )
           }
-        }}
-      />
+          onChange={(nextPassword) => {
+            resetFormFeedback();
+            setPassword(nextPassword);
+
+            if (passwordError) {
+              setPasswordError(null);
+            }
+
+            if (confirmPasswordError && confirmPassword.length > 0) {
+              setConfirmPasswordError(
+                nextPassword === confirmPassword
+                  ? null
+                  : "Passwords must match to continue.",
+              );
+            }
+          }}
+        />
       </div>
 
       {mode === "signup" ? (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           className="pt-2"
         >
-        <PasswordField
-          id="confirm-password"
-          label="Confirm password"
-          value={confirmPassword}
-          minLength={6}
-          maxLength={72}
-          autoComplete="new-password"
-          placeholder="Re-enter your password"
-          error={confirmPasswordError}
-          footer={<p>Match your password exactly before creating the account.</p>}
-          onChange={(nextValue) => {
-            resetFormFeedback();
-            setConfirmPassword(nextValue);
-            setConfirmPasswordError(
-              nextValue.length === 0 || nextValue === password
-                ? null
-                : "Passwords must match to continue.",
-            );
-          }}
-        />
+          <PasswordField
+            id="confirm-password"
+            label="Confirm password"
+            value={confirmPassword}
+            minLength={6}
+            maxLength={72}
+            autoComplete="new-password"
+            placeholder="Re-enter your password"
+            error={confirmPasswordError}
+            footer={
+              <p>Match your password exactly before creating the account.</p>
+            }
+            onChange={(nextValue) => {
+              resetFormFeedback();
+              setConfirmPassword(nextValue);
+              setConfirmPasswordError(
+                nextValue.length === 0 || nextValue === password
+                  ? null
+                  : "Passwords must match to continue.",
+              );
+            }}
+          />
         </motion.div>
+      ) : null}
+
+      {mode === "login" ? (
+        <div className="-mt-2 flex justify-end">
+          <Link
+            href={routes.public.forgotPassword}
+            className="text-sm font-semibold text-brandRose transition-colors hover:text-brandRose/80 dark:text-brandCyan dark:hover:text-brandCyan/80"
+          >
+            Forgot password?
+          </Link>
+        </div>
       ) : null}
 
       <AnimatePresence mode="popLayout">
         {error ? (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -317,7 +335,7 @@ export function AuthForm({
         ) : null}
 
         {successMessage ? (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -331,33 +349,35 @@ export function AuthForm({
       </AnimatePresence>
 
       <div className="pt-2">
-      <PrimaryButton
-        type="submit"
-        className="w-full h-[52px] rounded-[14px] text-[15px] font-semibold tracking-wide shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-[1px] active:translate-y-[1px] active:shadow-sm"
-        disabled={isSubmitting}
-        isLoading={isSubmitting}
-        isSuccess={Boolean(successMessage) && !isSubmitting}
-      >
-        {successMessage && !isSubmitting ? "Account ready" : content.submitLabel}
-      </PrimaryButton>
+        <PrimaryButton
+          type="submit"
+          className="w-full h-[52px] rounded-[14px] text-[15px] font-semibold tracking-wide shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-[1px] active:translate-y-[1px] active:shadow-sm"
+          disabled={isSubmitting}
+          isLoading={isSubmitting}
+          isSuccess={Boolean(successMessage) && !isSubmitting}
+        >
+          {successMessage && !isSubmitting
+            ? "Account ready"
+            : content.submitLabel}
+        </PrimaryButton>
       </div>
 
       {mode === "signup" ? (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
           className="space-y-6"
         >
           <p className="text-center text-[13px] leading-relaxed text-muted-foreground">
-            By creating an account, you agree to Dotly&apos;s {" "}
+            By creating an account, you agree to Dotly&apos;s{" "}
             <Link
               href={routes.public.terms}
               className="font-semibold text-brandRose hover:text-brandRose/80 underline-offset-4 hover:underline dark:text-brandCyan dark:hover:text-brandCyan/80 transition-colors"
             >
               Terms
             </Link>{" "}
-            and acknowledge the {" "}
+            and acknowledge the{" "}
             <Link
               href={routes.public.privacy}
               className="font-semibold text-brandRose hover:text-brandRose/80 underline-offset-4 hover:underline dark:text-brandCyan dark:hover:text-brandCyan/80 transition-colors"

@@ -21,11 +21,21 @@ export const envValidationSchema = Joi.object({
   STORAGE_BUCKET: Joi.string().allow("").default(""),
   MAILGUN_API_KEY: Joi.string().allow("").default(""),
   MAILGUN_DOMAIN: Joi.string().allow("").default(""),
-  MAIL_FROM_EMAIL: Joi.string().email({ tlds: { allow: false } }).allow("").default(""),
+  MAIL_FROM_EMAIL: Joi.string()
+    .email({ tlds: { allow: false } })
+    .allow("")
+    .default(""),
   FRONTEND_VERIFICATION_URL_BASE: Joi.string()
     .uri({ scheme: [/https?/] })
     .allow("")
     .default(""),
+  FRONTEND_PASSWORD_RESET_URL_BASE: Joi.string()
+    .uri({ scheme: [/https?/] })
+    .allow("")
+    .default(""),
+  TWILIO_ACCOUNT_SID: Joi.string().allow("").default(""),
+  TWILIO_AUTH_TOKEN: Joi.string().allow("").default(""),
+  TWILIO_FROM_PHONE_NUMBER: Joi.string().allow("").default(""),
   QR_BASE_URL: Joi.string()
     .uri({ scheme: [/https?/] })
     .default("https://dotly.id/q"),

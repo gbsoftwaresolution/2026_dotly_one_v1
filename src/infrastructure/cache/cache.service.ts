@@ -84,6 +84,41 @@ export class CacheService implements OnModuleDestroy {
     return this.connectPromise;
   }
 
+  async setIfAbsent(
+    key: string,
+    value: string,
+    ttlSeconds: number,
+  ): Promise<boolean | null> {
+    const client = await this.ensureConnection();
+
+    if (!client) {
+      return null;
+    }
+
+    const result = await client.set(key, value, {
+      NX: true,
+      EX: ttlSeconds,
+    });
+
+    return result === "OK";
+  }
+
+  async increment(key: string, ttlSeconds: number): Promise<number | null> {
+    const client = await this.ensureConnection();
+
+    if (!client) {
+      return null;
+    }
+
+    const count = await client.incr(key);
+
+    if (count === 1) {
+      await client.expire(key, ttlSeconds);
+    }
+
+    return count;
+  }
+
   async getHealthStatus(): Promise<{
     status: "up" | "down" | "degraded" | "disabled";
     message?: string;

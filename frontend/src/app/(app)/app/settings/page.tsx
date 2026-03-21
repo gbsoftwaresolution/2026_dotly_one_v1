@@ -1,18 +1,21 @@
-import { VerificationSettingsCard } from "@/components/settings/verification-settings-card";
+import { PageHeader } from "@/components/shared/page-header";
+import { AccountSecuritySettings } from "@/components/settings/account-security-settings";
 import { ThemeSwitcher } from "@/components/app-shell/theme-switcher";
+import { requireServerSession } from "@/lib/auth/protected-route";
+import { routes } from "@/lib/constants/routes";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const { user } = await requireServerSession(routes.app.settings);
+
   return (
-    <section className="flex flex-col gap-4">
-      {/* Page header */}
-      <div className="space-y-1 px-1">
-        <h1 className="text-xl font-bold text-foreground">Settings</h1>
-        <p className="text-sm text-muted">
-          Appearance and account preferences.
-        </p>
-      </div>
+    <section className="space-y-4">
+      <PageHeader
+        title="Settings"
+        description="Trust, verification, and appearance controls for your Dotly account."
+      />
 
-      {/* Appearance */}
+      <AccountSecuritySettings user={user} />
+
       <div className="glass rounded-3xl border border-border bg-surface p-5">
         <p className="label-xs mb-4 text-muted">Appearance</p>
         <div className="flex items-center justify-between gap-4">
@@ -24,16 +27,6 @@ export default function SettingsPage() {
           </div>
           <ThemeSwitcher />
         </div>
-      </div>
-
-      <VerificationSettingsCard />
-
-      {/* Coming soon */}
-      <div className="rounded-3xl border border-dashed border-border p-5">
-        <p className="text-center font-mono text-xs text-muted">
-          More settings — persona management and session control — will expand
-          after Phase 1.
-        </p>
       </div>
     </section>
   );

@@ -35,29 +35,54 @@ MAILGUN_API_KEY=
 MAILGUN_DOMAIN=
 MAIL_FROM_EMAIL=
 FRONTEND_VERIFICATION_URL_BASE=http://localhost:3001/verify-email
+FRONTEND_PASSWORD_RESET_URL_BASE=http://localhost:3001/reset-password
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_FROM_PHONE_NUMBER=
 QR_BASE_URL=http://localhost:3001/q
 ```
 
 Mail behavior:
 
 - Email verification links are sent through Mailgun only when all four mail values above are configured.
+- Password reset links are sent through Mailgun when the mail credentials and `FRONTEND_PASSWORD_RESET_URL_BASE` are configured.
+- Mobile OTP verification codes are sent through Twilio when all three Twilio values above are configured.
 - If Mailgun is disabled or only partially configured, signup still succeeds, the account remains unverified, and the frontend explains that email delivery is unavailable in the current environment.
 - Verification links expire after 24 hours. Resend requests are cooldown-limited to avoid rapid abuse.
+- Password reset links are single-use, hashed at rest, expire after one hour, and do not reveal whether an account exists.
+- Mobile OTP codes expire after 10 minutes, invalidate older active challenges, apply resend guardrails, and rate-limit rapid retry attempts after incorrect codes.
 
 ## Verification Policy
 
 - Dotly keeps signup, login, persona setup, and basic onboarding available to unverified accounts.
 - Dotly currently requires a verified email for trust-sensitive actions: sending contact requests, creating profile QR codes, creating Quick Connect QR codes, joining events, enabling event discovery, and viewing discoverable event participants.
+- Verified mobile OTP now counts as the next active trust factor and satisfies the same trust-sensitive policy seam.
 - Blocked trust actions return a user-facing `403` message that tells the user to verify their email and resend a verification link if needed.
-- The backend rule is centralized in a trust-aware verification policy service. Email verification is the active trust factor today, and the same requirement model is ready to accept mobile OTP or additional verified identity factors later without rewriting each call site.
+- The backend rule is centralized in a trust-aware verification policy service. Email verification and verified mobile OTP now plug into the same requirement model without rewriting each call site.
 
 ## Resend Verification UX
 
 - Unverified users see their verification state in the app shell and settings.
+- Authenticated users can now manage account trust from Settings, including email verification status, password changes, mobile OTP enrollment, active sessions, and remote sign-out.
 - Restricted entry points such as contact requests, QR sharing, and event participation show verification guidance before the user attempts the action.
 - The resend CTA is available from the verification page and the in-app unverified prompts.
 - Successful resend attempts confirm that a fresh link is on the way.
 - Cooldown responses tell the user to check the latest email and wait about a minute before trying again.
+
+## Password Recovery
+
+- The login page links to `/forgot-password`, which accepts an email address and always returns a neutral success response.
+- Reset completion happens on `/reset-password?token=...` and enforces the same password quality policy as authenticated password changes.
+- Password change inside settings requires the current password and signs out other sessions after a successful rotation.
+- Password reset signs out all active sessions after completion.
+- Anonymous password reset throttling normalizes the requested email before hashing the cache key so casing and whitespace variants do not bypass the guardrail.
+
+## Sessions And Devices
+
+- Login now creates a persistent session record with device and platform summaries derived from the user agent.
+- Authenticated requests validate both the JWT and the stored session record, so revoked sessions immediately stop working.
+- Settings shows the current device, other active devices, individual remote sign-out actions, and a sign-out-all-other-devices action.
+- Session revoke endpoints depend on a tracked current session id and reject malformed session ids before they reach the revocation path.
 
 ## Verification Analytics And Diagnostics
 
@@ -200,7 +225,7 @@ npm run build
 ## Notes
 
 - Backend uses the `/v1` API prefix.
-- Backend exposes `/v1/metrics` for Prometheus-compatible health gauges.
+- Backend exposes `/v1/metrics` for Prometheus-compatible health gauges, including auth security gauges for active reset tokens, OTP challenges, and session churn.
 - Backend exposes `/v1/health/verification` for non-PII verification runtime diagnostics.
 - Frontend expects the backend at `NEXT_PUBLIC_API_BASE_URL`.
 - Local CORS is configured for `http://localhost:3001` by default.
@@ -209,4 +234,5 @@ npm run build
 - Readiness checks do not force a fresh Redis reconnect on every probe; they report the latest known cache state and last attempted connection timestamp.
 - Backend logs are structured JSON and include `x-request-id` correlation for request/exception tracing.
 - Unverified accounts can still log in, but trust-sensitive product surfaces continue to gate on the backend verification policy.
-- The current verification policy is email-first, but the active requirement model already supports future mobile OTP or additional verified identity signals as interchangeable trust factors.
+- Twilio is the SMS gateway for mobile OTP enrollment. Use a verified sender number that can deliver to the regions you support.
+- The current trust model is now email verification plus verified mobile OTP, with room for future linked auth methods or passkeys.

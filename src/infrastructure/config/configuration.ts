@@ -29,6 +29,13 @@ export const configuration = () => ({
     fromEmail: process.env.MAIL_FROM_EMAIL ?? "",
     frontendVerificationUrlBase:
       process.env.FRONTEND_VERIFICATION_URL_BASE ?? "",
+    frontendPasswordResetUrlBase:
+      process.env.FRONTEND_PASSWORD_RESET_URL_BASE ?? "",
+  },
+  sms: {
+    twilioAccountSid: process.env.TWILIO_ACCOUNT_SID ?? "",
+    twilioAuthToken: process.env.TWILIO_AUTH_TOKEN ?? "",
+    twilioFromPhoneNumber: process.env.TWILIO_FROM_PHONE_NUMBER ?? "",
   },
   qr: {
     baseUrl: process.env.QR_BASE_URL ?? "https://dotly.id/q",

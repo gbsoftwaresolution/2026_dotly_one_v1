@@ -8,12 +8,18 @@ import type { AuthCredentials, LoginResult } from "@/types/auth";
 export async function POST(request: Request) {
   try {
     const credentials = (await request.json()) as AuthCredentials;
-    const result = await apiRequest<{ accessToken: string }>("/auth/login", {
+    const result = await apiRequest<{
+      accessToken: string;
+      sessionId?: string;
+    }>("/auth/login", {
       method: "POST",
       body: credentials,
     });
 
-    const response = NextResponse.json<LoginResult>({ success: true });
+    const response = NextResponse.json<LoginResult>({
+      success: true,
+      sessionId: result.sessionId,
+    });
     setAuthCookie(response, result.accessToken);
 
     return response;

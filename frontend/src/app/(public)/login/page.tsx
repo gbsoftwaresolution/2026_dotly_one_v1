@@ -22,6 +22,8 @@ export default async function LoginPage({
   const created = resolvedSearchParams.created === "1";
   const verificationDelivered = resolvedSearchParams.delivery !== "disabled";
   const verified = resolvedSearchParams.verified === "1";
+  const passwordResetComplete =
+    resolvedSearchParams.reason === "password-reset";
   const shouldResetSession = resolvedSearchParams.reason === "expired";
   const resendHref = initialEmail
     ? `${routes.public.verifyEmail}?email=${encodeURIComponent(initialEmail)}`
@@ -53,6 +55,13 @@ export default async function LoginPage({
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
           <p className="font-mono text-sm text-emerald-600 dark:text-emerald-400">
             Email confirmed. Log in to continue.
+          </p>
+        </div>
+      ) : null}
+      {passwordResetComplete ? (
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+          <p className="font-mono text-sm text-emerald-600 dark:text-emerald-400">
+            Password reset complete. Log in with your new password.
           </p>
         </div>
       ) : null}

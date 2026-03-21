@@ -95,8 +95,7 @@ export class VerificationPolicyService {
   constructor(
     private readonly prismaService: PrismaService,
     @Optional()
-    private readonly analyticsService: AnalyticsService =
-      noopAnalyticsService as AnalyticsService,
+    private readonly analyticsService: AnalyticsService = noopAnalyticsService as AnalyticsService,
   ) {}
 
   async assertUserMeetsRequirement(
@@ -140,7 +139,7 @@ export class VerificationPolicyService {
   getAvailableTrustFactors() {
     return Object.entries(TRUST_FACTOR_CATALOG).map(([factor, metadata]) => ({
       factor: factor as TrustFactor,
-      available: factor === "email_verified",
+      available: true,
       source: metadata.source,
     }));
   }
@@ -150,13 +149,14 @@ export class VerificationPolicyService {
   }
 
   private async getUserTrustState(userId: string): Promise<UserTrustState> {
-    const user = await this.prismaService.user.findUnique({
+    const user = await (this.prismaService as any).user.findUnique({
       where: {
         id: userId,
       },
       select: {
         id: true,
         isVerified: true,
+        phoneVerifiedAt: true,
       },
     });
 
@@ -168,7 +168,7 @@ export class VerificationPolicyService {
       userId: user.id,
       factors: {
         email_verified: user.isVerified,
-        mobile_otp_verified: false,
+        mobile_otp_verified: Boolean(user.phoneVerifiedAt),
       },
     };
   }
@@ -178,7 +178,9 @@ export class VerificationPolicyService {
     trustState: UserTrustState,
   ) {
     const definition = VERIFICATION_POLICY[requirement];
-    const satisfied = definition.anyOf.some((factor) => trustState.factors[factor]);
+    const satisfied = definition.anyOf.some(
+      (factor) => trustState.factors[factor],
+    );
 
     return {
       requirement,

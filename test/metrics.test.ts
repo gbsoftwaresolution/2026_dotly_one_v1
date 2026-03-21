@@ -8,6 +8,33 @@ describe("MetricsService", () => {
     const service = new MetricsService(
       {
         $queryRawUnsafe: async () => [{ result: 1 }],
+        passwordResetToken: {
+          count: async ({ where }: any) => {
+            if (where?.consumedAt === null) {
+              return 2;
+            }
+
+            return 7;
+          },
+        },
+        mobileOtpChallenge: {
+          count: async ({ where }: any) => {
+            if (where?.consumedAt === null) {
+              return 3;
+            }
+
+            return 9;
+          },
+        },
+        authSession: {
+          count: async ({ where }: any) => {
+            if (where?.revokedAt === null) {
+              return 11;
+            }
+
+            return 4;
+          },
+        },
       } as any,
       {
         getHealthStatus: async () => ({ status: "up" }),
@@ -25,5 +52,11 @@ describe("MetricsService", () => {
     );
     assert.match(metrics, /dotly_database_up 1/);
     assert.match(metrics, /dotly_cache_up 1/);
+    assert.match(metrics, /dotly_auth_password_reset_active_tokens 2/);
+    assert.match(metrics, /dotly_auth_password_reset_issued_last_24h 7/);
+    assert.match(metrics, /dotly_auth_mobile_otp_active_challenges 3/);
+    assert.match(metrics, /dotly_auth_mobile_otp_issued_last_24h 9/);
+    assert.match(metrics, /dotly_auth_sessions_active 11/);
+    assert.match(metrics, /dotly_auth_sessions_revoked_last_24h 4/);
   });
 });
