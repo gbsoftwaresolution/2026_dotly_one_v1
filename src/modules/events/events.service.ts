@@ -18,6 +18,7 @@ import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { BlocksService } from "../blocks/blocks.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { PersonasService } from "../personas/personas.service";
+import { VerificationPolicyService } from "../auth/verification-policy.service";
 
 import { CreateEventDto } from "./dto/create-event.dto";
 import { JoinEventDto } from "./dto/join-event.dto";
@@ -62,19 +63,30 @@ const noopNotificationsService: Pick<NotificationsService, "createSafe"> = {
   createSafe: async () => undefined,
 };
 
+const noopVerificationPolicyService: Pick<
+  VerificationPolicyService,
+  "assertUserIsVerified"
+> = {
+  assertUserIsVerified: async () => undefined,
+};
+
 @Injectable()
 export class EventsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly personasService: PersonasService,
     private readonly blocksService: BlocksService,
-    private readonly notificationsService: Pick<
-      NotificationsService,
-      "createSafe"
-    > = noopNotificationsService,
+    private readonly notificationsService: NotificationsService = noopNotificationsService as NotificationsService,
+    private readonly verificationPolicyService: VerificationPolicyService =
+      noopVerificationPolicyService as VerificationPolicyService,
   ) {}
 
   async create(userId: string, createEventDto: CreateEventDto) {
+    await this.verificationPolicyService.assertUserIsVerified(
+      userId,
+      "create_event",
+    );
+
     const startsAt = new Date(createEventDto.startsAt);
     const endsAt = new Date(createEventDto.endsAt);
 
@@ -181,6 +193,11 @@ export class EventsService {
   }
 
   async join(userId: string, eventId: string, joinEventDto: JoinEventDto) {
+    await this.verificationPolicyService.assertUserIsVerified(
+      userId,
+      "join_event",
+    );
+
     const event = await this.getEventOrThrow(eventId);
     this.assertJoinWindowOpen(event);
 
@@ -224,6 +241,11 @@ export class EventsService {
   }
 
   async enableDiscovery(userId: string, eventId: string) {
+    await this.verificationPolicyService.assertUserIsVerified(
+      userId,
+      "enable_event_discovery",
+    );
+
     const event = await this.getEventOrThrow(eventId);
     this.assertDiscoveryWindowOpen(event);
 
@@ -266,6 +288,11 @@ export class EventsService {
   }
 
   async findVisibleParticipants(userId: string, eventId: string) {
+    await this.verificationPolicyService.assertUserIsVerified(
+      userId,
+      "view_event_participants",
+    );
+
     const event = await this.getEventOrThrow(eventId);
     this.assertDiscoveryWindowOpen(event);
 
@@ -510,21 +537,6 @@ function toPrismaEventStatus(status: EventStatus): PrismaEventStatus {
       return PrismaEventStatus.LIVE;
     case EventStatus.Ended:
       return PrismaEventStatus.ENDED;
-  }
-
-  throw new Error("Unsupported event status");
-}
-
-function toApiEventStatus(status: PrismaEventStatus): EventStatus {
-  switch (status) {
-    case PrismaEventStatus.DRAFT:
-      return EventStatus.Draft;
-    case PrismaEventStatus.PUBLISHED:
-      return EventStatus.Published;
-    case PrismaEventStatus.LIVE:
-      return EventStatus.Live;
-    case PrismaEventStatus.ENDED:
-      return EventStatus.Ended;
   }
 
   throw new Error("Unsupported event status");

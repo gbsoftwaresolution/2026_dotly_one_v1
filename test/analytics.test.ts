@@ -122,6 +122,22 @@ describe("AnalyticsService", () => {
         persona: {
           findMany: async () => [{ id: "persona-1" }, { id: "persona-2" }],
         },
+        analyticsEvent: {
+          count: async ({ where }: { where: { eventType: PrismaAnalyticsEventType } }) => {
+            switch (where.eventType) {
+              case PrismaAnalyticsEventType.EMAIL_VERIFICATION_ISSUED:
+                return 3;
+              case PrismaAnalyticsEventType.EMAIL_VERIFICATION_RESENT:
+                return 1;
+              case PrismaAnalyticsEventType.EMAIL_VERIFICATION_VERIFIED:
+                return 2;
+              case PrismaAnalyticsEventType.VERIFICATION_REQUIREMENT_BLOCKED:
+                return 4;
+              default:
+                return 0;
+            }
+          },
+        },
         personaAnalytics: {
           aggregate: async () => ({
             _sum: {
@@ -145,6 +161,11 @@ describe("AnalyticsService", () => {
       totalRequests: 4,
       totalApproved: 3,
       totalContacts: 3,
+      totalVerificationEmailsIssued: 3,
+      totalVerificationResends: 1,
+      totalVerificationCompleted: 2,
+      totalVerificationBlocks: 4,
+      verificationConversionRate: 66.67,
     });
   });
 });

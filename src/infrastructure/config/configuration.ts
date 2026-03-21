@@ -18,9 +18,17 @@ export const configuration = () => ({
   },
   redis: {
     url: process.env.REDIS_URL ?? "redis://localhost:6379",
+    enabled: process.env.REDIS_ENABLED !== "false",
   },
   storage: {
     bucket: process.env.STORAGE_BUCKET ?? "",
+  },
+  mail: {
+    mailgunApiKey: process.env.MAILGUN_API_KEY ?? "",
+    mailgunDomain: process.env.MAILGUN_DOMAIN ?? "",
+    fromEmail: process.env.MAIL_FROM_EMAIL ?? "",
+    frontendVerificationUrlBase:
+      process.env.FRONTEND_VERIFICATION_URL_BASE ?? "",
   },
   qr: {
     baseUrl: process.env.QR_BASE_URL ?? "https://dotly.id/q",

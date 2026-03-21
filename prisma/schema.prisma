@@ -78,6 +78,10 @@ enum AnalyticsEventType {
   REQUEST_SENT    @map("request_sent")
   REQUEST_APPROVED @map("request_approved")
   CONTACT_CREATED @map("contact_created")
+  EMAIL_VERIFICATION_ISSUED @map("email_verification_issued")
+  EMAIL_VERIFICATION_VERIFIED @map("email_verification_verified")
+  EMAIL_VERIFICATION_RESENT @map("email_verification_resent")
+  VERIFICATION_REQUIREMENT_BLOCKED @map("verification_requirement_blocked")
 }
 
 model User {
@@ -85,6 +89,7 @@ model User {
   email                   String                @unique
   passwordHash            String
   isVerified              Boolean               @default(false)
+  emailVerificationTokens EmailVerificationToken[]
   personas                Persona[]
   analyticsEvents         AnalyticsEvent[]
   createdEvents           Event[]
@@ -98,6 +103,20 @@ model User {
   notifications           Notification[]
   createdAt               DateTime              @default(now())
   updatedAt               DateTime              @updatedAt
+}
+
+model EmailVerificationToken {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  tokenHash    String   @unique @db.VarChar(64)
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  supersededAt DateTime?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, expiresAt])
 }
 
 model Persona {

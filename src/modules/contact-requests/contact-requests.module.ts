@@ -10,6 +10,11 @@ import { PersonasModule } from "../personas/personas.module";
 import { RelationshipsModule } from "../relationships/relationships.module";
 
 import { ContactRequestsController } from "./contact-requests.controller";
+import { ContactRequestCreateService } from "./contact-request-create.service";
+import { ContactRequestRecipientPolicyService } from "./contact-request-recipient-policy.service";
+import { ContactRequestRetryPolicyService } from "./contact-request-retry-policy.service";
+import { ContactRequestRespondService } from "./contact-request-respond.service";
+import { ContactRequestSourcePolicyService } from "./contact-request-source-policy.service";
 import { ContactRequestsService } from "./contact-requests.service";
 import { RequestRateLimitService } from "./request-rate-limit.service";
 
@@ -25,7 +30,15 @@ import { RequestRateLimitService } from "./request-rate-limit.service";
     NotificationsModule,
   ],
   controllers: [ContactRequestsController],
-  providers: [ContactRequestsService, RequestRateLimitService],
+  providers: [
+    ContactRequestsService,
+    ContactRequestCreateService,
+    ContactRequestRecipientPolicyService,
+    ContactRequestRetryPolicyService,
+    ContactRequestSourcePolicyService,
+    ContactRequestRespondService,
+    RequestRateLimitService,
+  ],
   exports: [ContactRequestsService],
 })
 export class ContactRequestsModule {}

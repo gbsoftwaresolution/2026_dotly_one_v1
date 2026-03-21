@@ -33,6 +33,10 @@ export type AnalyticsTracker = Pick<
   | "trackRequestSent"
   | "trackRequestApproved"
   | "trackContactCreated"
+  | "trackVerificationEmailIssued"
+  | "trackVerificationResend"
+  | "trackEmailVerified"
+  | "trackVerificationBlockedAction"
 >;
 
 export const noopAnalyticsService: AnalyticsTracker = {
@@ -41,6 +45,10 @@ export const noopAnalyticsService: AnalyticsTracker = {
   trackRequestSent: async () => true,
   trackRequestApproved: async () => true,
   trackContactCreated: async () => true,
+  trackVerificationEmailIssued: async () => true,
+  trackVerificationResend: async () => true,
+  trackEmailVerified: async () => true,
+  trackVerificationBlockedAction: async () => true,
 };
 
 const personaAnalyticsSelect = {
@@ -197,6 +205,58 @@ export class AnalyticsService {
     );
   }
 
+  async trackVerificationEmailIssued(input: {
+    actorUserId: string;
+    context: "signup" | "resend";
+    emailSent: boolean;
+  }) {
+    return this.trackSafe({
+      userId: input.actorUserId,
+      eventType: PrismaAnalyticsEventType.EMAIL_VERIFICATION_ISSUED,
+      metadata: {
+        context: input.context,
+        emailSent: input.emailSent,
+      },
+    });
+  }
+
+  async trackVerificationResend(input: {
+    actorUserId: string;
+    emailSent: boolean;
+  }) {
+    return this.trackSafe({
+      userId: input.actorUserId,
+      eventType: PrismaAnalyticsEventType.EMAIL_VERIFICATION_RESENT,
+      metadata: {
+        emailSent: input.emailSent,
+      },
+    });
+  }
+
+  async trackEmailVerified(input: { actorUserId: string }) {
+    return this.trackSafe({
+      userId: input.actorUserId,
+      eventType: PrismaAnalyticsEventType.EMAIL_VERIFICATION_VERIFIED,
+    });
+  }
+
+  async trackVerificationBlockedAction(input: {
+    actorUserId: string;
+    requirement: string;
+    allowedFactors: string[];
+    missingFactors: string[];
+  }) {
+    return this.trackSafe({
+      userId: input.actorUserId,
+      eventType: PrismaAnalyticsEventType.VERIFICATION_REQUIREMENT_BLOCKED,
+      metadata: {
+        requirement: input.requirement,
+        allowedFactors: input.allowedFactors,
+        missingFactors: input.missingFactors,
+      },
+    });
+  }
+
   async getPersonaAnalytics(userId: string, personaId: string) {
     const ownedPersona = await this.prismaService.persona.findFirst({
       where: {
@@ -239,40 +299,69 @@ export class AnalyticsService {
   }
 
   async getSummary(userId: string) {
-    const personas = await this.prismaService.persona.findMany({
-      where: {
-        userId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (personas.length === 0) {
-      return {
-        totalProfileViews: 0,
-        totalQrScans: 0,
-        totalRequests: 0,
-        totalApproved: 0,
-        totalContacts: 0,
-      };
-    }
+    const [personas, issuedCount, resentCount, verifiedCount, blockedCount] =
+      await Promise.all([
+        this.prismaService.persona.findMany({
+          where: {
+            userId,
+          },
+          select: {
+            id: true,
+          },
+        }),
+        this.prismaService.analyticsEvent.count({
+          where: {
+            userId,
+            eventType: PrismaAnalyticsEventType.EMAIL_VERIFICATION_ISSUED,
+          },
+        }),
+        this.prismaService.analyticsEvent.count({
+          where: {
+            userId,
+            eventType: PrismaAnalyticsEventType.EMAIL_VERIFICATION_RESENT,
+          },
+        }),
+        this.prismaService.analyticsEvent.count({
+          where: {
+            userId,
+            eventType: PrismaAnalyticsEventType.EMAIL_VERIFICATION_VERIFIED,
+          },
+        }),
+        this.prismaService.analyticsEvent.count({
+          where: {
+            userId,
+            eventType:
+              PrismaAnalyticsEventType.VERIFICATION_REQUIREMENT_BLOCKED,
+          },
+        }),
+      ]);
 
     const personaIds = personas.map((persona) => persona.id);
-    const totals = await this.prismaService.personaAnalytics.aggregate({
-      where: {
-        personaId: {
-          in: personaIds,
-        },
-      },
-      _sum: {
-        profileViews: true,
-        qrScans: true,
-        requestsReceived: true,
-        requestsApproved: true,
-        contactsCreated: true,
-      },
-    });
+    const totals =
+      personaIds.length > 0
+        ? await this.prismaService.personaAnalytics.aggregate({
+            where: {
+              personaId: {
+                in: personaIds,
+              },
+            },
+            _sum: {
+              profileViews: true,
+              qrScans: true,
+              requestsReceived: true,
+              requestsApproved: true,
+              contactsCreated: true,
+            },
+          })
+        : {
+            _sum: {
+              profileViews: 0,
+              qrScans: 0,
+              requestsReceived: 0,
+              requestsApproved: 0,
+              contactsCreated: 0,
+            },
+          };
 
     const sums = totals._sum;
 
@@ -282,6 +371,14 @@ export class AnalyticsService {
       totalRequests: sums.requestsReceived ?? 0,
       totalApproved: sums.requestsApproved ?? 0,
       totalContacts: sums.contactsCreated ?? 0,
+      totalVerificationEmailsIssued: issuedCount,
+      totalVerificationResends: resentCount,
+      totalVerificationCompleted: verifiedCount,
+      totalVerificationBlocks: blockedCount,
+      verificationConversionRate: this.toConversionRatePercentage(
+        verifiedCount,
+        issuedCount,
+      ),
     };
   }
 

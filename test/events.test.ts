@@ -13,6 +13,37 @@ const SPEAKER_ROLE = "SPEAKER" as any;
 const ATTENDEE_ROLE = "ATTENDEE" as any;
 
 describe("EventsService", () => {
+  it("blocks event joins from unverified accounts", async () => {
+    const service = new EventsService(
+      {} as any,
+      {} as any,
+      {} as any,
+      undefined,
+      {
+        assertUserIsVerified: async () => {
+          throw new ForbiddenException(
+            "Verify your email before joining Dotly event networking. Check your inbox for the verification link, or resend it.",
+          );
+        },
+      } as any,
+    );
+
+    await assert.rejects(
+      service.join("user-id", "event-id", {
+        personaId: "persona-id",
+        role: EventParticipantRole.Attendee,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(
+          error.message,
+          "Verify your email before joining Dotly event networking. Check your inbox for the verification link, or resend it.",
+        );
+        return true;
+      },
+    );
+  });
+
   it("prevents duplicate joins for the same event", async () => {
     const service = new EventsService(
       {

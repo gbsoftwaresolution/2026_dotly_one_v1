@@ -25,6 +25,7 @@ import { ContactMemoryService } from "../contact-memory/contact-memory.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { PersonasService } from "../personas/personas.service";
 import { RelationshipsService } from "../relationships/relationships.service";
+import { VerificationPolicyService } from "../auth/verification-policy.service";
 
 import { ConnectQuickConnectQrDto } from "./dto/connect-quick-connect-qr.dto";
 import { CreateQuickConnectQrDto } from "./dto/create-quick-connect-qr.dto";
@@ -38,6 +39,13 @@ const noopNotificationsService: Pick<NotificationsService, "createSafe"> = {
   createSafe: async () => undefined,
 };
 
+const noopVerificationPolicyService: Pick<
+  VerificationPolicyService,
+  "assertUserIsVerified"
+> = {
+  assertUserIsVerified: async () => undefined,
+};
+
 @Injectable()
 export class QrService {
   constructor(
@@ -47,17 +55,20 @@ export class QrService {
     private readonly blocksService: BlocksService,
     private readonly relationshipsService: RelationshipsService,
     private readonly contactMemoryService: ContactMemoryService,
-    private readonly notificationsService: Pick<
-      NotificationsService,
-      "createSafe"
-    > = noopNotificationsService,
-    private readonly analyticsService: Pick<
-      AnalyticsService,
-      "trackQrScan" | "trackContactCreated"
-    > = noopAnalyticsService,
+    private readonly notificationsService: NotificationsService =
+      noopNotificationsService as NotificationsService,
+    private readonly analyticsService: AnalyticsService =
+      noopAnalyticsService as AnalyticsService,
+    private readonly verificationPolicyService: VerificationPolicyService =
+      noopVerificationPolicyService as VerificationPolicyService,
   ) {}
 
   async createProfileQr(userId: string, personaId: string) {
+    await this.verificationPolicyService.assertUserIsVerified(
+      userId,
+      "create_profile_qr",
+    );
+
     const persona = await this.personasService.findOwnedPersonaIdentity(
       userId,
       personaId,
@@ -116,6 +127,11 @@ export class QrService {
     personaId: string,
     createQuickConnectQrDto: CreateQuickConnectQrDto,
   ) {
+    await this.verificationPolicyService.assertUserIsVerified(
+      userId,
+      "create_quick_connect_qr",
+    );
+
     const persona = await this.personasService.findOwnedPersonaIdentity(
       userId,
       personaId,

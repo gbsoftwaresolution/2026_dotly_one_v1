@@ -26,7 +26,7 @@ describe("NotificationsController", () => {
     } as any);
 
     await controller.findAll(
-      { id: "user-1", email: "user@example.com" },
+      { id: "user-1", email: "user@example.com", isVerified: false },
       { limit: 10, offset: 5 },
     );
 
@@ -48,7 +48,7 @@ describe("NotificationsController", () => {
     } as any);
 
     const result = await controller.markAsRead(
-      { id: "user-1", email: "user@example.com" },
+      { id: "user-1", email: "user@example.com", isVerified: false },
       "1d894fb0-c315-4d74-9f61-c770e7e08d11",
     );
 

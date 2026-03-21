@@ -2,7 +2,6 @@ import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
 import {
-  BadRequestException,
   ConflictException,
   ForbiddenException,
   HttpException,
@@ -15,10 +14,46 @@ import {
 
 import { ContactRequestSourceType } from "../src/common/enums/contact-request-source-type.enum";
 import { BlocksService } from "../src/modules/blocks/blocks.service";
+import { ContactRequestCreateService } from "../src/modules/contact-requests/contact-request-create.service";
 import { ContactRequestsService } from "../src/modules/contact-requests/contact-requests.service";
 import { RequestRateLimitService } from "../src/modules/contact-requests/request-rate-limit.service";
 
 describe("ContactRequestsService", () => {
+  it("blocks contact requests from unverified accounts when verification is required", async () => {
+    const service = new ContactRequestCreateService(
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {
+        assertUserIsVerified: async () => {
+          throw new ForbiddenException(
+            "Verify your email before sending connection requests. Check your inbox for the verification link, or resend it.",
+          );
+        },
+      } as any,
+    );
+
+    await assert.rejects(
+      service.create("sender-user", {
+        fromPersonaId: "from-persona",
+        toPersonaId: "target-persona",
+        sourceType: ContactRequestSourceType.Profile,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(
+          error.message,
+          "Verify your email before sending connection requests. Check your inbox for the verification link, or resend it.",
+        );
+        return true;
+      },
+    );
+  });
+
   it("rejects requests when the target user has blocked the sender", async () => {
     const service = new ContactRequestsService(
       {

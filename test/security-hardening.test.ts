@@ -35,6 +35,15 @@ describe("JwtAuthGuard hardening", () => {
       {
         get: (key: string, fallback: string) => fallback,
       } as any,
+      {
+        user: {
+          findUnique: async () => ({
+            id: "user-1",
+            email: "user@example.com",
+            isVerified: false,
+          }),
+        },
+      } as any,
     );
 
     const request: any = {
@@ -57,6 +66,7 @@ describe("JwtAuthGuard hardening", () => {
     assert.deepEqual(request.user, {
       id: "user-1",
       email: "user@example.com",
+      isVerified: false,
     });
   });
 
@@ -70,6 +80,15 @@ describe("JwtAuthGuard hardening", () => {
       } as any,
       {
         get: (_key: string, fallback: string) => fallback,
+      } as any,
+      {
+        user: {
+          findUnique: async () => ({
+            id: "user-1",
+            email: "user@example.com",
+            isVerified: false,
+          }),
+        },
       } as any,
     );
 

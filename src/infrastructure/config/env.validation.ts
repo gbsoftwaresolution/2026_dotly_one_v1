@@ -11,8 +11,21 @@ export const envValidationSchema = Joi.object({
   JWT_ISSUER: Joi.string().min(1).default("dotly-backend"),
   JWT_AUDIENCE: Joi.string().min(1).default("dotly-clients"),
   CORS_ORIGINS: Joi.string().allow("").default(""),
+  REDIS_ENABLED: Joi.boolean()
+    .truthy("true")
+    .truthy("1")
+    .falsy("false")
+    .falsy("0")
+    .default(true),
   REDIS_URL: Joi.string().min(1).default("redis://localhost:6379"),
   STORAGE_BUCKET: Joi.string().allow("").default(""),
+  MAILGUN_API_KEY: Joi.string().allow("").default(""),
+  MAILGUN_DOMAIN: Joi.string().allow("").default(""),
+  MAIL_FROM_EMAIL: Joi.string().email({ tlds: { allow: false } }).allow("").default(""),
+  FRONTEND_VERIFICATION_URL_BASE: Joi.string()
+    .uri({ scheme: [/https?/] })
+    .allow("")
+    .default(""),
   QR_BASE_URL: Joi.string()
     .uri({ scheme: [/https?/] })
     .default("https://dotly.id/q"),

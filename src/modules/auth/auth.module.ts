@@ -4,13 +4,17 @@ import { JwtModule } from "@nestjs/jwt";
 import type { StringValue } from "ms";
 
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { AnalyticsModule } from "../analytics/analytics.module";
 
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
+import { VerificationDiagnosticsService } from "./verification-diagnostics.service";
+import { VerificationPolicyService } from "./verification-policy.service";
 
 @Global()
 @Module({
   imports: [
+    AnalyticsModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -27,7 +31,18 @@ import { AuthService } from "./auth.service";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard],
-  exports: [AuthService, JwtAuthGuard, JwtModule],
+  providers: [
+    AuthService,
+    JwtAuthGuard,
+    VerificationPolicyService,
+    VerificationDiagnosticsService,
+  ],
+  exports: [
+    AuthService,
+    JwtAuthGuard,
+    JwtModule,
+    VerificationPolicyService,
+    VerificationDiagnosticsService,
+  ],
 })
 export class AuthModule {}

@@ -11,6 +11,30 @@ jobs:
   backend:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dotly
+          POSTGRES_PASSWORD: dotly
+          POSTGRES_DB: dotly_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dotly -d dotly_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       DATABASE_URL: postgresql://dotly:dotly@localhost:5432/dotly_test
       JWT_SECRET: test-secret
@@ -36,8 +60,17 @@ jobs:
       - name: Generate Prisma client
         run: npm run prisma:generate
 
+      - name: Apply Prisma migrations
+        run: npm run prisma:migrate:deploy
+
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Lint
+        run: npm run lint
+
       - name: Run tests
         run: npm test
+
+      - name: Build
+        run: npm run build

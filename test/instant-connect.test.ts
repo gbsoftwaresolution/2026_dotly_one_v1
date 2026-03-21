@@ -369,6 +369,79 @@ describe("QrService.connectQuickConnectQr", () => {
   });
 });
 
+describe("QrService verification enforcement", () => {
+  it("blocks profile QR generation for unverified accounts", async () => {
+    const service = new QrService(
+      {} as any,
+      {} as any,
+      {
+        findOwnedPersonaIdentity: async () => ({ id: "persona-id" }),
+      } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {
+        assertUserIsVerified: async () => {
+          throw new ForbiddenException(
+            "Verify your email before creating shareable profile QR codes. Check your inbox for the verification link, or resend it.",
+          );
+        },
+      } as any,
+    );
+
+    await assert.rejects(
+      service.createProfileQr("scanner-user", "persona-id"),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(
+          error.message,
+          "Verify your email before creating shareable profile QR codes. Check your inbox for the verification link, or resend it.",
+        );
+        return true;
+      },
+    );
+  });
+
+  it("blocks quick-connect QR generation for unverified accounts", async () => {
+    const service = new QrService(
+      {} as any,
+      {} as any,
+      {
+        findOwnedPersonaIdentity: async () => ({ id: "persona-id" }),
+      } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {
+        assertUserIsVerified: async () => {
+          throw new ForbiddenException(
+            "Verify your email before creating Quick Connect QR codes. Check your inbox for the verification link, or resend it.",
+          );
+        },
+      } as any,
+    );
+
+    await assert.rejects(
+      service.createQuickConnectQr("scanner-user", "persona-id", {
+        durationHours: 4,
+        maxUses: 2,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(
+          error.message,
+          "Verify your email before creating Quick Connect QR codes. Check your inbox for the verification link, or resend it.",
+        );
+        return true;
+      },
+    );
+  });
+});
+
 describe("RelationshipsService", () => {
   it("prevents upgrading expired instant access relationships", async () => {
     const service = new RelationshipsService({
