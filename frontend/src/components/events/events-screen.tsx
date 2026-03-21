@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { Card } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
@@ -15,6 +14,12 @@ import type { PersonaSummary } from "@/types/persona";
 import type { EventSummary } from "@/types/event";
 
 import { EventCard } from "./event-card";
+
+// ---------------------------------------------------------------------------
+// Shared input class
+// ---------------------------------------------------------------------------
+const inputCls =
+  "min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20";
 
 // ---------------------------------------------------------------------------
 // Join panel
@@ -79,7 +84,6 @@ function JoinPanel({ onJoined }: JoinPanelProps) {
     setIsSubmitting(true);
     setError(null);
     try {
-      // The access code IS the event ID — backend join is POST /events/:id/join
       const event = await eventApi.join(trimmed, {
         personaId: selectedPersonaId,
       });
@@ -98,7 +102,7 @@ function JoinPanel({ onJoined }: JoinPanelProps) {
       {!isOpen ? (
         <button
           onClick={() => setIsOpen(true)}
-          className="flex w-full items-center justify-between rounded-3xl border border-dashed border-slate-200 bg-white/50 px-5 py-5 text-sm font-semibold text-slate-500 transition-colors hover:border-brandRose hover:text-brandRose dark:border-zinc-800 dark:bg-zinc-950/50 dark:text-zinc-400 dark:hover:border-brandCyan dark:hover:text-brandCyan"
+          className="flex w-full items-center justify-between rounded-3xl border border-dashed border-border bg-surface/50 px-5 py-5 text-sm font-semibold text-muted transition-all hover:border-brandRose hover:text-brandRose dark:hover:border-brandCyan dark:hover:text-brandCyan active:scale-[0.98]"
         >
           <span>Join an event</span>
           <span className="font-mono text-xs tracking-widest">
@@ -106,13 +110,10 @@ function JoinPanel({ onJoined }: JoinPanelProps) {
           </span>
         </button>
       ) : (
-        <Card>
+        <div className="glass rounded-3xl border border-border bg-surface p-5">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <label
-                htmlFor="event-code"
-                className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
-              >
+            <div className="space-y-1.5">
+              <label htmlFor="event-code" className="label-xs text-muted">
                 Event Access Code
               </label>
               <input
@@ -122,22 +123,19 @@ function JoinPanel({ onJoined }: JoinPanelProps) {
                 value={eventCode}
                 onChange={(e) => setEventCode(e.target.value)}
                 placeholder="Paste the event access code"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-sm text-foreground placeholder:text-slate-400 focus:border-brandRose focus:outline-none focus:ring-2 focus:ring-brandRose/20 dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-600 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+                className={inputCls}
                 autoComplete="off"
                 spellCheck={false}
               />
             </div>
 
             {/* Persona selector */}
-            <div className="space-y-1">
-              <label
-                htmlFor="event-persona"
-                className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
-              >
+            <div className="space-y-1.5">
+              <label htmlFor="event-persona" className="label-xs text-muted">
                 Attend as
               </label>
               {personasLoading ? (
-                <div className="h-10 animate-pulse rounded-2xl bg-slate-100 dark:bg-zinc-900" />
+                <div className="h-12 animate-pulse rounded-2xl bg-surface" />
               ) : personas.length === 0 ? (
                 <p className="text-xs text-muted">
                   No personas found. Create one first.
@@ -147,7 +145,7 @@ function JoinPanel({ onJoined }: JoinPanelProps) {
                   id="event-persona"
                   value={selectedPersonaId}
                   onChange={(e) => setSelectedPersonaId(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-foreground focus:border-brandRose focus:outline-none focus:ring-2 focus:ring-brandRose/20 dark:border-zinc-800 dark:bg-zinc-900 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+                  className={inputCls}
                 >
                   {personas.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -159,9 +157,11 @@ function JoinPanel({ onJoined }: JoinPanelProps) {
             </div>
 
             {error ? (
-              <p className="text-xs text-rose-600 dark:text-rose-400">
-                {error}
-              </p>
+              <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
+                <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
+                  {error}
+                </p>
+              </div>
             ) : null}
 
             <div className="flex gap-3">
@@ -179,13 +179,13 @@ function JoinPanel({ onJoined }: JoinPanelProps) {
                   setEventCode("");
                   setError(null);
                 }}
-                className="rounded-2xl border border-slate-200 px-5 py-5 text-sm font-semibold text-muted transition-colors hover:text-foreground dark:border-zinc-800"
+                className="rounded-2xl border border-border px-5 py-3 text-sm font-semibold text-muted transition-all hover:text-foreground hover:border-foreground/20 active:scale-95"
               >
                 Cancel
               </button>
             </div>
           </form>
-        </Card>
+        </div>
       )}
     </div>
   );
@@ -235,13 +235,12 @@ export function EventsScreen() {
   }, [router]);
 
   function handleJoined(event: EventSummary) {
-    // Prepend the newly joined event and avoid duplicates
     setEvents((prev) => [event, ...prev.filter((e) => e.id !== event.id)]);
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         {[...Array(3)].map((_, i) => (
           <SkeletonCard key={i} />
         ))}
@@ -254,7 +253,7 @@ export function EventsScreen() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       <JoinPanel onJoined={handleJoined} />
 
       {events.length === 0 ? (

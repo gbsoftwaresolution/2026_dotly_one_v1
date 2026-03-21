@@ -75,8 +75,8 @@ export function ContactsScreen() {
   return (
     <section className="space-y-4">
       {successMessage && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-400">
-          <p className="font-mono text-xs font-semibold uppercase tracking-widest">
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+          <p className="font-mono text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
             {successMessage}
           </p>
         </div>
@@ -89,7 +89,7 @@ export function ContactsScreen() {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search contacts..."
           className={cn(
-            "w-full rounded-2xl border border-border bg-white px-4 py-3 font-sans text-sm text-foreground placeholder:text-muted/60 transition-all focus:border-brandRose focus:outline-none focus:ring-2 focus:ring-brandRose/20 dark:border-zinc-800 dark:bg-zinc-950 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20",
+            "w-full rounded-2xl border border-border bg-surface px-4 py-3 font-sans text-sm text-foreground placeholder:text-muted/50 transition-all focus:border-brandRose focus:outline-none focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20",
           )}
         />
       </div>
@@ -124,7 +124,7 @@ export function ContactsScreen() {
           }
         />
       ) : (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           {contacts.map((contact) => (
             <ContactCard key={contact.relationshipId} contact={contact} />
           ))}

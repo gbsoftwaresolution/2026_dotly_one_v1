@@ -76,15 +76,16 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
     }
   }
 
+  const inputCls =
+    "min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20";
+
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-5" onSubmit={handleSubmit}>
       {/* Access mode — most important for Phase 5 */}
       <div className="space-y-3">
         <div className="space-y-1">
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-            Visibility Protocol
-          </p>
-          <p className="font-sans text-xs text-muted">
+          <p className="label-xs text-muted">Visibility Protocol</p>
+          <p className="text-xs text-muted">
             Control how others can connect with this persona.
           </p>
         </div>
@@ -161,75 +162,89 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
       </div>
 
       {/* Profile info */}
-      <div className="space-y-3 pt-2">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-          Profile info
-        </p>
+      <div className="space-y-4 pt-2">
+        <p className="label-xs text-muted">Profile info</p>
 
-        <label className="space-y-2 text-sm font-medium text-foreground">
-          <span>Full name</span>
+        <div className="space-y-1.5">
+          <label className="label-xs" htmlFor="edit-fullname">
+            Full name
+          </label>
           <input
+            id="edit-fullname"
             required
             minLength={1}
             maxLength={120}
-            className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal outline-none transition focus:border-accent"
+            className={inputCls}
             value={formState.fullName ?? ""}
             onChange={(event) => updateField("fullName", event.target.value)}
           />
-        </label>
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-2 text-sm font-medium text-foreground">
-            <span>Job title</span>
+          <div className="space-y-1.5">
+            <label className="label-xs" htmlFor="edit-jobtitle">
+              Job title
+            </label>
             <input
+              id="edit-jobtitle"
               required
               minLength={1}
               maxLength={120}
-              className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal outline-none transition focus:border-accent"
+              className={inputCls}
               value={formState.jobTitle ?? ""}
               onChange={(event) => updateField("jobTitle", event.target.value)}
             />
-          </label>
+          </div>
 
-          <label className="space-y-2 text-sm font-medium text-foreground">
-            <span>Company</span>
+          <div className="space-y-1.5">
+            <label className="label-xs" htmlFor="edit-company">
+              Company
+            </label>
             <input
+              id="edit-company"
               required
               minLength={1}
               maxLength={120}
-              className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal outline-none transition focus:border-accent"
+              className={inputCls}
               value={formState.companyName ?? ""}
               onChange={(event) =>
                 updateField("companyName", event.target.value)
               }
             />
-          </label>
+          </div>
         </div>
 
-        <label className="space-y-2 text-sm font-medium text-foreground">
-          <span>Tagline</span>
+        <div className="space-y-1.5">
+          <label className="label-xs" htmlFor="edit-tagline">
+            Tagline
+          </label>
           <textarea
+            id="edit-tagline"
             required
             minLength={1}
             maxLength={160}
             rows={4}
-            className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-normal outline-none transition focus:border-accent"
+            className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
             value={formState.tagline ?? ""}
             onChange={(event) => updateField("tagline", event.target.value)}
           />
-        </label>
+        </div>
       </div>
 
       {error ? (
-        <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {error}
-        </p>
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
+          <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
+            {error}
+          </p>
+        </div>
       ) : null}
 
       {successMessage ? (
-        <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          {successMessage}
-        </p>
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+          <p className="font-mono text-sm text-emerald-600 dark:text-emerald-400">
+            {successMessage}
+          </p>
+        </div>
       ) : null}
 
       <PrimaryButton type="submit" className="w-full" disabled={isSubmitting}>

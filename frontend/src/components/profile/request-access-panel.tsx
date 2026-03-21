@@ -179,11 +179,13 @@ export function RequestAccessPanel({
 
   if (personaLoadError) {
     return (
-      <Card className="space-y-3 border-rose-200 bg-rose-50/80">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-rose-700">
+      <Card className="space-y-3 border-rose-500/30 bg-rose-500/10">
+        <p className="label-xs text-rose-500 dark:text-rose-400">
           Unable to continue
         </p>
-        <p className="text-sm leading-6 text-rose-700">{personaLoadError}</p>
+        <p className="text-sm leading-6 text-rose-600 dark:text-rose-400">
+          {personaLoadError}
+        </p>
       </Card>
     );
   }
@@ -227,7 +229,7 @@ export function RequestAccessPanel({
           </label>
           <select
             id="fromPersonaId"
-            className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 font-sans text-sm text-foreground outline-none transition focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+            className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 font-sans text-sm text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
             value={selectedPersonaId}
             onChange={(event) => setSelectedPersonaId(event.target.value)}
             disabled={isSubmitting || Boolean(successMessage)}
@@ -251,7 +253,7 @@ export function RequestAccessPanel({
             id="reason"
             maxLength={280}
             rows={3}
-            className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 font-sans text-sm text-foreground outline-none transition focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+            className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 font-sans text-sm text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
             placeholder="Tell them why you'd like to connect (optional)"
             value={reason}
             onChange={(event) => setReason(event.target.value)}

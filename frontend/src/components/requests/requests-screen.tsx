@@ -137,6 +137,7 @@ export function RequestsScreen() {
 
   return (
     <section className="space-y-4">
+      {/* Tab switcher */}
       <div className="rounded-[1.75rem] border border-border bg-surface/80 p-1 shadow-sm">
         <div className="grid grid-cols-2 gap-1">
           {(
@@ -152,7 +153,7 @@ export function RequestsScreen() {
               className={cn(
                 "min-h-12 rounded-[1.25rem] px-4 font-mono text-[11px] font-semibold uppercase tracking-widest transition-all",
                 activeTab === tab
-                  ? "bg-slate-900 text-white shadow-sm dark:bg-white dark:text-zinc-950"
+                  ? "bg-brandRose text-white shadow-sm dark:bg-brandCyan dark:text-zinc-950"
                   : "text-muted hover:bg-slate-100 hover:text-foreground dark:hover:bg-zinc-800",
               )}
             >
@@ -163,16 +164,25 @@ export function RequestsScreen() {
       </div>
 
       {feedback ? (
-        <p
+        <div
           className={cn(
-            "rounded-2xl px-4 py-3 text-sm",
+            "rounded-2xl px-4 py-3",
             feedback.tone === "success"
-              ? "border border-green-200 bg-green-50 text-green-700"
-              : "border border-rose-200 bg-rose-50 text-rose-700",
+              ? "border border-emerald-500/30 bg-emerald-500/10"
+              : "border border-rose-500/30 bg-rose-500/10",
           )}
         >
-          {feedback.message}
-        </p>
+          <p
+            className={cn(
+              "font-mono text-sm",
+              feedback.tone === "success"
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-rose-500 dark:text-rose-400",
+            )}
+          >
+            {feedback.message}
+          </p>
+        </div>
       ) : null}
 
       {isLoading ? (
@@ -201,7 +211,7 @@ export function RequestsScreen() {
             description="When someone requests access to one of your public personas, it will appear here."
           />
         ) : (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             {incoming.map((request) => (
               <IncomingRequestCard
                 key={request.id}
@@ -237,7 +247,7 @@ export function RequestsScreen() {
           }
         />
       ) : (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           {outgoing.map((request) => (
             <OutgoingRequestCard key={request.id} request={request} />
           ))}

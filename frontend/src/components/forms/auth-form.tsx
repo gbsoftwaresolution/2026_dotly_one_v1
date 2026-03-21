@@ -96,27 +96,26 @@ export function AuthForm({
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
+      {/* Title block */}
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold text-foreground dark:text-white">
+        <h2 className="text-xl font-bold tracking-tight text-foreground">
           {content.title}
         </h2>
-        <p className="text-sm leading-6 text-muted dark:text-zinc-400">
+        <p className="text-sm leading-6 text-muted">
           Use your email and password to access your Dotly workspace.
         </p>
       </div>
 
-      <div className="space-y-2">
-        <label
-          className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500"
-          htmlFor="email"
-        >
+      {/* Email */}
+      <div className="space-y-1.5">
+        <label className="label-xs" htmlFor="email">
           Email
         </label>
         <input
           id="email"
           required
           autoComplete="email"
-          className="min-h-12 w-full rounded-2xl border border-slate-200 bg-white/50 px-4 text-sm font-medium text-slate-900 outline-none backdrop-blur-xl transition focus:border-brandRose focus:ring-1 focus:ring-brandRose dark:border-zinc-800 dark:bg-bgOnyx/50 dark:text-white dark:focus:border-brandCyan dark:focus:ring-brandCyan"
+          className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-foreground outline-none backdrop-blur-xl transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20 placeholder:text-muted/50"
           placeholder="name@example.com"
           type="email"
           value={email}
@@ -124,11 +123,9 @@ export function AuthForm({
         />
       </div>
 
-      <div className="space-y-2">
-        <label
-          className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500"
-          htmlFor="password"
-        >
+      {/* Password */}
+      <div className="space-y-1.5">
+        <label className="label-xs" htmlFor="password">
           Password
         </label>
         <input
@@ -137,7 +134,7 @@ export function AuthForm({
           minLength={6}
           maxLength={72}
           autoComplete={mode === "login" ? "current-password" : "new-password"}
-          className="min-h-12 w-full rounded-2xl border border-slate-200 bg-white/50 px-4 text-sm font-medium text-slate-900 outline-none backdrop-blur-xl transition focus:border-brandRose focus:ring-1 focus:ring-brandRose dark:border-zinc-800 dark:bg-bgOnyx/50 dark:text-white dark:focus:border-brandCyan dark:focus:ring-brandCyan"
+          className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-medium text-foreground outline-none backdrop-blur-xl transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20 placeholder:text-muted/50"
           placeholder="At least 6 characters"
           type="password"
           value={password}
@@ -145,25 +142,34 @@ export function AuthForm({
         />
       </div>
 
+      {/* Error */}
       {error ? (
-        <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {error}
-        </p>
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
+          <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
+            {error}
+          </p>
+        </div>
       ) : null}
 
+      {/* Success */}
       {successMessage ? (
-        <p className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-          {successMessage}
-        </p>
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+          <p className="font-mono text-sm text-emerald-600 dark:text-emerald-400">
+            {successMessage}
+          </p>
+        </div>
       ) : null}
 
       <PrimaryButton type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? "Please wait..." : content.submitLabel}
       </PrimaryButton>
 
-      <p className="text-sm text-muted">
+      <p className="text-center text-sm text-muted">
         {content.alternateLabel}{" "}
-        <Link href={content.alternateHref} className="font-medium text-accent">
+        <Link
+          href={content.alternateHref}
+          className="font-semibold text-brandRose underline-offset-4 hover:underline dark:text-brandCyan"
+        >
           {content.alternateAction}
         </Link>
       </p>

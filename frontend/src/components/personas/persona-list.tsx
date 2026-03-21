@@ -17,7 +17,7 @@ export function PersonaList({ personas }: PersonaListProps) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {personas.map((persona) => (
         <PersonaCard key={persona.id} persona={persona} />
       ))}

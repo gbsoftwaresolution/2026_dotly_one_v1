@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { Card } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -59,22 +58,19 @@ function formatDateRange(startsAt: string, endsAt: string): string {
 // ---------------------------------------------------------------------------
 function StealthShield() {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-dashed border-slate-200 dark:border-zinc-800">
+    <div className="relative overflow-hidden rounded-3xl border border-dashed border-border">
       {/* Blurred ghost rows to hint at content underneath */}
       <div
-        className="space-y-3 p-4 blur-sm select-none pointer-events-none"
+        className="pointer-events-none select-none space-y-3 p-4 blur-sm"
         aria-hidden
       >
         {[...Array(3)].map((_, i) => (
-          <div
-            key={i}
-            className="h-20 rounded-2xl bg-slate-100 dark:bg-zinc-900"
-          />
+          <div key={i} className="h-20 rounded-2xl bg-surface" />
         ))}
       </div>
       {/* Overlay label */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-[2px]">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-bg/70 backdrop-blur-[2px]">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -90,10 +86,8 @@ function StealthShield() {
             <line x1="1" y1="1" x2="23" y2="23" />
           </svg>
         </div>
-        <p className="font-mono text-xs font-semibold text-muted uppercase tracking-widest">
-          Stealth Mode
-        </p>
-        <p className="text-xs text-muted text-center px-6">
+        <p className="label-xs text-muted">Stealth Mode</p>
+        <p className="px-6 text-center text-xs text-muted">
           Enable your Discovery Signal to see who else is here.
         </p>
       </div>
@@ -176,10 +170,6 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
       .finally(() => setParticipantsLoading(false));
   }, [eventId, router]);
 
-  // Spec requirement: participants are NOT fetched until the user toggles ON
-  // Therefore we do NOT auto-load on mount even if discoverable === true.
-  // We DO load when the event is first loaded and already discoverable — that
-  // reflects the user having toggled on in a previous session.
   useEffect(() => {
     if (
       event?.status === "live" &&
@@ -202,7 +192,6 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
         await eventApi.disableDiscovery(eventId);
       }
 
-      // Optimistically update local event state
       setEvent((prev) =>
         prev
           ? {
@@ -216,10 +205,8 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
 
       if (event.status === "live") {
         if (enable) {
-          // User just turned ON — fetch participants for the first time
           loadParticipants();
         } else {
-          // User turned OFF — clear participant list (privacy-first)
           setParticipants([]);
           setParticipantsError(null);
         }
@@ -244,7 +231,7 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <SkeletonCard />
         <SkeletonCard />
       </div>
@@ -266,19 +253,17 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
   const myPersonaId = event.myParticipation?.personaId ?? "";
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-5">
       {/* ── Event info card ─────────────────────────────────────────────── */}
-      <Card>
+      <div className="glass rounded-3xl border border-border bg-surface p-5">
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-3">
-            {/* Event name — Plus Jakarta Sans */}
             <h2 className="text-lg font-semibold text-foreground">
               {event.name}
             </h2>
             <StatusBadge label={badge.label} tone={badge.tone} />
           </div>
 
-          {/* Timestamps — JetBrains Mono */}
           <p className="font-mono text-sm text-muted">
             {formatDateRange(event.startsAt, event.endsAt)}
           </p>
@@ -291,7 +276,7 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
             <p className="text-sm text-foreground">{event.description}</p>
           ) : null}
         </div>
-      </Card>
+      </div>
 
       {/* ── Not joined ──────────────────────────────────────────────────── */}
       {!hasJoined ? (
@@ -303,18 +288,20 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
 
       {/* ── Discovery Signal card (joined only) ─────────────────────────── */}
       {hasJoined ? (
-        <Card>
+        <div className="glass rounded-3xl border border-border bg-surface p-5">
           <DiscoveryToggle
             enabled={isDiscoverable}
             onToggle={handleDiscoveryToggle}
             isLoading={discoveryToggling}
           />
           {discoveryError ? (
-            <p className="mt-3 font-mono text-xs text-rose-600 dark:text-rose-400">
-              {discoveryError}
-            </p>
+            <div className="mt-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
+              <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
+                {discoveryError}
+              </p>
+            </div>
           ) : null}
-          <div className="mt-3 border-t border-slate-100 pt-3 dark:border-zinc-900">
+          <div className="mt-3 border-t border-border pt-3">
             <p className="font-mono text-xs text-muted">
               Attending as{" "}
               <span className="font-medium capitalize text-foreground">
@@ -322,26 +309,20 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
               </span>
             </p>
           </div>
-        </Card>
+        </div>
       ) : null}
 
       {/* ── Participants section (live window only, joined only) ─────────── */}
       {hasJoined && event.status === "live" ? (
-        <section className="space-y-3">
-          <h3 className="font-mono text-xs font-semibold uppercase tracking-widest text-muted">
-            People here
-          </h3>
+        <section className="flex flex-col gap-3">
+          <h3 className="label-xs text-muted">People here</h3>
 
-          {/* Stealth mode — discovery is OFF */}
           {!isDiscoverable ? (
             <StealthShield />
           ) : participantsLoading ? (
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3">
               {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-20 animate-pulse rounded-3xl bg-slate-100 dark:bg-zinc-900"
-                />
+                <div key={i} className="skeleton h-20 rounded-3xl" />
               ))}
             </div>
           ) : participantsError ? (
@@ -366,20 +347,20 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
 
       {/* ── Upcoming — discovery window not open yet ─────────────────────── */}
       {hasJoined && event.status === "upcoming" ? (
-        <Card className="border-dashed">
+        <div className="rounded-3xl border border-dashed border-border p-5">
           <p className="text-center font-mono text-xs text-muted">
             Participant discovery opens when the event goes live.
           </p>
-        </Card>
+        </div>
       ) : null}
 
       {/* ── Ended ────────────────────────────────────────────────────────── */}
       {hasJoined && event.status === "ended" ? (
-        <Card className="border-dashed">
+        <div className="rounded-3xl border border-dashed border-border p-5">
           <p className="text-center font-mono text-xs text-muted">
             This event has ended. Discovery is closed.
           </p>
-        </Card>
+        </div>
       ) : null}
     </div>
   );

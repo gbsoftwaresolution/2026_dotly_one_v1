@@ -6,6 +6,8 @@ type SecondaryButtonProps = PropsWithChildren<
   ButtonHTMLAttributes<HTMLButtonElement> & {
     isLoading?: boolean;
     isSuccess?: boolean;
+    fullWidth?: boolean;
+    size?: "sm" | "md" | "lg";
   }
 >;
 
@@ -15,25 +17,70 @@ export function SecondaryButton({
   isLoading,
   isSuccess,
   disabled,
+  fullWidth,
+  size = "md",
   ...props
 }: SecondaryButtonProps) {
+  const sizeClasses = {
+    sm: "h-10 px-4 text-xs rounded-xl",
+    md: "h-14 px-6 text-sm rounded-2xl",
+    lg: "h-16 px-8 text-base rounded-2xl",
+  };
+
   return (
     <button
       disabled={disabled || isLoading}
       className={cn(
-        "inline-flex py-5 items-center justify-center rounded-2xl border px-5 text-sm font-bold transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-bgOnyx",
+        // Base
+        "relative inline-flex items-center justify-center font-bold tracking-tight overflow-hidden",
+        "select-none no-select",
+        // Size
+        sizeClasses[size],
+        // Width
+        fullWidth && "w-full",
+        // Default state
         !isSuccess &&
-          !isLoading &&
-          "border-slate-200 bg-white/50 text-slate-900 hover:bg-slate-50 active:scale-95 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-white dark:hover:bg-zinc-800 focus:ring-brandRose dark:focus:ring-brandCyan",
-        isLoading &&
-          "border-slate-200 bg-slate-50 opacity-70 text-slate-400 cursor-not-wait dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500",
-        isSuccess &&
-          "border-emerald-500 bg-emerald-50/50 text-emerald-700 dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-400 focus:ring-emerald-500",
+          !isLoading && [
+            // Dark mode: glass surface
+            "dark:bg-white/[0.06] dark:border dark:border-white/[0.08] dark:text-white",
+            "dark:hover:bg-white/[0.10] dark:hover:border-white/[0.12]",
+            // Light mode: white surface
+            "bg-white border border-black/[0.08] text-slate-900",
+            "hover:bg-slate-50 hover:border-black/[0.12]",
+            // Shared interactions
+            "transition-all duration-250 ease-spring",
+            "hover:-translate-y-px active:scale-[0.97] active:translate-y-0",
+            "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:focus-visible:ring-offset-bgOnyx",
+          ],
+        // Loading state
+        isLoading && [
+          "dark:bg-white/[0.04] dark:border dark:border-white/[0.06] dark:text-white/40",
+          "bg-slate-100 border border-black/[0.06] text-slate-400",
+          "cursor-not-allowed",
+        ],
+        // Success state
+        isSuccess && [
+          "border border-status-success/30 bg-status-success/10 text-status-success",
+        ],
+        // Disabled
+        disabled && !isLoading && "opacity-40 cursor-not-allowed",
         className,
       )}
       {...props}
     >
-      {isLoading ? "Processing..." : children}
+      {/* Inner highlight */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent"
+      />
+      {isLoading ? (
+        <span className="flex items-center gap-2">
+          <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+          <span>Processing…</span>
+        </span>
+      ) : (
+        children
+      )}
     </button>
   );
 }

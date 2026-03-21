@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { Card } from "@/components/shared/card";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { qrApi } from "@/lib/api";
@@ -32,32 +31,22 @@ function formatDateTime(value: string): string {
 function getConnectErrorCopy(error: ApiError): string {
   const msg = error.message.toLowerCase();
 
-  if (error.status === 401) {
+  if (error.status === 401)
     return "Your session has expired. Please log in again to connect.";
-  }
   if (error.status === 403) {
-    if (msg.includes("blocked")) {
+    if (msg.includes("blocked"))
       return "This connection is blocked and cannot be completed.";
-    }
-    if (msg.includes("verified")) {
+    if (msg.includes("verified"))
       return "This Quick Connect is limited to verified users.";
-    }
-
     return "You are not allowed to use this Quick Connect.";
   }
-  if (msg.includes("usage limit") || msg.includes("exhausted")) {
+  if (msg.includes("usage limit") || msg.includes("exhausted"))
     return "This Quick Connect QR has reached its usage limit and can no longer be used.";
-  }
-  if (msg.includes("expired")) {
+  if (msg.includes("expired"))
     return "This Quick Connect QR has expired and can no longer be used.";
-  }
-  if (msg.includes("already")) {
+  if (msg.includes("already"))
     return "You already have an active instant access connection with this person.";
-  }
-  if (error.status === 404) {
-    return "This QR code no longer exists.";
-  }
-
+  if (error.status === 404) return "This QR code no longer exists.";
   return error.message || "Something went wrong. Please try again.";
 }
 
@@ -70,32 +59,27 @@ type FlowState =
 function getConnectErrorState(error: ApiError): FlowState {
   const msg = error.message.toLowerCase();
 
-  if (error.status === 401) {
+  if (error.status === 401)
     return {
       type: "error",
       title: "Login required",
       message: "Your session has expired. Please log in again to connect.",
     };
-  }
 
   if (error.status === 403) {
-    if (msg.includes("blocked")) {
+    if (msg.includes("blocked"))
       return {
         type: "error",
         title: "Connection blocked",
         message:
           "This person cannot be reached through Quick Connect because one side has blocked the other.",
       };
-    }
-
-    if (msg.includes("verified")) {
+    if (msg.includes("verified"))
       return {
         type: "error",
         title: "Verification required",
         message: "This Quick Connect is only available to verified users.",
       };
-    }
-
     return {
       type: "error",
       title: "Access denied",
@@ -103,62 +87,62 @@ function getConnectErrorState(error: ApiError): FlowState {
     };
   }
 
-  if (msg.includes("usage limit") || msg.includes("exhausted")) {
+  if (msg.includes("usage limit") || msg.includes("exhausted"))
     return {
       type: "error",
       title: "QR Exhausted",
       message:
         "This Quick Connect QR has reached its usage limit and can no longer be used.",
     };
-  }
 
-  if (msg.includes("not active yet")) {
+  if (msg.includes("not active yet"))
     return {
       type: "error",
       title: "Cooldown Active",
       message:
         "This Quick Connect QR is not active yet. Please try again later.",
     };
-  }
 
-  if (msg.includes("expired")) {
+  if (msg.includes("expired"))
     return {
       type: "error",
       title: "QR Expired",
       message: "This Quick Connect QR has expired and can no longer be used.",
     };
-  }
 
-  if (msg.includes("active instant access relationship already exists")) {
+  if (msg.includes("active instant access relationship already exists"))
     return {
       type: "error",
       title: "Already Connected",
       message:
         "You already have an active instant access connection with this person.",
     };
-  }
 
-  if (msg.includes("contact relationship already exists")) {
+  if (msg.includes("contact relationship already exists"))
     return {
       type: "error",
       title: "Already Connected",
       message: "You already have an approved relationship with this contact.",
     };
-  }
 
-  if (error.status === 404) {
+  if (error.status === 404)
     return {
       type: "error",
       title: "QR Not Found",
       message: "This QR code no longer exists.",
     };
-  }
 
   return {
     type: "error",
     title: "Connection failed",
     message: getConnectErrorCopy(error),
   };
+}
+
+function avatarGradient(name: string): string {
+  const hue = (name.charCodeAt(0) * 137) % 360;
+  const hue2 = (hue + 40) % 360;
+  return `linear-gradient(135deg, hsl(${hue},60%,45%), hsl(${hue2},60%,55%))`;
 }
 
 export function QuickConnectFlow({
@@ -175,9 +159,7 @@ export function QuickConnectFlow({
 
   async function handleConnect() {
     if (!selectedPersonaId) return;
-
     setFlowState({ type: "connecting" });
-
     try {
       const result = await qrApi.connectQuick(code, {
         fromPersonaId: selectedPersonaId,
@@ -205,15 +187,15 @@ export function QuickConnectFlow({
     const target = result.targetPersona;
 
     return (
-      <Card className="space-y-6">
+      <div className="glass rounded-3xl border border-border bg-surface p-6 space-y-6">
         {/* Success header */}
-        <div className="flex flex-col items-center text-center gap-3 pt-2">
-          <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400">
+        <div className="flex flex-col items-center gap-3 pt-2 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-3xl border border-emerald-500/30 bg-emerald-500/10">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"
-              className="h-8 w-8"
+              className="h-8 w-8 text-emerald-600 dark:text-emerald-400"
             >
               <path
                 fillRule="evenodd"
@@ -225,13 +207,13 @@ export function QuickConnectFlow({
 
           <div className="space-y-1">
             <StatusBadge label="Connected" tone="success" />
-            <h2 className="font-sans text-xl font-bold text-foreground pt-1">
+            <h2 className="pt-1 text-xl font-bold text-foreground">
               Temporary access started
             </h2>
-            <p className="font-sans text-sm text-muted">
+            <p className="text-sm text-muted">
               {target.jobTitle} at {target.companyName}
             </p>
-            <p className="font-sans text-sm text-muted">
+            <p className="text-sm text-muted">
               This access is temporary until you upgrade it to an approved
               relationship.
             </p>
@@ -239,24 +221,18 @@ export function QuickConnectFlow({
         </div>
 
         {/* Access window */}
-        <div className="rounded-2xl border border-border bg-slate-50/70 dark:bg-zinc-900/50 p-4 space-y-3">
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-            Instant Access Window
-          </p>
+        <div className="rounded-2xl border border-border bg-surface/60 p-4 space-y-3">
+          <p className="label-xs text-muted">Instant Access Window</p>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="space-y-0.5">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted">
-                Starts
-              </p>
-              <p className="font-sans text-foreground">
+              <p className="label-xs text-muted">Starts</p>
+              <p className="text-foreground">
                 {formatDateTime(result.accessStartAt)}
               </p>
             </div>
             <div className="space-y-0.5">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted">
-                Ends
-              </p>
-              <p className="font-sans text-foreground">
+              <p className="label-xs text-muted">Ends</p>
+              <p className="text-foreground">
                 {formatDateTime(result.accessEndAt)}
               </p>
             </div>
@@ -266,59 +242,53 @@ export function QuickConnectFlow({
         {/* CTA */}
         <a
           href={routes.app.contactDetail(result.relationshipId)}
-          className="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 py-5 px-5 text-sm font-bold text-white transition-all hover:bg-slate-800 active:scale-95 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2"
+          className="inline-flex w-full items-center justify-center rounded-2xl bg-brandRose py-5 px-5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brandRose/40 dark:bg-brandCyan dark:text-zinc-950 dark:focus:ring-brandCyan/40"
         >
           View contact
         </a>
-      </Card>
+      </div>
     );
   }
 
   if (flowState.type === "error") {
     return (
-      <Card className="space-y-4 border-rose-200 bg-rose-50/80 dark:border-rose-900 dark:bg-rose-950/20">
+      <div className="glass rounded-3xl border border-rose-500/30 bg-rose-500/10 p-6 space-y-4">
         <div className="space-y-2">
-          <h2 className="font-sans text-lg font-semibold text-rose-700 dark:text-rose-300">
+          <h2 className="text-lg font-semibold text-rose-500 dark:text-rose-400">
             {flowState.title}
           </h2>
-          <p className="font-sans text-sm leading-6 text-rose-700/90 dark:text-rose-300/80">
+          <p className="text-sm leading-6 text-rose-500/90 dark:text-rose-400/80">
             {flowState.message}
           </p>
         </div>
         <button
           type="button"
           onClick={handleRetry}
-          className="inline-flex w-full items-center justify-center rounded-2xl border border-rose-300 bg-white py-4 px-5 text-sm font-semibold text-rose-700 transition-all hover:bg-rose-50 active:scale-95 dark:border-rose-800 dark:bg-transparent dark:text-rose-400 dark:hover:bg-rose-950/30 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2"
+          className="inline-flex w-full items-center justify-center rounded-2xl border border-rose-500/30 bg-transparent py-4 px-5 text-sm font-semibold text-rose-500 transition-all hover:bg-rose-500/10 active:scale-95 dark:text-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-400/40"
         >
           Try again
         </button>
-      </Card>
+      </div>
     );
   }
 
   const isConnecting = flowState.type === "connecting";
 
   return (
-    <Card className="space-y-6">
+    <div className="glass rounded-3xl border border-border bg-surface p-6 space-y-6">
       {/* Who you're connecting with */}
       <div className="space-y-1">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-          Connecting with
-        </p>
-        <p className="font-sans text-base font-semibold text-foreground">
-          {hostName}
-        </p>
-        <p className="font-sans text-sm text-muted">
+        <p className="label-xs text-muted">Connecting with</p>
+        <p className="text-base font-semibold text-foreground">{hostName}</p>
+        <p className="text-sm text-muted">
           {hostJobTitle} at {hostCompany}
         </p>
       </div>
 
       {/* Persona selector */}
       <div className="space-y-3">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-          Connect as
-        </p>
-        <div className="space-y-2">
+        <p className="label-xs text-muted">Connect as</p>
+        <div className="flex flex-col gap-2">
           {personas.map((persona) => {
             const isSelected = selectedPersonaId === persona.id;
             return (
@@ -330,24 +300,21 @@ export function QuickConnectFlow({
                 className={`w-full rounded-2xl border px-4 py-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-brandRose dark:focus:ring-brandCyan focus:ring-offset-2 ${
                   isSelected
                     ? "border-brandRose bg-brandRose/5 dark:border-brandCyan dark:bg-brandCyan/5"
-                    : "border-border bg-white hover:bg-slate-50 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                    : "border-border bg-surface hover:bg-surface/80"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold transition-colors ${
-                      isSelected
-                        ? "bg-brandRose text-white dark:bg-brandCyan dark:text-zinc-950"
-                        : "bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300"
-                    }`}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white transition-all"
+                    style={{ background: avatarGradient(persona.fullName) }}
                   >
                     {persona.fullName.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-sans text-sm font-semibold text-foreground">
+                    <p className="truncate text-sm font-semibold text-foreground">
                       {persona.fullName}
                     </p>
-                    <p className="truncate font-sans text-xs text-muted">
+                    <p className="truncate font-mono text-xs text-muted">
                       @{persona.username} &middot;{" "}
                       {persona.type.charAt(0).toUpperCase() +
                         persona.type.slice(1)}
@@ -382,6 +349,6 @@ export function QuickConnectFlow({
       >
         {isConnecting ? "Connecting..." : "Start Temporary Access"}
       </PrimaryButton>
-    </Card>
+    </div>
   );
 }

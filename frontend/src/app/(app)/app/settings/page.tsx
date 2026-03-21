@@ -1,19 +1,37 @@
-import { Card } from "@/components/shared/card";
-import { PageHeader } from "@/components/shared/page-header";
+import { ThemeSwitcher } from "@/components/app-shell/theme-switcher";
 
 export default function SettingsPage() {
   return (
-    <section className="space-y-4">
-      <PageHeader
-        title="Settings"
-        description="Account-level settings will expand after Phase 1."
-      />
-      <Card>
+    <section className="flex flex-col gap-4">
+      {/* Page header */}
+      <div className="space-y-1 px-1">
+        <h1 className="text-xl font-bold text-foreground">Settings</h1>
         <p className="text-sm text-muted">
-          For now, session access and persona management happen from the main
-          workspace screens.
+          Appearance and account preferences.
         </p>
-      </Card>
+      </div>
+
+      {/* Appearance */}
+      <div className="glass rounded-3xl border border-border bg-surface p-5">
+        <p className="label-xs mb-4 text-muted">Appearance</p>
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <p className="text-sm font-semibold text-foreground">Theme</p>
+            <p className="font-mono text-xs text-muted">
+              Onyx (dark) or Luminous (light)
+            </p>
+          </div>
+          <ThemeSwitcher />
+        </div>
+      </div>
+
+      {/* Coming soon */}
+      <div className="rounded-3xl border border-dashed border-border p-5">
+        <p className="text-center font-mono text-xs text-muted">
+          More settings — persona management and session control — will expand
+          after Phase 1.
+        </p>
+      </div>
     </section>
   );
 }

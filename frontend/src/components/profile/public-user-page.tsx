@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 
 import { PublicProfileCard } from "@/components/profile/public-profile-card";
 import { RequestAccessPanel } from "@/components/profile/request-access-panel";
-import { Card } from "@/components/shared/card";
 import { personaApi, publicApi, userApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { getServerAccessToken } from "@/lib/auth/server-session";
@@ -78,12 +77,14 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
 
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-xl items-center px-4 py-8 sm:px-6">
-        <Card className="w-full space-y-2 border-rose-200 bg-rose-50/80 text-center">
-          <h1 className="text-xl font-semibold text-rose-700">
+        <div className="w-full rounded-3xl border border-rose-500/30 bg-rose-500/10 p-6 text-center space-y-2">
+          <h1 className="text-xl font-semibold text-rose-500 dark:text-rose-400">
             Profile unavailable
           </h1>
-          <p className="text-sm leading-6 text-rose-700">{message}</p>
-        </Card>
+          <p className="text-sm leading-6 text-rose-500/90 dark:text-rose-400/80">
+            {message}
+          </p>
+        </div>
       </main>
     );
   }

@@ -1,8 +1,6 @@
-import { Card } from "@/components/shared/card";
-
 export function ProfileSummaryCard() {
   return (
-    <Card>
+    <div className="glass rounded-3xl border border-dashed border-border bg-surface/60 p-5">
       <div className="space-y-2">
         <h2 className="text-base font-semibold text-foreground">
           Persona detail coming next
@@ -13,6 +11,6 @@ export function ProfileSummaryCard() {
           of this screen.
         </p>
       </div>
-    </Card>
+    </div>
   );
 }

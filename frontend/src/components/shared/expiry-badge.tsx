@@ -25,26 +25,18 @@ export function ExpiryBadge({ accessEndAt, isExpired }: ExpiryBadgeProps) {
   if (!accessEndAt) return null;
 
   if (isExpired) {
-    return <StatusBadge label="Expired" tone="neutral" />;
+    return <StatusBadge label="Expired" tone="neutral" dot />;
   }
 
   const nearExpiry = isNearExpiry(accessEndAt);
 
   return (
-    <div className="flex items-center gap-2">
-      <span
-        className={`inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest bg-brandRose/10 text-brandRose dark:bg-brandCyan/10 dark:text-brandCyan ${
-          nearExpiry ? "animate-pulse" : ""
-        }`}
-      >
-        {nearExpiry && (
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brandRose dark:bg-brandCyan opacity-75"></span>
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brandRose dark:bg-brandCyan"></span>
-          </span>
-        )}
-        TEMP
-      </span>
+    <div className="flex items-center gap-2 flex-wrap">
+      <StatusBadge
+        label="TEMP"
+        tone={nearExpiry ? "warning" : "cyan"}
+        dot={nearExpiry}
+      />
       <span className="font-mono text-[10px] text-muted">
         Expires {formatDate(accessEndAt)}
       </span>

@@ -2,33 +2,116 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   DESIGN TOKENS — CSS Custom Properties
+   Two themes: "onyx" (dark, default) & "luminous" (light)
+   ============================================================ */
+
 :root {
-  --color-background: #f5f7fb;
-  --color-foreground: #142033;
-  --color-surface: #ffffff;
-  --color-border: #d8dfeb;
-  --color-muted: #64748b;
-  --color-accent: #1d4ed8;
-  --color-accent-foreground: #f8fafc;
-  --color-success: #15803d;
-  --color-warning: #b45309;
+  /* Onyx (dark) theme — default */
+  --color-background: #080808;
+  --color-foreground: #f2f2f2;
+  --color-surface: #0f0f0f;
+  --color-surface-elevated: #161616;
+  --color-border: rgba(255, 255, 255, 0.06);
+  --color-border-subtle: rgba(255, 255, 255, 0.03);
+  --color-muted: #8a8a8e;
+  --color-accent: #00d4ff;
+  --color-accent-foreground: #080808;
+  --color-success: #30d158;
+  --color-warning: #ffd60a;
+  --color-error: #ff453a;
+
+  /* Layout */
+  --header-height: 64px;
+  --nav-height: 68px;
+  --page-x: 1.25rem;
 }
 
-* {
+/* Luminous (light) theme overrides */
+html:not(.dark) {
+  --color-background: #f5f5f7;
+  --color-foreground: #1d1d1f;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #f2f2f7;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-subtle: rgba(0, 0, 0, 0.04);
+  --color-muted: #6e6e73;
+  --color-accent: #ff3366;
+  --color-accent-foreground: #ffffff;
+  --color-success: #1c7a3a;
+  --color-warning: #b45309;
+  --color-error: #c0392b;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html {
   min-height: 100%;
+  /* Prevent font size inflation on iOS */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Smooth scroll (but not for animations — prefers-reduced-motion respected) */
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at top, rgba(29, 78, 216, 0.08), transparent 35%),
-    linear-gradient(180deg, #f8fbff 0%, #f4f7fb 48%, #eef2f7 100%);
+  min-height: 100dvh;
+  background-color: var(--color-background);
   color: var(--color-foreground);
+  /* Prevent overscroll bounce on iOS (allow in specific scroll containers) */
+  overscroll-behavior: none;
+  /* Touch-action optimization */
+  touch-action: pan-y;
+}
+
+/* Dark mode rich background */
+.dark body {
+  background-color: #080808;
+  background-image:
+    radial-gradient(
+      ellipse at 15% 10%,
+      rgba(0, 212, 255, 0.055) 0px,
+      transparent 45%
+    ),
+    radial-gradient(
+      ellipse at 85% 85%,
+      rgba(124, 58, 237, 0.05) 0px,
+      transparent 45%
+    ),
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(255, 51, 102, 0.03) 0px,
+      transparent 35%
+    );
+  background-attachment: fixed;
+}
+
+/* Light mode background */
+html:not(.dark) body {
+  background-color: #f5f5f7;
+  background-image:
+    radial-gradient(
+      ellipse at 15% 10%,
+      rgba(0, 212, 255, 0.04) 0px,
+      transparent 45%
+    ),
+    radial-gradient(
+      ellipse at 85% 85%,
+      rgba(124, 58, 237, 0.03) 0px,
+      transparent 45%
+    );
+  background-attachment: fixed;
 }
 
 a {
@@ -43,9 +126,26 @@ select {
   font: inherit;
 }
 
+/* Better focus visible */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* Momentum scroll on iOS for scroll containers */
+.scroll-momentum {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
+
+/* ============================================================
+   TAILWIND BASE LAYER
+   ============================================================ */
+
 @layer base {
   body {
-    @apply antialiased;
+    @apply antialiased font-sans;
   }
 
   h1,
@@ -54,7 +154,7 @@ select {
   h4,
   h5,
   h6 {
-    @apply text-balance;
+    @apply text-balance tracking-tight;
   }
 
   p {
@@ -62,8 +162,224 @@ select {
   }
 }
 
+/* ============================================================
+   COMPONENT CLASSES
+   ============================================================ */
+
+@layer components {
+  /* --- Glass card surfaces --- */
+  .glass {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+  }
+
+  .glass-light {
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  /* --- Gradient text --- */
+  .text-gradient-cyan {
+    background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-rose {
+    background: linear-gradient(135deg, #ff3366 0%, #ff6b35 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-brand {
+    background: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* --- Skeleton shimmer --- */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.04) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+    border-radius: 8px;
+  }
+
+  html:not(.dark) .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.04) 0%,
+      rgba(0, 0, 0, 0.08) 50%,
+      rgba(0, 0, 0, 0.04) 100%
+    );
+    background-size: 200% 100%;
+  }
+
+  /* --- Premium divider --- */
+  .divider {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--color-border) 20%,
+      var(--color-border) 80%,
+      transparent 100%
+    );
+  }
+
+  /* --- Haptic button press (no JS) --- */
+  .press {
+    @apply transition-transform duration-[100ms] active:scale-[0.97];
+    transform-origin: center;
+  }
+
+  /* --- Label / eyebrow style --- */
+  .label-xs {
+    @apply font-mono text-[10px] font-black uppercase tracking-[0.12em];
+  }
+}
+
+/* ============================================================
+   UTILITY LAYER
+   ============================================================ */
+
 @layer utilities {
+  /* Safe area padding */
+  .safe-pt {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
   .safe-pb {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+  .safe-pl {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  .safe-pr {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  .pb-nav {
+    padding-bottom: calc(
+      var(--nav-height) + env(safe-area-inset-bottom, 0px) + 1.5rem
+    );
+  }
+
+  /* Full device height (handles dynamic viewport on mobile) */
+  .h-screen-dvh {
+    height: 100dvh;
+  }
+  .min-h-screen-dvh {
+    min-height: 100dvh;
+  }
+
+  /* Prevent text selection on interactive elements */
+  .no-select {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Smooth color transitions */
+  .transition-theme {
+    transition:
+      background-color 300ms ease,
+      color 300ms ease,
+      border-color 300ms ease;
+  }
+
+  /* Hide scrollbar visually (but keep functionality) */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Text clamp utilities */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  /* Glow effects */
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.25);
+  }
+  .glow-rose {
+    box-shadow: 0 0 20px rgba(255, 51, 102, 0.25);
+  }
+  .glow-violet {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.25);
+  }
+
+  /* Animation delays for staggered entrances */
+  .delay-75 {
+    animation-delay: 75ms;
+  }
+  .delay-150 {
+    animation-delay: 150ms;
+  }
+  .delay-225 {
+    animation-delay: 225ms;
+  }
+  .delay-300 {
+    animation-delay: 300ms;
+  }
+  .delay-400 {
+    animation-delay: 400ms;
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION — Accessibility
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   KEYFRAMES (used by Tailwind animation utilities)
+   ============================================================ */
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 }

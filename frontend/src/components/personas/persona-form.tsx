@@ -73,13 +73,20 @@ export function PersonaForm() {
     }
   }
 
+  const inputCls =
+    "min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20";
+
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-5" onSubmit={handleSubmit}>
+      {/* Identity type + access mode */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="space-y-2 text-sm font-medium text-foreground">
-          <span>Type</span>
+        <div className="space-y-1.5">
+          <label className="label-xs" htmlFor="persona-type">
+            Type
+          </label>
           <select
-            className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal outline-none transition focus:border-accent"
+            id="persona-type"
+            className={inputCls}
             value={formState.type}
             onChange={(event) =>
               updateField(
@@ -94,12 +101,15 @@ export function PersonaForm() {
               </option>
             ))}
           </select>
-        </label>
+        </div>
 
-        <label className="space-y-2 text-sm font-medium text-foreground">
-          <span>Access mode</span>
+        <div className="space-y-1.5">
+          <label className="label-xs" htmlFor="persona-access">
+            Access mode
+          </label>
           <select
-            className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal outline-none transition focus:border-accent"
+            id="persona-access"
+            className={inputCls}
             value={formState.accessMode}
             onChange={(event) =>
               updateField(
@@ -114,82 +124,103 @@ export function PersonaForm() {
               </option>
             ))}
           </select>
-        </label>
+        </div>
       </div>
 
-      <label className="space-y-2 text-sm font-medium text-foreground">
-        <span>Username</span>
+      {/* Username */}
+      <div className="space-y-1.5">
+        <label className="label-xs" htmlFor="persona-username">
+          Username
+        </label>
         <input
+          id="persona-username"
           required
           minLength={3}
           maxLength={30}
           pattern="^[a-z0-9_-]+$"
-          className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal outline-none transition focus:border-accent"
+          className={inputCls}
           placeholder="jane-doe"
           value={formState.username}
           onChange={(event) => updateField("username", event.target.value)}
         />
-      </label>
+      </div>
 
-      <label className="space-y-2 text-sm font-medium text-foreground">
-        <span>Full name</span>
+      {/* Full name */}
+      <div className="space-y-1.5">
+        <label className="label-xs" htmlFor="persona-fullname">
+          Full name
+        </label>
         <input
+          id="persona-fullname"
           required
           minLength={1}
           maxLength={120}
-          className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal outline-none transition focus:border-accent"
+          className={inputCls}
           placeholder="Jane Doe"
           value={formState.fullName}
           onChange={(event) => updateField("fullName", event.target.value)}
         />
-      </label>
+      </div>
 
+      {/* Job + Company */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="space-y-2 text-sm font-medium text-foreground">
-          <span>Job title</span>
+        <div className="space-y-1.5">
+          <label className="label-xs" htmlFor="persona-jobtitle">
+            Job title
+          </label>
           <input
+            id="persona-jobtitle"
             required
             minLength={1}
             maxLength={120}
-            className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal outline-none transition focus:border-accent"
+            className={inputCls}
             placeholder="Product designer"
             value={formState.jobTitle}
             onChange={(event) => updateField("jobTitle", event.target.value)}
           />
-        </label>
+        </div>
 
-        <label className="space-y-2 text-sm font-medium text-foreground">
-          <span>Company</span>
+        <div className="space-y-1.5">
+          <label className="label-xs" htmlFor="persona-company">
+            Company
+          </label>
           <input
+            id="persona-company"
             required
             minLength={1}
             maxLength={120}
-            className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal outline-none transition focus:border-accent"
+            className={inputCls}
             placeholder="Dotly"
             value={formState.companyName}
             onChange={(event) => updateField("companyName", event.target.value)}
           />
-        </label>
+        </div>
       </div>
 
-      <label className="space-y-2 text-sm font-medium text-foreground">
-        <span>Tagline</span>
+      {/* Tagline */}
+      <div className="space-y-1.5">
+        <label className="label-xs" htmlFor="persona-tagline">
+          Tagline
+        </label>
         <textarea
+          id="persona-tagline"
           required
           minLength={1}
           maxLength={160}
           rows={4}
-          className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-normal outline-none transition focus:border-accent"
+          className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20 resize-none"
           placeholder="Designing thoughtful identity experiences for modern teams."
           value={formState.tagline}
           onChange={(event) => updateField("tagline", event.target.value)}
         />
-      </label>
+      </div>
 
       {error ? (
-        <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {error}
-        </p>
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
+          <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
+            {error}
+          </p>
+        </div>
       ) : null}
 
       <PrimaryButton type="submit" className="w-full" disabled={isSubmitting}>

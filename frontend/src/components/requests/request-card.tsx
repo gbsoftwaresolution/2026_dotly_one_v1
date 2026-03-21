@@ -60,7 +60,12 @@ export function IncomingRequestCard({
             className="h-12 w-12 rounded-2xl object-cover"
           />
         ) : (
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-sm font-semibold text-white">
+          <div
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-white"
+            style={{
+              background: `hsl(${((request.fromPersona.username?.charCodeAt(0) ?? 72) * 137) % 360}, 60%, 45%)`,
+            }}
+          >
             {request.fromPersona.fullName.charAt(0).toUpperCase()}
           </div>
         )}
@@ -85,10 +90,8 @@ export function IncomingRequestCard({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-slate-50/80 px-4 py-3 dark:bg-zinc-900/50">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
-          Reason
-        </p>
+      <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
+        <p className="label-xs text-muted">Reason</p>
         <p className="mt-2 text-sm leading-6 text-foreground">
           {request.reason?.trim() || "No reason added."}
         </p>
@@ -96,14 +99,14 @@ export function IncomingRequestCard({
 
       <div className="flex gap-3">
         <button
-          className="flex h-[60px] flex-1 items-center justify-center rounded-2xl bg-slate-100 px-5 text-sm font-bold text-slate-900 transition-all hover:bg-slate-200 active:scale-95 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+          className="flex h-[60px] flex-1 items-center justify-center rounded-2xl border border-border bg-transparent px-5 text-sm font-bold text-foreground transition-all hover:bg-slate-50 active:scale-95 disabled:opacity-50 dark:hover:bg-zinc-800"
           disabled={isApproving || isRejecting}
           onClick={() => onReject(request.id)}
         >
           {isRejecting ? "Rejecting..." : "Reject"}
         </button>
         <button
-          className="flex h-[60px] flex-1 items-center justify-center rounded-2xl bg-slate-900 px-5 text-sm font-bold text-white transition-all hover:bg-slate-800 active:scale-95 disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100"
+          className="flex h-[60px] flex-1 items-center justify-center rounded-2xl bg-brandRose px-5 text-sm font-bold text-white transition-all hover:bg-brandRose/90 active:scale-95 disabled:opacity-50 dark:bg-brandCyan dark:text-zinc-950 dark:hover:bg-brandCyan/90"
           disabled={isApproving || isRejecting}
           onClick={() => onApprove(request.id)}
         >
@@ -130,7 +133,12 @@ export function OutgoingRequestCard({ request }: OutgoingRequestCardProps) {
             className="h-12 w-12 rounded-2xl object-cover"
           />
         ) : (
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-sm font-semibold text-white">
+          <div
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-white"
+            style={{
+              background: `hsl(${((request.toPersona.username?.charCodeAt(0) ?? 72) * 137) % 360}, 60%, 45%)`,
+            }}
+          >
             {request.toPersona.fullName.charAt(0).toUpperCase()}
           </div>
         )}
@@ -158,10 +166,8 @@ export function OutgoingRequestCard({ request }: OutgoingRequestCardProps) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-slate-50/80 px-4 py-3 dark:bg-zinc-900/50">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
-          Reason
-        </p>
+      <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
+        <p className="label-xs text-muted">Reason</p>
         <p className="mt-2 text-sm leading-6 text-foreground">
           {request.reason?.trim() || "No reason added."}
         </p>

@@ -71,8 +71,10 @@ export function ContactCard({ contact }: ContactCardProps) {
       className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-brandRose dark:focus-visible:ring-brandCyan rounded-3xl"
     >
       <Card
-        className={`space-y-4 transition-all hover:bg-slate-50 active:scale-[0.99] dark:hover:bg-zinc-900 ${
-          nearExpiry ? "border-amber-200 dark:border-amber-900/60" : ""
+        className={`space-y-4 transition-all hover:bg-slate-50/50 active:scale-[0.99] dark:hover:bg-zinc-900/50 ${
+          nearExpiry
+            ? "border-amber-400/40 dark:border-amber-500/30 shadow-[0_0_20px_rgba(251,191,36,0.12)]"
+            : ""
         }`}
       >
         <div className="flex items-start gap-4">
@@ -84,7 +86,12 @@ export function ContactCard({ contact }: ContactCardProps) {
               className="h-14 w-14 rounded-2xl object-cover"
             />
           ) : (
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-base font-semibold text-white dark:bg-white dark:text-zinc-950">
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-base font-bold text-white"
+              style={{
+                background: `hsl(${((targetPersona.username?.charCodeAt(0) ?? 72) * 137) % 360}, 60%, 45%)`,
+              }}
+            >
               {targetPersona.fullName.charAt(0).toUpperCase()}
             </div>
           )}

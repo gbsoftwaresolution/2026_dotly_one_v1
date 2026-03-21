@@ -1,6 +1,4 @@
 import { AuthForm } from "@/components/forms/auth-form";
-import { Card } from "@/components/shared/card";
-import { PageHeader } from "@/components/shared/page-header";
 import { routes } from "@/lib/constants/routes";
 
 export default async function SignupPage({
@@ -13,13 +11,21 @@ export default async function SignupPage({
 
   return (
     <section className="space-y-5">
-      <PageHeader
-        title="Sign up"
-        description="Create your Dotly account to manage personas and share permissioned identity cards safely."
-      />
-      <Card className="space-y-5">
+      {/* Page intro */}
+      <div className="space-y-1 px-1">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Create your account
+        </h1>
+        <p className="text-sm leading-6 text-muted">
+          Join Dotly to manage personas and share permissioned identity cards
+          safely.
+        </p>
+      </div>
+
+      {/* Glass card form */}
+      <div className="glass rounded-3xl border border-border/60 p-6 shadow-shell">
         <AuthForm mode="signup" redirectTo={redirectTo} />
-      </Card>
+      </div>
     </section>
   );
 }

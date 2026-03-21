@@ -16,7 +16,7 @@ const modeOptions: Array<{ value: QrMode; label: string }> = [
 
 export function QrModeToggle({ value, onChange }: QrModeToggleProps) {
   return (
-    <div className="grid grid-cols-2 rounded-2xl border border-border bg-slate-100/80 p-1">
+    <div className="grid grid-cols-2 rounded-2xl border border-border bg-surface p-1">
       {modeOptions.map((option) => {
         const isActive = option.value === value;
 
@@ -25,9 +25,9 @@ export function QrModeToggle({ value, onChange }: QrModeToggleProps) {
             key={option.value}
             type="button"
             className={cn(
-              "min-h-11 rounded-xl px-4 text-sm font-semibold transition",
+              "min-h-11 rounded-xl px-4 text-sm font-semibold transition-all",
               isActive
-                ? "bg-white text-foreground shadow-sm"
+                ? "bg-brandRose text-white shadow-sm dark:bg-brandCyan dark:text-zinc-950"
                 : "text-muted hover:text-foreground",
             )}
             onClick={() => onChange(option.value)}

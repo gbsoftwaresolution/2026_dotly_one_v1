@@ -57,12 +57,12 @@ export function ParticipantsList({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2">
       {participants.map((p) => (
         <div key={p.personaId}>
           {sentIds.has(p.personaId) ? (
-            <div className="rounded-3xl border border-green-100 bg-green-50 px-5 py-4 dark:border-green-900 dark:bg-green-950/30">
-              <p className="font-mono text-xs font-medium text-green-700 dark:text-green-400">
+            <div className="rounded-3xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4">
+              <p className="font-mono text-xs font-medium text-emerald-600 dark:text-emerald-400">
                 Request sent to {p.fullName}
               </p>
             </div>
@@ -74,9 +74,11 @@ export function ParticipantsList({
                 isRequesting={requestingIds.has(p.personaId)}
               />
               {errors[p.personaId] ? (
-                <p className="mt-1 px-2 font-mono text-xs text-rose-600 dark:text-rose-400">
-                  {errors[p.personaId]}
-                </p>
+                <div className="mt-1 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-3 py-2">
+                  <p className="font-mono text-xs text-rose-500 dark:text-rose-400">
+                    {errors[p.personaId]}
+                  </p>
+                </div>
               ) : null}
             </>
           )}

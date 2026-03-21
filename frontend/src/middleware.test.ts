@@ -24,4 +24,16 @@ describe("middleware", () => {
 
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
+
+  it("preserves the full path for nested protected routes", () => {
+    const request = new NextRequest(
+      "http://localhost:3001/app/contacts/relationship-1",
+    );
+
+    const response = middleware(request);
+
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3001/login?next=%2Fapp%2Fcontacts%2Frelationship-1",
+    );
+  });
 });

@@ -109,13 +109,18 @@ export function NoteEditor({
       </div>
 
       {feedback?.tone === "error" ? (
-        <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 font-sans text-sm text-rose-700">
-          {feedback.message}
-        </p>
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
+          <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
+            {feedback.message}
+          </p>
+        </div>
       ) : disabled ? (
-        <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 font-sans text-sm text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
-          Notes are locked because this instant access relationship has expired.
-        </p>
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <p className="font-sans text-sm text-amber-600 dark:text-amber-400">
+            Notes are locked because this instant access relationship has
+            expired.
+          </p>
+        </div>
       ) : null}
 
       <div className="pt-2">

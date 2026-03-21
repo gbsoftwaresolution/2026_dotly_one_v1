@@ -27,7 +27,7 @@ export function PersonaInsightRow({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full flex-col space-y-4 rounded-3xl border border-slate-100 bg-white p-5 text-left shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all active:scale-[0.98] dark:border-zinc-900 dark:bg-zinc-950"
+      className="flex w-full flex-col space-y-4 rounded-3xl border border-border bg-surface p-5 text-left shadow-sm transition-all active:scale-[0.98] hover:border-brandRose/30 hover:bg-brandRose/5 dark:hover:border-brandCyan/30 dark:hover:bg-brandCyan/5"
     >
       <div className="flex items-start justify-between">
         <div>
@@ -39,9 +39,7 @@ export function PersonaInsightRow({
           </p>
         </div>
         {isRefreshing ? (
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-            Refreshing
-          </p>
+          <p className="label-xs text-muted">Refreshing</p>
         ) : null}
       </div>
 
@@ -53,8 +51,8 @@ export function PersonaInsightRow({
         <div className="grid w-full grid-cols-3 gap-2">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="animate-pulse space-y-1">
-              <div className="h-2 w-full rounded bg-slate-100 dark:bg-zinc-900" />
-              <div className="h-4 w-2/3 rounded bg-slate-100 dark:bg-zinc-900" />
+              <div className="h-2 w-full rounded-full bg-current opacity-10" />
+              <div className="h-4 w-2/3 rounded-full bg-current opacity-10" />
             </div>
           ))}
         </div>
@@ -62,26 +60,20 @@ export function PersonaInsightRow({
         <div className="w-full space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <p className="font-sans text-[10px] font-bold uppercase tracking-widest text-muted">
-                Views
-              </p>
-              <p className="mt-1 font-mono text-lg font-semibold text-foreground">
+              <p className="label-xs text-muted">Views</p>
+              <p className="mt-1 font-mono text-lg font-bold text-foreground">
                 {analytics.profileViews}
               </p>
             </div>
             <div>
-              <p className="font-sans text-[10px] font-bold uppercase tracking-widest text-muted">
-                Scans
-              </p>
-              <p className="mt-1 font-mono text-lg font-semibold text-foreground">
+              <p className="label-xs text-muted">Scans</p>
+              <p className="mt-1 font-mono text-lg font-bold text-foreground">
                 {analytics.qrScans}
               </p>
             </div>
             <div>
-              <p className="font-sans text-[10px] font-bold uppercase tracking-widest text-muted">
-                Conversion
-              </p>
-              <p className="mt-1 font-mono text-lg font-semibold text-foreground">
+              <p className="label-xs text-muted">Conv.</p>
+              <p className="mt-1 font-mono text-lg font-bold text-brandRose dark:text-brandCyan">
                 {conversionRate}%
               </p>
             </div>
@@ -89,17 +81,13 @@ export function PersonaInsightRow({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="font-sans text-[10px] font-bold uppercase tracking-widest text-muted">
-                Requests
-              </p>
+              <p className="label-xs text-muted">Requests</p>
               <p className="mt-1 font-mono text-sm font-semibold text-foreground">
                 {analytics.requestsReceived}
               </p>
             </div>
             <div>
-              <p className="font-sans text-[10px] font-bold uppercase tracking-widest text-muted">
-                Approved
-              </p>
+              <p className="label-xs text-muted">Approved</p>
               <p className="mt-1 font-mono text-sm font-semibold text-foreground">
                 {analytics.requestsApproved}
               </p>
@@ -107,9 +95,9 @@ export function PersonaInsightRow({
           </div>
 
           {/* Performance Bar */}
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-900">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">
             <div
-              className="h-full rounded-full bg-brandRose transition-all duration-500 dark:bg-brandCyan"
+              className="h-full rounded-full bg-gradient-to-r from-brandRose to-brandRose/70 transition-all duration-700 dark:from-brandCyan dark:to-brandCyan/70"
               style={{ width: `${Math.min(conversionNum, 100)}%` }}
             />
           </div>

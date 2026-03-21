@@ -10,16 +10,15 @@ export function StatCard({ label, value, highlight }: StatCardProps) {
   return (
     <div
       className={cn(
-        "flex flex-col justify-between rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_16px_rgb(0,0,0,0.04)] dark:border-zinc-900 dark:bg-zinc-950",
-        highlight && "ring-1 ring-brandRose/50 dark:ring-brandCyan/50",
+        "flex flex-col justify-between rounded-2xl border border-border bg-surface p-4 shadow-sm transition-all",
+        highlight &&
+          "border-brandRose/30 bg-brandRose/5 dark:border-brandCyan/30 dark:bg-brandCyan/5 shadow-[0_0_20px_rgba(255,83,112,0.08)] dark:shadow-[0_0_20px_rgba(0,245,212,0.08)]",
       )}
     >
-      <p className="font-sans text-[10px] font-bold uppercase tracking-widest text-muted">
-        {label}
-      </p>
+      <p className="label-xs text-muted">{label}</p>
       <p
         className={cn(
-          "mt-2 font-mono text-2xl font-semibold",
+          "mt-2 font-mono text-2xl font-bold",
           highlight ? "text-brandRose dark:text-brandCyan" : "text-foreground",
         )}
       >

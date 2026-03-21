@@ -4,6 +4,8 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 
+process.env.NEXT_PUBLIC_API_BASE_URL = "http://localhost:3000/v1";
+
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: any) =>
     React.createElement(
