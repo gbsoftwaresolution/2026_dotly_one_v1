@@ -4,6 +4,11 @@ export interface AnalyticsSummary {
   totalRequests: number;
   totalApproved: number;
   totalContacts: number;
+  totalVerificationEmailsIssued: number;
+  totalVerificationResends: number;
+  totalVerificationCompleted: number;
+  totalVerificationBlocks: number;
+  verificationConversionRate: number;
 }
 
 export interface PersonaAnalytics {

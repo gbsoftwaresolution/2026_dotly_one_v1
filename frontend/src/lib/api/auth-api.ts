@@ -1,4 +1,11 @@
-import type { AuthCredentials, LoginResult, SignupResult } from "@/types/auth";
+import type {
+  AuthCredentials,
+  LoginResult,
+  ResendVerificationEmailInput,
+  ResendVerificationEmailResult,
+  SignupResult,
+  VerifyEmailResult,
+} from "@/types/auth";
 
 import { apiRequest } from "./client";
 
@@ -20,6 +27,20 @@ export const authApi = {
   logout: () =>
     apiRequest<{ success: boolean }>("/api/auth/logout", {
       method: "POST",
+      baseUrl: "",
+      credentials: "same-origin",
+    }),
+  verifyEmail: (token: string) =>
+    apiRequest<VerifyEmailResult>("/api/auth/verify-email", {
+      method: "POST",
+      body: { token },
+      baseUrl: "",
+      credentials: "same-origin",
+    }),
+  resendVerificationEmail: (input: ResendVerificationEmailInput) =>
+    apiRequest<ResendVerificationEmailResult>("/api/auth/verify-email/resend", {
+      method: "POST",
+      body: input,
       baseUrl: "",
       credentials: "same-origin",
     }),

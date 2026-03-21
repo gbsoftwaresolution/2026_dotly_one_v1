@@ -12,12 +12,31 @@ export interface AuthCredentials {
 export interface AuthUser {
   id: string;
   email: string;
+  isVerified: boolean;
 }
 
 export interface SignupResult {
   user: AuthUser;
+  verificationPending: boolean;
+  verificationEmailSent: boolean;
 }
 
 export interface LoginResult {
   success: boolean;
+}
+
+export interface VerifyEmailResult {
+  verified: boolean;
+  alreadyVerified: boolean;
+  user: AuthUser;
+}
+
+export interface ResendVerificationEmailInput {
+  email: string;
+}
+
+export interface ResendVerificationEmailResult {
+  accepted: boolean;
+  verificationPending: boolean;
+  verificationEmailSent: boolean;
 }

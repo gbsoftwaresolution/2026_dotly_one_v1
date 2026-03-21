@@ -47,7 +47,10 @@ import QrPage from "./page";
 
 describe("QrPage", () => {
   it("requires the protected session and loads personas", async () => {
-    mocks.requireServerSession.mockResolvedValue({ accessToken: "token" });
+    mocks.requireServerSession.mockResolvedValue({
+      accessToken: "token",
+      user: { id: "user-1", email: "user@dotly.one", isVerified: true },
+    });
     mocks.listPersonas.mockResolvedValue([]);
 
     const element = await QrPage();
@@ -58,7 +61,10 @@ describe("QrPage", () => {
   });
 
   it("redirects expired sessions back to login", async () => {
-    mocks.requireServerSession.mockResolvedValue({ accessToken: "token" });
+    mocks.requireServerSession.mockResolvedValue({
+      accessToken: "token",
+      user: { id: "user-1", email: "user@dotly.one", isVerified: true },
+    });
     mocks.listPersonas.mockRejectedValue(
       new ApiError("Unauthorized", 401, { message: "Unauthorized" }),
     );

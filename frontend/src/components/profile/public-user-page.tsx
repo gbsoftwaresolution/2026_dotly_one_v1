@@ -24,12 +24,13 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
     const accessToken = await getServerAccessToken();
 
     let isAuthenticated = false;
+    let currentUser = null;
     let personas: PersonaSummary[] = [];
     let personaLoadError: string | null = null;
 
     if (accessToken) {
       try {
-        await userApi.me(accessToken);
+        currentUser = await userApi.me(accessToken);
         isAuthenticated = true;
 
         try {
@@ -60,6 +61,7 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
             profile={profile}
             initialPersonas={personas}
             isAuthenticated={isAuthenticated}
+            currentUser={currentUser}
             personaLoadError={personaLoadError}
           />
         </div>

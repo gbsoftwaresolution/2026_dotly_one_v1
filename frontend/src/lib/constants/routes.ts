@@ -3,6 +3,9 @@ export const routes = {
     home: "/",
     login: "/login",
     signup: "/signup",
+    verifyEmail: "/verify-email",
+    terms: "/terms",
+    privacy: "/privacy",
     qrLanding: "/q",
   },
   app: {

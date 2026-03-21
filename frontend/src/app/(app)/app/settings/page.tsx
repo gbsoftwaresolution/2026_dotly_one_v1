@@ -1,3 +1,4 @@
+import { VerificationSettingsCard } from "@/components/settings/verification-settings-card";
 import { ThemeSwitcher } from "@/components/app-shell/theme-switcher";
 
 export default function SettingsPage() {
@@ -24,6 +25,8 @@ export default function SettingsPage() {
           <ThemeSwitcher />
         </div>
       </div>
+
+      <VerificationSettingsCard />
 
       {/* Coming soon */}
       <div className="rounded-3xl border border-dashed border-border p-5">

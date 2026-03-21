@@ -80,6 +80,11 @@ describe("RequestAccessPanel", () => {
         profile: profileFixture,
         initialPersonas: [personaFixture],
         isAuthenticated: true,
+        currentUser: {
+          id: "user-1",
+          email: "user@dotly.one",
+          isVerified: true,
+        },
       }),
     );
 
@@ -100,5 +105,27 @@ describe("RequestAccessPanel", () => {
     });
 
     expect(screen.getByText(/request sent/i)).toBeInTheDocument();
+  });
+
+  it("shows verification guidance instead of the request form for unverified users", () => {
+    render(
+      React.createElement(RequestAccessPanel, {
+        profile: profileFixture,
+        initialPersonas: [personaFixture],
+        isAuthenticated: true,
+        currentUser: {
+          id: "user-1",
+          email: "user@dotly.one",
+          isVerified: false,
+        },
+      }),
+    );
+
+    expect(
+      screen.getByText(/verify your email before sending requests/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /request access/i }),
+    ).not.toBeInTheDocument();
   });
 });

@@ -14,7 +14,10 @@ export function PublicShell({ children }: PropsWithChildren) {
   const isCanonicalPublicProfileRoute =
     topLevelPath.length === 1 &&
     topLevelPath[0] !== "login" &&
-    topLevelPath[0] !== "signup";
+    topLevelPath[0] !== "signup" &&
+    topLevelPath[0] !== "terms" &&
+    topLevelPath[0] !== "privacy" &&
+    topLevelPath[0] !== "verify-email";
 
   const isFullscreenRoute =
     pathname.startsWith("/u/") ||

@@ -4,7 +4,7 @@ import { requireServerSession } from "@/lib/auth/protected-route";
 import { routes } from "@/lib/constants/routes";
 
 export default async function EventsPage() {
-  await requireServerSession(routes.app.events);
+  const { user } = await requireServerSession(routes.app.events);
 
   return (
     <section className="space-y-4">
@@ -12,7 +12,7 @@ export default async function EventsPage() {
         title="Events"
         description="Events you have joined. Discover people while you are there."
       />
-      <EventsScreen />
+      <EventsScreen isVerified={user.isVerified} currentUserEmail={user.email} />
     </section>
   );
 }

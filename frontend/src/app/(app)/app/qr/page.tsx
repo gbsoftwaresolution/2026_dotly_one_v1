@@ -10,7 +10,7 @@ import { requireServerSession } from "@/lib/auth/protected-route";
 import { routes } from "@/lib/constants/routes";
 
 export default async function QrPage() {
-  const { accessToken } = await requireServerSession(routes.app.qr);
+  const { accessToken, user } = await requireServerSession(routes.app.qr);
 
   try {
     const personas = await personaApi.list(accessToken);
@@ -40,7 +40,11 @@ export default async function QrPage() {
           />
         ) : (
           <div className="w-full">
-            <QrGeneratorPanel personas={personas} />
+            <QrGeneratorPanel
+              personas={personas}
+              isVerified={user.isVerified}
+              currentUserEmail={user.email}
+            />
           </div>
         )}
       </section>

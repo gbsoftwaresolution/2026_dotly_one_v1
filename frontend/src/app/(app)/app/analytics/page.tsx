@@ -10,7 +10,7 @@ export default async function AnalyticsPage() {
     <section className="space-y-4">
       <PageHeader
         title="Analytics"
-        description="Track how your personas are performing across views, scans, and connections."
+        description="Track persona performance alongside verification conversion, resend usage, and trust-policy friction."
       />
       <AnalyticsScreen />
     </section>

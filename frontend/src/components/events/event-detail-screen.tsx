@@ -15,11 +15,15 @@ import type {
   EventSummary,
 } from "@/types/event";
 
+import { VerificationPrompt } from "../auth/verification-prompt";
+
 import { DiscoveryToggle } from "./discovery-toggle";
 import { ParticipantsList } from "./participants-list";
 
 interface EventDetailScreenProps {
   eventId: string;
+  isVerified: boolean;
+  currentUserEmail: string;
 }
 
 function statusBadgeProps(status: EventStatus) {
@@ -98,7 +102,11 @@ function StealthShield() {
 // ---------------------------------------------------------------------------
 // EventDetailScreen
 // ---------------------------------------------------------------------------
-export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
+export function EventDetailScreen({
+  eventId,
+  isVerified,
+  currentUserEmail,
+}: EventDetailScreenProps) {
   const router = useRouter();
   const [event, setEvent] = useState<EventSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -172,13 +180,14 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
 
   useEffect(() => {
     if (
+      isVerified &&
       event?.status === "live" &&
       event.myParticipation?.discoverable === true
     ) {
       loadParticipants();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event?.id, loadParticipants]);
+  }, [event?.id, isVerified, loadParticipants]);
 
   // Discovery toggle handler
   async function handleDiscoveryToggle(enable: boolean) {
@@ -293,7 +302,18 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
             enabled={isDiscoverable}
             onToggle={handleDiscoveryToggle}
             isLoading={discoveryToggling}
+            disabled={!isVerified}
           />
+          {!isVerified ? (
+            <div className="mt-4">
+              <VerificationPrompt
+                compact
+                email={currentUserEmail}
+                title="Verify your email before joining event discovery"
+                description="Participant visibility and discovery signals stay behind verified accounts to keep event networking trustworthy."
+              />
+            </div>
+          ) : null}
           {discoveryError ? (
             <div className="mt-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
               <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
@@ -317,7 +337,14 @@ export function EventDetailScreen({ eventId }: EventDetailScreenProps) {
         <section className="flex flex-col gap-3">
           <h3 className="label-xs text-muted">People here</h3>
 
-          {!isDiscoverable ? (
+          {!isVerified ? (
+            <VerificationPrompt
+              compact
+              email={currentUserEmail}
+              title="Verify your email to view participants"
+              description="Dotly only reveals discoverable event participants to verified accounts."
+            />
+          ) : !isDiscoverable ? (
             <StealthShield />
           ) : participantsLoading ? (
             <div className="flex flex-col gap-3">

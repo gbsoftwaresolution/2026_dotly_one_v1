@@ -16,13 +16,21 @@ import type {
   QuickConnectQrSummary,
 } from "@/types/persona";
 
+import { VerificationPrompt } from "../auth/verification-prompt";
+
 interface QrGeneratorPanelProps {
   personas: PersonaSummary[];
+  isVerified: boolean;
+  currentUserEmail: string;
 }
 
 type GeneratedQr = QrTokenSummary | QuickConnectQrSummary;
 
-export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
+export function QrGeneratorPanel({
+  personas,
+  isVerified,
+  currentUserEmail,
+}: QrGeneratorPanelProps) {
   const router = useRouter();
   const [selectedPersonaId, setSelectedPersonaId] = useState(
     personas[0]?.id ?? "",
@@ -98,8 +106,21 @@ export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
   const inputCls =
     "min-h-[60px] w-full rounded-2xl border border-border bg-surface px-4 text-sm text-foreground font-mono outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20";
 
+  const verificationCopy =
+    mode === "standard"
+      ? "Verify your email before creating shareable profile QR codes. Dotly keeps public identity sharing behind a verified account."
+      : "Verify your email before creating Quick Connect QR codes. Dotly only opens instant connection flows from verified accounts.";
+
   return (
     <div className="space-y-4 font-sans">
+      {!isVerified ? (
+        <VerificationPrompt
+          email={currentUserEmail}
+          title="QR sharing is waiting on verification"
+          description={verificationCopy}
+        />
+      ) : null}
+
       <div className="glass rounded-3xl border border-border/60 p-6 shadow-shell space-y-5">
         {/* Persona selector */}
         <div className="space-y-1.5">
@@ -172,7 +193,7 @@ export function QrGeneratorPanel({ personas }: QrGeneratorPanelProps) {
           <PrimaryButton
             type="button"
             className="w-full h-[60px]"
-            disabled={isSubmitting || !selectedPersonaId}
+            disabled={isSubmitting || !selectedPersonaId || !isVerified}
             onClick={() => void handleGenerate()}
           >
             {isSubmitting ? "Generating..." : "Generate QR"}

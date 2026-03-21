@@ -16,11 +16,15 @@ import type {
   PublicProfile,
   PublicProfileRequestTarget,
 } from "@/types";
+import type { UserProfile } from "@/types/user";
+
+import { VerificationPrompt } from "../auth/verification-prompt";
 
 interface RequestAccessPanelProps {
   profile: PublicProfile;
   initialPersonas: PersonaSummary[];
   isAuthenticated: boolean;
+  currentUser?: UserProfile | null;
   personaLoadError?: string | null;
 }
 
@@ -77,6 +81,7 @@ export function RequestAccessPanel({
   profile,
   initialPersonas,
   isAuthenticated,
+  currentUser = null,
   personaLoadError = null,
 }: RequestAccessPanelProps) {
   const [selectedPersonaId, setSelectedPersonaId] = useState(
@@ -187,6 +192,16 @@ export function RequestAccessPanel({
           {personaLoadError}
         </p>
       </Card>
+    );
+  }
+
+  if (currentUser && !currentUser.isVerified) {
+    return (
+      <VerificationPrompt
+        email={currentUser.email}
+        title="Verify your email before sending requests"
+        description={`Dotly only sends connection requests from verified accounts. Verify ${currentUser.email} to request access to ${profile.fullName}.`}
+      />
     );
   }
 

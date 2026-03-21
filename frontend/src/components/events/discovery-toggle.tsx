@@ -4,12 +4,14 @@ interface DiscoveryToggleProps {
   enabled: boolean;
   onToggle: (enabled: boolean) => void;
   isLoading?: boolean;
+  disabled?: boolean;
 }
 
 export function DiscoveryToggle({
   enabled,
   onToggle,
   isLoading,
+  disabled = false,
 }: DiscoveryToggleProps) {
   return (
     <div className="flex items-center justify-between gap-4">
@@ -39,7 +41,7 @@ export function DiscoveryToggle({
         role="switch"
         aria-checked={enabled}
         aria-label="Toggle discovery signal"
-        disabled={isLoading}
+        disabled={isLoading || disabled}
         onClick={() => onToggle(!enabled)}
         className={[
           "relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent",

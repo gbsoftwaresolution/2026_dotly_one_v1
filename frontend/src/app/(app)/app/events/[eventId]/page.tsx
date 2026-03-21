@@ -11,7 +11,7 @@ export default async function EventDetailPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  await requireServerSession(routes.app.eventDetail(eventId));
+  const { user } = await requireServerSession(routes.app.eventDetail(eventId));
 
   return (
     <section className="space-y-4">
@@ -26,7 +26,11 @@ export default async function EventDetailPage({
           </Link>
         }
       />
-      <EventDetailScreen eventId={eventId} />
+      <EventDetailScreen
+        eventId={eventId}
+        isVerified={user.isVerified}
+        currentUserEmail={user.email}
+      />
     </section>
   );
 }

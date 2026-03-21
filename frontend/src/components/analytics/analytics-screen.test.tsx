@@ -60,13 +60,20 @@ describe("AnalyticsScreen", () => {
       totalRequests: 4,
       totalApproved: 2,
       totalContacts: 2,
+      totalVerificationEmailsIssued: 3,
+      totalVerificationResends: 1,
+      totalVerificationCompleted: 1,
+      totalVerificationBlocks: 2,
+      verificationConversionRate: 33.33,
     });
     mocks.listPersonas.mockResolvedValue([personaFixture]);
     mocks.getPersona.mockResolvedValue({
+      personaId: "persona-1",
       profileViews: 14,
       qrScans: 6,
       requestsReceived: 4,
       requestsApproved: 2,
+      contactsCreated: 2,
       conversionRate: 50,
     });
 
@@ -78,6 +85,8 @@ describe("AnalyticsScreen", () => {
 
     expect(screen.getByText(/sender persona/i)).toBeInTheDocument();
     expect(screen.getByText(/total contacts/i)).toBeInTheDocument();
+    expect(screen.getByText(/verification emails/i)).toBeInTheDocument();
+    expect(screen.getByText(/trust blocks/i)).toBeInTheDocument();
   });
 
   it("redirects to login when the session has expired", async () => {

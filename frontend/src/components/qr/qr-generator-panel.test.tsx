@@ -66,6 +66,8 @@ describe("QrGeneratorPanel", () => {
     render(
       React.createElement(QrGeneratorPanel, {
         personas: [personaFixture],
+        isVerified: true,
+        currentUserEmail: "user@dotly.one",
       }),
     );
 
@@ -82,5 +84,20 @@ describe("QrGeneratorPanel", () => {
         maxUses: 3,
       });
     });
+  });
+
+  it("shows verification guidance and disables generation for unverified users", () => {
+    render(
+      React.createElement(QrGeneratorPanel, {
+        personas: [personaFixture],
+        isVerified: false,
+        currentUserEmail: "user@dotly.one",
+      }),
+    );
+
+    expect(
+      screen.getByText(/qr sharing is waiting on verification/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /generate qr/i })).toBeDisabled();
   });
 });

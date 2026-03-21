@@ -1,5 +1,6 @@
 import type { PropsWithChildren, ReactNode } from "react";
 
+import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { NotificationBadge } from "@/components/notifications/notification-badge";
 import { SessionStatus } from "./session-status";
@@ -67,7 +68,10 @@ export function AppShell({
 
       {/* ── Main content ───────────────────────────────── */}
       <main className="flex-1 px-5 py-5 pb-nav">
-        <div className="space-y-4 animate-fade-up">{children}</div>
+        <div className="space-y-4 animate-fade-up">
+          <EmailVerificationBanner />
+          {children}
+        </div>
       </main>
 
       {/* ── Bottom Nav ─────────────────────────────────── */}

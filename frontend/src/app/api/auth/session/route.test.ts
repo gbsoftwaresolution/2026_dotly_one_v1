@@ -27,6 +27,29 @@ import { ApiError } from "@/lib/api/client";
 import { GET } from "./route";
 
 describe("GET /api/auth/session", () => {
+  it("returns the current session with verification state", async () => {
+    mocks.getServerAccessToken.mockResolvedValue("token");
+    mocks.me.mockResolvedValue({
+      id: "user-1",
+      email: "user@dotly.one",
+      isVerified: false,
+    });
+
+    const response = await GET();
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({
+      isAuthenticated: true,
+      isLoading: false,
+      user: {
+        id: "user-1",
+        email: "user@dotly.one",
+        isVerified: false,
+      },
+    });
+  });
+
   it("returns a logged out snapshot when there is no access token", async () => {
     mocks.getServerAccessToken.mockResolvedValue(null);
 

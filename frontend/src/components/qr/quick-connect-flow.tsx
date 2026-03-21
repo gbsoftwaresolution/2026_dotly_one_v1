@@ -78,7 +78,8 @@ function getConnectErrorState(error: ApiError): FlowState {
       return {
         type: "error",
         title: "Verification required",
-        message: "This Quick Connect is only available to verified users.",
+        message:
+          "Verify your email before using this Quick Connect. Check your inbox for the verification link, or resend it from your account banner.",
       };
     return {
       type: "error",

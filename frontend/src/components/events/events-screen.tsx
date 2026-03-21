@@ -13,6 +13,8 @@ import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import type { PersonaSummary } from "@/types/persona";
 import type { EventSummary } from "@/types/event";
 
+import { VerificationPrompt } from "../auth/verification-prompt";
+
 import { EventCard } from "./event-card";
 
 // ---------------------------------------------------------------------------
@@ -27,9 +29,15 @@ const inputCls =
 
 interface JoinPanelProps {
   onJoined: (event: EventSummary) => void;
+  isVerified: boolean;
+  currentUserEmail: string;
 }
 
-function JoinPanel({ onJoined }: JoinPanelProps) {
+function JoinPanel({
+  onJoined,
+  isVerified,
+  currentUserEmail,
+}: JoinPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [eventCode, setEventCode] = useState("");
   const [personas, setPersonas] = useState<PersonaSummary[]>([]);
@@ -95,6 +103,16 @@ function JoinPanel({ onJoined }: JoinPanelProps) {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (!isVerified) {
+    return (
+      <VerificationPrompt
+        email={currentUserEmail}
+        title="Verify your email before joining events"
+        description="Dotly event networking only opens for verified accounts. Verify your email to join an event and participate in discovery safely."
+      />
+    );
   }
 
   return (
@@ -195,7 +213,13 @@ function JoinPanel({ onJoined }: JoinPanelProps) {
 // EventsScreen
 // ---------------------------------------------------------------------------
 
-export function EventsScreen() {
+export function EventsScreen({
+  isVerified,
+  currentUserEmail,
+}: {
+  isVerified: boolean;
+  currentUserEmail: string;
+}) {
   const router = useRouter();
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -254,7 +278,11 @@ export function EventsScreen() {
 
   return (
     <div className="flex flex-col gap-3">
-      <JoinPanel onJoined={handleJoined} />
+      <JoinPanel
+        onJoined={handleJoined}
+        isVerified={isVerified}
+        currentUserEmail={currentUserEmail}
+      />
 
       {events.length === 0 ? (
         <EmptyState

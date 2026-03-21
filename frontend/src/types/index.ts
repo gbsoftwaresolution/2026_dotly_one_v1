@@ -3,8 +3,11 @@ export type {
   AuthCredentials,
   AuthUser,
   LoginResult,
+  ResendVerificationEmailInput,
+  ResendVerificationEmailResult,
   SessionSnapshot,
   SignupResult,
+  VerifyEmailResult,
 } from "./auth";
 export type {
   Contact,

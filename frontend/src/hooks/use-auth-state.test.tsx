@@ -23,6 +23,7 @@ describe("useAuthState", () => {
       user: {
         id: "user-1",
         email: "user@example.com",
+        isVerified: false,
       },
       isAuthenticated: true,
       isLoading: false,

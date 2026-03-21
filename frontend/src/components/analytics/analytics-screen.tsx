@@ -22,7 +22,7 @@ interface PersonaRowState extends PersonaWithAnalytics {
 function SummarySkeleton() {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-      {Array.from({ length: 5 }).map((_, i) => (
+      {Array.from({ length: 10 }).map((_, i) => (
         <div
           key={i}
           className="skeleton rounded-2xl border border-border bg-surface p-4 flex flex-col justify-between"
@@ -184,7 +184,11 @@ export function AnalyticsScreen() {
       summary.totalQrScans > 0 ||
       summary.totalRequests > 0 ||
       summary.totalApproved > 0 ||
-      summary.totalContacts > 0);
+      summary.totalContacts > 0 ||
+      summary.totalVerificationEmailsIssued > 0 ||
+      summary.totalVerificationResends > 0 ||
+      summary.totalVerificationCompleted > 0 ||
+      summary.totalVerificationBlocks > 0);
 
   return (
     <div className="space-y-8">
@@ -210,6 +214,30 @@ export function AnalyticsScreen() {
                 label="Total Contacts"
                 value={summary.totalContacts}
                 highlight={summary.totalContacts > 0}
+              />
+              <StatCard
+                label="Verification Emails"
+                value={summary.totalVerificationEmailsIssued}
+                highlight={summary.totalVerificationEmailsIssued > 0}
+              />
+              <StatCard
+                label="Verified Accounts"
+                value={summary.totalVerificationCompleted}
+                highlight={summary.totalVerificationCompleted > 0}
+              />
+              <StatCard
+                label="Verification Resends"
+                value={summary.totalVerificationResends}
+              />
+              <StatCard
+                label="Trust Blocks"
+                value={summary.totalVerificationBlocks}
+                highlight={summary.totalVerificationBlocks > 0}
+              />
+              <StatCard
+                label="Verify Rate"
+                value={`${summary.verificationConversionRate.toFixed(2)}%`}
+                highlight={summary.verificationConversionRate > 0}
               />
             </div>
           ) : (
