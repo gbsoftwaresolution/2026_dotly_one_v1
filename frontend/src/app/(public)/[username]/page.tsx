@@ -1,6 +1,6 @@
 import { PublicUserPage } from "@/components/profile/public-user-page";
 
-export default async function PublicUserPageRoute({
+export default async function CanonicalPublicUserPage({
   params,
 }: {
   params: Promise<{ username: string }>;

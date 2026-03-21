@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { formatAccessMode } from "@/lib/persona/labels";
+import { routes } from "@/lib/constants/routes";
 import type { PersonaSummary } from "@/types/persona";
 
 interface PersonaCardProps {
@@ -47,9 +48,15 @@ export function PersonaCard({ persona }: PersonaCardProps) {
       </dl>
 
       <div className="mt-6 space-y-2">
+        <Link
+          href={routes.app.personaDetail(persona.id)}
+          className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white/70 py-5 font-sans text-sm font-bold text-slate-900 transition-all active:scale-95 hover:bg-slate-50 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-white dark:hover:bg-zinc-800"
+        >
+          Edit Persona
+        </Link>
         {isPubliclyVisible ? (
           <Link
-            href={`/u/${persona.username}`}
+            href={`/${persona.username}`}
             className="inline-flex w-full items-center justify-center rounded-xl bg-brandRose py-5 font-sans text-sm font-bold text-white transition-all active:scale-95 hover:opacity-90 dark:bg-white dark:text-bgOnyx"
           >
             Open Public Profile
@@ -62,7 +69,8 @@ export function PersonaCard({ persona }: PersonaCardProps) {
         {!isPubliclyVisible ? (
           <p className="text-xs text-muted">
             Set access mode to open if you want this persona to resolve at
-            `dotly.id/{persona.username}`.
+            {" "}
+            dotly.id/{persona.username}.
           </p>
         ) : null}
       </div>

@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/context/ThemeContext";
 import { pwaConfig } from "@/lib/constants/pwa";
+import { buildThemeInitScript } from "@/lib/theme/theme";
 
 import "./globals.css";
 
@@ -15,6 +16,8 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
 });
+
+const themeInitScript = buildThemeInitScript();
 
 export const metadata: Metadata = {
   title: {
@@ -33,7 +36,12 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
     >
+      <head>
+        <meta name="color-scheme" content="light dark" />
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="bg-bgLuminous text-slate-900 dark:bg-bgOnyx dark:text-white transition-colors">
         <ThemeProvider>{children}</ThemeProvider>
       </body>

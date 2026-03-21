@@ -7,8 +7,15 @@ import { usePathname } from "next/navigation";
 
 export function PublicShell({ children }: PropsWithChildren) {
   const pathname = usePathname();
+  const topLevelPath = pathname.split("/").filter(Boolean);
+  const isCanonicalPublicProfileRoute =
+    topLevelPath.length === 1 &&
+    topLevelPath[0] !== "login" &&
+    topLevelPath[0] !== "signup";
   const isFullscreenRoute =
-    pathname.startsWith("/u/") || pathname.startsWith("/q/");
+    pathname.startsWith("/u/") ||
+    pathname.startsWith("/q/") ||
+    isCanonicalPublicProfileRoute;
 
   if (isFullscreenRoute) {
     return <div className="min-h-screen">{children}</div>;

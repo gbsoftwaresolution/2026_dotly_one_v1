@@ -2,7 +2,13 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "onyx" | "luminous";
+import {
+  applyThemeToDocument,
+  DEFAULT_THEME,
+  isTheme,
+  THEME_STORAGE_KEY,
+  type Theme,
+} from "@/lib/theme/theme";
 
 interface ThemeContextType {
   theme: Theme;
@@ -12,42 +18,33 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function getInitialTheme(): Theme {
+  if (typeof document === "undefined") {
+    return DEFAULT_THEME;
+  }
+
+  const documentTheme = document.documentElement.dataset.theme ?? null;
+
+  if (isTheme(documentTheme)) {
+    return documentTheme;
+  }
+
+  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+
+  return isTheme(storedTheme) ? storedTheme : DEFAULT_THEME;
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("onyx");
-  const [mounted, setMounted] = useState(false);
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
 
-  // On mount, read from localStorage or default to onyx
   useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem("dotly_theme") as Theme | null;
-    if (stored === "luminous" || stored === "onyx") {
-      setThemeState(stored);
-    } else {
-      setThemeState("onyx");
-      localStorage.setItem("dotly_theme", "onyx");
-    }
-  }, []);
-
-  // Sync with HTML class and localStorage
-  useEffect(() => {
-    if (!mounted) return;
-    const root = document.documentElement;
-    if (theme === "onyx") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-    localStorage.setItem("dotly_theme", theme);
-  }, [theme, mounted]);
+    applyThemeToDocument(theme);
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   const setTheme = (newTheme: Theme) => setThemeState(newTheme);
   const toggleTheme = () =>
     setThemeState((prev) => (prev === "onyx" ? "luminous" : "onyx"));
-
-  // Prevent hydration mismatch
-  if (!mounted) {
-    return <>{children}</>;
-  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
