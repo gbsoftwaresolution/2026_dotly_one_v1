@@ -122,9 +122,14 @@ describe("PublicSmartCard", () => {
     revokeObjectUrl.mockClear();
     scrollIntoView.mockClear();
     assignLocation.mockClear();
-    vi.stubGlobal("URL", {
-      createObjectURL: createObjectUrl,
-      revokeObjectURL: revokeObjectUrl,
+    fetchMock.mockReset();
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: createObjectUrl,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: revokeObjectUrl,
     });
     vi.stubGlobal("fetch", fetchMock);
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
@@ -461,8 +466,61 @@ describe("PublicSmartCard", () => {
     await user.click(screen.getByRole("button", { name: /save contact/i }));
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      /save contact is unavailable right now/i,
+      /unable to download contact/i,
     );
+  });
+
+  it("hides save contact when the vcard link is malformed", () => {
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: createProfile({
+          smartCard: {
+            primaryAction: "contact_me",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: true,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
+            actions: {
+              call: false,
+              whatsapp: false,
+              email: false,
+              vcard: true,
+            },
+            actionLinks: {
+              call: null,
+              whatsapp: null,
+              email: null,
+              vcard: "javascript:alert('xss')",
+            },
+          },
+          smartCardConfig: {
+            primaryAction: "contact_me",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: true,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
+          },
+        }),
+      }),
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /save contact/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/^direct actions$/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /request access/i })).toBeEnabled();
   });
 
   it("falls back to request access when instant connect has no public QR target", () => {

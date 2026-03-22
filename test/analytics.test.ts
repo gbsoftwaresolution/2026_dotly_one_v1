@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
-import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, NotFoundException } from "@nestjs/common";
 
 import { AnalyticsEventType as PrismaAnalyticsEventType } from "@prisma/client";
 
@@ -635,7 +635,7 @@ describe("ProfilesService analytics hook", () => {
     await assert.rejects(service.getPublicVcard("alice"), NotFoundException);
   });
 
-  it("rejects vcard generation when enabled public action values are malformed", async () => {
+  it("omits malformed public action values from the generated vcard", async () => {
     const service = new ProfilesService(
       {
         persona: {
@@ -669,15 +669,209 @@ describe("ProfilesService analytics hook", () => {
       } as any,
     );
 
-    await assert.rejects(
-      service.getPublicVcard("alice"),
-      (error: unknown) => {
-        assert(error instanceof BadRequestException);
-        assert.equal(error.message, "Malformed public action values: publicPhone");
+    const result = await service.getPublicVcard("alice");
 
-        return true;
-      },
+    assert.doesNotMatch(result.content, /TEL:/);
+    assert.match(result.content, /EMAIL:alice@example.com/);
+  });
+
+  it("never leaks whatsapp values into the generated vcard", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: false,
+              allowWhatsapp: true,
+              allowEmail: false,
+              allowVcard: true,
+            },
+            publicPhone: null,
+            publicWhatsappNumber: "+1 (555) 123-4567",
+            publicEmail: null,
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
     );
+
+    const result = await service.getPublicVcard("alice");
+
+    assert.doesNotMatch(result.content, /WA\.ME/i);
+    assert.doesNotMatch(result.content, /15551234567/);
+    assert.doesNotMatch(result.content, /TEL:/);
+  });
+
+  it("sanitizes the downloaded vcard filename", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: 'Alice ../" Demo',
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: false,
+              allowWhatsapp: false,
+              allowEmail: false,
+              allowVcard: true,
+            },
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    const result = await service.getPublicVcard("alice");
+
+    assert.equal(result.filename, "alice-demo.vcf");
+  });
+
+  it("serializes single-token names without duplicating the family name", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Cher",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: false,
+              allowWhatsapp: false,
+              allowEmail: false,
+              allowVcard: true,
+            },
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    const result = await service.getPublicVcard("alice");
+
+    assert.match(result.content, /FN:Cher/);
+    assert.match(result.content, /N:;Cher;;;/);
+    assert.doesNotMatch(result.content, /N:Cher;Cher;;;/);
+  });
+
+  it("folds long vcard lines for standards-compliant output", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline:
+              "This is a deliberately long public note that should be folded into multiple physical lines for strict vCard importers without changing the visible content.",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: false,
+              allowWhatsapp: false,
+              allowEmail: false,
+              allowVcard: true,
+            },
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    const result = await service.getPublicVcard("alice");
+
+    assert.match(result.content, /NOTE:This is a deliberately long public note/);
+    assert.match(result.content, /\r\n /);
+  });
+
+  it("returns 404 when the smart card config is malformed", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: false,
+              allowWhatsapp: false,
+              allowEmail: false,
+              allowVcard: "yes",
+            },
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    await assert.rejects(service.getPublicVcard("alice"), NotFoundException);
   });
 
   it("does not block public profile loading when analytics is slow", async () => {

@@ -52,6 +52,29 @@ function isRenderableActionLink(
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function isRenderableDirectActionLink(
+  action: PublicSmartCardDirectAction,
+  value: string | null | undefined,
+): value is string {
+  if (!isRenderableActionLink(value)) {
+    return false;
+  }
+
+  if (action !== "vcard") {
+    return true;
+  }
+
+  try {
+    const resolvedUrl = new URL(value, "https://dotly.local");
+
+    return (
+      resolvedUrl.protocol === "http:" || resolvedUrl.protocol === "https:"
+    );
+  } catch {
+    return false;
+  }
+}
+
 export interface ResolvedPublicSmartCardPrimaryCta {
   requestedAction: PersonaSmartCardPrimaryAction;
   action: PersonaSmartCardPrimaryAction;
@@ -117,7 +140,7 @@ export function getPublicSmartCardDirectActions(
   }
 
   return directActionOrder.filter((action) =>
-    isRenderableActionLink(config.actionLinks[action]),
+    isRenderableDirectActionLink(action, config.actionLinks[action]),
   );
 }
 

@@ -157,6 +157,44 @@ describe("smart-card primary action helpers", () => {
             call: null,
             whatsapp: null,
             email: null,
+            vcard: "javascript:alert('xss')",
+          },
+        },
+      }),
+    ).toBe(false);
+
+    expect(
+      hasPublicSmartCardDirectActions({
+        channels: {
+          phoneNumber: null,
+          email: null,
+        },
+        publicActions: {
+          phone: null,
+          whatsappNumber: null,
+          email: null,
+        },
+        smartCard: {
+          primaryAction: "contact_me",
+          allowCall: false,
+          allowWhatsapp: false,
+          allowEmail: false,
+          allowVcard: true,
+          actionState: {
+            requestAccessEnabled: true,
+            instantConnectEnabled: false,
+            contactMeEnabled: true,
+          },
+          actions: {
+            call: false,
+            whatsapp: false,
+            email: false,
+            vcard: true,
+          },
+          actionLinks: {
+            call: null,
+            whatsapp: null,
+            email: null,
             vcard: "/api/public/jane/vcard",
           },
         },

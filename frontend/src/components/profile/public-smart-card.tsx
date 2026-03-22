@@ -37,7 +37,6 @@ interface SmartAction {
   label: string;
   href: string;
   icon: typeof Phone;
-  onClick?: () => void;
 }
 
 function avatarHue(seed: string): number {
@@ -45,23 +44,66 @@ function avatarHue(seed: string): number {
 }
 
 async function downloadVcard(href: string, username: string) {
-  const response = await window.fetch(href, {
+  const trimmedHref = href.trim();
+
+  if (!trimmedHref) {
+    throw new Error("Unable to download contact");
+  }
+
+  let resolvedHref: string;
+
+  try {
+    const validatedUrl = new URL(trimmedHref, document.baseURI);
+
+    if (
+      validatedUrl.protocol !== "http:" &&
+      validatedUrl.protocol !== "https:"
+    ) {
+      throw new Error("Unsupported vCard URL");
+    }
+
+    resolvedHref = trimmedHref;
+  } catch {
+    throw new Error("Unable to download contact");
+  }
+
+  const response = await window.fetch(resolvedHref, {
     method: "GET",
   });
 
   if (!response.ok) {
-    throw new Error("Unable to download vCard");
+    throw new Error("Unable to download contact");
   }
 
   const file = await response.blob();
-  const url = URL.createObjectURL(file);
+
+  if (!file.size) {
+    throw new Error("Unable to download contact");
+  }
+
+  if (typeof URL.createObjectURL !== "function") {
+    window.location.assign(resolvedHref);
+    return;
+  }
+
+  const objectUrl = URL.createObjectURL(file);
   const anchor = document.createElement("a");
+  const safeFilename = username.trim().replace(/[^a-z0-9_-]+/gi, "-") || "contact";
 
-  anchor.href = url;
-  anchor.download = `${username}.vcf`;
-  anchor.click();
+  anchor.href = objectUrl;
+  anchor.download = `${safeFilename}.vcf`;
+  anchor.rel = "noopener";
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
 
-  URL.revokeObjectURL(url);
+  try {
+    anchor.click();
+  } catch {
+    window.location.assign(resolvedHref);
+  } finally {
+    anchor.remove();
+    URL.revokeObjectURL(objectUrl);
+  }
 }
 
 function getPrimaryCtaCopy(primaryAction: PersonaSmartCardPrimaryAction): {
@@ -86,6 +128,7 @@ type PrimaryCtaState =
 
 type DirectActionState =
   | { status: "idle" }
+  | { status: "loading" }
   | { status: "success"; message: string }
   | { status: "error"; message: string };
 
@@ -102,6 +145,7 @@ export function PublicSmartCard({
   const [directActionState, setDirectActionState] = useState<DirectActionState>({
     status: "idle",
   });
+  const [isVcardDownloading, setIsVcardDownloading] = useState(false);
   const feedbackTimeoutRef = useRef<number | null>(null);
   const directActionFeedbackTimeoutRef = useRef<number | null>(null);
   const panelHighlightTimeoutRef = useRef<number | null>(null);
@@ -181,9 +225,6 @@ export function PublicSmartCard({
       label: "Save Contact",
       href: actionLinks.vcard,
       icon: Download,
-      onClick: () => {
-        void handleVcardAction(actionLinks.vcard!);
-      },
     });
   }
 
@@ -273,6 +314,11 @@ export function PublicSmartCard({
     setDirectActionState({ status: "error", message });
   }
 
+  function setDirectActionLoadingState() {
+    clearDirectActionFeedbackTimeout();
+    setDirectActionState({ status: "loading" });
+  }
+
   function handleRequestAccessAction() {
     if (!requestAccessHref.startsWith("#")) {
       setSuccessState("Opening request access.");
@@ -322,11 +368,16 @@ export function PublicSmartCard({
   }
 
   async function handleVcardAction(href: string) {
+    setIsVcardDownloading(true);
+    setDirectActionLoadingState();
+
     try {
       await downloadVcard(href, profile.username);
       setDirectActionSuccessState("Contact download started.");
     } catch {
-      setDirectActionErrorState("Save Contact is unavailable right now.");
+      setDirectActionErrorState("Unable to download contact.");
+    } finally {
+      setIsVcardDownloading(false);
     }
   }
 
@@ -516,18 +567,24 @@ export function PublicSmartCard({
                   <button
                     key={action.key}
                     type="button"
-                    onClick={action.onClick}
+                    onClick={() => {
+                      void handleVcardAction(action.href);
+                    }}
+                    disabled={isVcardDownloading}
+                    aria-busy={isVcardDownloading}
                     className={cn(
                       "flex min-h-[84px] flex-col justify-between rounded-[24px] border border-border bg-surface/70 p-4 text-left transition-all",
                       "hover:-translate-y-0.5 hover:border-brandRose/30 hover:bg-surface",
                       "dark:hover:border-brandCyan/30",
+                      isVcardDownloading &&
+                        "cursor-wait opacity-70 hover:translate-y-0 hover:border-border hover:bg-surface/70 dark:hover:border-border",
                     )}
                   >
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brandRose/10 text-brandRose dark:bg-brandCyan/10 dark:text-brandCyan">
                       <Icon className="h-5 w-5" />
                     </div>
                     <span className="text-sm font-semibold text-foreground">
-                      {action.label}
+                      {isVcardDownloading ? "Saving contact..." : action.label}
                     </span>
                   </button>
                 );
@@ -537,6 +594,11 @@ export function PublicSmartCard({
             {directActionState.status === "error" ? (
               <p role="alert" className="text-sm leading-6 text-rose-500 dark:text-rose-300">
                 {directActionState.message}
+              </p>
+            ) : null}
+            {directActionState.status === "loading" ? (
+              <p aria-live="polite" className="text-sm leading-6 text-muted">
+                Starting contact download...
               </p>
             ) : null}
             {directActionState.status === "success" ? (

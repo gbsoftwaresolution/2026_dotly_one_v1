@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -22,13 +21,30 @@ import {
 import {
   buildSmartCardActionState,
   buildSafePublicActionValues,
-  isEmailLikeValue,
-  isPhoneLikeValue,
   supportsRequestAccessFlow,
   toSafeSmartCardConfig,
 } from "../personas/persona-sharing";
 import { PublicPersonaDto } from "./dto/public-persona.dto";
 import { toQrLink } from "../qr/qr.presenter";
+
+interface PublicVcardPayload {
+  fn: string;
+  n: {
+    familyName: string;
+    givenName: string;
+  };
+  title: string | null;
+  org: string | null;
+  email: string | null;
+  tel: string | null;
+  url: string;
+  note: string | null;
+}
+
+interface PublicVcardResult {
+  filename: string;
+  content: string;
+}
 
 const authenticatedRequestTargetSelect = {
   id: true,
@@ -93,21 +109,17 @@ export class ProfilesService {
 
   async getPublicVcard(username: string) {
     const persona = await this.findPublicPersonaByUsername(username);
-    const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
 
-    if (
-      persona.sharingMode !== PrismaPersonaSharingMode.SMART_CARD ||
-      !safeSmartCardConfig?.allowVcard
-    ) {
+    if (!this.canExposeVcard(persona)) {
       throw new NotFoundException("Public vCard not found");
     }
 
-    this.assertNoMalformedPublicActionValues(persona, safeSmartCardConfig);
+    const payload = this.buildVcardPayload(persona);
 
     return {
-      filename: `${persona.username.trim().toLowerCase()}.vcf`,
-      content: this.buildVcardContent(persona, safeSmartCardConfig),
-    };
+      filename: this.buildSafeVcardFilename(persona),
+      content: this.generateVcardString(payload),
+    } satisfies PublicVcardResult;
   }
 
   async getRequestTarget(username: string) {
@@ -192,47 +204,18 @@ export class ProfilesService {
     return persona;
   }
 
-  private assertNoMalformedPublicActionValues(
-    persona: Pick<
-      PublicPersonaRecord,
-      "publicPhone" | "publicWhatsappNumber" | "publicEmail"
-    >,
-    safeSmartCardConfig: NonNullable<ReturnType<typeof toSafeSmartCardConfig>>,
-  ): void {
-    const malformedFields: string[] = [];
+  private canExposeVcard(
+    persona: Pick<PublicPersonaRecord, "sharingMode" | "smartCardConfig">,
+  ): boolean {
+    const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
 
-    if (
-      safeSmartCardConfig.allowCall &&
-      persona.publicPhone !== null &&
-      !isPhoneLikeValue(persona.publicPhone)
-    ) {
-      malformedFields.push("publicPhone");
-    }
-
-    if (
-      safeSmartCardConfig.allowWhatsapp &&
-      persona.publicWhatsappNumber !== null &&
-      !isPhoneLikeValue(persona.publicWhatsappNumber)
-    ) {
-      malformedFields.push("publicWhatsappNumber");
-    }
-
-    if (
-      safeSmartCardConfig.allowEmail &&
-      persona.publicEmail !== null &&
-      !isEmailLikeValue(persona.publicEmail)
-    ) {
-      malformedFields.push("publicEmail");
-    }
-
-    if (malformedFields.length > 0) {
-      throw new BadRequestException(
-        `Malformed public action values: ${malformedFields.join(", ")}`,
-      );
-    }
+    return Boolean(
+      persona.sharingMode === PrismaPersonaSharingMode.SMART_CARD &&
+        safeSmartCardConfig?.allowVcard,
+    );
   }
 
-  private buildVcardContent(
+  private buildVcardPayload(
     persona: Pick<
       PublicPersonaRecord,
       | "username"
@@ -244,46 +227,96 @@ export class ProfilesService {
       | "publicPhone"
       | "publicWhatsappNumber"
       | "publicEmail"
+      | "smartCardConfig"
     >,
-    safeSmartCardConfig: NonNullable<ReturnType<typeof toSafeSmartCardConfig>>,
-  ): string {
+  ): PublicVcardPayload {
     const publicUrl = this.toCanonicalPublicUrl(persona.publicUrl, persona.username);
     const publicActionValues = buildSafePublicActionValues({
-      smartCardConfig: safeSmartCardConfig,
+      smartCardConfig: persona.smartCardConfig,
       publicPhone: persona.publicPhone,
       publicWhatsappNumber: persona.publicWhatsappNumber,
       publicEmail: persona.publicEmail,
     });
+    const fn =
+      this.getTrimmedText(persona.fullName) ??
+      this.getTrimmedText(persona.username) ??
+      "Dotly Contact";
+    const [givenName, familyName] = this.splitVcardName(fn);
+
+    return {
+      fn,
+      n: {
+        familyName,
+        givenName,
+      },
+      title: this.getTrimmedText(persona.jobTitle),
+      org: this.getTrimmedText(persona.companyName),
+      email: publicActionValues.email,
+      tel: publicActionValues.phone,
+      url: publicUrl,
+      note: this.getTrimmedText(persona.tagline),
+    } satisfies PublicVcardPayload;
+  }
+
+  private generateVcardString(payload: PublicVcardPayload): string {
     const lines = [
       "BEGIN:VCARD",
       "VERSION:3.0",
-      `FN:${this.escapeVcardText(persona.fullName)}`,
-      `URL:${this.escapeVcardText(publicUrl)}`,
+      `FN:${this.escapeVcardText(payload.fn)}`,
+      `N:${[
+        payload.n.familyName,
+        payload.n.givenName,
+        "",
+        "",
+        "",
+      ]
+        .map((value) => this.escapeVcardText(value))
+        .join(";")}`,
     ];
 
-    if (persona.jobTitle.trim().length > 0) {
-      lines.push(`TITLE:${this.escapeVcardText(persona.jobTitle)}`);
+    if (payload.title !== null) {
+      lines.push(`TITLE:${this.escapeVcardText(payload.title)}`);
     }
 
-    if (persona.companyName.trim().length > 0) {
-      lines.push(`ORG:${this.escapeVcardText(persona.companyName)}`);
+    if (payload.org !== null) {
+      lines.push(`ORG:${this.escapeVcardText(payload.org)}`);
     }
 
-    if (publicActionValues.email !== null) {
-      lines.push(`EMAIL:${this.escapeVcardText(publicActionValues.email)}`);
+    if (payload.email !== null) {
+      lines.push(`EMAIL:${this.escapeVcardText(payload.email)}`);
     }
 
-    if (publicActionValues.phone !== null) {
-      lines.push(`TEL:${this.escapeVcardText(publicActionValues.phone)}`);
+    if (payload.tel !== null) {
+      lines.push(`TEL:${this.escapeVcardText(payload.tel)}`);
     }
 
-    if (persona.tagline.trim().length > 0) {
-      lines.push(`NOTE:${this.escapeVcardText(persona.tagline)}`);
+    lines.push(`URL:${this.escapeVcardText(payload.url)}`);
+
+    if (payload.note !== null) {
+      lines.push(`NOTE:${this.escapeVcardText(payload.note)}`);
     }
 
     lines.push("END:VCARD");
 
-    return `${lines.join("\r\n")}\r\n`;
+    return `${lines.map((line) => this.foldVcardLine(line)).join("\r\n")}\r\n`;
+  }
+
+  private buildSafeVcardFilename(
+    persona: Pick<PublicPersonaRecord, "username" | "fullName">,
+  ): string {
+    const rawBase =
+      this.getTrimmedText(persona.username) ??
+      this.getTrimmedText(persona.fullName) ??
+      "contact";
+    const safeBase = rawBase
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 64);
+
+    return `${safeBase || "contact"}.vcf`;
   }
 
   private escapeVcardText(value: string): string {
@@ -292,6 +325,47 @@ export class ProfilesService {
       .replace(/;/g, "\\;")
       .replace(/,/g, "\\,")
       .replace(/\r?\n/g, "\\n");
+  }
+
+  private getTrimmedText(value: string | null | undefined): string | null {
+    if (typeof value !== "string") {
+      return null;
+    }
+
+    const trimmedValue = value.trim();
+
+    return trimmedValue.length > 0 ? trimmedValue : null;
+  }
+
+  private splitVcardName(fullName: string): [string, string] {
+    const parts = fullName.split(/\s+/).filter((part) => part.length > 0);
+
+    if (parts.length <= 1) {
+      return [fullName, ""];
+    }
+
+    const familyName = parts.at(-1) ?? fullName;
+    const givenName = parts.slice(0, -1).join(" ");
+
+    return [givenName, familyName];
+  }
+
+  private foldVcardLine(line: string): string {
+    const maxLineLength = 75;
+
+    if (line.length <= maxLineLength) {
+      return line;
+    }
+
+    const segments: string[] = [];
+
+    for (let index = 0; index < line.length; index += maxLineLength) {
+      const segment = line.slice(index, index + maxLineLength);
+
+      segments.push(index === 0 ? segment : ` ${segment}`);
+    }
+
+    return segments.join("\r\n");
   }
 
   private toCanonicalPublicUrl(publicUrl: string, username: string): string {
