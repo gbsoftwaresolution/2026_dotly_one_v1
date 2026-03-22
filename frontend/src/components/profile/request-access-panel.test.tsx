@@ -27,12 +27,21 @@ import { RequestAccessPanel } from "./request-access-panel";
 
 const profileFixture = {
   username: "target",
+  publicUrl: "https://dotly.id/target",
+  name: "Target User",
   fullName: "Target User",
   jobTitle: "Founder",
   companyName: "Dotly",
   tagline: "Connect intentionally",
+  profilePhoto: null,
   profilePhotoUrl: null,
   sharingMode: "controlled" as const,
+  channels: {
+    phoneNumber: null,
+    email: null,
+  },
+  links: [],
+  smartCard: null,
   smartCardConfig: null,
 } as const;
 
@@ -80,6 +89,7 @@ describe("RequestAccessPanel", () => {
         profile: {
           ...profileFixture,
           sharingMode: "smart_card",
+          smartCard: null,
           smartCardConfig: null,
         },
         initialPersonas: [],
@@ -160,6 +170,13 @@ describe("RequestAccessPanel", () => {
         profile: {
           ...profileFixture,
           sharingMode: "smart_card",
+          smartCard: {
+            primaryAction: "request_access",
+            allowCall: false,
+            allowWhatsapp: true,
+            allowEmail: false,
+            allowVcard: false,
+          },
           smartCardConfig: {
             primaryAction: "request_access",
             allowCall: false,
@@ -211,6 +228,13 @@ describe("RequestAccessPanel", () => {
         profile: {
           ...profileFixture,
           sharingMode: "smart_card",
+          smartCard: {
+            primaryAction: "instant_connect",
+            allowCall: false,
+            allowWhatsapp: true,
+            allowEmail: false,
+            allowVcard: true,
+          },
           smartCardConfig: {
             primaryAction: "instant_connect",
             allowCall: false,
@@ -238,6 +262,7 @@ describe("RequestAccessPanel", () => {
         profile: {
           ...profileFixture,
           sharingMode: "smart_card",
+          smartCard: null,
           smartCardConfig: null,
         },
         initialPersonas: [personaFixture],

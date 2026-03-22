@@ -106,10 +106,10 @@ export function RequestAccessPanel({
   );
   const smartCardPrimaryAction =
     profile.sharingMode === "smart_card"
-      ? profile.smartCardConfig?.primaryAction ?? null
+      ? profile.smartCard?.primaryAction ?? null
       : null;
   const isSmartCardMisconfigured =
-    profile.sharingMode === "smart_card" && profile.smartCardConfig === null;
+    profile.sharingMode === "smart_card" && profile.smartCard === null;
   const supportsRequestAccess =
     profile.sharingMode === "controlled" ||
     smartCardPrimaryAction === "request_access";

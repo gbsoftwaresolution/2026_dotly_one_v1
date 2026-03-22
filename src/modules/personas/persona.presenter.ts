@@ -8,6 +8,7 @@ import {
 import { PersonaAccessMode } from "../../common/enums/persona-access-mode.enum";
 import { PersonaSharingMode } from "../../common/enums/persona-sharing-mode.enum";
 import { PersonaType } from "../../common/enums/persona-type.enum";
+import { PublicPersonaDto } from "../profiles/dto/public-persona.dto";
 import {
   toApiSharingMode,
   toSafeSmartCardConfig,
@@ -34,6 +35,7 @@ export const privatePersonaSelect = {
 export const publicPersonaSelect = {
   id: true,
   username: true,
+  publicUrl: true,
   fullName: true,
   jobTitle: true,
   companyName: true,
@@ -41,6 +43,12 @@ export const publicPersonaSelect = {
   profilePhotoUrl: true,
   sharingMode: true,
   smartCardConfig: true,
+  user: {
+    select: {
+      email: true,
+      phoneNumber: true,
+    },
+  },
 } satisfies Prisma.PersonaSelect;
 
 export type PrivatePersonaRecord = Prisma.PersonaGetPayload<{
@@ -107,18 +115,9 @@ export function toPrivatePersonaView(persona: PrivatePersonaRecord) {
 }
 
 export function toPublicPersonaView(persona: PublicPersonaRecord) {
-  return {
-    username: persona.username,
-    fullName: persona.fullName,
-    jobTitle: persona.jobTitle,
-    companyName: persona.companyName,
-    tagline: persona.tagline,
-    profilePhotoUrl: persona.profilePhotoUrl,
-    sharingMode: toApiSharingMode(persona.sharingMode),
-    smartCardConfig: toSafeSmartCardConfig(persona.smartCardConfig),
-  };
+  return PublicPersonaDto.fromRecord(persona);
 }
 
 export function buildPublicUrl(username: string): string {
-  return `dotly.id/${username}`;
+  return `https://dotly.id/${username}`;
 }

@@ -182,7 +182,7 @@ describe("ProfilesService analytics hook", () => {
           findFirst: async () => ({
             id: "persona-id",
             username: "alice",
-            publicUrl: "dotly.id/alice",
+            publicUrl: "https://dotly.id/alice",
             fullName: "Alice Demo",
             jobTitle: "Founder",
             companyName: "Dotly",
@@ -194,6 +194,10 @@ describe("ProfilesService analytics hook", () => {
             smartCardConfig: {
               primaryAction: "request_access",
               allowWhatsapp: true,
+            },
+            user: {
+              email: "alice@dotly.one",
+              phoneNumber: null,
             },
           }),
         },
@@ -212,12 +216,27 @@ describe("ProfilesService analytics hook", () => {
 
     assert.deepEqual(result, {
       username: "alice",
+      publicUrl: "https://dotly.id/alice",
+      name: "Alice Demo",
       fullName: "Alice Demo",
       jobTitle: "Founder",
       companyName: "Dotly",
       tagline: "Connect fast",
+      profilePhoto: null,
       profilePhotoUrl: null,
       sharingMode: "smart_card",
+      channels: {
+        phoneNumber: null,
+        email: null,
+      },
+      links: [],
+      smartCard: {
+        primaryAction: "request_access",
+        allowCall: false,
+        allowWhatsapp: true,
+        allowEmail: false,
+        allowVcard: false,
+      },
       smartCardConfig: {
         primaryAction: "request_access",
         allowCall: false,
@@ -241,7 +260,7 @@ describe("ProfilesService analytics hook", () => {
           findFirst: async () => ({
             id: "persona-id",
             username: "alice",
-            publicUrl: "dotly.id/alice",
+            publicUrl: "https://dotly.id/alice",
             fullName: "Alice Demo",
             jobTitle: "Founder",
             companyName: "Dotly",
@@ -258,6 +277,10 @@ describe("ProfilesService analytics hook", () => {
                 secret: true,
               },
             },
+            user: {
+              email: "alice@dotly.one",
+              phoneNumber: "+15551234567",
+            },
           }),
         },
       } as any,
@@ -267,6 +290,20 @@ describe("ProfilesService analytics hook", () => {
     );
 
     const result = await service.getPublicProfile("alice");
+
+    assert.deepEqual(result.channels, {
+      phoneNumber: "+15551234567",
+      email: null,
+    });
+    assert.deepEqual(result.links, []);
+
+    assert.deepEqual(result.smartCard, {
+      primaryAction: "contact_me",
+      allowCall: true,
+      allowWhatsapp: false,
+      allowEmail: false,
+      allowVcard: false,
+    });
 
     assert.deepEqual(result.smartCardConfig, {
       primaryAction: "contact_me",
@@ -311,7 +348,7 @@ describe("ProfilesService analytics hook", () => {
           findFirst: async () => ({
             id: "persona-id",
             username: "alice",
-            publicUrl: "dotly.id/alice",
+            publicUrl: "https://dotly.id/alice",
             fullName: "Alice Demo",
             jobTitle: "Founder",
             companyName: "Dotly",
@@ -321,6 +358,10 @@ describe("ProfilesService analytics hook", () => {
             verifiedOnly: false,
             sharingMode: "CONTROLLED",
             smartCardConfig: null,
+            user: {
+              email: "alice@dotly.one",
+              phoneNumber: "+15551234567",
+            },
           }),
         },
       } as any,
@@ -332,10 +373,11 @@ describe("ProfilesService analytics hook", () => {
       } as any,
     );
 
-    await service.getPublicProfile("alice");
+    const result = await service.getPublicProfile("alice");
     resolved = true;
 
     assert.equal(resolved, true);
+    assert.equal(result.smartCard, null);
   });
 });
 

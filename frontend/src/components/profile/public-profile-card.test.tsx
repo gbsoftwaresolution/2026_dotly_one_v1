@@ -11,12 +11,21 @@ describe("PublicProfileCard", () => {
       React.createElement(PublicProfileCard, {
         profile: {
           username: "jane",
+          publicUrl: "https://dotly.id/jane",
+          name: "Jane Doe",
           fullName: "Jane Doe",
           jobTitle: "Founder",
           companyName: "Dotly",
           tagline: "Trusted identity",
+          profilePhoto: null,
           profilePhotoUrl: null,
           sharingMode: "controlled",
+          channels: {
+            phoneNumber: null,
+            email: null,
+          },
+          links: [],
+          smartCard: null,
           smartCardConfig: null,
         },
       }),
@@ -31,12 +40,27 @@ describe("PublicProfileCard", () => {
       React.createElement(PublicProfileCard, {
         profile: {
           username: "jane",
+          publicUrl: "https://dotly.id/jane",
+          name: "Jane Doe",
           fullName: "Jane Doe",
           jobTitle: "Founder",
           companyName: "Dotly",
           tagline: "Trusted identity",
+          profilePhoto: null,
           profilePhotoUrl: null,
           sharingMode: "smart_card",
+          channels: {
+            phoneNumber: "+15551234567",
+            email: "jane@dotly.one",
+          },
+          links: [],
+          smartCard: {
+            primaryAction: "instant_connect",
+            allowCall: true,
+            allowWhatsapp: false,
+            allowEmail: true,
+            allowVcard: false,
+          },
           smartCardConfig: {
             primaryAction: "instant_connect",
             allowCall: true,

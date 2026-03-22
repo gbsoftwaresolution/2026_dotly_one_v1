@@ -72,9 +72,9 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
             tone={isSmartCard ? "cyan" : "neutral"}
             dot
           />
-          {profile.smartCardConfig?.primaryAction ? (
+          {profile.smartCard?.primaryAction ? (
             <StatusBadge
-              label={formatPrimaryAction(profile.smartCardConfig.primaryAction)}
+              label={formatPrimaryAction(profile.smartCard.primaryAction)}
               tone="info"
             />
           ) : null}
@@ -87,13 +87,13 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
                 Smart Card access
               </p>
               <p className="text-sm leading-6 text-cyan-800 dark:text-white/80">
-                {profile.smartCardConfig
+                {profile.smartCard
                   ? "This profile exposes a card-first action before full access is granted."
                   : "This profile is in Smart Card Mode, but its card configuration is currently unavailable."}
               </p>
             </div>
 
-            {profile.smartCardConfig ? (
+            {profile.smartCard ? (
               <div className="space-y-2">
                 <p className="label-xs text-cyan-700 dark:text-brandCyan">
                   Available actions

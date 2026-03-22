@@ -55,12 +55,27 @@ const personasServiceMock = {
 const profilesServiceMock = {
   getPublicProfile: async () => ({
     username: "alice",
+    publicUrl: "https://dotly.id/alice",
+    name: "Alice Demo",
     fullName: "Alice Demo",
     jobTitle: "Founder",
     companyName: "Dotly",
     tagline: "Connect fast",
+    profilePhoto: null,
     profilePhotoUrl: null,
     sharingMode: "smart_card",
+    channels: {
+      phoneNumber: null,
+      email: null,
+    },
+    links: [],
+    smartCard: {
+      primaryAction: "request_access",
+      allowCall: false,
+      allowWhatsapp: true,
+      allowEmail: false,
+      allowVcard: true,
+    },
     smartCardConfig: {
       primaryAction: "request_access",
       allowCall: false,
@@ -386,12 +401,27 @@ describe("HTTP Security E2E", () => {
     assert.equal(payload.success, true);
     assert.deepEqual(payload.data, {
       username: "alice",
+      publicUrl: "https://dotly.id/alice",
+      name: "Alice Demo",
       fullName: "Alice Demo",
       jobTitle: "Founder",
       companyName: "Dotly",
       tagline: "Connect fast",
+      profilePhoto: null,
       profilePhotoUrl: null,
       sharingMode: "smart_card",
+      channels: {
+        phoneNumber: null,
+        email: null,
+      },
+      links: [],
+      smartCard: {
+        primaryAction: "request_access",
+        allowCall: false,
+        allowWhatsapp: true,
+        allowEmail: false,
+        allowVcard: true,
+      },
       smartCardConfig: {
         primaryAction: "request_access",
         allowCall: false,

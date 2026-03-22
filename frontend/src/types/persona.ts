@@ -17,6 +17,17 @@ export interface PersonaSmartCardConfig {
   allowVcard: boolean;
 }
 
+export interface PublicProfileChannels {
+  phoneNumber: string | null;
+  email: string | null;
+}
+
+export interface PublicProfileLink {
+  label: string;
+  href: string;
+  kind: "website" | "social";
+}
+
 export interface PersonaSummary {
   id: string;
   type: PersonaType;
@@ -62,12 +73,18 @@ export interface UpdatePersonaSharingInput {
 
 export interface PublicProfile {
   username: string;
+  publicUrl: string;
+  name: string;
   fullName: string;
   jobTitle: string;
   companyName: string;
   tagline: string;
+  profilePhoto: string | null;
   profilePhotoUrl?: string | null;
   sharingMode: PersonaSharingMode;
+  channels: PublicProfileChannels;
+  links: ReadonlyArray<PublicProfileLink>;
+  smartCard: PersonaSmartCardConfig | null;
   smartCardConfig: PersonaSmartCardConfig | null;
 }
 

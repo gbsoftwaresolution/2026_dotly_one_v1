@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { PublicProfileCard } from "@/components/profile/public-profile-card";
+import { PublicSmartCard } from "@/components/profile/public-smart-card";
 import { RequestAccessPanel } from "@/components/profile/request-access-panel";
 import { personaApi, publicApi, userApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
@@ -53,17 +54,35 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
       }
     }
 
+    const isSmartCard = profile.sharingMode === "smart_card";
+    const showRequestAccessPanel =
+      profile.sharingMode === "controlled" ||
+      profile.smartCard?.primaryAction === "request_access";
+
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-xl items-center px-4 py-8 sm:px-6">
+      <main
+        className={`mx-auto flex min-h-screen w-full items-center px-4 py-8 sm:px-6 ${
+          isSmartCard ? "max-w-md" : "max-w-xl"
+        }`}
+      >
         <div className="w-full space-y-4">
-          <PublicProfileCard profile={profile} />
-          <RequestAccessPanel
-            profile={profile}
-            initialPersonas={personas}
-            isAuthenticated={isAuthenticated}
-            currentUser={currentUser}
-            personaLoadError={personaLoadError}
-          />
+          {isSmartCard ? (
+            <PublicSmartCard profile={profile} />
+          ) : (
+            <PublicProfileCard profile={profile} />
+          )}
+
+          {showRequestAccessPanel ? (
+            <div id="request-access-panel">
+              <RequestAccessPanel
+                profile={profile}
+                initialPersonas={personas}
+                isAuthenticated={isAuthenticated}
+                currentUser={currentUser}
+                personaLoadError={personaLoadError}
+              />
+            </div>
+          ) : null}
         </div>
       </main>
     );
