@@ -37,6 +37,8 @@ const contactRelationshipSelect = {
   state: true,
   accessStartAt: true,
   accessEndAt: true,
+  lastInteractionAt: true,
+  interactionCount: true,
   createdAt: true,
   sourceType: true,
   targetPersona: {
@@ -175,6 +177,18 @@ export class ContactsService {
       }
 
       const note = updateContactNoteDto.note;
+      const existingNote = normalizedRelationship.memories[0]?.note ?? null;
+
+      if (existingNote === note) {
+        return {
+          relationshipId: normalizedRelationship.id,
+          note,
+          lastInteractionAt: normalizedRelationship.lastInteractionAt ?? null,
+          interactionCount: toSafeInteractionCount(
+            normalizedRelationship.interactionCount,
+          ),
+        };
+      }
 
       await this.contactMemoryService.updateNote(tx, {
         memoryId: normalizedRelationship.memories[0]?.id,
@@ -189,9 +203,22 @@ export class ContactsService {
         note,
       });
 
+      const interactionMetadata =
+        await this.relationshipsService.updateInteractionMetadata(
+          tx,
+          normalizedRelationship.id,
+        );
+
       return {
         relationshipId: normalizedRelationship.id,
         note,
+        lastInteractionAt:
+          interactionMetadata?.lastInteractionAt ??
+          normalizedRelationship.lastInteractionAt ??
+          null,
+        interactionCount:
+          interactionMetadata?.interactionCount ??
+          toSafeInteractionCount(normalizedRelationship.interactionCount),
       };
     });
   }
@@ -238,6 +265,8 @@ export class ContactsService {
       state: toApiRelationshipState(relationship.state),
       createdAt: relationship.createdAt,
       accessEndAt: relationship.accessEndAt,
+      lastInteractionAt: relationship.lastInteractionAt ?? null,
+      interactionCount: toSafeInteractionCount(relationship.interactionCount),
       sourceType: toApiContactRequestSourceType(relationship.sourceType),
       targetPersona: {
         id: relationship.targetPersona.id,
@@ -268,6 +297,8 @@ export class ContactsService {
       accessEndAt: relationship.accessEndAt,
       isExpired: relationship.state === PrismaContactRelationshipState.EXPIRED,
       createdAt: relationship.createdAt,
+      lastInteractionAt: relationship.lastInteractionAt ?? null,
+      interactionCount: toSafeInteractionCount(relationship.interactionCount),
       sourceType: toApiContactRequestSourceType(relationship.sourceType),
       targetPersona: {
         id: relationship.targetPersona.id,
@@ -363,4 +394,12 @@ function toSourceLabel(
   }
 
   throw new Error("Unsupported contact request source type");
+}
+
+function toSafeInteractionCount(interactionCount: number | null | undefined) {
+  if (typeof interactionCount !== "number" || interactionCount < 0) {
+    return 0;
+  }
+
+  return interactionCount;
 }

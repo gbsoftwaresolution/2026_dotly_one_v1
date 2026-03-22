@@ -4,6 +4,7 @@ import { Card } from "@/components/shared/card";
 import { ExpiryBadge } from "@/components/shared/expiry-badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { routes } from "@/lib/constants/routes";
+import { formatTimeAgoShort, isRecentTimestamp } from "@/lib/utils/format-time-ago";
 import type { Contact } from "@/types/contact";
 
 function formatSourceType(sourceType: Contact["sourceType"]): string {
@@ -56,6 +57,7 @@ export function ContactCard({ contact }: ContactCardProps) {
     relationshipId,
     state,
     accessEndAt,
+    lastInteractionAt,
   } = contact;
 
   const nearExpiry =
@@ -64,6 +66,12 @@ export function ContactCard({ contact }: ContactCardProps) {
     accessEndAt !== undefined
       ? isNearExpiry(accessEndAt)
       : false;
+
+  const recentInteractionLabel = lastInteractionAt
+    ? formatTimeAgoShort(lastInteractionAt)
+    : null;
+  const showRecentInteraction =
+    recentInteractionLabel !== null && isRecentTimestamp(lastInteractionAt, 14);
 
   return (
     <Link
@@ -110,7 +118,14 @@ export function ContactCard({ contact }: ContactCardProps) {
             )}
           </div>
 
-          <div className="shrink-0 pt-1">{getStateBadge(contact)}</div>
+          <div className="shrink-0 space-y-2 pt-1 text-right">
+            <div>{getStateBadge(contact)}</div>
+            {showRecentInteraction ? (
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+                {recentInteractionLabel}
+              </p>
+            ) : null}
+          </div>
         </div>
 
         <div className="flex items-center gap-4 border-t border-border pt-3 font-mono text-[10px] uppercase tracking-widest text-muted flex-wrap">

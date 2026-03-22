@@ -43,7 +43,7 @@ export class RelationshipsService {
         },
       });
 
-      await tx.contactRelationship.create({
+      const reciprocalRelationship = await tx.contactRelationship.create({
         data: {
           ownerUserId: data.targetUserId,
           targetUserId: data.ownerUserId,
@@ -58,7 +58,10 @@ export class RelationshipsService {
         },
       });
 
-      return relationship;
+      return {
+        id: relationship.id,
+        reciprocalRelationshipId: reciprocalRelationship.id,
+      };
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -69,6 +72,61 @@ export class RelationshipsService {
 
       throw error;
     }
+  }
+
+  async updateInteractionMetadata(
+    prisma: Prisma.TransactionClient | PrismaService,
+    relationshipId: string,
+    interactionAt: Date = new Date(),
+  ) {
+    if (Number.isNaN(interactionAt.getTime())) {
+      throw new Error("Invalid interaction timestamp");
+    }
+
+    const updateResult = await prisma.contactRelationship.updateMany({
+      where: {
+        id: relationshipId,
+      },
+      data: {
+        interactionCount: {
+          increment: 1,
+        },
+      },
+    });
+
+    if (updateResult.count !== 1) {
+      return null;
+    }
+
+    await prisma.contactRelationship.updateMany({
+      where: {
+        id: relationshipId,
+        OR: [
+          {
+            lastInteractionAt: null,
+          },
+          {
+            lastInteractionAt: {
+              lt: interactionAt,
+            },
+          },
+        ],
+      },
+      data: {
+        lastInteractionAt: interactionAt,
+      },
+    });
+
+    return prisma.contactRelationship.findUnique({
+      where: {
+        id: relationshipId,
+      },
+      select: {
+        id: true,
+        lastInteractionAt: true,
+        interactionCount: true,
+      },
+    });
   }
 
   async createOrRefreshInstantAccessRelationship(

@@ -340,6 +340,7 @@ describe("Notification hooks", () => {
 
   it("creates a request_approved notification on approval", async () => {
     const notifications: Array<{ payload: unknown; tx: unknown }> = [];
+    const interactionUpdates: string[] = [];
 
     const service = new ContactRequestsService(
       {
@@ -368,7 +369,14 @@ describe("Notification hooks", () => {
         assertNoInteractionBlock: async () => undefined,
       } as any,
       {
-        createApprovedRelationship: async () => ({ id: "relationship-id" }),
+        createApprovedRelationship: async () => ({
+          id: "relationship-id",
+          reciprocalRelationshipId: "relationship-reciprocal-id",
+        }),
+        updateInteractionMetadata: async (_tx: unknown, relationshipId: string) => {
+          interactionUpdates.push(relationshipId);
+          return null;
+        },
       } as any,
       {
         createInitialMemory: async () => ({ id: "memory-id" }),
@@ -393,6 +401,10 @@ describe("Notification hooks", () => {
       (notifications[0]?.payload as any).body,
       "Receiver User approved your request",
     );
+    assert.deepEqual(interactionUpdates, [
+      "relationship-id",
+      "relationship-reciprocal-id",
+    ]);
   });
 
   it("creates an event_joined notification when joining an event", async () => {

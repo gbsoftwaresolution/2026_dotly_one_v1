@@ -321,6 +321,8 @@ model ContactRelationship {
   sourceId        String?                  @db.Uuid
   accessStartAt   DateTime?
   accessEndAt     DateTime?
+  lastInteractionAt DateTime?
+  interactionCount Int                      @default(0)
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
   ownerUser       User                     @relation("ContactRelationshipOwnerUser", fields: [ownerUserId], references: [id], onDelete: Cascade)

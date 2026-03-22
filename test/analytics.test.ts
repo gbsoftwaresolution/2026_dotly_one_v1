@@ -1290,7 +1290,11 @@ describe("ContactRequestsService analytics hooks", () => {
         assertNoInteractionBlock: async () => undefined,
       } as any,
       {
-        createApprovedRelationship: async () => ({ id: "relationship-id" }),
+        createApprovedRelationship: async () => ({
+          id: "relationship-id",
+          reciprocalRelationshipId: "relationship-reciprocal-id",
+        }),
+        updateInteractionMetadata: async () => null,
       } as any,
       {
         createInitialMemory: async () => ({ id: "memory-id" }),

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
@@ -20,6 +21,7 @@ export function NoteEditor({
   initialNote,
   disabled = false,
 }: NoteEditorProps) {
+  const router = useRouter();
   const [value, setValue] = useState(initialNote ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState<{
@@ -51,6 +53,7 @@ export function NoteEditor({
       setValue(canonicalValue);
       savedValueRef.current = canonicalValue;
       setFeedback({ tone: "success", message: "Sync Success" });
+      router.refresh();
     } catch (error) {
       setFeedback({
         tone: "error",
@@ -62,7 +65,7 @@ export function NoteEditor({
     } finally {
       setIsSaving(false);
     }
-  }, [disabled, isDirty, isSaving, relationshipId, value]);
+  }, [disabled, isDirty, isSaving, relationshipId, router, value]);
 
   const charsLeft = MAX_NOTE_LENGTH - value.length;
   const isOverLimit = charsLeft < 0;

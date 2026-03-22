@@ -101,11 +101,25 @@ export class ContactRequestRespondService {
           sourceId: contactRequest.sourceId,
         });
 
-      await this.contactMemoryService.createInitialMemory(tx, {
-        relationshipId: relationship.id,
-        metAt: respondedAt,
-        sourceLabel: toSourceLabel(contactRequest.sourceType),
-      });
+      await Promise.all([
+        this.contactMemoryService.createInitialMemory(tx, {
+          relationshipId: relationship.id,
+          metAt: respondedAt,
+          sourceLabel: toSourceLabel(contactRequest.sourceType),
+        }),
+        this.relationshipsService.updateInteractionMetadata(
+          tx,
+          relationship.id,
+          respondedAt,
+        ),
+        relationship.reciprocalRelationshipId
+          ? this.relationshipsService.updateInteractionMetadata(
+              tx,
+              relationship.reciprocalRelationshipId,
+              respondedAt,
+            )
+          : Promise.resolve(null),
+      ]);
 
       await Promise.all([
         this.analyticsService.trackRequestApproved(

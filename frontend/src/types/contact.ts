@@ -31,6 +31,8 @@ export interface Contact {
   state: ContactRelationshipState;
   createdAt: string;
   accessEndAt: string | null;
+  lastInteractionAt: string | null;
+  interactionCount: number;
   sourceType: ContactRequestSourceType;
   targetPersona: ContactTargetPersona;
   memory: ContactMemory;
@@ -42,6 +44,8 @@ export interface ContactDetail {
   createdAt: string;
   accessStartAt: string | null;
   accessEndAt: string | null;
+  lastInteractionAt: string | null;
+  interactionCount: number;
   isExpired: boolean;
   sourceType: ContactRequestSourceType;
   targetPersona: ContactTargetPersonaDetail;
@@ -55,6 +59,8 @@ export interface UpdateContactNoteInput {
 export interface UpdateContactNoteResult {
   relationshipId: string;
   note: string | null;
+  lastInteractionAt: string | null;
+  interactionCount: number;
 }
 
 export interface UpdateRelationshipStateResult {

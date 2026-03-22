@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { ApiError, apiRequest } from "@/lib/api/client";
 import { requireServerSession } from "@/lib/auth/protected-route";
 import { routes } from "@/lib/constants/routes";
+import { formatTimeAgo } from "@/lib/utils/format-time-ago";
 import type { ContactDetail } from "@/types/contact";
 
 function formatSourceType(sourceType: ContactDetail["sourceType"]): string {
@@ -110,11 +111,14 @@ export default async function ContactDetailPage({
     state,
     accessStartAt,
     accessEndAt,
+    lastInteractionAt,
+    interactionCount,
     isExpired,
   } = contact;
 
   const nearExpiry =
     !isExpired && accessEndAt ? isNearExpiry(accessEndAt) : false;
+  const lastInteractionLabel = formatTimeAgo(lastInteractionAt);
 
   return (
     <section className="space-y-4">
@@ -199,6 +203,17 @@ export default async function ContactDetailPage({
             </p>
             <p className="font-mono text-sm text-foreground">
               {formatTimestamp(createdAt)}
+            </p>
+          </div>
+          <div className="bg-surface p-4 space-y-1">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+              Last Interaction
+            </p>
+            <p className="font-sans text-sm text-foreground">
+              {lastInteractionLabel}
+            </p>
+            <p className="font-sans text-xs text-muted">
+              Interactions: {interactionCount}
             </p>
           </div>
           {state === "instant_access" && accessEndAt ? (
