@@ -2,6 +2,21 @@ export type PersonaType = "personal" | "professional" | "business";
 
 export type PersonaAccessMode = "open" | "request" | "private";
 
+export type PersonaSharingMode = "controlled" | "smart_card";
+
+export type PersonaSmartCardPrimaryAction =
+  | "request_access"
+  | "instant_connect"
+  | "contact_me";
+
+export interface PersonaSmartCardConfig {
+  primaryAction: PersonaSmartCardPrimaryAction;
+  allowCall: boolean;
+  allowWhatsapp: boolean;
+  allowEmail: boolean;
+  allowVcard: boolean;
+}
+
 export interface PersonaSummary {
   id: string;
   type: PersonaType;
@@ -14,6 +29,8 @@ export interface PersonaSummary {
   profilePhotoUrl?: string | null;
   accessMode: PersonaAccessMode;
   verifiedOnly: boolean;
+  sharingMode: PersonaSharingMode;
+  smartCardConfig: PersonaSmartCardConfig | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -38,6 +55,11 @@ export interface UpdatePersonaInput {
   verifiedOnly?: boolean;
 }
 
+export interface UpdatePersonaSharingInput {
+  sharingMode?: PersonaSharingMode;
+  smartCardConfig?: PersonaSmartCardConfig | null;
+}
+
 export interface PublicProfile {
   username: string;
   fullName: string;
@@ -45,6 +67,8 @@ export interface PublicProfile {
   companyName: string;
   tagline: string;
   profilePhotoUrl?: string | null;
+  sharingMode: PersonaSharingMode;
+  smartCardConfig: PersonaSmartCardConfig | null;
 }
 
 export interface PublicProfileRequestTarget {

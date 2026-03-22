@@ -89,7 +89,7 @@ describe("validateEnvironment", () => {
           MAIL_FROM_EMAIL: "",
           FRONTEND_VERIFICATION_URL_BASE: "",
           FRONTEND_PASSWORD_RESET_URL_BASE: "",
-          TWILIO_ACCOUNT_SID: "AC1234567890123456789012345678901-invalid",
+          TWILIO_ACCOUNT_SID: `AC${"1".repeat(32)}`,
           TWILIO_AUTH_TOKEN: "",
           TWILIO_FROM_PHONE_NUMBER: "",
           QR_BASE_URL: "https://dotly.id/q",

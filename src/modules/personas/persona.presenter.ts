@@ -1,11 +1,17 @@
 import {
   PersonaAccessMode as PrismaPersonaAccessMode,
+  PersonaSharingMode as PrismaPersonaSharingMode,
   PersonaType as PrismaPersonaType,
   Prisma,
 } from "@prisma/client";
 
 import { PersonaAccessMode } from "../../common/enums/persona-access-mode.enum";
+import { PersonaSharingMode } from "../../common/enums/persona-sharing-mode.enum";
 import { PersonaType } from "../../common/enums/persona-type.enum";
+import {
+  toApiSharingMode,
+  toSafeSmartCardConfig,
+} from "./persona-sharing";
 
 export const privatePersonaSelect = {
   id: true,
@@ -19,6 +25,8 @@ export const privatePersonaSelect = {
   profilePhotoUrl: true,
   accessMode: true,
   verifiedOnly: true,
+  sharingMode: true,
+  smartCardConfig: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.PersonaSelect;
@@ -31,6 +39,8 @@ export const publicPersonaSelect = {
   companyName: true,
   tagline: true,
   profilePhotoUrl: true,
+  sharingMode: true,
+  smartCardConfig: true,
 } satisfies Prisma.PersonaSelect;
 
 export type PrivatePersonaRecord = Prisma.PersonaGetPayload<{
@@ -89,6 +99,8 @@ export function toPrivatePersonaView(persona: PrivatePersonaRecord) {
     profilePhotoUrl: persona.profilePhotoUrl,
     accessMode: apiAccessModeMap[persona.accessMode],
     verifiedOnly: persona.verifiedOnly,
+    sharingMode: toApiSharingMode(persona.sharingMode),
+    smartCardConfig: toSafeSmartCardConfig(persona.smartCardConfig),
     createdAt: persona.createdAt,
     updatedAt: persona.updatedAt,
   };
@@ -102,6 +114,8 @@ export function toPublicPersonaView(persona: PublicPersonaRecord) {
     companyName: persona.companyName,
     tagline: persona.tagline,
     profilePhotoUrl: persona.profilePhotoUrl,
+    sharingMode: toApiSharingMode(persona.sharingMode),
+    smartCardConfig: toSafeSmartCardConfig(persona.smartCardConfig),
   };
 }
 

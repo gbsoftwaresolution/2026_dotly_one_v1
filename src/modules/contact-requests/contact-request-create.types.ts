@@ -9,6 +9,8 @@ export interface ContactRequestTargetPersona {
   username: string;
   fullName: string;
   accessMode: string;
+  sharingMode?: string;
+  smartCardConfig?: unknown;
   verifiedOnly: boolean;
 }
 

@@ -1,6 +1,8 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
+import { ForbiddenException } from "@nestjs/common";
+
 import { AnalyticsEventType as PrismaAnalyticsEventType } from "@prisma/client";
 
 import { AnalyticsService } from "../src/modules/analytics/analytics.service";
@@ -188,6 +190,11 @@ describe("ProfilesService analytics hook", () => {
             profilePhotoUrl: null,
             accessMode: "OPEN",
             verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "request_access",
+              allowWhatsapp: true,
+            },
           }),
         },
       } as any,
@@ -210,6 +217,14 @@ describe("ProfilesService analytics hook", () => {
       companyName: "Dotly",
       tagline: "Connect fast",
       profilePhotoUrl: null,
+      sharingMode: "smart_card",
+      smartCardConfig: {
+        primaryAction: "request_access",
+        allowCall: false,
+        allowWhatsapp: true,
+        allowEmail: false,
+        allowVcard: false,
+      },
     });
 
     assert.deepEqual(tracked[0], {
@@ -217,6 +232,74 @@ describe("ProfilesService analytics hook", () => {
       viewerUserId: null,
       idempotencyKey: "request-key",
     });
+  });
+
+  it("returns only safe smart card config fields on public profiles", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            publicUrl: "dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: true,
+              internalPersonaId: "persona-id",
+              nested: {
+                secret: true,
+              },
+            },
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    const result = await service.getPublicProfile("alice");
+
+    assert.deepEqual(result.smartCardConfig, {
+      primaryAction: "contact_me",
+      allowCall: true,
+      allowWhatsapp: false,
+      allowEmail: false,
+      allowVcard: false,
+    });
+  });
+
+  it("rejects request targets when smart card mode does not allow request access", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            fullName: "Alice Demo",
+            accessMode: "OPEN",
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "instant_connect",
+              allowCall: true,
+            },
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    await assert.rejects(service.getRequestTarget("alice"), ForbiddenException);
   });
 
   it("does not block public profile loading when analytics is slow", async () => {
@@ -236,6 +319,8 @@ describe("ProfilesService analytics hook", () => {
             profilePhotoUrl: null,
             accessMode: "OPEN",
             verifiedOnly: false,
+            sharingMode: "CONTROLLED",
+            smartCardConfig: null,
           }),
         },
       } as any,

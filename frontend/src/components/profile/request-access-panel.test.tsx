@@ -31,6 +31,9 @@ const profileFixture = {
   jobTitle: "Founder",
   companyName: "Dotly",
   tagline: "Connect intentionally",
+  profilePhotoUrl: null,
+  sharingMode: "controlled" as const,
+  smartCardConfig: null,
 } as const;
 
 const personaFixture = {
@@ -45,6 +48,8 @@ const personaFixture = {
   profilePhotoUrl: null,
   accessMode: "open" as const,
   verifiedOnly: false,
+  sharingMode: "controlled" as const,
+  smartCardConfig: null,
   createdAt: "2026-03-21T10:00:00.000Z",
   updatedAt: "2026-03-21T10:00:00.000Z",
 } as const;
@@ -67,6 +72,27 @@ describe("RequestAccessPanel", () => {
     expect(
       screen.getByRole("link", { name: /login to connect/i }),
     ).toHaveAttribute("href", "/login?next=%2Fu%2Ftarget");
+  });
+
+  it("shows the unavailable state for signed-out visitors when smart card config is missing", () => {
+    render(
+      React.createElement(RequestAccessPanel, {
+        profile: {
+          ...profileFixture,
+          sharingMode: "smart_card",
+          smartCardConfig: null,
+        },
+        initialPersonas: [],
+        isAuthenticated: false,
+      }),
+    );
+
+    expect(
+      screen.getByText(/this card is missing its action configuration/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /login to connect/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("submits a request from the selected persona", async () => {
@@ -121,6 +147,110 @@ describe("RequestAccessPanel", () => {
     });
 
     expect(screen.getByText(/request sent/i)).toBeInTheDocument();
+  });
+
+  it("keeps request access available when smart card mode uses request_access", async () => {
+    mocks.getRequestTarget.mockResolvedValue({ id: "target-persona" });
+    mocks.sendRequest.mockResolvedValue({ id: "request-1" });
+
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(RequestAccessPanel, {
+        profile: {
+          ...profileFixture,
+          sharingMode: "smart_card",
+          smartCardConfig: {
+            primaryAction: "request_access",
+            allowCall: false,
+            allowWhatsapp: true,
+            allowEmail: false,
+            allowVcard: false,
+          },
+        },
+        initialPersonas: [personaFixture],
+        isAuthenticated: true,
+        currentUser: {
+          id: "user-1",
+          email: "user@dotly.one",
+          isVerified: true,
+          security: {
+            trustBadge: "verified",
+            maskedEmail: "us**@dotly.one",
+            mailDeliveryAvailable: true,
+            passwordResetAvailable: true,
+            smsDeliveryAvailable: true,
+            maskedPhoneNumber: null,
+            phoneVerificationStatus: "not_enrolled",
+            mobileOtpEnrollment: null,
+            explanation:
+              "Email verification is the first trust factor for your Dotly identity.",
+            unlockedActions: ["Send contact requests"],
+            restrictedActions: [],
+            requirements: [],
+            trustFactors: [],
+          },
+        },
+      }),
+    );
+
+    expect(
+      screen.getByText(/request access from this smart card/i),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /request access/i }));
+
+    await waitFor(() => {
+      expect(mocks.sendRequest).toHaveBeenCalled();
+    });
+  });
+
+  it("hides the approval flow when a smart card uses a non-request action", () => {
+    render(
+      React.createElement(RequestAccessPanel, {
+        profile: {
+          ...profileFixture,
+          sharingMode: "smart_card",
+          smartCardConfig: {
+            primaryAction: "instant_connect",
+            allowCall: false,
+            allowWhatsapp: true,
+            allowEmail: false,
+            allowVcard: true,
+          },
+        },
+        initialPersonas: [personaFixture],
+        isAuthenticated: true,
+      }),
+    );
+
+    expect(
+      screen.getByText(/instant connect is the primary card action/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /request access/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a clear unavailable state when smart card config is missing", () => {
+    render(
+      React.createElement(RequestAccessPanel, {
+        profile: {
+          ...profileFixture,
+          sharingMode: "smart_card",
+          smartCardConfig: null,
+        },
+        initialPersonas: [personaFixture],
+        isAuthenticated: true,
+      }),
+    );
+
+    expect(
+      screen.getByText(/this card is missing its action configuration/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /request access/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows verification guidance instead of the request form for unverified users", () => {

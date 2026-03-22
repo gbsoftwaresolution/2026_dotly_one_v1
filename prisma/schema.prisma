@@ -30,6 +30,11 @@ enum PersonaAccessMode {
   PRIVATE @map("private")
 }
 
+enum PersonaSharingMode {
+  CONTROLLED @map("controlled")
+  SMART_CARD @map("smart_card")
+}
+
 enum ContactRequestSourceType {
   PROFILE @map("profile")
   QR      @map("qr")
@@ -206,6 +211,8 @@ model Persona {
   profilePhotoUrl          String?
   accessMode               PersonaAccessMode
   verifiedOnly             Boolean               @default(false)
+  sharingMode              PersonaSharingMode    @default(CONTROLLED)
+  smartCardConfig          Json?
   user                     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   qrAccessTokens           QRAccessToken[]
   analyticsEvents          AnalyticsEvent[]

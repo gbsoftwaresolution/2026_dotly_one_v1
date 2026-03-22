@@ -15,6 +15,7 @@ export const routes = {
     personas: "/app/personas",
     createPersona: "/app/personas/create",
     personaDetail: (personaId: string) => `/app/personas/${personaId}`,
+    personaSettings: (personaId: string) => `/app/personas/settings/${personaId}`,
     requests: "/app/requests",
     qr: "/app/qr",
     contacts: "/app/contacts",

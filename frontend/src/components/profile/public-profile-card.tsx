@@ -1,3 +1,9 @@
+import { StatusBadge } from "@/components/shared/status-badge";
+import {
+  formatPrimaryAction,
+  formatSharingMode,
+} from "@/lib/persona/labels";
+
 import { Card } from "@/components/shared/card";
 import type { PublicProfile } from "@/types/persona";
 
@@ -7,6 +13,15 @@ interface PublicProfileCardProps {
 
 export function PublicProfileCard({ profile }: PublicProfileCardProps) {
   const avatarHue = ((profile.username?.charCodeAt(0) ?? 72) * 137) % 360;
+  const isSmartCard = profile.sharingMode === "smart_card";
+  const enabledSmartCardActions = profile.smartCardConfig
+    ? [
+        profile.smartCardConfig.allowCall ? "Call" : null,
+        profile.smartCardConfig.allowWhatsapp ? "WhatsApp" : null,
+        profile.smartCardConfig.allowEmail ? "Email" : null,
+        profile.smartCardConfig.allowVcard ? "Save Contact" : null,
+      ].filter((value): value is string => value !== null)
+    : [];
 
   return (
     <Card className="overflow-hidden p-0 shadow-shell border-border/60">
@@ -51,6 +66,62 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
       </div>
 
       <div className="space-y-5 px-6 py-6">
+        <div className="flex flex-wrap gap-2">
+          <StatusBadge
+            label={formatSharingMode(profile.sharingMode)}
+            tone={isSmartCard ? "cyan" : "neutral"}
+            dot
+          />
+          {profile.smartCardConfig?.primaryAction ? (
+            <StatusBadge
+              label={formatPrimaryAction(profile.smartCardConfig.primaryAction)}
+              tone="info"
+            />
+          ) : null}
+        </div>
+
+        {isSmartCard ? (
+          <div className="space-y-3 rounded-3xl border border-cyan-200 bg-cyan-50/70 p-4 dark:border-brandCyan/25 dark:bg-brandCyan/10">
+            <div className="space-y-1">
+              <p className="label-xs text-cyan-700 dark:text-brandCyan">
+                Smart Card access
+              </p>
+              <p className="text-sm leading-6 text-cyan-800 dark:text-white/80">
+                {profile.smartCardConfig
+                  ? "This profile exposes a card-first action before full access is granted."
+                  : "This profile is in Smart Card Mode, but its card configuration is currently unavailable."}
+              </p>
+            </div>
+
+            {profile.smartCardConfig ? (
+              <div className="space-y-2">
+                <p className="label-xs text-cyan-700 dark:text-brandCyan">
+                  Available actions
+                </p>
+                {enabledSmartCardActions.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {enabledSmartCardActions.map((label) => (
+                      <StatusBadge key={label} label={label} tone="cyan" />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm leading-6 text-cyan-800 dark:text-white/80">
+                    No direct contact actions are currently enabled on this card.
+                  </p>
+                )}
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div className="space-y-1 rounded-3xl border border-border bg-surface/60 p-4">
+            <p className="label-xs text-muted">Controlled access</p>
+            <p className="text-sm leading-6 text-muted">
+              This profile uses an approval-based flow before any direct
+              connection happens.
+            </p>
+          </div>
+        )}
+
         {/* About */}
         <div className="space-y-2">
           <p className="label-xs text-muted">About</p>

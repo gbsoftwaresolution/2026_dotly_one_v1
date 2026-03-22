@@ -15,6 +15,7 @@ import type { AuthenticatedUser } from "../../common/decorators/current-user.dec
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 
 import { CreatePersonaDto } from "./dto/create-persona.dto";
+import { UpdatePersonaSharingDto } from "./dto/update-persona-sharing.dto";
 import { UpdatePersonaDto } from "./dto/update-persona.dto";
 
 import { PersonasService } from "./personas.service";
@@ -60,6 +61,19 @@ export class PersonasController {
     @Body() updatePersonaDto: UpdatePersonaDto,
   ) {
     return this.personasService.update(user.id, id, updatePersonaDto);
+  }
+
+  @Patch(":id/sharing")
+  updateSharingMode(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id", new ParseUUIDPipe()) id: string,
+    @Body() updatePersonaSharingDto: UpdatePersonaSharingDto,
+  ) {
+    return this.personasService.updateSharingMode(
+      user.id,
+      id,
+      updatePersonaSharingDto,
+    );
   }
 
   @Delete(":id")

@@ -48,6 +48,8 @@ export class ContactRequestRecipientPolicyService {
         username: true,
         fullName: true,
         accessMode: true,
+        sharingMode: true,
+        smartCardConfig: true,
         verifiedOnly: true,
       },
     });

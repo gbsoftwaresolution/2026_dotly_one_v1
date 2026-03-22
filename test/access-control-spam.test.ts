@@ -431,6 +431,67 @@ describe("ContactRequestsService", () => {
     );
   });
 
+  it("rejects profile requests when smart card mode disables request access", async () => {
+    const service = new ContactRequestCreateService(
+      {} as any,
+      {
+        resolveEligibleParticipants: async () => ({
+          fromPersona: { id: "from-persona", fullName: "Sender Persona" },
+          targetPersona: {
+            id: "target-persona",
+            userId: "target-user",
+            username: "target",
+            fullName: "Target User",
+            accessMode: PrismaPersonaAccessMode.OPEN,
+            sharingMode: "smart_card",
+            smartCardConfig: {
+              primaryAction: "instant_connect",
+              allowCall: true,
+            },
+            verifiedOnly: false,
+          },
+          senderUser: { id: "sender-user", isVerified: true },
+        }),
+      } as any,
+      {
+        assertCanCreateRequest: async () => undefined,
+      } as any,
+      {
+        assertSourceAccess: async () => undefined,
+      } as any,
+      {
+        reserveAndCreate: async () => {
+          throw new Error("should not create request");
+        },
+      } as any,
+      {
+        createSafe: async () => undefined,
+      } as any,
+      {
+        trackRequestSent: async () => undefined,
+      } as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
+    );
+
+    await assert.rejects(
+      service.create("sender-user", {
+        fromPersonaId: "from-persona",
+        toPersonaId: "target-persona",
+        sourceType: ContactRequestSourceType.Profile,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(
+          error.message,
+          "This profile is not accepting requests at this time.",
+        );
+        return true;
+      },
+    );
+  });
+
   it("blocks approval when a block exists before approval", async () => {
     const service = new ContactRequestsService(
       {

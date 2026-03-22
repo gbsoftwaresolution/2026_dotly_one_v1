@@ -29,8 +29,27 @@ const JWT_AUDIENCE = "dotly-clients";
 const JWT_SECRET = "test-secret";
 const TEST_SESSION_ID = "session-current";
 
+const sharingUpdateCalls: Array<{
+  userId: string;
+  personaId: string;
+  payload: unknown;
+}> = [];
+
 const personasServiceMock = {
   findAllByUser: async (userId: string) => [{ id: `persona-for-${userId}` }],
+  updateSharingMode: async (
+    userId: string,
+    personaId: string,
+    payload: any,
+  ) => {
+    sharingUpdateCalls.push({ userId, personaId, payload });
+
+    return {
+      id: personaId,
+      sharingMode: payload.sharingMode ?? "controlled",
+      smartCardConfig: payload.smartCardConfig ?? null,
+    };
+  },
 };
 
 const profilesServiceMock = {
@@ -41,6 +60,14 @@ const profilesServiceMock = {
     companyName: "Dotly",
     tagline: "Connect fast",
     profilePhotoUrl: null,
+    sharingMode: "smart_card",
+    smartCardConfig: {
+      primaryAction: "request_access",
+      allowCall: false,
+      allowWhatsapp: true,
+      allowEmail: false,
+      allowVcard: true,
+    },
   }),
 };
 
@@ -208,6 +235,88 @@ describe("HTTP Security E2E", () => {
     await app.close();
   });
 
+  it("accepts authenticated sharing updates with strict nested validation", async () => {
+    const token = await jwtService.signAsync({
+      sub: "user-84",
+      email: "user84@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(
+      `${baseUrl}/v1/personas/4b26dc1f-9238-46db-89c5-d9d2476f8c51/sharing`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sharingMode: "smart_card",
+          smartCardConfig: {
+            primaryAction: "instant_connect",
+            allowWhatsapp: true,
+            allowVcard: true,
+          },
+        }),
+      },
+    );
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.success, true);
+    assert.equal(sharingUpdateCalls.at(-1)?.userId, "user-84");
+    assert.equal(
+      sharingUpdateCalls.at(-1)?.personaId,
+      "4b26dc1f-9238-46db-89c5-d9d2476f8c51",
+    );
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(sharingUpdateCalls.at(-1)?.payload)),
+      {
+      sharingMode: "smart_card",
+      smartCardConfig: {
+        primaryAction: "instant_connect",
+        allowCall: false,
+        allowWhatsapp: true,
+        allowEmail: false,
+        allowVcard: true,
+      },
+      },
+    );
+  });
+
+  it("rejects unknown smart card config fields", async () => {
+    const token = await jwtService.signAsync({
+      sub: "user-84",
+      email: "user84@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(
+      `${baseUrl}/v1/personas/4b26dc1f-9238-46db-89c5-d9d2476f8c51/sharing`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sharingMode: "smart_card",
+          smartCardConfig: {
+            primaryAction: "request_access",
+            internalFlag: true,
+          },
+        }),
+      },
+    );
+    const payload = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.success, false);
+    assert.deepEqual(payload.message, [
+      "smartCardConfig.property internalFlag should not exist",
+    ]);
+  });
+
   it("rejects protected endpoints without authentication", async () => {
     const response = await fetch(`${baseUrl}/v1/personas`);
     const payload = await response.json();
@@ -282,6 +391,14 @@ describe("HTTP Security E2E", () => {
       companyName: "Dotly",
       tagline: "Connect fast",
       profilePhotoUrl: null,
+      sharingMode: "smart_card",
+      smartCardConfig: {
+        primaryAction: "request_access",
+        allowCall: false,
+        allowWhatsapp: true,
+        allowEmail: false,
+        allowVcard: true,
+      },
     });
     assert.equal(payload.data.id, undefined);
     assert.equal(payload.data.accessMode, undefined);

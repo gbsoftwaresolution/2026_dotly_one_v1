@@ -2,6 +2,7 @@ import type {
   CreatePersonaInput,
   PersonaSummary,
   UpdatePersonaInput,
+  UpdatePersonaSharingInput,
 } from "@/types/persona";
 
 import { apiRequest } from "./client";
@@ -34,6 +35,14 @@ export const personaApi = {
 
   update: (personaId: string, input: UpdatePersonaInput) =>
     apiRequest<PersonaSummary>(`/api/personas/${personaId}`, {
+      method: "PATCH",
+      body: input,
+      baseUrl: "",
+      credentials: "same-origin",
+    }),
+
+  updateSharing: (personaId: string, input: UpdatePersonaSharingInput) =>
+    apiRequest<PersonaSummary>(`/api/personas/${personaId}/sharing`, {
       method: "PATCH",
       body: input,
       baseUrl: "",

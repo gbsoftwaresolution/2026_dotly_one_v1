@@ -39,6 +39,8 @@ const personaFixture = {
   profilePhotoUrl: null,
   accessMode: "open" as const,
   verifiedOnly: false,
+  sharingMode: "controlled" as const,
+  smartCardConfig: null,
   createdAt: "2026-03-21T10:00:00.000Z",
   updatedAt: "2026-03-21T10:00:00.000Z",
 } as const;

@@ -10,6 +10,7 @@ import { SecondaryButton } from "@/components/shared/secondary-button";
 import { publicApi, requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
+import { formatPrimaryAction } from "@/lib/persona/labels";
 import { cn } from "@/lib/utils/cn";
 import type {
   PersonaSummary,
@@ -103,6 +104,15 @@ export function RequestAccessPanel({
       initialPersonas.some((persona) => persona.username === profile.username),
     [initialPersonas, profile.username],
   );
+  const smartCardPrimaryAction =
+    profile.sharingMode === "smart_card"
+      ? profile.smartCardConfig?.primaryAction ?? null
+      : null;
+  const isSmartCardMisconfigured =
+    profile.sharingMode === "smart_card" && profile.smartCardConfig === null;
+  const supportsRequestAccess =
+    profile.sharingMode === "controlled" ||
+    smartCardPrimaryAction === "request_access";
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -138,19 +148,43 @@ export function RequestAccessPanel({
     }
   }
 
+  if (isSmartCardMisconfigured) {
+    return (
+      <Card className="space-y-4 border-amber-300/50 bg-amber-50/80 dark:border-status-warning/25 dark:bg-status-warning/10">
+        <div className="space-y-2">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-amber-700 dark:text-status-warning">
+            Smart Card unavailable
+          </p>
+          <h2 className="font-sans text-lg font-semibold text-foreground">
+            This card is missing its action configuration
+          </h2>
+          <p className="text-sm leading-6 text-muted">
+            The owner has enabled Smart Card Mode, but the public card details
+            are incomplete right now. Try again later.
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <Card className="space-y-4">
         <div className="space-y-2">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-            Request access
+            {profile.sharingMode === "smart_card"
+              ? "Smart Card action"
+              : "Request access"}
           </p>
           <h2 className="font-sans text-lg font-semibold text-foreground">
-            Log in to connect
+            {profile.sharingMode === "smart_card"
+              ? "Log in to continue"
+              : "Log in to connect"}
           </h2>
           <p className="text-sm leading-6 text-muted">
-            Use one of your personas to request access in a permissioned,
-            approval-based flow.
+            {profile.sharingMode === "smart_card"
+              ? `This smart card starts with ${formatPrimaryAction(smartCardPrimaryAction!)}. Log in to continue from one of your personas.`
+              : "Use one of your personas to request access in a permissioned, approval-based flow."}
           </p>
         </div>
         <Link href={loginHref} className="block">
@@ -178,6 +212,26 @@ export function RequestAccessPanel({
         <Link href={routes.app.personas} className="block">
           <SecondaryButton className="w-full">Open personas</SecondaryButton>
         </Link>
+      </Card>
+    );
+  }
+
+  if (!supportsRequestAccess) {
+    return (
+      <Card className="space-y-4 border-cyan-200 bg-cyan-50/70 dark:border-brandCyan/25 dark:bg-brandCyan/10">
+        <div className="space-y-2">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-cyan-700 dark:text-brandCyan">
+            Smart Card mode
+          </p>
+          <h2 className="font-sans text-lg font-semibold text-foreground">
+            {formatPrimaryAction(smartCardPrimaryAction!)} is the primary card
+            action
+          </h2>
+          <p className="text-sm leading-6 text-muted">
+            This public profile does not use the approval-based request flow.
+            Continue through the card entry point that was shared with you.
+          </p>
+        </div>
       </Card>
     );
   }
@@ -223,14 +277,19 @@ export function RequestAccessPanel({
     <Card className="space-y-5">
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-brandRose dark:text-brandCyan">
-          Request access
+          {profile.sharingMode === "smart_card"
+            ? "Smart Card action"
+            : "Request access"}
         </p>
         <h2 className="font-sans text-lg font-semibold text-foreground">
-          Reach out from one of your personas
+          {profile.sharingMode === "smart_card"
+            ? "Request access from this Smart Card"
+            : "Reach out from one of your personas"}
         </h2>
         <p className="text-sm leading-6 text-muted">
-          Send a permission request to {profile.fullName}. They can approve or
-          reject it from their requests screen.
+          {profile.sharingMode === "smart_card"
+            ? `${formatPrimaryAction(smartCardPrimaryAction!)} is configured as the primary card action. Send a permission request to ${profile.fullName}.`
+            : `Send a permission request to ${profile.fullName}. They can approve or reject it from their requests screen.`}
         </p>
       </div>
 

@@ -1,13 +1,16 @@
 import {
+  BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
+import { PersonaSharingMode as PrismaPersonaSharingMode, Prisma } from "@prisma/client";
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 
 import { CreatePersonaDto } from "./dto/create-persona.dto";
+import { UpdatePersonaSharingDto } from "./dto/update-persona-sharing.dto";
 import { UpdatePersonaDto } from "./dto/update-persona.dto";
 import {
   buildPublicUrl,
@@ -16,6 +19,10 @@ import {
   toPrismaPersonaType,
   toPrivatePersonaView,
 } from "./persona.presenter";
+import {
+  toPrismaSharingMode,
+  validateSmartCardConfig,
+} from "./persona-sharing";
 
 @Injectable()
 export class PersonasService {
@@ -160,6 +167,69 @@ export class PersonasService {
         id: personaId,
       },
       data,
+      select: privatePersonaSelect,
+    });
+
+    return toPrivatePersonaView(persona);
+  }
+
+  async updateSharingMode(
+    userId: string,
+    personaId: string,
+    updatePersonaSharingDto: UpdatePersonaSharingDto,
+  ) {
+    const existingPersona = await this.prismaService.persona.findUnique({
+      where: {
+        id: personaId,
+      },
+      select: {
+        userId: true,
+        sharingMode: true,
+        smartCardConfig: true,
+      },
+    });
+
+    if (!existingPersona) {
+      throw new NotFoundException("Persona not found");
+    }
+
+    if (existingPersona.userId !== userId) {
+      throw new ForbiddenException("You do not own this persona");
+    }
+
+    const nextSharingMode = updatePersonaSharingDto.sharingMode
+      ? toPrismaSharingMode(updatePersonaSharingDto.sharingMode)
+      : existingPersona.sharingMode;
+
+    const requestedConfig =
+      updatePersonaSharingDto.smartCardConfig !== undefined
+        ? updatePersonaSharingDto.smartCardConfig
+        : existingPersona.smartCardConfig;
+
+    const smartCardConfig =
+      nextSharingMode === PrismaPersonaSharingMode.CONTROLLED
+        ? null
+        : (() => {
+            if (requestedConfig === null || requestedConfig === undefined) {
+              throw new BadRequestException(
+                "smartCardConfig is required when sharingMode is smart_card",
+              );
+            }
+
+            return validateSmartCardConfig(requestedConfig);
+          })();
+
+    const persona = await this.prismaService.persona.update({
+      where: {
+        id: personaId,
+      },
+      data: {
+        sharingMode: nextSharingMode,
+        smartCardConfig:
+          smartCardConfig === null
+            ? Prisma.DbNull
+            : (smartCardConfig as unknown as Prisma.InputJsonValue),
+      },
       select: privatePersonaSelect,
     });
 

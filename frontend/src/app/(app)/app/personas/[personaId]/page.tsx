@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PersonaEditForm } from "@/components/personas/persona-edit-form";
 import { Card } from "@/components/shared/card";
 import { PageHeader } from "@/components/shared/page-header";
+import { SecondaryButton } from "@/components/shared/secondary-button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ApiError, apiRequest } from "@/lib/api/client";
 import { requireServerSession } from "@/lib/auth/protected-route";
@@ -69,6 +71,13 @@ export default async function PersonaDetailPage({
       <PageHeader
         title={persona.fullName}
         description={`@${persona.username} · ${persona.jobTitle} at ${persona.companyName}`}
+        action={
+          <Link href={routes.app.personaSettings(persona.id)}>
+            <SecondaryButton className="min-h-11 px-4 py-2 text-sm">
+              Sharing Mode
+            </SecondaryButton>
+          </Link>
+        }
       />
 
       {/* Status row */}

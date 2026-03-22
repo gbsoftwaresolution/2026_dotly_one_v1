@@ -1,5 +1,6 @@
-import { ConflictException, Injectable } from "@nestjs/common";
+import { ConflictException, ForbiddenException, Injectable } from "@nestjs/common";
 import {
+  PersonaSharingMode as PrismaPersonaSharingMode,
   ContactRequestStatus as PrismaContactRequestStatus,
   Prisma,
 } from "@prisma/client";
@@ -22,6 +23,7 @@ import { ContactRequestRetryPolicyService } from "./contact-request-retry-policy
 import { ContactRequestSourcePolicyService } from "./contact-request-source-policy.service";
 import { CreateContactRequestDto } from "./dto/create-contact-request.dto";
 import { RequestRateLimitService } from "./request-rate-limit.service";
+import { supportsRequestAccessFlow } from "../personas/persona-sharing";
 
 const noopVerificationPolicyService: Pick<
   VerificationPolicyService,
@@ -59,6 +61,23 @@ export class ContactRequestCreateService {
         createContactRequestDto.fromPersonaId,
         createContactRequestDto.toPersonaId,
       );
+
+    const targetSharingMode =
+      targetPersona.sharingMode === PrismaPersonaSharingMode.SMART_CARD.toLowerCase()
+        ? PrismaPersonaSharingMode.SMART_CARD
+        : PrismaPersonaSharingMode.CONTROLLED;
+
+    if (
+      createContactRequestDto.sourceType === ContactRequestSourceType.Profile &&
+      !supportsRequestAccessFlow(
+        targetSharingMode,
+        targetPersona.smartCardConfig,
+      )
+    ) {
+      throw new ForbiddenException(
+        "This profile is not accepting requests at this time.",
+      );
+    }
 
     await this.retryPolicyService.assertCanCreateRequest(
       userId,
