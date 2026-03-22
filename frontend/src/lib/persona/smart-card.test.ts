@@ -93,6 +93,11 @@ describe("smart-card primary action helpers", () => {
           phoneNumber: null,
           email: null,
         },
+        publicActions: {
+          phone: null,
+          whatsappNumber: null,
+          email: null,
+        },
         smartCard: {
           primaryAction: "contact_me",
           allowCall: true,
@@ -107,6 +112,11 @@ describe("smart-card primary action helpers", () => {
       hasPublicSmartCardDirectActions({
         channels: {
           phoneNumber: null,
+          email: null,
+        },
+        publicActions: {
+          phone: null,
+          whatsappNumber: null,
           email: null,
         },
         smartCard: {

@@ -213,6 +213,9 @@ model Persona {
   verifiedOnly             Boolean               @default(false)
   sharingMode              PersonaSharingMode    @default(CONTROLLED)
   smartCardConfig          Json?
+  publicPhone              String?               @db.VarChar(32)
+  publicWhatsappNumber     String?               @db.VarChar(32)
+  publicEmail              String?               @db.VarChar(254)
   user                     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   qrAccessTokens           QRAccessToken[]
   analyticsEvents          AnalyticsEvent[]

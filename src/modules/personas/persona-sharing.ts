@@ -15,6 +15,29 @@ export interface PersonaSmartCardConfig {
   allowVcard: boolean;
 }
 
+export interface PersonaPublicActionFields {
+  publicPhone: string | null;
+  publicWhatsappNumber: string | null;
+  publicEmail: string | null;
+}
+
+export interface PersonaSmartCardActions {
+  call: boolean;
+  whatsapp: boolean;
+  email: boolean;
+  vcard: boolean;
+}
+
+export interface PersonaPublicActionValues {
+  phone: string | null;
+  whatsappNumber: string | null;
+  email: string | null;
+}
+
+export interface PersonaSmartCardActionSource extends PersonaPublicActionFields {
+  smartCardConfig: unknown;
+}
+
 export interface PersonaSmartCardActionState {
   requestAccessEnabled: boolean;
   instantConnectEnabled: boolean;
@@ -62,6 +85,21 @@ function normalizeBoolean(
   }
 
   return value;
+}
+
+function hasPublicValue(value: string | null | undefined): boolean {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+export function isPhoneLikeValue(value: string): boolean {
+  const trimmedValue = value.trim();
+
+  if (!/^[0-9+().\-\s]{7,32}$/.test(trimmedValue)) {
+    return false;
+  }
+
+  const digits = trimmedValue.replace(/\D/g, "");
+  return digits.length >= 7 && digits.length <= 15;
 }
 
 export function toPrismaSharingMode(
@@ -120,36 +158,96 @@ export function isInstantConnectEnabled(
 
 export function isContactMeEnabled(
   config: PersonaSmartCardConfig | null | undefined,
+  publicFields?: Partial<PersonaPublicActionFields> | null,
 ): boolean {
+  return hasDirectSmartCardActions({
+    smartCardConfig: config,
+    publicPhone: publicFields?.publicPhone ?? null,
+    publicWhatsappNumber: publicFields?.publicWhatsappNumber ?? null,
+    publicEmail: publicFields?.publicEmail ?? null,
+  });
+}
+
+export function isCallEnabled(persona: PersonaSmartCardActionSource): boolean {
+  const config = toSafeSmartCardConfig(persona.smartCardConfig);
+
+  return Boolean(config?.allowCall && hasPublicValue(persona.publicPhone));
+}
+
+export function isWhatsappEnabled(
+  persona: PersonaSmartCardActionSource,
+): boolean {
+  const config = toSafeSmartCardConfig(persona.smartCardConfig);
+
   return Boolean(
-    config &&
-      (config.allowCall ||
-        config.allowWhatsapp ||
-        config.allowEmail ||
-        config.allowVcard),
+    config?.allowWhatsapp && hasPublicValue(persona.publicWhatsappNumber),
   );
 }
 
-export function isPublicContactMeEnabled(
-  config: PersonaSmartCardConfig | null | undefined,
-): boolean {
+export function isEmailEnabled(persona: PersonaSmartCardActionSource): boolean {
+  const config = toSafeSmartCardConfig(persona.smartCardConfig);
+
+  return Boolean(config?.allowEmail && hasPublicValue(persona.publicEmail));
+}
+
+export function isVcardEnabled(persona: PersonaSmartCardActionSource): boolean {
+  const config = toSafeSmartCardConfig(persona.smartCardConfig);
+
   return Boolean(config?.allowVcard);
+}
+
+export function buildSmartCardActions(
+  persona: PersonaSmartCardActionSource,
+): PersonaSmartCardActions {
+  return {
+    call: isCallEnabled(persona),
+    whatsapp: isWhatsappEnabled(persona),
+    email: isEmailEnabled(persona),
+    vcard: isVcardEnabled(persona),
+  };
+}
+
+export function hasDirectSmartCardActions(
+  persona: PersonaSmartCardActionSource,
+): boolean {
+  const actions = buildSmartCardActions(persona);
+
+  return actions.call || actions.whatsapp || actions.email || actions.vcard;
+}
+
+export function buildSafePublicActionValues(
+  persona: PersonaSmartCardActionSource,
+): PersonaPublicActionValues {
+  return {
+    phone: isCallEnabled(persona) ? persona.publicPhone : null,
+    whatsappNumber: isWhatsappEnabled(persona)
+      ? persona.publicWhatsappNumber
+      : null,
+    email: isEmailEnabled(persona) ? persona.publicEmail : null,
+  };
 }
 
 export function buildSmartCardActionState(
   persona: PersonaSmartCardCompatibilityContext,
   config: PersonaSmartCardConfig | null | undefined,
+  publicFields?: Partial<PersonaPublicActionFields> | null,
 ): PersonaSmartCardActionState {
   return {
     requestAccessEnabled: isRequestAccessEnabled(persona),
     instantConnectEnabled: isInstantConnectEnabled(persona),
-    contactMeEnabled: isPublicContactMeEnabled(config),
+    contactMeEnabled: hasDirectSmartCardActions({
+      smartCardConfig: config,
+      publicPhone: publicFields?.publicPhone ?? null,
+      publicWhatsappNumber: publicFields?.publicWhatsappNumber ?? null,
+      publicEmail: publicFields?.publicEmail ?? null,
+    }),
   };
 }
 
 export function validateSmartCardConfigCompatibility(
   config: PersonaSmartCardConfig,
   context: PersonaSmartCardCompatibilityContext,
+  publicFields?: Partial<PersonaPublicActionFields> | null,
 ): PersonaSmartCardConfig {
   if (
     config.primaryAction === PersonaSmartCardPrimaryAction.RequestAccess &&
@@ -157,6 +255,32 @@ export function validateSmartCardConfigCompatibility(
   ) {
     throw new BadRequestException(
       "smartCardConfig.primaryAction request_access is not supported for private personas",
+    );
+  }
+
+
+  const actionSource: PersonaSmartCardActionSource = {
+    smartCardConfig: config,
+    publicPhone: publicFields?.publicPhone ?? null,
+    publicWhatsappNumber: publicFields?.publicWhatsappNumber ?? null,
+    publicEmail: publicFields?.publicEmail ?? null,
+  };
+
+  if (config.allowCall && !isCallEnabled(actionSource)) {
+    throw new BadRequestException(
+      "smartCardConfig.allowCall requires a valid publicPhone value",
+    );
+  }
+
+  if (config.allowWhatsapp && !isWhatsappEnabled(actionSource)) {
+    throw new BadRequestException(
+      "smartCardConfig.allowWhatsapp requires a valid publicWhatsappNumber value",
+    );
+  }
+
+  if (config.allowEmail && !isEmailEnabled(actionSource)) {
+    throw new BadRequestException(
+      "smartCardConfig.allowEmail requires a valid publicEmail value",
     );
   }
 
@@ -173,7 +297,7 @@ export function validateSmartCardConfigCompatibility(
 
   if (
     config.primaryAction === PersonaSmartCardPrimaryAction.ContactMe &&
-    !isContactMeEnabled(config)
+    !hasDirectSmartCardActions(actionSource)
   ) {
     throw new BadRequestException(
       "smartCardConfig.primaryAction contact_me requires at least one direct action to be enabled",

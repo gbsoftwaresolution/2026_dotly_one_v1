@@ -5,8 +5,12 @@ import {
 
 import { PersonaSharingMode } from "../../../common/enums/persona-sharing-mode.enum";
 import {
+  buildSafePublicActionValues,
+  buildSmartCardActions,
+  type PersonaPublicActionValues,
   type PersonaSmartCardActionState,
   type PersonaSmartCardConfig,
+  type PersonaSmartCardActions,
   toApiSharingMode,
   toSafeSmartCardConfig,
 } from "../../personas/persona-sharing";
@@ -23,6 +27,9 @@ interface PublicPersonaSource {
   accessMode: PrismaPersonaAccessMode;
   sharingMode: PrismaPersonaSharingMode;
   smartCardConfig: unknown;
+  publicPhone: string | null;
+  publicWhatsappNumber: string | null;
+  publicEmail: string | null;
 }
 
 export class PublicPersonaChannelsDto {
@@ -54,6 +61,45 @@ export class PublicPersonaSmartCardActionStateDto {
       instantConnectEnabled: actionState.instantConnectEnabled,
       contactMeEnabled: actionState.contactMeEnabled,
     } satisfies PublicPersonaSmartCardActionStateDto;
+  }
+}
+
+export class PublicPersonaSmartCardActionsDto {
+  call!: boolean;
+
+  whatsapp!: boolean;
+
+  email!: boolean;
+
+  vcard!: boolean;
+
+  static fromActions(
+    actions: PersonaSmartCardActions,
+  ): PublicPersonaSmartCardActionsDto {
+    return {
+      call: actions.call,
+      whatsapp: actions.whatsapp,
+      email: actions.email,
+      vcard: actions.vcard,
+    } satisfies PublicPersonaSmartCardActionsDto;
+  }
+}
+
+export class PublicPersonaPublicActionsDto {
+  phone!: string | null;
+
+  whatsappNumber!: string | null;
+
+  email!: string | null;
+
+  static fromValues(
+    values: PersonaPublicActionValues,
+  ): PublicPersonaPublicActionsDto {
+    return {
+      phone: values.phone,
+      whatsappNumber: values.whatsappNumber,
+      email: values.email,
+    } satisfies PublicPersonaPublicActionsDto;
   }
 }
 
@@ -94,13 +140,17 @@ export class PublicPersonaSmartCardDto {
 
   actionState!: PublicPersonaSmartCardActionStateDto;
 
+  actions!: PublicPersonaSmartCardActionsDto;
+
   static fromConfig(
     config: PersonaSmartCardConfig,
     actionState: PersonaSmartCardActionState,
+    actions: PersonaSmartCardActions,
   ): PublicPersonaSmartCardDto {
     return {
       ...PublicPersonaSmartCardConfigDto.fromConfig(config),
       actionState: PublicPersonaSmartCardActionStateDto.fromState(actionState),
+      actions: PublicPersonaSmartCardActionsDto.fromActions(actions),
     } satisfies PublicPersonaSmartCardDto;
   }
 }
@@ -136,6 +186,8 @@ export class PublicPersonaDto {
 
   smartCardConfig!: PublicPersonaSmartCardConfigDto | null;
 
+  publicActions!: PublicPersonaPublicActionsDto;
+
   private static toCanonicalPublicUrl(publicUrl: string, username: string): string {
     const trimmedPublicUrl = publicUrl.trim();
 
@@ -159,6 +211,18 @@ export class PublicPersonaDto {
   ): PublicPersonaDto {
     const sharingMode = toApiSharingMode(persona.sharingMode);
     const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
+    const directActions = buildSmartCardActions({
+      smartCardConfig: safeSmartCardConfig,
+      publicPhone: persona.publicPhone,
+      publicWhatsappNumber: persona.publicWhatsappNumber,
+      publicEmail: persona.publicEmail,
+    });
+    const publicActions = buildSafePublicActionValues({
+      smartCardConfig: safeSmartCardConfig,
+      publicPhone: persona.publicPhone,
+      publicWhatsappNumber: persona.publicWhatsappNumber,
+      publicEmail: persona.publicEmail,
+    });
     const publicUrl = PublicPersonaDto.toCanonicalPublicUrl(
       persona.publicUrl,
       persona.username,
@@ -172,6 +236,7 @@ export class PublicPersonaDto {
         : PublicPersonaSmartCardDto.fromConfig(
             safeSmartCardConfig,
             options.actionState,
+            directActions,
           );
 
     return {
@@ -196,6 +261,7 @@ export class PublicPersonaDto {
         safeSmartCardConfig === null
           ? null
           : PublicPersonaSmartCardConfigDto.fromConfig(safeSmartCardConfig),
+      publicActions: PublicPersonaPublicActionsDto.fromValues(publicActions),
     } satisfies PublicPersonaDto;
   }
 }

@@ -40,6 +40,11 @@ const profileFixture = {
     phoneNumber: null,
     email: null,
   },
+  publicActions: {
+    phone: null,
+    whatsappNumber: null,
+    email: null,
+  },
   links: [],
   smartCard: null,
   smartCardConfig: null,
@@ -59,6 +64,9 @@ const personaFixture = {
   verifiedOnly: false,
   sharingMode: "controlled" as const,
   smartCardConfig: null,
+  publicPhone: null,
+  publicWhatsappNumber: null,
+  publicEmail: null,
   createdAt: "2026-03-21T10:00:00.000Z",
   updatedAt: "2026-03-21T10:00:00.000Z",
 } as const;
@@ -181,6 +189,12 @@ describe("RequestAccessPanel", () => {
               instantConnectEnabled: false,
               contactMeEnabled: true,
             },
+            actions: {
+              call: false,
+              whatsapp: true,
+              email: false,
+              vcard: false,
+            },
           },
           smartCardConfig: {
             primaryAction: "request_access",
@@ -250,6 +264,12 @@ describe("RequestAccessPanel", () => {
               instantConnectEnabled: true,
               contactMeEnabled: true,
             },
+            actions: {
+              call: false,
+              whatsapp: true,
+              email: false,
+              vcard: true,
+            },
           },
           smartCardConfig: {
             primaryAction: "instant_connect",
@@ -293,6 +313,12 @@ describe("RequestAccessPanel", () => {
               requestAccessEnabled: true,
               instantConnectEnabled: false,
               contactMeEnabled: false,
+            },
+            actions: {
+              call: false,
+              whatsapp: false,
+              email: false,
+              vcard: false,
             },
           },
           smartCardConfig: {

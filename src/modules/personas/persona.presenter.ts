@@ -28,6 +28,9 @@ export const privatePersonaSelect = {
   verifiedOnly: true,
   sharingMode: true,
   smartCardConfig: true,
+  publicPhone: true,
+  publicWhatsappNumber: true,
+  publicEmail: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.PersonaSelect;
@@ -44,6 +47,9 @@ export const publicPersonaSelect = {
   accessMode: true,
   sharingMode: true,
   smartCardConfig: true,
+  publicPhone: true,
+  publicWhatsappNumber: true,
+  publicEmail: true,
 } satisfies Prisma.PersonaSelect;
 
 export type PrivatePersonaRecord = Prisma.PersonaGetPayload<{
@@ -104,6 +110,9 @@ export function toPrivatePersonaView(persona: PrivatePersonaRecord) {
     verifiedOnly: persona.verifiedOnly,
     sharingMode: toApiSharingMode(persona.sharingMode),
     smartCardConfig: toSafeSmartCardConfig(persona.smartCardConfig),
+    publicPhone: persona.publicPhone,
+    publicWhatsappNumber: persona.publicWhatsappNumber,
+    publicEmail: persona.publicEmail,
     createdAt: persona.createdAt,
     updatedAt: persona.updatedAt,
   };

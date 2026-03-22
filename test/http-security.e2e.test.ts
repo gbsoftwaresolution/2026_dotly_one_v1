@@ -48,6 +48,9 @@ const personasServiceMock = {
       id: personaId,
       sharingMode: payload.sharingMode ?? "controlled",
       smartCardConfig: payload.smartCardConfig ?? null,
+      publicPhone: payload.publicPhone ?? null,
+      publicWhatsappNumber: payload.publicWhatsappNumber ?? null,
+      publicEmail: payload.publicEmail ?? null,
     };
   },
 };
@@ -80,6 +83,12 @@ const profilesServiceMock = {
         instantConnectEnabled: false,
         contactMeEnabled: true,
       },
+      actions: {
+        call: false,
+        whatsapp: true,
+        email: false,
+        vcard: true,
+      },
     },
     smartCardConfig: {
       primaryAction: "request_access",
@@ -87,6 +96,11 @@ const profilesServiceMock = {
       allowWhatsapp: true,
       allowEmail: false,
       allowVcard: true,
+    },
+    publicActions: {
+      phone: null,
+      whatsappNumber: "+15551234567",
+      email: null,
     },
   }),
 };
@@ -272,6 +286,7 @@ describe("HTTP Security E2E", () => {
         },
         body: JSON.stringify({
           sharingMode: "smart_card",
+          publicWhatsappNumber: " +1 555 123 4567 ",
           smartCardConfig: {
             primaryAction: "instant_connect",
             allowWhatsapp: true,
@@ -292,14 +307,15 @@ describe("HTTP Security E2E", () => {
     assert.deepEqual(
       JSON.parse(JSON.stringify(sharingUpdateCalls.at(-1)?.payload)),
       {
-      sharingMode: "smart_card",
-      smartCardConfig: {
-        primaryAction: "instant_connect",
-        allowCall: false,
-        allowWhatsapp: true,
-        allowEmail: false,
-        allowVcard: true,
-      },
+        sharingMode: "smart_card",
+        publicWhatsappNumber: "+1 555 123 4567",
+        smartCardConfig: {
+          primaryAction: "instant_connect",
+          allowCall: false,
+          allowWhatsapp: true,
+          allowEmail: false,
+          allowVcard: true,
+        },
       },
     );
   });
@@ -462,6 +478,12 @@ describe("HTTP Security E2E", () => {
           instantConnectEnabled: false,
           contactMeEnabled: true,
         },
+        actions: {
+          call: false,
+          whatsapp: true,
+          email: false,
+          vcard: true,
+        },
       },
       smartCardConfig: {
         primaryAction: "request_access",
@@ -469,6 +491,11 @@ describe("HTTP Security E2E", () => {
         allowWhatsapp: true,
         allowEmail: false,
         allowVcard: true,
+      },
+      publicActions: {
+        phone: null,
+        whatsappNumber: "+15551234567",
+        email: null,
       },
     });
     assert.equal(payload.data.id, undefined);

@@ -195,10 +195,9 @@ describe("ProfilesService analytics hook", () => {
               primaryAction: "request_access",
               allowWhatsapp: true,
             },
-            user: {
-              email: "alice@dotly.one",
-              phoneNumber: null,
-            },
+            publicPhone: null,
+            publicWhatsappNumber: "+15551234567",
+            publicEmail: null,
           }),
         },
       } as any,
@@ -240,7 +239,13 @@ describe("ProfilesService analytics hook", () => {
         actionState: {
           requestAccessEnabled: true,
           instantConnectEnabled: false,
-          contactMeEnabled: false,
+          contactMeEnabled: true,
+        },
+        actions: {
+          call: false,
+          whatsapp: true,
+          email: false,
+          vcard: false,
         },
       },
       smartCardConfig: {
@@ -249,6 +254,11 @@ describe("ProfilesService analytics hook", () => {
         allowWhatsapp: true,
         allowEmail: false,
         allowVcard: false,
+      },
+      publicActions: {
+        phone: null,
+        whatsappNumber: "+15551234567",
+        email: null,
       },
     });
 
@@ -283,10 +293,9 @@ describe("ProfilesService analytics hook", () => {
                 secret: true,
               },
             },
-            user: {
-              email: "alice@dotly.one",
-              phoneNumber: "+15551234567",
-            },
+            publicPhone: "+15551234567",
+            publicWhatsappNumber: null,
+            publicEmail: null,
           }),
         },
       } as any,
@@ -313,7 +322,13 @@ describe("ProfilesService analytics hook", () => {
       actionState: {
         requestAccessEnabled: true,
         instantConnectEnabled: false,
-        contactMeEnabled: false,
+        contactMeEnabled: true,
+      },
+      actions: {
+        call: true,
+        whatsapp: false,
+        email: false,
+        vcard: false,
       },
     });
 
@@ -323,6 +338,12 @@ describe("ProfilesService analytics hook", () => {
       allowWhatsapp: false,
       allowEmail: false,
       allowVcard: false,
+    });
+
+    assert.deepEqual(result.publicActions, {
+      phone: "+15551234567",
+      whatsappNumber: null,
+      email: null,
     });
   });
 
@@ -412,10 +433,9 @@ describe("ProfilesService analytics hook", () => {
               allowEmail: false,
               allowVcard: false,
             },
-            user: {
-              email: "alice@dotly.one",
-              phoneNumber: null,
-            },
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
           }),
         },
         qRAccessToken: {
@@ -455,10 +475,9 @@ describe("ProfilesService analytics hook", () => {
             verifiedOnly: false,
             sharingMode: "CONTROLLED",
             smartCardConfig: null,
-            user: {
-              email: "alice@dotly.one",
-              phoneNumber: "+15551234567",
-            },
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
           }),
         },
       } as any,

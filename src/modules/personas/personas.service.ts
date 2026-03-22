@@ -26,6 +26,8 @@ import {
   toPrivatePersonaView,
 } from "./persona.presenter";
 import {
+  isPhoneLikeValue,
+  type PersonaPublicActionFields,
   type PersonaSmartCardConfig,
   toPrismaSharingMode,
   validateSmartCardConfig,
@@ -195,6 +197,9 @@ export class PersonasService {
         accessMode: true,
         sharingMode: true,
         smartCardConfig: true,
+        publicPhone: true,
+        publicWhatsappNumber: true,
+        publicEmail: true,
       },
     });
 
@@ -214,6 +219,11 @@ export class PersonasService {
       updatePersonaSharingDto.smartCardConfig !== undefined
         ? updatePersonaSharingDto.smartCardConfig
         : existingPersona.smartCardConfig;
+
+    const publicActionFields = this.resolvePublicActionFields(
+      existingPersona,
+      updatePersonaSharingDto,
+    );
 
     const smartCardConfig =
       nextSharingMode === PrismaPersonaSharingMode.CONTROLLED
@@ -237,7 +247,7 @@ export class PersonasService {
               sharingMode: nextSharingMode,
               accessMode: existingPersona.accessMode,
               hasActiveProfileQr,
-            });
+            }, publicActionFields);
           })();
 
     const persona = await this.prismaService.persona.update({
@@ -250,6 +260,9 @@ export class PersonasService {
           smartCardConfig === null
             ? Prisma.DbNull
             : (smartCardConfig as unknown as Prisma.InputJsonValue),
+        publicPhone: publicActionFields.publicPhone,
+        publicWhatsappNumber: publicActionFields.publicWhatsappNumber,
+        publicEmail: publicActionFields.publicEmail,
       },
       select: privatePersonaSelect,
     });
@@ -306,5 +319,101 @@ export class PersonasService {
     });
 
     return activeProfileQr !== null;
+  }
+
+  private resolvePublicActionFields(
+    existingPersona: {
+      publicPhone: string | null;
+      publicWhatsappNumber: string | null;
+      publicEmail: string | null;
+    },
+    updatePersonaSharingDto: UpdatePersonaSharingDto,
+  ): PersonaPublicActionFields {
+    return {
+      publicPhone:
+        updatePersonaSharingDto.publicPhone !== undefined
+          ? this.normalizePublicPhoneField(
+              updatePersonaSharingDto.publicPhone,
+              "publicPhone",
+            )
+          : this.normalizePublicPhoneField(
+              existingPersona.publicPhone,
+              "publicPhone",
+            ),
+      publicWhatsappNumber:
+        updatePersonaSharingDto.publicWhatsappNumber !== undefined
+          ? this.normalizePublicPhoneField(
+              updatePersonaSharingDto.publicWhatsappNumber,
+              "publicWhatsappNumber",
+            )
+          : this.normalizePublicPhoneField(
+              existingPersona.publicWhatsappNumber,
+              "publicWhatsappNumber",
+            ),
+      publicEmail:
+        updatePersonaSharingDto.publicEmail !== undefined
+          ? this.normalizePublicEmailField(
+              updatePersonaSharingDto.publicEmail,
+              "publicEmail",
+            )
+          : this.normalizePublicEmailField(
+              existingPersona.publicEmail,
+              "publicEmail",
+            ),
+    };
+  }
+
+  private normalizePublicPhoneField(
+    value: unknown,
+    fieldName: "publicPhone" | "publicWhatsappNumber",
+  ): string | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (typeof value !== "string") {
+      throw new BadRequestException(`${fieldName} must be a string`);
+    }
+
+    const normalizedValue = value.trim();
+
+    if (normalizedValue.length === 0) {
+      return null;
+    }
+
+    if (!isPhoneLikeValue(normalizedValue)) {
+      throw new BadRequestException(
+        `${fieldName} must be a valid phone-like string`,
+      );
+    }
+
+    return normalizedValue;
+  }
+
+  private normalizePublicEmailField(
+    value: unknown,
+    fieldName: "publicEmail",
+  ): string | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (typeof value !== "string") {
+      throw new BadRequestException(`${fieldName} must be a string`);
+    }
+
+    const normalizedValue = value.trim().toLowerCase();
+
+    if (normalizedValue.length === 0) {
+      return null;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(normalizedValue)) {
+      throw new BadRequestException(`${fieldName} must be a valid email`);
+    }
+
+    return normalizedValue;
   }
 }

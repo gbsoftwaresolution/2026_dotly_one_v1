@@ -16,6 +16,8 @@ import { Card } from "@/components/shared/card";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { formatPrimaryAction } from "@/lib/persona/labels";
 import {
+  getPublicSmartCardActionValues,
+  getPublicSmartCardDirectActions,
   hasPublicSmartCardDirectActions,
   resolvePublicSmartCardPrimaryCta,
 } from "@/lib/persona/smart-card";
@@ -52,6 +54,7 @@ function avatarHue(seed: string): number {
 }
 
 function buildVcard(profile: PublicProfile): string {
+  const publicActionValues = getPublicSmartCardActionValues(profile);
   const lines = [
     "BEGIN:VCARD",
     "VERSION:3.0",
@@ -63,12 +66,12 @@ function buildVcard(profile: PublicProfile): string {
     `URL:${profile.publicUrl}`,
   ];
 
-  if (profile.channels.email) {
-    lines.push(`EMAIL;TYPE=INTERNET:${profile.channels.email}`);
+  if (publicActionValues.email) {
+    lines.push(`EMAIL;TYPE=INTERNET:${publicActionValues.email}`);
   }
 
-  if (profile.channels.phoneNumber) {
-    lines.push(`TEL;TYPE=CELL:${profile.channels.phoneNumber}`);
+  if (publicActionValues.phone) {
+    lines.push(`TEL;TYPE=CELL:${publicActionValues.phone}`);
   }
 
   lines.push("END:VCARD");
@@ -156,36 +159,38 @@ export function PublicSmartCard({
 
   const hue = avatarHue(profile.username);
   const hasDirectActions = hasPublicSmartCardDirectActions(profile);
+  const publicActionValues = getPublicSmartCardActionValues(profile);
+  const directActionKeys = getPublicSmartCardDirectActions(config, profile);
   const smartActions: SmartAction[] = [];
 
-  if (config.allowCall && profile.channels.phoneNumber) {
+  if (directActionKeys.includes("call") && publicActionValues.phone) {
     smartActions.push({
       key: "call",
       label: "Call",
-      href: toDialHref(profile.channels.phoneNumber),
+      href: toDialHref(publicActionValues.phone),
       icon: Phone,
     });
   }
 
-  if (config.allowWhatsapp && profile.channels.phoneNumber) {
+  if (directActionKeys.includes("whatsapp") && publicActionValues.whatsappNumber) {
     smartActions.push({
       key: "whatsapp",
       label: "WhatsApp",
-      href: toWhatsappHref(profile.channels.phoneNumber),
+      href: toWhatsappHref(publicActionValues.whatsappNumber),
       icon: MessageCircle,
     });
   }
 
-  if (config.allowEmail && profile.channels.email) {
+  if (directActionKeys.includes("email") && publicActionValues.email) {
     smartActions.push({
       key: "email",
       label: "Email",
-      href: `mailto:${profile.channels.email}`,
+      href: `mailto:${publicActionValues.email}`,
       icon: AtSign,
     });
   }
 
-  if (config.allowVcard) {
+  if (directActionKeys.includes("vcard")) {
     smartActions.push({
       key: "vcard",
       label: "Save Contact",

@@ -2,6 +2,7 @@ import type {
   PersonaSmartCardActionState,
   PersonaSmartCardConfig,
   PersonaSmartCardPrimaryAction,
+  PublicProfileSmartCard,
   PublicProfile,
 } from "@/types/persona";
 
@@ -24,8 +25,24 @@ interface ResolvePublicSmartCardPrimaryActionOptions {
 
 type PublicSmartCardActionProfile = Pick<
   PublicProfile,
-  "channels" | "smartCard"
->;
+  "channels" | "publicActions"
+> & {
+  smartCard: PublicProfileSmartCard | PersonaSmartCardConfig | null;
+};
+
+function getPublicCallNumber(profile: PublicSmartCardActionProfile): string | null {
+  return profile.publicActions?.phone ?? profile.channels.phoneNumber;
+}
+
+function getPublicWhatsappNumber(
+  profile: PublicSmartCardActionProfile,
+): string | null {
+  return profile.publicActions?.whatsappNumber ?? profile.channels.phoneNumber;
+}
+
+function getPublicEmail(profile: PublicSmartCardActionProfile): string | null {
+  return profile.publicActions?.email ?? profile.channels.email;
+}
 
 export interface ResolvedPublicSmartCardPrimaryCta {
   requestedAction: PersonaSmartCardPrimaryAction;
@@ -80,28 +97,32 @@ function getPrimaryActionAvailability(
 }
 
 export function getPublicSmartCardDirectActions(
-  config: PersonaSmartCardConfig | null | undefined,
-  profile: Pick<PublicSmartCardActionProfile, "channels">,
+  config: PersonaSmartCardConfig | PublicProfileSmartCard | null | undefined,
+  profile: PublicSmartCardActionProfile,
 ): Array<"call" | "whatsapp" | "email" | "vcard"> {
   if (!config) {
     return [];
   }
 
   const actions: Array<"call" | "whatsapp" | "email" | "vcard"> = [];
+  const resolvedActions = "actions" in config ? config.actions : null;
 
-  if (config.allowCall && profile.channels.phoneNumber) {
+  if ((resolvedActions?.call ?? false) || (config.allowCall && getPublicCallNumber(profile))) {
     actions.push("call");
   }
 
-  if (config.allowWhatsapp && profile.channels.phoneNumber) {
+  if (
+    (resolvedActions?.whatsapp ?? false) ||
+    (config.allowWhatsapp && getPublicWhatsappNumber(profile))
+  ) {
     actions.push("whatsapp");
   }
 
-  if (config.allowEmail && profile.channels.email) {
+  if ((resolvedActions?.email ?? false) || (config.allowEmail && getPublicEmail(profile))) {
     actions.push("email");
   }
 
-  if (config.allowVcard) {
+  if ((resolvedActions?.vcard ?? false) || config.allowVcard) {
     actions.push("vcard");
   }
 
@@ -112,6 +133,14 @@ export function hasPublicSmartCardDirectActions(
   profile: PublicSmartCardActionProfile,
 ): boolean {
   return getPublicSmartCardDirectActions(profile.smartCard, profile).length > 0;
+}
+
+export function getPublicSmartCardActionValues(profile: PublicSmartCardActionProfile) {
+  return {
+    phone: getPublicCallNumber(profile),
+    whatsappNumber: getPublicWhatsappNumber(profile),
+    email: getPublicEmail(profile),
+  };
 }
 
 export function normalizeSmartCardPrimaryAction(

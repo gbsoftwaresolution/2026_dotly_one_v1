@@ -27,6 +27,11 @@ function createProfile(overrides: Partial<React.ComponentProps<typeof PublicSmar
       phoneNumber: null,
       email: null,
     },
+    publicActions: {
+      phone: null,
+      whatsappNumber: null,
+      email: null,
+    },
     links: [],
     smartCard: {
       primaryAction: "request_access" as const,
@@ -38,6 +43,12 @@ function createProfile(overrides: Partial<React.ComponentProps<typeof PublicSmar
         requestAccessEnabled: true,
         instantConnectEnabled: false,
         contactMeEnabled: false,
+      },
+      actions: {
+        call: false,
+        whatsapp: false,
+        email: false,
+        vcard: false,
       },
     },
     smartCardConfig: {
@@ -82,8 +93,9 @@ describe("PublicSmartCard", () => {
     render(
       React.createElement(PublicSmartCard, {
         profile: createProfile({
-          channels: {
-            phoneNumber: "+1 555 123 4567",
+          publicActions: {
+            phone: "+1 555 123 4567",
+            whatsappNumber: "+1 555 123 4567",
             email: "jane@dotly.one",
           },
           smartCard: {
@@ -96,6 +108,12 @@ describe("PublicSmartCard", () => {
               requestAccessEnabled: true,
               instantConnectEnabled: false,
               contactMeEnabled: true,
+            },
+            actions: {
+              call: true,
+              whatsapp: true,
+              email: true,
+              vcard: true,
             },
           },
           smartCardConfig: {
@@ -158,8 +176,9 @@ describe("PublicSmartCard", () => {
     render(
       React.createElement(PublicSmartCard, {
         profile: createProfile({
-          channels: {
-            phoneNumber: "+1 555 123 4567",
+          publicActions: {
+            phone: "+1 555 123 4567",
+            whatsappNumber: null,
             email: null,
           },
           smartCard: {
@@ -172,6 +191,12 @@ describe("PublicSmartCard", () => {
               requestAccessEnabled: true,
               instantConnectEnabled: false,
               contactMeEnabled: true,
+            },
+            actions: {
+              call: true,
+              whatsapp: false,
+              email: false,
+              vcard: false,
             },
           },
           smartCardConfig: {
@@ -220,6 +245,12 @@ describe("PublicSmartCard", () => {
               instantConnectEnabled: true,
               contactMeEnabled: false,
             },
+            actions: {
+              call: false,
+              whatsapp: false,
+              email: false,
+              vcard: false,
+            },
           },
           smartCardConfig: {
             primaryAction: "instant_connect",
@@ -250,8 +281,9 @@ describe("PublicSmartCard", () => {
     render(
       React.createElement(PublicSmartCard, {
         profile: createProfile({
-          channels: {
-            phoneNumber: null,
+          publicActions: {
+            phone: null,
+            whatsappNumber: null,
             email: "jane@dotly.one",
           },
           smartCard: {
@@ -264,6 +296,12 @@ describe("PublicSmartCard", () => {
               requestAccessEnabled: true,
               instantConnectEnabled: false,
               contactMeEnabled: true,
+            },
+            actions: {
+              call: false,
+              whatsapp: false,
+              email: false,
+              vcard: true,
             },
           },
           smartCardConfig: {
@@ -304,6 +342,12 @@ describe("PublicSmartCard", () => {
               instantConnectEnabled: true,
               contactMeEnabled: false,
             },
+            actions: {
+              call: false,
+              whatsapp: false,
+              email: false,
+              vcard: false,
+            },
           },
           smartCardConfig: {
             primaryAction: "instant_connect",
@@ -340,6 +384,12 @@ describe("PublicSmartCard", () => {
               instantConnectEnabled: false,
               contactMeEnabled: false,
             },
+            actions: {
+              call: false,
+              whatsapp: false,
+              email: false,
+              vcard: false,
+            },
           },
           smartCardConfig: {
             primaryAction: "contact_me",
@@ -375,6 +425,12 @@ describe("PublicSmartCard", () => {
               requestAccessEnabled: false,
               instantConnectEnabled: false,
               contactMeEnabled: false,
+            },
+            actions: {
+              call: false,
+              whatsapp: false,
+              email: false,
+              vcard: false,
             },
           },
           smartCardConfig: {
@@ -413,5 +469,46 @@ describe("PublicSmartCard", () => {
     expect(
       screen.getByText(/missing its public configuration/i),
     ).toBeInTheDocument();
+  });
+
+  it("uses safe public actions even when channels are redacted", () => {
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: createProfile({
+          channels: {
+            phoneNumber: null,
+            email: null,
+          },
+          publicActions: {
+            phone: null,
+            whatsappNumber: "+1 555 123 4567",
+            email: null,
+          },
+          smartCard: {
+            primaryAction: "contact_me",
+            allowCall: false,
+            allowWhatsapp: true,
+            allowEmail: false,
+            allowVcard: false,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
+            actions: {
+              call: false,
+              whatsapp: true,
+              email: false,
+              vcard: false,
+            },
+          },
+        }),
+      }),
+    );
+
+    expect(screen.getByRole("link", { name: /whatsapp/i })).toHaveAttribute(
+      "href",
+      "https://wa.me/15551234567",
+    );
   });
 });

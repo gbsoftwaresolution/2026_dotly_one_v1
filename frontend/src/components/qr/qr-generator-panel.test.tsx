@@ -41,6 +41,9 @@ const personaFixture = {
   verifiedOnly: false,
   sharingMode: "controlled" as const,
   smartCardConfig: null,
+  publicPhone: null,
+  publicWhatsappNumber: null,
+  publicEmail: null,
   createdAt: "2026-03-21T10:00:00.000Z",
   updatedAt: "2026-03-21T10:00:00.000Z",
 } as const;

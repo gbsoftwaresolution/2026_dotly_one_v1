@@ -15,6 +15,13 @@ export interface PersonaSmartCardActionState {
   contactMeEnabled: boolean;
 }
 
+export interface PersonaSmartCardActions {
+  call: boolean;
+  whatsapp: boolean;
+  email: boolean;
+  vcard: boolean;
+}
+
 export interface PersonaSmartCardConfig {
   primaryAction: PersonaSmartCardPrimaryAction;
   allowCall: boolean;
@@ -22,6 +29,17 @@ export interface PersonaSmartCardConfig {
   allowEmail: boolean;
   allowVcard: boolean;
   actionState?: PersonaSmartCardActionState | null;
+}
+
+export interface PublicProfilePublicActions {
+  phone: string | null;
+  whatsappNumber: string | null;
+  email: string | null;
+}
+
+export interface PublicProfileSmartCard extends PersonaSmartCardConfig {
+  actionState: PersonaSmartCardActionState;
+  actions: PersonaSmartCardActions;
 }
 
 export interface PublicProfileChannels {
@@ -49,6 +67,9 @@ export interface PersonaSummary {
   verifiedOnly: boolean;
   sharingMode: PersonaSharingMode;
   smartCardConfig: PersonaSmartCardConfig | null;
+  publicPhone: string | null;
+  publicWhatsappNumber: string | null;
+  publicEmail: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -76,6 +97,9 @@ export interface UpdatePersonaInput {
 export interface UpdatePersonaSharingInput {
   sharingMode?: PersonaSharingMode;
   smartCardConfig?: PersonaSmartCardConfig | null;
+  publicPhone?: string | null;
+  publicWhatsappNumber?: string | null;
+  publicEmail?: string | null;
 }
 
 export interface PublicProfile {
@@ -92,8 +116,9 @@ export interface PublicProfile {
   channels: PublicProfileChannels;
   links: ReadonlyArray<PublicProfileLink>;
   instantConnectUrl?: string | null;
-  smartCard: PersonaSmartCardConfig | null;
+  smartCard: PublicProfileSmartCard | null;
   smartCardConfig: PersonaSmartCardConfig | null;
+  publicActions: PublicProfilePublicActions;
 }
 
 export interface PublicProfileRequestTarget {

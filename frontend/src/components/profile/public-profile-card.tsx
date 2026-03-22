@@ -3,6 +3,7 @@ import {
   formatPrimaryAction,
   formatSharingMode,
 } from "@/lib/persona/labels";
+import { getPublicSmartCardDirectActions } from "@/lib/persona/smart-card";
 
 import { Card } from "@/components/shared/card";
 import type { PublicProfile } from "@/types/persona";
@@ -14,13 +15,19 @@ interface PublicProfileCardProps {
 export function PublicProfileCard({ profile }: PublicProfileCardProps) {
   const avatarHue = ((profile.username?.charCodeAt(0) ?? 72) * 137) % 360;
   const isSmartCard = profile.sharingMode === "smart_card";
-  const enabledSmartCardActions = profile.smartCardConfig
-    ? [
-        profile.smartCardConfig.allowCall ? "Call" : null,
-        profile.smartCardConfig.allowWhatsapp ? "WhatsApp" : null,
-        profile.smartCardConfig.allowEmail ? "Email" : null,
-        profile.smartCardConfig.allowVcard ? "Save Contact" : null,
-      ].filter((value): value is string => value !== null)
+  const enabledSmartCardActions = profile.smartCard
+    ? getPublicSmartCardDirectActions(profile.smartCard, profile).map((action) => {
+        switch (action) {
+          case "call":
+            return "Call";
+          case "whatsapp":
+            return "WhatsApp";
+          case "email":
+            return "Email";
+          case "vcard":
+            return "Save Contact";
+        }
+      })
     : [];
 
   return (

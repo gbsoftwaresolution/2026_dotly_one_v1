@@ -45,6 +45,9 @@ describe("PersonasService sharing mode", () => {
           accessMode: "REQUEST",
           sharingMode: "CONTROLLED",
           smartCardConfig: null,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
         }),
         update: async (args: any) => ({
           id: "persona-1",
@@ -60,6 +63,9 @@ describe("PersonasService sharing mode", () => {
           verifiedOnly: false,
           sharingMode: args.data.sharingMode,
           smartCardConfig: args.data.smartCardConfig,
+          publicPhone: args.data.publicPhone,
+          publicWhatsappNumber: args.data.publicWhatsappNumber,
+          publicEmail: args.data.publicEmail,
           createdAt: new Date("2026-03-22T10:00:00.000Z"),
           updatedAt: new Date("2026-03-22T10:05:00.000Z"),
         }),
@@ -71,6 +77,7 @@ describe("PersonasService sharing mode", () => {
 
     const result = await service.updateSharingMode("user-1", "persona-1", {
       sharingMode: PersonaSharingMode.SmartCard,
+      publicWhatsappNumber: " +1 555 123 4567 ",
       smartCardConfig: {
         primaryAction: PersonaSmartCardPrimaryAction.InstantConnect,
         allowCall: false,
@@ -88,6 +95,7 @@ describe("PersonasService sharing mode", () => {
       allowEmail: false,
       allowVcard: false,
     });
+    assert.equal(result.publicWhatsappNumber, "+1 555 123 4567");
   });
 
   it("returns 404 when the persona does not exist", async () => {
@@ -113,6 +121,9 @@ describe("PersonasService sharing mode", () => {
           accessMode: "REQUEST",
           sharingMode: "CONTROLLED",
           smartCardConfig: null,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
         }),
       },
     } as any);
@@ -133,6 +144,9 @@ describe("PersonasService sharing mode", () => {
           accessMode: "REQUEST",
           sharingMode: "CONTROLLED",
           smartCardConfig: null,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
         }),
       },
     } as any);
@@ -153,6 +167,9 @@ describe("PersonasService sharing mode", () => {
           accessMode: "REQUEST",
           sharingMode: "CONTROLLED",
           smartCardConfig: null,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
         }),
       },
       qRAccessToken: {
@@ -197,6 +214,9 @@ describe("PersonasService sharing mode", () => {
             allowEmail: false,
             allowVcard: false,
           },
+          publicPhone: null,
+          publicWhatsappNumber: "+15550001111",
+          publicEmail: null,
         }),
         update: async (args: any) => ({
           id: "persona-1",
@@ -212,6 +232,9 @@ describe("PersonasService sharing mode", () => {
           verifiedOnly: false,
           sharingMode: args.data.sharingMode,
           smartCardConfig: args.data.smartCardConfig,
+          publicPhone: args.data.publicPhone,
+          publicWhatsappNumber: args.data.publicWhatsappNumber,
+          publicEmail: args.data.publicEmail,
           createdAt: new Date("2026-03-22T10:00:00.000Z"),
           updatedAt: new Date("2026-03-22T10:05:00.000Z"),
         }),
@@ -219,6 +242,8 @@ describe("PersonasService sharing mode", () => {
     } as any);
 
     const result = await service.updateSharingMode("user-1", "persona-1", {
+      publicPhone: "+1 (555) 222-3333",
+      publicEmail: " ALICE@EXAMPLE.COM ",
       smartCardConfig: {
         primaryAction: PersonaSmartCardPrimaryAction.RequestAccess,
         allowCall: true,
@@ -236,6 +261,8 @@ describe("PersonasService sharing mode", () => {
       allowEmail: true,
       allowVcard: false,
     });
+    assert.equal(result.publicPhone, "+1 (555) 222-3333");
+    assert.equal(result.publicEmail, "alice@example.com");
   });
 
   it("sanitizes stored smart card config before returning it", async () => {
@@ -250,6 +277,9 @@ describe("PersonasService sharing mode", () => {
             allowCall: true,
             internalFlag: true,
           },
+          publicPhone: "+15551234567",
+          publicWhatsappNumber: null,
+          publicEmail: null,
         }),
         update: async (args: any) => ({
           id: "persona-1",
@@ -265,6 +295,9 @@ describe("PersonasService sharing mode", () => {
           verifiedOnly: false,
           sharingMode: args.data.sharingMode,
           smartCardConfig: args.data.smartCardConfig,
+          publicPhone: args.data.publicPhone,
+          publicWhatsappNumber: args.data.publicWhatsappNumber,
+          publicEmail: args.data.publicEmail,
           createdAt: new Date("2026-03-22T10:00:00.000Z"),
           updatedAt: new Date("2026-03-22T10:05:00.000Z"),
         }),
@@ -272,6 +305,7 @@ describe("PersonasService sharing mode", () => {
     } as any);
 
     const result = await service.updateSharingMode("user-1", "persona-1", {
+      publicPhone: "+15551234567",
       smartCardConfig: {
         primaryAction: PersonaSmartCardPrimaryAction.ContactMe,
         allowCall: true,
@@ -298,6 +332,9 @@ describe("PersonasService sharing mode", () => {
           accessMode: "PRIVATE",
           sharingMode: "CONTROLLED",
           smartCardConfig: null,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
         }),
       },
     } as any);
@@ -333,6 +370,9 @@ describe("PersonasService sharing mode", () => {
           accessMode: "REQUEST",
           sharingMode: "CONTROLLED",
           smartCardConfig: null,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
         }),
       },
     } as any);
@@ -353,6 +393,81 @@ describe("PersonasService sharing mode", () => {
         assert.equal(
           error.message,
           "smartCardConfig.primaryAction contact_me requires at least one direct action to be enabled",
+        );
+
+        return true;
+      },
+    );
+  });
+
+  it("rejects call when publicPhone is missing", async () => {
+    const service = new PersonasService({
+      persona: {
+        findUnique: async () => ({
+          userId: "user-1",
+          accessMode: "REQUEST",
+          sharingMode: "CONTROLLED",
+          smartCardConfig: null,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
+        }),
+      },
+    } as any);
+
+    await assert.rejects(
+      service.updateSharingMode("user-1", "persona-1", {
+        sharingMode: PersonaSharingMode.SmartCard,
+        smartCardConfig: {
+          primaryAction: PersonaSmartCardPrimaryAction.RequestAccess,
+          allowCall: true,
+          allowWhatsapp: false,
+          allowEmail: false,
+          allowVcard: false,
+        },
+      }),
+      (error: unknown) => {
+        assert(error instanceof BadRequestException);
+        assert.equal(
+          error.message,
+          "smartCardConfig.allowCall requires a valid publicPhone value",
+        );
+
+        return true;
+      },
+    );
+  });
+
+  it("rejects contact_me when a required public value is removed", async () => {
+    const service = new PersonasService({
+      persona: {
+        findUnique: async () => ({
+          userId: "user-1",
+          accessMode: "REQUEST",
+          sharingMode: "SMART_CARD",
+          smartCardConfig: {
+            primaryAction: "contact_me",
+            allowCall: true,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: false,
+          },
+          publicPhone: "+15551234567",
+          publicWhatsappNumber: null,
+          publicEmail: null,
+        }),
+      },
+    } as any);
+
+    await assert.rejects(
+      service.updateSharingMode("user-1", "persona-1", {
+        publicPhone: "   ",
+      }),
+      (error: unknown) => {
+        assert(error instanceof BadRequestException);
+        assert.equal(
+          error.message,
+          "smartCardConfig.allowCall requires a valid publicPhone value",
         );
 
         return true;

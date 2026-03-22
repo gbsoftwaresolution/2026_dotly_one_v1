@@ -88,6 +88,11 @@ export class ProfilesService {
           hasActiveProfileQr: activeProfileQrCode !== null,
         },
         safeSmartCardConfig,
+        {
+          publicPhone: persona.publicPhone,
+          publicWhatsappNumber: persona.publicWhatsappNumber,
+          publicEmail: persona.publicEmail,
+        },
       ),
     });
   }
