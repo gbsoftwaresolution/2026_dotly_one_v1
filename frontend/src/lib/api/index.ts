@@ -3,6 +3,7 @@ export { authApi } from "./auth-api";
 export { blocksApi } from "./blocks-api";
 export { contactsApi } from "./contacts-api";
 export { eventApi } from "./event-api";
+export { followUpsApi } from "./follow-ups-api";
 export { personaApi } from "./persona-api";
 export { publicApi } from "./public-api";
 export { qrApi } from "./qr-api";

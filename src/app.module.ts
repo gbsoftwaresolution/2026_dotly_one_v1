@@ -19,6 +19,7 @@ import { ContactMemoryModule } from "./modules/contact-memory/contact-memory.mod
 import { ContactRequestsModule } from "./modules/contact-requests/contact-requests.module";
 import { ContactsModule } from "./modules/contacts/contacts.module";
 import { EventsModule } from "./modules/events/events.module";
+import { FollowUpsModule } from "./modules/follow-ups/follow-ups.module";
 import { HealthModule } from "./modules/health/health.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { PersonasModule } from "./modules/personas/personas.module";
@@ -51,6 +52,7 @@ import { UsersModule } from "./modules/users/users.module";
     ContactRequestsModule,
     ContactsModule,
     RelationshipsModule,
+    FollowUpsModule,
     ContactMemoryModule,
     EventsModule,
     NotificationsModule,

@@ -19,6 +19,7 @@ export const routes = {
     requests: "/app/requests",
     qr: "/app/qr",
     contacts: "/app/contacts",
+    followUps: "/app/follow-ups",
     contactDetail: (relationshipId: string) =>
       `/app/contacts/${relationshipId}`,
     events: "/app/events",

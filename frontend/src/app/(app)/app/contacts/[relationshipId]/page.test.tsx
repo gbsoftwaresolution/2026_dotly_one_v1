@@ -48,6 +48,11 @@ vi.mock("@/components/contacts/note-editor", () => ({
     React.createElement("div", { "data-testid": "note-editor" }, initialNote ?? "empty-note"),
 }));
 
+vi.mock("@/components/follow-ups/contact-follow-up-form", () => ({
+  ContactFollowUpForm: ({ contactName }: { contactName: string }) =>
+    React.createElement("div", { "data-testid": "follow-up-form" }, `Remind ${contactName}`),
+}));
+
 vi.mock("@/components/contacts/relationship-actions", () => ({
   RelationshipActions: ({ displayName }: { displayName: string }) =>
     React.createElement("div", { "data-testid": "relationship-actions" }, displayName),
@@ -122,6 +127,10 @@ describe("ContactDetailPage", () => {
       "/app/contacts/relationship-id",
     );
     expect(screen.getByText("Relationship")).toBeInTheDocument();
+    expect(screen.getByText("Follow up")).toBeInTheDocument();
+    expect(screen.getByTestId("follow-up-form")).toHaveTextContent(
+      "Remind Alex Parker",
+    );
     expect(screen.getByText("Recently active")).toBeInTheDocument();
     expect(screen.getByText("1 day ago")).toBeInTheDocument();
     expect(screen.getByText("5")).toBeInTheDocument();

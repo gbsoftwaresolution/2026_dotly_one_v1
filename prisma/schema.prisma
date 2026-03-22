@@ -68,6 +68,12 @@ enum ContactRelationshipState {
   EXPIRED        @map("expired")
 }
 
+enum FollowUpStatus {
+  PENDING   @map("pending")
+  COMPLETED @map("completed")
+  CANCELLED @map("cancelled")
+}
+
 enum NotificationType {
   REQUEST_RECEIVED @map("request_received")
   REQUEST_APPROVED @map("request_approved")
@@ -113,6 +119,7 @@ model User {
   incomingContactRequests ContactRequest[]      @relation("ContactRequestToUser")
   ownedRelationships      ContactRelationship[] @relation("ContactRelationshipOwnerUser")
   targetRelationships     ContactRelationship[] @relation("ContactRelationshipTargetUser")
+  followUps               FollowUp[]
   initiatedBlocks         Block[]               @relation("BlockerUser")
   receivedBlocks          Block[]               @relation("BlockedUser")
   notifications           Notification[]
@@ -330,10 +337,29 @@ model ContactRelationship {
   ownerPersona    Persona                  @relation("ContactRelationshipOwnerPersona", fields: [ownerPersonaId], references: [id], onDelete: Cascade)
   targetPersona   Persona                  @relation("ContactRelationshipTargetPersona", fields: [targetPersonaId], references: [id], onDelete: Cascade)
   memories        ContactMemory[]
+  followUps       FollowUp[]
 
   @@unique([ownerUserId, targetUserId, ownerPersonaId, targetPersonaId])
   @@index([ownerUserId, state, accessEndAt, createdAt])
   @@index([targetUserId, createdAt])
+}
+
+model FollowUp {
+  id             String         @id @default(uuid()) @db.Uuid
+  ownerUserId    String         @db.Uuid
+  relationshipId String         @db.Uuid
+  remindAt       DateTime
+  status         FollowUpStatus @default(PENDING)
+  note           String?        @db.VarChar(1000)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  completedAt    DateTime?
+  ownerUser      User           @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  relationship   ContactRelationship @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
+
+  @@index([ownerUserId, status, remindAt])
+  @@index([relationshipId, remindAt])
+  @@index([ownerUserId, updatedAt])
 }
 
 model ContactMemory {

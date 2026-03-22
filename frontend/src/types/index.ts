@@ -21,6 +21,15 @@ export type {
   UpdateRelationshipStateResult,
 } from "./contact";
 export type {
+  CreateFollowUpInput,
+  FollowUp,
+  FollowUpListQuery,
+  FollowUpRelationship,
+  FollowUpStatus,
+  FollowUpTargetPersona,
+  UpdateFollowUpInput,
+} from "./follow-up";
+export type {
   MarkAllReadResult,
   Notification,
   NotificationListResult,

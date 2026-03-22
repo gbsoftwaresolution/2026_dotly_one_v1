@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { ContactFollowUpForm } from "@/components/follow-ups/contact-follow-up-form";
 import { NoteEditor } from "@/components/contacts/note-editor";
 import { RelationshipActions } from "@/components/contacts/relationship-actions";
 import { Card } from "@/components/shared/card";
@@ -283,6 +284,31 @@ export default async function ContactDetailPage({
               </>
             ) : null}
           </div>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-sans text-lg font-semibold text-foreground">
+              Follow up
+            </h2>
+            <p className="font-sans text-sm text-muted">
+              Set a simple reminder to reconnect without turning this into a task list.
+            </p>
+          </div>
+
+          <ContactFollowUpForm
+            relationshipId={relationshipId}
+            contactName={targetPersona.fullName}
+            disabled={isExpired}
+          />
+
+          {isExpired ? (
+            <p className="font-sans text-xs text-muted">
+              Reminders are unavailable because this relationship is no longer active.
+            </p>
+          ) : null}
         </div>
       </Card>
 
