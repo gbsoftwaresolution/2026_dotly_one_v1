@@ -5,8 +5,8 @@ import { useState } from "react";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { authApi } from "@/lib/api";
-import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
+import { classifyAuthError } from "@/lib/utils/auth-errors";
 
 type FeedbackTone = "success" | "warning" | "error";
 
@@ -30,21 +30,20 @@ export default function ForgotPasswordPage() {
         "If that address belongs to a Dotly account, a reset link is on the way. Check your inbox and spam folder.",
       );
     } catch (submissionError) {
-      if (
-        submissionError instanceof ApiError &&
-        (submissionError.status === 429 || /wait|too many/i.test(submissionError.message))
-      ) {
+      const classifiedError = classifyAuthError(submissionError);
+
+      if (classifiedError.kind === "throttled") {
         setErrorTone("warning");
         setError(
           "Too many reset requests for this address right now. Wait a moment and use the latest email from Dotly if one already arrived.",
         );
       } else {
         setErrorTone("error");
-      setError(
-        submissionError instanceof ApiError
-          ? submissionError.message
-          : "Unable to start password recovery right now.",
-      );
+        setError(
+          classifiedError.kind !== "unknown"
+            ? classifiedError.message
+            : "Unable to start password recovery right now.",
+        );
       }
     } finally {
       setIsSubmitting(false);

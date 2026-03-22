@@ -103,6 +103,16 @@ export class CacheService implements OnModuleDestroy {
     return result === "OK";
   }
 
+  async get(key: string): Promise<string | null> {
+    const client = await this.ensureConnection();
+
+    if (!client) {
+      return null;
+    }
+
+    return client.get(key);
+  }
+
   async increment(key: string, ttlSeconds: number): Promise<number | null> {
     const client = await this.ensureConnection();
 

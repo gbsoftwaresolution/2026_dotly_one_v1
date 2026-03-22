@@ -7,9 +7,17 @@ import {
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import {
+  SecurityAuditService,
+  noopSecurityAuditService,
+} from "../../infrastructure/logging/security-audit.service";
+import {
   AnalyticsService,
   noopAnalyticsService,
 } from "../analytics/analytics.service";
+import {
+  AuthMetricsService,
+  noopAuthMetricsService,
+} from "./auth-metrics.service";
 
 export type TrustFactor = "email_verified" | "mobile_otp_verified";
 
@@ -96,6 +104,11 @@ export class VerificationPolicyService {
     private readonly prismaService: PrismaService,
     @Optional()
     private readonly analyticsService: AnalyticsService = noopAnalyticsService as AnalyticsService,
+    @Optional()
+    private readonly securityAuditService: Pick<SecurityAuditService, "log"> =
+      noopSecurityAuditService,
+    @Optional()
+    private readonly authMetricsService: AuthMetricsService = noopAuthMetricsService,
   ) {}
 
   async assertUserMeetsRequirement(
@@ -106,11 +119,25 @@ export class VerificationPolicyService {
     const evaluation = this.evaluateRequirement(requirement, trustState);
 
     if (!evaluation.satisfied) {
+      this.authMetricsService.recordTrustSensitiveActionBlocked(requirement);
+
       await this.analyticsService.trackVerificationBlockedAction({
         actorUserId: userId,
         requirement,
         allowedFactors: evaluation.allowedFactors,
         missingFactors: evaluation.missingFactors,
+      });
+
+      this.securityAuditService.log({
+        action: "auth.verification_requirement.enforcement",
+        outcome: "blocked",
+        actorUserId: userId,
+        reason: requirement,
+        policySource: "verification_policy",
+        metadata: {
+          allowedFactors: evaluation.allowedFactors,
+          missingFactors: evaluation.missingFactors,
+        },
       });
 
       throw new ForbiddenException(evaluation.message);

@@ -11,17 +11,42 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { Prisma } from "@prisma/client";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 import { createHash, randomBytes, randomInt } from "node:crypto";
 
 import { MailService } from "../../infrastructure/mail/mail.service";
 import { CacheService } from "../../infrastructure/cache/cache.service";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { AppLoggerService } from "../../infrastructure/logging/logging.service";
+import {
+  SecurityAuditOutcome,
+  SecurityAuditService,
+  noopSecurityAuditService,
+} from "../../infrastructure/logging/security-audit.service";
 import { SmsService } from "../../infrastructure/sms/sms.service";
 import { AnalyticsService } from "../analytics/analytics.service";
+import {
+  AuthAbuseProtectionService,
+  AuthActionContext,
+  AuthThrottleDecision,
+} from "./auth-abuse-protection.service";
+import {
+  AuthMetricsService,
+  noopAuthMetricsService,
+} from "./auth-metrics.service";
 
-import { DeviceSessionService } from "./device-session.service";
+import {
+  AUTH_ERROR_MESSAGES,
+  authBadRequest,
+  authConflict,
+  authNotFound,
+  authTooManyRequests,
+  authUnauthorized,
+} from "./auth-error-policy";
+import {
+  DeviceSessionService,
+  type SessionRevokeResult,
+} from "./device-session.service";
 import { PasswordPolicyService } from "./password-policy.service";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
@@ -38,13 +63,11 @@ const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 const EMAIL_VERIFICATION_RESEND_COOLDOWN_MS = 60 * 1000;
 const EMAIL_VERIFICATION_RESEND_WINDOW_MS = 60 * 60 * 1000;
 const EMAIL_VERIFICATION_RESEND_LIMIT = 5;
-const INVALID_VERIFICATION_MESSAGE = "Verification link is invalid or expired";
 
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
 const PASSWORD_RESET_COOLDOWN_MS = 60 * 1000;
 const PASSWORD_RESET_WINDOW_MS = 60 * 60 * 1000;
 const PASSWORD_RESET_WINDOW_LIMIT = 5;
-const INVALID_RESET_MESSAGE = "Reset link is invalid or expired";
 const PASSWORD_RESET_GENERIC_RESPONSE = {
   accepted: true,
   resetEmailSent: true,
@@ -58,10 +81,8 @@ const OTP_MAX_ATTEMPTS = 5;
 const OTP_ATTEMPT_COOLDOWN_MS = 5 * 1000;
 const MOBILE_OTP_ENROLLMENT_PURPOSE = "ENROLLMENT" as const;
 
-type SessionContext = {
-  userAgent?: string | null;
-  ipAddress?: string | null;
-};
+type SessionContext = AuthActionContext;
+type AuditContext = AuthActionContext;
 
 @Injectable()
 export class AuthService {
@@ -101,18 +122,60 @@ export class AuthService {
     private readonly logger: AppLoggerService = {
       logWithMeta: () => undefined,
     } as unknown as AppLoggerService,
+    @Optional()
+    private readonly securityAuditService: Pick<SecurityAuditService, "log"> =
+      noopSecurityAuditService,
+    @Optional()
+    private readonly authMetricsService: AuthMetricsService = noopAuthMetricsService,
+    @Optional()
+    private readonly authAbuseProtectionService: AuthAbuseProtectionService =
+      {
+        getLoginThrottle: async () => null,
+        recordLoginFailure: async () => null,
+        consumeSignupAttempt: async () => null,
+        consumePasswordResetRequest: async () => null,
+        consumePasswordResetCompletion: async () => null,
+        consumeVerificationResend: async () => null,
+        consumeVerificationCompletion: async () => null,
+        consumeMobileOtpRequest: async () => null,
+        consumeMobileOtpVerification: async () => null,
+      } as unknown as AuthAbuseProtectionService,
   ) {}
 
   private get prisma(): any {
     return this.prismaService as any;
   }
 
-  async signup(signupDto: SignupDto) {
+  async signup(signupDto: SignupDto, auditContext?: AuditContext) {
     this.passwordPolicyService.validate(signupDto.password);
+
+    const normalizedEmail = this.normalizeEmailAddress(signupDto.email);
+    const signupThrottle = await this.authAbuseProtectionService.consumeSignupAttempt(
+      normalizedEmail,
+      auditContext,
+    );
+
+    if (signupThrottle) {
+      this.authMetricsService.recordSignupThrottle(
+        signupThrottle.reason as "email_rate_limited" | "ip_rate_limited",
+      );
+      this.throwThrottleException(
+        "auth.signup",
+        signupThrottle,
+        AUTH_ERROR_MESSAGES.signupRateLimit,
+        {
+          requestContext: auditContext,
+          reason: signupThrottle.reason,
+          metadata: {
+            emailHash: this.hashSecurityIdentifier(normalizedEmail),
+          },
+        },
+      );
+    }
 
     const existingUser = await this.prisma.user.findUnique({
       where: {
-        email: signupDto.email,
+        email: normalizedEmail,
       },
       select: {
         id: true,
@@ -120,7 +183,15 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException("Email already in use");
+      this.authMetricsService.recordSignupFailure("email_already_registered");
+      this.logAuthAuditEvent("auth.signup", "failure", {
+        requestId: auditContext?.requestId,
+        reason: "email_already_registered",
+        metadata: {
+          emailHash: this.hashSecurityIdentifier(normalizedEmail),
+        },
+      });
+      throw authConflict(AUTH_ERROR_MESSAGES.emailAlreadyRegistered);
     }
 
     const passwordHash = await bcrypt.hash(signupDto.password, 10);
@@ -128,7 +199,7 @@ export class AuthService {
     try {
       const user = await this.prisma.user.create({
         data: {
-          email: signupDto.email,
+          email: normalizedEmail,
           passwordHash,
           isVerified: false,
         },
@@ -147,98 +218,307 @@ export class AuthService {
         user.email,
       );
 
+      this.authMetricsService.recordSignupSuccess();
+
+      const mailDeliveryAvailable =
+        (this.mailService as any).isEmailVerificationConfigured?.() ??
+        this.mailService.isConfigured();
+
+      this.logAuthAuditEvent("auth.signup", "success", {
+        actorUserId: user.id,
+        requestId: auditContext?.requestId,
+        targetType: "user",
+        targetId: user.id,
+        metadata: {
+          verificationPending: true,
+          verificationEmailSent: verification.emailSent,
+          mailDeliveryAvailable,
+        },
+      });
+
+      this.logAuthAuditEvent("auth.email_verification.issue", "accepted", {
+        actorUserId: user.id,
+        requestId: auditContext?.requestId,
+        targetType: "user",
+        targetId: user.id,
+        reason: "signup",
+        metadata: {
+          emailSent: verification.emailSent,
+          expiresAt: verification.expiresAt.toISOString(),
+        },
+      });
+
       return {
         user,
         verificationPending: true,
         verificationEmailSent: verification.emailSent,
-        mailDeliveryAvailable:
-          (this.mailService as any).isEmailVerificationConfigured?.() ??
-          this.mailService.isConfigured(),
+        mailDeliveryAvailable,
       };
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === "P2002"
       ) {
-        throw new ConflictException("Email already in use");
+        this.logAuthAuditEvent("auth.signup", "failure", {
+          requestId: auditContext?.requestId,
+          reason: "email_already_registered",
+          metadata: {
+            emailHash: this.hashSecurityIdentifier(normalizedEmail),
+          },
+        });
+        this.authMetricsService.recordSignupFailure("email_already_registered");
+        throw authConflict(AUTH_ERROR_MESSAGES.emailAlreadyRegistered);
       }
+
+      this.authMetricsService.recordSignupFailure("system_error");
 
       throw error;
     }
   }
 
   async login(loginDto: LoginDto, context?: SessionContext) {
-    const normalizedEmail = this.normalizeEmailAddress(loginDto.email);
-    const user = await this.prisma.user.findUnique({
-      where: {
-        email: normalizedEmail,
-      },
-      select: {
-        id: true,
-        email: true,
-        passwordHash: true,
-        isVerified: true,
-      },
-    });
+    try {
+      const normalizedEmail = this.normalizeEmailAddress(loginDto.email);
+      const loginThrottle = await this.authAbuseProtectionService.getLoginThrottle(
+        normalizedEmail,
+        context,
+      );
 
-    if (!user) {
-      this.logSecurityEvent("warn", "Login rejected", {
-        outcome: "unknown_email",
-        emailHash: this.hashSecurityIdentifier(normalizedEmail),
+      if (loginThrottle) {
+        this.authMetricsService.recordLoginThrottle(
+          loginThrottle.reason as
+            | "account_lockout"
+            | "account_ip_lockout"
+            | "ip_lockout",
+        );
+        this.throwThrottleException(
+          "auth.login",
+          loginThrottle,
+          AUTH_ERROR_MESSAGES.loginTemporarilyLocked,
+          {
+            requestContext: context,
+            reason: loginThrottle.reason,
+            metadata: {
+              emailHash: this.hashSecurityIdentifier(normalizedEmail),
+            },
+          },
+        );
+      }
+
+      const user = await this.prisma.user.findUnique({
+        where: {
+          email: normalizedEmail,
+        },
+        select: {
+          id: true,
+          email: true,
+          passwordHash: true,
+          isVerified: true,
+        },
       });
-      throw new UnauthorizedException("Invalid credentials");
-    }
 
-    const isPasswordValid = await bcrypt.compare(
-      loginDto.password,
-      user.passwordHash,
-    );
+      if (!user) {
+        const escalatedProtection = await this.authAbuseProtectionService.recordLoginFailure(
+          normalizedEmail,
+          context,
+        );
+        this.authMetricsService.recordLoginFailure("unknown_email");
+        this.logAuthAuditEvent("auth.login", "failure", {
+          requestId: context?.requestId,
+          reason: "unknown_email",
+          metadata: {
+            emailHash: this.hashSecurityIdentifier(normalizedEmail),
+            ...(escalatedProtection
+              ? {
+                  escalatedProtectionReason: escalatedProtection.reason,
+                  challengeRecommended: escalatedProtection.challengeRecommended,
+                }
+              : {}),
+          },
+        });
+        throw authUnauthorized(AUTH_ERROR_MESSAGES.invalidCredentials);
+      }
 
-    if (!isPasswordValid) {
-      this.logSecurityEvent("warn", "Login rejected", {
-        outcome: "invalid_password",
+      const isPasswordValid = await bcrypt.compare(
+        loginDto.password,
+        user.passwordHash,
+      );
+
+      if (!isPasswordValid) {
+        const escalatedProtection = await this.authAbuseProtectionService.recordLoginFailure(
+          normalizedEmail,
+          context,
+        );
+        this.authMetricsService.recordLoginFailure("invalid_password");
+        this.logAuthAuditEvent("auth.login", "failure", {
+          actorUserId: user.id,
+          requestId: context?.requestId,
+          reason: "invalid_password",
+          metadata: escalatedProtection
+            ? {
+                escalatedProtectionReason: escalatedProtection.reason,
+                challengeRecommended: escalatedProtection.challengeRecommended,
+              }
+            : undefined,
+        });
+        throw authUnauthorized(AUTH_ERROR_MESSAGES.invalidCredentials);
+      }
+
+      const expiresAt = this.getSessionExpiryDate();
+      const session = await this.deviceSessionService.createSession(
+        user.id,
+        expiresAt,
+        context,
+      );
+
+      const accessToken = await this.jwtService.signAsync({
+        sub: user.id,
+        email: user.email,
+        sessionId: session.id,
+      });
+
+      this.authMetricsService.recordLoginSuccess();
+
+      this.logAuthAuditEvent("auth.login", "success", {
         actorUserId: user.id,
+        requestId: context?.requestId,
+        sessionId: session.id,
+        metadata: {
+          expiresAt: expiresAt.toISOString(),
+          hasUserAgent: Boolean(context?.userAgent),
+          hasIpAddress: Boolean(context?.ipAddress),
+        },
       });
-      throw new UnauthorizedException("Invalid credentials");
+
+      return {
+        accessToken,
+        sessionId: session.id,
+        expiresAt,
+      };
+    } catch (error) {
+      if (!(error instanceof HttpException)) {
+        this.authMetricsService.recordLoginFailure("system_error");
+      }
+
+      throw error;
     }
-
-    const expiresAt = this.getSessionExpiryDate();
-    const session = await this.deviceSessionService.createSession(
-      user.id,
-      expiresAt,
-      context,
-    );
-
-    const accessToken = await this.jwtService.signAsync({
-      sub: user.id,
-      email: user.email,
-      sessionId: session.id,
-    });
-
-    this.logSecurityEvent("log", "Login completed", {
-      actorUserId: user.id,
-      sessionId: session.id,
-      expiresAt: expiresAt.toISOString(),
-      hasUserAgent: Boolean(context?.userAgent),
-      hasIpAddress: Boolean(context?.ipAddress),
-    });
-
-    return {
-      accessToken,
-      sessionId: session.id,
-      expiresAt,
-    };
   }
 
-  async verifyEmail(verifyEmailDto: VerifyEmailDto) {
-    const tokenHash = this.hashVerificationToken(verifyEmailDto.token);
-    const now = new Date();
-    const token = await this.prisma.emailVerificationToken.findUnique({
-      where: {
-        tokenHash,
-      },
-      include: {
-        user: {
+  async verifyEmail(verifyEmailDto: VerifyEmailDto, auditContext?: AuditContext) {
+    try {
+      const verificationThrottle =
+        await this.authAbuseProtectionService.consumeVerificationCompletion(
+          auditContext,
+        );
+
+      if (verificationThrottle) {
+        this.authMetricsService.recordVerificationEmailCompletion(
+          "throttled",
+          "ip_rate_limited",
+        );
+        this.throwThrottleException(
+          "auth.email_verification.complete",
+          verificationThrottle,
+          AUTH_ERROR_MESSAGES.verificationAttemptRateLimit,
+          {
+            requestContext: auditContext,
+            reason: verificationThrottle.reason,
+          },
+        );
+      }
+
+      const tokenHash = this.hashVerificationToken(verifyEmailDto.token);
+      const now = new Date();
+      const token = await this.prisma.emailVerificationToken.findUnique({
+        where: {
+          tokenHash,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              isVerified: true,
+              phoneNumber: true,
+              pendingPhoneNumber: true,
+              phoneVerifiedAt: true,
+            },
+          },
+        },
+      });
+
+      if (!token) {
+        this.authMetricsService.recordVerificationEmailCompletion(
+          "failure",
+          "invalid_or_expired_token",
+        );
+        this.logAuthAuditEvent("auth.email_verification.complete", "failure", {
+          requestId: auditContext?.requestId,
+          reason: "invalid_or_expired_token",
+        });
+        throw authBadRequest(AUTH_ERROR_MESSAGES.invalidVerificationLink);
+      }
+
+      if (token.user.isVerified) {
+        if (!token.consumedAt) {
+          await this.prisma.emailVerificationToken.update({
+            where: {
+              id: token.id,
+            },
+            data: {
+              consumedAt: now,
+            },
+          });
+        }
+
+        this.authMetricsService.recordVerificationEmailCompletion(
+          "accepted",
+          "already_verified",
+        );
+
+        this.logAuthAuditEvent("auth.email_verification.complete", "accepted", {
+          actorUserId: token.user.id,
+          requestId: auditContext?.requestId,
+          targetType: "user",
+          targetId: token.user.id,
+          reason: "already_verified",
+          metadata: {
+            alreadyVerified: true,
+          },
+        });
+
+        return {
+          verified: true,
+          alreadyVerified: true,
+          user: token.user,
+        };
+      }
+
+      if (
+        token.consumedAt ||
+        token.supersededAt ||
+        token.expiresAt.getTime() <= now.getTime()
+      ) {
+        this.authMetricsService.recordVerificationEmailCompletion(
+          "failure",
+          "invalid_or_expired_token",
+        );
+        this.logAuthAuditEvent("auth.email_verification.complete", "failure", {
+          actorUserId: token.userId,
+          requestId: auditContext?.requestId,
+          reason: "invalid_or_expired_token",
+        });
+        throw authBadRequest(AUTH_ERROR_MESSAGES.invalidVerificationLink);
+      }
+
+      const user = await this.prismaService.$transaction(async (tx: any) => {
+        const verifiedUser = await tx.user.update({
+          where: {
+            id: token.userId,
+          },
+          data: {
+            isVerified: true,
+          },
           select: {
             id: true,
             email: true,
@@ -247,17 +527,9 @@ export class AuthService {
             pendingPhoneNumber: true,
             phoneVerifiedAt: true,
           },
-        },
-      },
-    });
+        });
 
-    if (!token) {
-      throw new BadRequestException(INVALID_VERIFICATION_MESSAGE);
-    }
-
-    if (token.user.isVerified) {
-      if (!token.consumedAt) {
-        await this.prisma.emailVerificationToken.update({
+        await tx.emailVerificationToken.update({
           where: {
             id: token.id,
           },
@@ -265,204 +537,288 @@ export class AuthService {
             consumedAt: now,
           },
         });
-      }
+
+        await tx.emailVerificationToken.updateMany({
+          where: {
+            userId: token.userId,
+            id: {
+              not: token.id,
+            },
+            consumedAt: null,
+            supersededAt: null,
+          },
+          data: {
+            supersededAt: now,
+          },
+        });
+
+        return verifiedUser;
+      });
+
+      await this.analyticsService.trackEmailVerified({
+        actorUserId: user.id,
+      });
+
+      this.authMetricsService.recordVerificationEmailCompletion(
+        "success",
+        "none",
+      );
+
+      this.logAuthAuditEvent("auth.email_verification.complete", "success", {
+        actorUserId: user.id,
+        requestId: auditContext?.requestId,
+        targetType: "user",
+        targetId: user.id,
+        metadata: {
+          alreadyVerified: false,
+        },
+      });
 
       return {
         verified: true,
-        alreadyVerified: true,
-        user: token.user,
+        alreadyVerified: false,
+        user,
       };
-    }
+    } catch (error) {
+      if (!(error instanceof HttpException)) {
+        this.authMetricsService.recordVerificationEmailCompletion(
+          "failure",
+          "system_error",
+        );
+      }
 
-    if (
-      token.consumedAt ||
-      token.supersededAt ||
-      token.expiresAt.getTime() <= now.getTime()
-    ) {
-      throw new BadRequestException(INVALID_VERIFICATION_MESSAGE);
+      throw error;
     }
+  }
 
-    const user = await this.prismaService.$transaction(async (tx: any) => {
-      const verifiedUser = await tx.user.update({
+  async resendVerificationEmail(
+    resendVerificationEmailDto: ResendVerificationEmailDto,
+    auditContext?: AuditContext,
+  ) {
+    try {
+      const normalizedEmail = this.normalizeEmailAddress(
+        resendVerificationEmailDto.email,
+      );
+      const resendThrottle = await this.authAbuseProtectionService.consumeVerificationResend(
+        normalizedEmail,
+        auditContext,
+      );
+
+      if (resendThrottle) {
+        this.authMetricsService.recordVerificationResend(
+          "throttled",
+          resendThrottle.reason as
+            | "email_rate_limited"
+            | "ip_rate_limited"
+            | "session_rate_limited",
+        );
+        this.throwThrottleException(
+          "auth.email_verification.resend",
+          resendThrottle,
+          AUTH_ERROR_MESSAGES.verificationEmailRateLimit,
+          {
+            requestContext: auditContext,
+            reason: resendThrottle.reason,
+            metadata: {
+              emailHash: this.hashSecurityIdentifier(normalizedEmail),
+            },
+          },
+        );
+      }
+
+      const user = await this.prisma.user.findUnique({
         where: {
-          id: token.userId,
-        },
-        data: {
-          isVerified: true,
+          email: normalizedEmail,
         },
         select: {
           id: true,
           email: true,
           isVerified: true,
-          phoneNumber: true,
-          pendingPhoneNumber: true,
-          phoneVerifiedAt: true,
         },
       });
 
-      await tx.emailVerificationToken.update({
-        where: {
-          id: token.id,
-        },
-        data: {
-          consumedAt: now,
-        },
-      });
-
-      await tx.emailVerificationToken.updateMany({
-        where: {
-          userId: token.userId,
-          id: {
-            not: token.id,
+      if (!user || user.isVerified) {
+        this.authMetricsService.recordVerificationResend(
+          "suppressed",
+          user ? "already_verified" : "unknown_email",
+        );
+        this.logAuthAuditEvent("auth.email_verification.resend", "suppressed", {
+          actorUserId: user?.id,
+          requestId: auditContext?.requestId,
+          reason: user ? "already_verified" : "unknown_email",
+          metadata: {
+            emailHash: this.hashSecurityIdentifier(normalizedEmail),
           },
-          consumedAt: null,
-          supersededAt: null,
-        },
-        data: {
-          supersededAt: now,
-        },
-      });
+        });
+        return {
+          accepted: true,
+          verificationPending: false,
+          verificationEmailSent: false,
+          mailDeliveryAvailable:
+            (this.mailService as any).isEmailVerificationConfigured?.() ??
+            this.mailService.isConfigured(),
+        };
+      }
 
-      return verifiedUser;
-    });
+      await this.assertCanResendVerificationEmail(user.id, auditContext);
 
-    await this.analyticsService.trackEmailVerified({
-      actorUserId: user.id,
-    });
+      const verification = await this.issueEmailVerificationToken(
+        user.id,
+        user.email,
+        "resend",
+      );
 
-    return {
-      verified: true,
-      alreadyVerified: false,
-      user,
-    };
-  }
+      this.authMetricsService.recordVerificationResend("issued", "none");
 
-  async resendVerificationEmail(
-    resendVerificationEmailDto: ResendVerificationEmailDto,
-  ) {
-    const normalizedEmail = this.normalizeEmailAddress(
-      resendVerificationEmailDto.email,
-    );
-    const user = await this.prisma.user.findUnique({
-      where: {
-        email: normalizedEmail,
-      },
-      select: {
-        id: true,
-        email: true,
-        isVerified: true,
-      },
-    });
-
-    if (!user || user.isVerified) {
-      this.logSecurityEvent("log", "Verification resend accepted without issuance", {
-        outcome: user ? "already_verified" : "unknown_email",
-        actorUserId: user?.id,
-        emailHash: this.hashSecurityIdentifier(normalizedEmail),
-      });
-      return {
-        accepted: true,
-        verificationPending: false,
-        verificationEmailSent: false,
-        mailDeliveryAvailable:
-          (this.mailService as any).isEmailVerificationConfigured?.() ??
-          this.mailService.isConfigured(),
-      };
-    }
-
-    await this.assertCanResendVerificationEmail(user.id);
-
-    const verification = await this.issueEmailVerificationToken(
-      user.id,
-      user.email,
-      "resend",
-    );
-
-    await this.analyticsService.trackVerificationResend({
-      actorUserId: user.id,
-      emailSent: verification.emailSent,
-    });
-
-    this.logSecurityEvent("log", "Verification resend issued", {
-      actorUserId: user.id,
-      emailSent: verification.emailSent,
-      expiresAt: verification.expiresAt.toISOString(),
-    });
-
-    return {
-      accepted: true,
-      verificationPending: true,
-      verificationEmailSent: verification.emailSent,
-      mailDeliveryAvailable:
-        (this.mailService as any).isEmailVerificationConfigured?.() ??
-        this.mailService.isConfigured(),
-    };
-  }
-
-  async resendVerificationEmailForCurrentUser(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-      select: {
-        id: true,
-        email: true,
-        isVerified: true,
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException("Invalid authentication token");
-    }
-
-    if (user.isVerified) {
-      this.logSecurityEvent("log", "Verification resend accepted without issuance", {
-        outcome: "already_verified",
+      await this.analyticsService.trackVerificationResend({
         actorUserId: user.id,
+        emailSent: verification.emailSent,
       });
+
+      this.logAuthAuditEvent("auth.email_verification.resend", "accepted", {
+        actorUserId: user.id,
+        requestId: auditContext?.requestId,
+        targetType: "user",
+        targetId: user.id,
+        metadata: {
+          emailSent: verification.emailSent,
+          expiresAt: verification.expiresAt.toISOString(),
+        },
+      });
+
       return {
         accepted: true,
-        verificationPending: false,
-        verificationEmailSent: false,
+        verificationPending: true,
+        verificationEmailSent: verification.emailSent,
         mailDeliveryAvailable:
           (this.mailService as any).isEmailVerificationConfigured?.() ??
           this.mailService.isConfigured(),
       };
+    } catch (error) {
+      if (!(error instanceof HttpException)) {
+        this.authMetricsService.recordVerificationResend("failed", "system_error");
+      }
+
+      throw error;
     }
+  }
 
-    await this.assertCanResendVerificationEmail(user.id);
+  async resendVerificationEmailForCurrentUser(
+    userId: string,
+    auditContext?: AuditContext,
+  ) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          email: true,
+          isVerified: true,
+        },
+      });
 
-    const verification = await this.issueEmailVerificationToken(
-      user.id,
-      user.email,
-      "resend",
-    );
+      if (!user) {
+        throw authUnauthorized();
+      }
 
-    await this.analyticsService.trackVerificationResend({
-      actorUserId: user.id,
-      emailSent: verification.emailSent,
-    });
+      if (user.isVerified) {
+        this.authMetricsService.recordVerificationResend(
+          "suppressed",
+          "already_verified",
+        );
+        this.logAuthAuditEvent("auth.email_verification.resend", "suppressed", {
+          actorUserId: user.id,
+          requestId: auditContext?.requestId,
+          reason: "already_verified",
+        });
+        return {
+          accepted: true,
+          verificationPending: false,
+          verificationEmailSent: false,
+          mailDeliveryAvailable:
+            (this.mailService as any).isEmailVerificationConfigured?.() ??
+            this.mailService.isConfigured(),
+        };
+      }
 
-    this.logSecurityEvent("log", "Verification resend issued", {
-      actorUserId: user.id,
-      emailSent: verification.emailSent,
-      expiresAt: verification.expiresAt.toISOString(),
-    });
+      const resendThrottle = await this.authAbuseProtectionService.consumeVerificationResend(
+        user.email,
+        auditContext,
+      );
 
-    return {
-      accepted: true,
-      verificationPending: true,
-      verificationEmailSent: verification.emailSent,
-      mailDeliveryAvailable:
-        (this.mailService as any).isEmailVerificationConfigured?.() ??
-        this.mailService.isConfigured(),
-    };
+      if (resendThrottle) {
+        this.authMetricsService.recordVerificationResend(
+          "throttled",
+          resendThrottle.reason as
+            | "email_rate_limited"
+            | "ip_rate_limited"
+            | "session_rate_limited",
+        );
+        this.throwThrottleException(
+          "auth.email_verification.resend",
+          resendThrottle,
+          AUTH_ERROR_MESSAGES.verificationEmailRateLimit,
+          {
+            actorUserId: user.id,
+            requestContext: auditContext,
+            reason: resendThrottle.reason,
+            metadata: {
+              emailHash: this.hashSecurityIdentifier(user.email),
+            },
+          },
+        );
+      }
+
+      await this.assertCanResendVerificationEmail(user.id, auditContext);
+
+      const verification = await this.issueEmailVerificationToken(
+        user.id,
+        user.email,
+        "resend",
+      );
+
+      this.authMetricsService.recordVerificationResend("issued", "none");
+
+      await this.analyticsService.trackVerificationResend({
+        actorUserId: user.id,
+        emailSent: verification.emailSent,
+      });
+
+      this.logAuthAuditEvent("auth.email_verification.resend", "accepted", {
+        actorUserId: user.id,
+        requestId: auditContext?.requestId,
+        targetType: "user",
+        targetId: user.id,
+        metadata: {
+          emailSent: verification.emailSent,
+          expiresAt: verification.expiresAt.toISOString(),
+        },
+      });
+
+      return {
+        accepted: true,
+        verificationPending: true,
+        verificationEmailSent: verification.emailSent,
+        mailDeliveryAvailable:
+          (this.mailService as any).isEmailVerificationConfigured?.() ??
+          this.mailService.isConfigured(),
+      };
+    } catch (error) {
+      if (!(error instanceof HttpException)) {
+        this.authMetricsService.recordVerificationResend("failed", "system_error");
+      }
+
+      throw error;
+    }
   }
 
   async changePassword(
     userId: string,
     changePasswordDto: ChangePasswordDto,
     currentSessionId?: string,
+    auditContext?: AuditContext,
   ) {
     const user = await this.prisma.user.findUnique({
       where: {
@@ -475,7 +831,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException("Invalid authentication token");
+      throw authUnauthorized();
     }
 
     const currentPasswordMatches = await bcrypt.compare(
@@ -484,11 +840,13 @@ export class AuthService {
     );
 
     if (!currentPasswordMatches) {
-      this.logSecurityEvent("warn", "Password change rejected", {
+      this.logAuthAuditEvent("auth.password.change", "failure", {
         actorUserId: userId,
-        outcome: "incorrect_current_password",
+        requestId: auditContext?.requestId,
+        sessionId: currentSessionId,
+        reason: "incorrect_current_password",
       });
-      throw new BadRequestException("Current password is incorrect.");
+      throw authBadRequest(AUTH_ERROR_MESSAGES.currentPasswordIncorrect);
     }
 
     this.passwordPolicyService.validate(changePasswordDto.newPassword, {
@@ -496,149 +854,12 @@ export class AuthService {
     });
 
     const passwordHash = await bcrypt.hash(changePasswordDto.newPassword, 10);
-
-    await this.prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        passwordHash,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    await this.prisma.passwordResetToken.updateMany({
-      where: {
-        userId,
-        consumedAt: null,
-        supersededAt: null,
-      },
-      data: {
-        supersededAt: new Date(),
-      },
-    });
-
-    if (currentSessionId) {
-      await this.deviceSessionService.revokeOtherSessions(
-        userId,
-        currentSessionId,
-        "password_changed",
-      );
-    } else {
-      await this.deviceSessionService.revokeAllSessions(
-        userId,
-        "password_changed",
-      );
-    }
-
-    this.logSecurityEvent("log", "Password changed", {
-      actorUserId: userId,
-      retainedCurrentSession: Boolean(currentSessionId),
-    });
-
-    return {
-      success: true,
-      signedOutSessions: true,
-    };
-  }
-
-  async requestPasswordReset(forgotPasswordDto: ForgotPasswordDto) {
-    const normalizedEmail = this.normalizeEmailAddress(forgotPasswordDto.email);
-
-    await this.assertAnonymousPasswordResetAllowed(normalizedEmail);
-
-    const user = await this.prisma.user.findUnique({
-      where: {
-        email: normalizedEmail,
-      },
-      select: {
-        id: true,
-        email: true,
-      },
-    });
-
-    if (!user) {
-      this.logSecurityEvent("log", "Password reset request accepted without issuance", {
-        outcome: "unknown_email",
-        emailHash: this.hashSecurityIdentifier(normalizedEmail),
-      });
-      return PASSWORD_RESET_GENERIC_RESPONSE;
-    }
-
-    const canIssuePasswordReset = await this.canIssuePasswordReset(user.id);
-
-    if (!canIssuePasswordReset) {
-      this.logSecurityEvent("warn", "Password reset request suppressed", {
-        actorUserId: user.id,
-        outcome: "per_account_rate_limited",
-      });
-      return PASSWORD_RESET_GENERIC_RESPONSE;
-    }
-
-    await this.issuePasswordResetToken(user.id, user.email);
-
-    this.logSecurityEvent("log", "Password reset token issued", {
-      actorUserId: user.id,
-      emailHash: this.hashSecurityIdentifier(normalizedEmail),
-    });
-
-    return PASSWORD_RESET_GENERIC_RESPONSE;
-  }
-
-  async resetPassword(resetPasswordDto: ResetPasswordDto) {
-    const now = new Date();
-    const tokenHash = this.hashVerificationToken(resetPasswordDto.token);
-    const token = await this.prisma.passwordResetToken.findUnique({
-      where: {
-        tokenHash,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            passwordHash: true,
-          },
-        },
-      },
-    });
-
-    if (
-      !token ||
-      token.consumedAt ||
-      token.supersededAt ||
-      token.expiresAt.getTime() <= now.getTime()
-    ) {
-      this.logSecurityEvent("warn", "Password reset rejected", {
-        outcome: "invalid_or_expired_token",
-      });
-      throw new BadRequestException(INVALID_RESET_MESSAGE);
-    }
-
-    this.passwordPolicyService.validate(resetPasswordDto.password);
-
-    const alreadyUsed = await bcrypt.compare(
-      resetPasswordDto.password,
-      token.user.passwordHash,
-    );
-
-    if (alreadyUsed) {
-      this.logSecurityEvent("warn", "Password reset rejected", {
-        actorUserId: token.userId,
-        outcome: "password_reuse",
-      });
-      throw new BadRequestException(
-        "Choose a new password that is different from your current one.",
-      );
-    }
-
-    const passwordHash = await bcrypt.hash(resetPasswordDto.password, 10);
+    const passwordChangeTimestamp = new Date();
 
     await this.prismaService.$transaction(async (tx: any) => {
       await tx.user.update({
         where: {
-          id: token.userId,
+          id: userId,
         },
         data: {
           passwordHash,
@@ -648,38 +869,40 @@ export class AuthService {
         },
       });
 
-      await tx.passwordResetToken.update({
-        where: {
-          id: token.id,
-        },
-        data: {
-          consumedAt: now,
-        },
-      });
-
       await tx.passwordResetToken.updateMany({
         where: {
-          userId: token.userId,
-          id: {
-            not: token.id,
-          },
+          userId,
           consumedAt: null,
           supersededAt: null,
         },
         data: {
-          supersededAt: now,
+          supersededAt: passwordChangeTimestamp,
         },
       });
+
+      if (currentSessionId) {
+        await this.deviceSessionService.revokeOtherSessions(
+          userId,
+          currentSessionId,
+          "password_changed",
+          tx,
+        );
+      } else {
+        await this.deviceSessionService.revokeAllSessions(
+          userId,
+          "password_changed",
+          tx,
+        );
+      }
     });
 
-    await this.deviceSessionService.revokeAllSessions(
-      token.userId,
-      "password_reset",
-    );
-
-    this.logSecurityEvent("log", "Password reset completed", {
-      actorUserId: token.userId,
-      revokedAllSessions: true,
+    this.logAuthAuditEvent("auth.password.change", "success", {
+      actorUserId: userId,
+      requestId: auditContext?.requestId,
+      sessionId: currentSessionId,
+      metadata: {
+        retainedCurrentSession: Boolean(currentSessionId),
+      },
     });
 
     return {
@@ -688,252 +911,636 @@ export class AuthService {
     };
   }
 
+  async requestPasswordReset(
+    forgotPasswordDto: ForgotPasswordDto,
+    auditContext?: AuditContext,
+  ) {
+    try {
+      const normalizedEmail = this.normalizeEmailAddress(forgotPasswordDto.email);
+
+      const passwordResetThrottle =
+        await this.authAbuseProtectionService.consumePasswordResetRequest(
+          normalizedEmail,
+          auditContext,
+        );
+
+      if (passwordResetThrottle) {
+        this.authMetricsService.recordPasswordResetRequest(
+          "throttled",
+          passwordResetThrottle.reason as
+            | "email_rate_limited"
+            | "ip_rate_limited",
+        );
+        this.throwThrottleException(
+          "auth.password_reset.request",
+          passwordResetThrottle,
+          AUTH_ERROR_MESSAGES.passwordResetRateLimit,
+          {
+            requestContext: auditContext,
+            reason: passwordResetThrottle.reason,
+            metadata: {
+              emailHash: this.hashSecurityIdentifier(normalizedEmail),
+            },
+          },
+        );
+      }
+
+      await this.assertAnonymousPasswordResetAllowed(normalizedEmail, auditContext);
+
+      const user = await this.prisma.user.findUnique({
+        where: {
+          email: normalizedEmail,
+        },
+        select: {
+          id: true,
+          email: true,
+        },
+      });
+
+      if (!user) {
+        this.authMetricsService.recordPasswordResetRequest(
+          "requested",
+          "unknown_email",
+        );
+        this.logAuthAuditEvent("auth.password_reset.request", "accepted", {
+          requestId: auditContext?.requestId,
+          reason: "unknown_email",
+          metadata: {
+            emailHash: this.hashSecurityIdentifier(normalizedEmail),
+            emailSent: false,
+          },
+        });
+        return PASSWORD_RESET_GENERIC_RESPONSE;
+      }
+
+      const canIssuePasswordReset = await this.canIssuePasswordReset(user.id);
+
+      if (!canIssuePasswordReset) {
+        this.authMetricsService.recordPasswordResetRequest(
+          "suppressed",
+          "per_account_rate_limited",
+        );
+        this.logAuthAuditEvent("auth.password_reset.request", "suppressed", {
+          actorUserId: user.id,
+          requestId: auditContext?.requestId,
+          reason: "per_account_rate_limited",
+        });
+        return PASSWORD_RESET_GENERIC_RESPONSE;
+      }
+
+      const passwordReset = await this.issuePasswordResetToken(user.id, user.email);
+
+      this.authMetricsService.recordPasswordResetRequest(
+        "requested",
+        passwordReset.emailSent ? "issued" : "delivery_failed",
+      );
+
+      this.logAuthAuditEvent("auth.password_reset.request", "accepted", {
+        actorUserId: user.id,
+        requestId: auditContext?.requestId,
+        targetType: "user",
+        targetId: user.id,
+        metadata: {
+          emailHash: this.hashSecurityIdentifier(normalizedEmail),
+          emailSent: passwordReset.emailSent,
+        },
+      });
+
+      return PASSWORD_RESET_GENERIC_RESPONSE;
+    } catch (error) {
+      if (!(error instanceof HttpException)) {
+        this.authMetricsService.recordPasswordResetRequest("failed", "system_error");
+      }
+
+      throw error;
+    }
+  }
+
+  async resetPassword(
+    resetPasswordDto: ResetPasswordDto,
+    auditContext?: AuditContext,
+  ) {
+    try {
+      const passwordResetCompletionThrottle =
+        await this.authAbuseProtectionService.consumePasswordResetCompletion(
+          auditContext,
+        );
+
+      if (passwordResetCompletionThrottle) {
+        this.authMetricsService.recordPasswordResetCompletion(
+          "throttled",
+          "ip_rate_limited",
+        );
+        this.throwThrottleException(
+          "auth.password_reset.complete",
+          passwordResetCompletionThrottle,
+          AUTH_ERROR_MESSAGES.passwordResetRateLimit,
+          {
+            requestContext: auditContext,
+            reason: passwordResetCompletionThrottle.reason,
+          },
+        );
+      }
+
+      const now = new Date();
+      const tokenHash = this.hashVerificationToken(resetPasswordDto.token);
+      const token = await this.prisma.passwordResetToken.findUnique({
+        where: {
+          tokenHash,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              passwordHash: true,
+            },
+          },
+        },
+      });
+
+      if (
+        !token ||
+        token.consumedAt ||
+        token.supersededAt ||
+        token.expiresAt.getTime() <= now.getTime()
+      ) {
+        this.authMetricsService.recordPasswordResetCompletion(
+          "failed",
+          "invalid_or_expired_token",
+        );
+        this.logAuthAuditEvent("auth.password_reset.complete", "failure", {
+          requestId: auditContext?.requestId,
+          reason: "invalid_or_expired_token",
+        });
+        throw authBadRequest(AUTH_ERROR_MESSAGES.invalidResetLink);
+      }
+
+      this.passwordPolicyService.validate(resetPasswordDto.password);
+
+      const alreadyUsed = await bcrypt.compare(
+        resetPasswordDto.password,
+        token.user.passwordHash,
+      );
+
+      if (alreadyUsed) {
+        this.authMetricsService.recordPasswordResetCompletion(
+          "failed",
+          "password_reuse",
+        );
+        this.logAuthAuditEvent("auth.password_reset.complete", "failure", {
+          actorUserId: token.userId,
+          requestId: auditContext?.requestId,
+          reason: "password_reuse",
+        });
+        throw new BadRequestException(
+          "Choose a new password that is different from your current one.",
+        );
+      }
+
+      const passwordHash = await bcrypt.hash(resetPasswordDto.password, 10);
+
+      await this.prismaService.$transaction(async (tx: any) => {
+        await tx.user.update({
+          where: {
+            id: token.userId,
+          },
+          data: {
+            passwordHash,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        await tx.passwordResetToken.update({
+          where: {
+            id: token.id,
+          },
+          data: {
+            consumedAt: now,
+          },
+        });
+
+        await tx.passwordResetToken.updateMany({
+          where: {
+            userId: token.userId,
+            id: {
+              not: token.id,
+            },
+            consumedAt: null,
+            supersededAt: null,
+          },
+          data: {
+            supersededAt: now,
+          },
+        });
+
+        await this.deviceSessionService.revokeAllSessions(
+          token.userId,
+          "password_reset",
+          tx,
+        );
+      });
+
+      this.authMetricsService.recordPasswordResetCompletion("completed", "none");
+
+      this.logAuthAuditEvent("auth.password_reset.complete", "success", {
+        actorUserId: token.userId,
+        requestId: auditContext?.requestId,
+        targetType: "user",
+        targetId: token.userId,
+        metadata: {
+          revokedAllSessions: true,
+        },
+      });
+
+      return {
+        success: true,
+        signedOutSessions: true,
+      };
+    } catch (error) {
+      if (!(error instanceof HttpException)) {
+        this.authMetricsService.recordPasswordResetCompletion(
+          "failed",
+          "system_error",
+        );
+      }
+
+      throw error;
+    }
+  }
+
   async requestMobileOtp(
     userId: string,
     requestMobileOtpDto: RequestMobileOtpDto,
+    auditContext?: AuditContext,
   ) {
-    const normalizedPhoneNumber = this.normalizePhoneNumber(
-      requestMobileOtpDto.phoneNumber,
-    );
-
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-      select: {
-        id: true,
-        phoneNumber: true,
-        phoneVerifiedAt: true,
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException("Invalid authentication token");
-    }
-
-    const conflictingUser = await this.prisma.user.findFirst({
-      where: {
-        phoneNumber: normalizedPhoneNumber,
-        id: {
-          not: userId,
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (conflictingUser) {
-      this.logSecurityEvent("warn", "Mobile OTP request rejected", {
-        actorUserId: userId,
-        outcome: "phone_already_verified_elsewhere",
-      });
-      throw new ConflictException(
-        "That mobile number is already verified on another Dotly account.",
+    try {
+      const normalizedPhoneNumber = this.normalizePhoneNumber(
+        requestMobileOtpDto.phoneNumber,
       );
+
+      const otpRequestThrottle =
+        await this.authAbuseProtectionService.consumeMobileOtpRequest(
+          normalizedPhoneNumber,
+          auditContext,
+        );
+
+      if (otpRequestThrottle) {
+        this.authMetricsService.recordOtpRequest(
+          "throttled",
+          otpRequestThrottle.reason as
+            | "phone_rate_limited"
+            | "session_rate_limited"
+            | "ip_rate_limited",
+        );
+        this.throwThrottleException(
+          "auth.mobile_otp.request",
+          otpRequestThrottle,
+          AUTH_ERROR_MESSAGES.mobileOtpRequestRateLimit,
+          {
+            actorUserId: userId,
+            requestContext: auditContext,
+            reason: otpRequestThrottle.reason,
+            metadata: {
+              phoneNumberMasked: this.maskPhoneNumber(normalizedPhoneNumber),
+            },
+          },
+        );
+      }
+
+      const user = await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          phoneNumber: true,
+          phoneVerifiedAt: true,
+        },
+      });
+
+      if (!user) {
+        throw authUnauthorized();
+      }
+
+      const conflictingUser = await this.prisma.user.findFirst({
+        where: {
+          phoneNumber: normalizedPhoneNumber,
+          id: {
+            not: userId,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (conflictingUser) {
+        this.authMetricsService.recordOtpRequest(
+          "blocked",
+          "phone_already_verified_elsewhere",
+        );
+        this.logAuthAuditEvent("auth.mobile_otp.request", "blocked", {
+          actorUserId: userId,
+          requestId: auditContext?.requestId,
+          reason: "phone_already_verified_elsewhere",
+        });
+        throw authConflict(AUTH_ERROR_MESSAGES.mobileNumberAlreadyVerified);
+      }
+
+      await this.assertCanIssueMobileOtp(userId, auditContext);
+
+      const issued = await this.issueMobileOtp(userId, normalizedPhoneNumber);
+
+      this.authMetricsService.recordOtpRequest("requested", "none");
+      this.authMetricsService.recordOtpRequest(
+        issued.deliverySucceeded ? "sent" : "failed",
+        issued.deliverySucceeded ? "none" : "delivery_failed",
+      );
+
+      this.logAuthAuditEvent("auth.mobile_otp.request", "accepted", {
+        actorUserId: userId,
+        requestId: auditContext?.requestId,
+        targetType: "mobile_otp_challenge",
+        targetId: issued.challengeId,
+        metadata: {
+          phoneNumberMasked: this.maskPhoneNumber(normalizedPhoneNumber),
+          deliveryAvailable: this.smsService.isConfigured(),
+          expiresAt: issued.expiresAt.toISOString(),
+        },
+      });
+
+      return {
+        status: "sent",
+        challengeId: issued.challengeId,
+        purpose: issued.purpose,
+        phoneNumber: this.maskPhoneNumber(normalizedPhoneNumber),
+        resendAvailableAt: issued.resendAvailableAt,
+        expiresAt: issued.expiresAt,
+        deliveryAvailable: this.smsService.isConfigured(),
+      };
+    } catch (error) {
+      if (!(error instanceof HttpException)) {
+        this.authMetricsService.recordOtpRequest("failed", "system_error");
+      }
+
+      throw error;
     }
-
-    await this.assertCanIssueMobileOtp(userId);
-
-    const issued = await this.issueMobileOtp(userId, normalizedPhoneNumber);
-
-    this.logSecurityEvent("log", "Mobile OTP issued", {
-      actorUserId: userId,
-      phoneNumberMasked: this.maskPhoneNumber(normalizedPhoneNumber),
-      deliveryAvailable: this.smsService.isConfigured(),
-      challengeId: issued.challengeId,
-      expiresAt: issued.expiresAt.toISOString(),
-    });
-
-    return {
-      status: "sent",
-      challengeId: issued.challengeId,
-      purpose: issued.purpose,
-      phoneNumber: this.maskPhoneNumber(normalizedPhoneNumber),
-      resendAvailableAt: issued.resendAvailableAt,
-      expiresAt: issued.expiresAt,
-      deliveryAvailable: this.smsService.isConfigured(),
-    };
   }
 
   async verifyMobileOtp(
     userId: string,
     verifyMobileOtpDto: VerifyMobileOtpDto,
+    auditContext?: AuditContext,
   ) {
-    const now = new Date();
-    const challengeId = this.normalizeOpaqueToken(
-      verifyMobileOtpDto.challengeId,
-    );
-    const codeHash = this.hashVerificationToken(verifyMobileOtpDto.code);
-    const challenge = await this.prisma.mobileOtpChallenge.findFirst({
-      where: {
-        userId,
-        id: challengeId,
-        purpose: MOBILE_OTP_ENROLLMENT_PURPOSE,
-      },
-      select: {
-        id: true,
-        phoneNumber: true,
-        codeHash: true,
-        expiresAt: true,
-        consumedAt: true,
-        supersededAt: true,
-        invalidAttemptCount: true,
-        lastAttemptAt: true,
-      },
-    });
+    try {
+      const otpVerifyThrottle =
+        await this.authAbuseProtectionService.consumeMobileOtpVerification(
+          auditContext,
+        );
 
-    if (!challenge) {
-      this.logSecurityEvent("warn", "Mobile OTP verification rejected", {
-        actorUserId: userId,
-        outcome: "challenge_not_found",
-      });
-      throw new BadRequestException(
-        "Request a verification code before trying again.",
-      );
-    }
-
-    if (challenge.consumedAt || challenge.supersededAt) {
-      this.logSecurityEvent("warn", "Mobile OTP verification rejected", {
-        actorUserId: userId,
-        challengeId: challenge.id,
-        outcome: "inactive_challenge",
-      });
-      throw new BadRequestException(
-        "This code is no longer active. Request a new one.",
-      );
-    }
-
-    if (challenge.expiresAt.getTime() <= now.getTime()) {
-      this.logSecurityEvent("warn", "Mobile OTP verification rejected", {
-        actorUserId: userId,
-        challengeId: challenge.id,
-        outcome: "expired_challenge",
-      });
-      throw new BadRequestException("This code expired. Request a new one.");
-    }
-
-    if (challenge.invalidAttemptCount >= OTP_MAX_ATTEMPTS) {
-      this.logSecurityEvent("warn", "Mobile OTP verification rate limited", {
-        actorUserId: userId,
-        challengeId: challenge.id,
-        outcome: "attempt_limit_reached",
-      });
-      throw new HttpException(
-        "Too many incorrect codes. Request a new one.",
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
-
-    if (
-      challenge.lastAttemptAt &&
-      now.getTime() - challenge.lastAttemptAt.getTime() < OTP_ATTEMPT_COOLDOWN_MS
-    ) {
-      this.logSecurityEvent("warn", "Mobile OTP verification rate limited", {
-        actorUserId: userId,
-        challengeId: challenge.id,
-        outcome: "attempt_cooldown_active",
-      });
-      throw new HttpException(
-        "Please wait a moment before trying another verification code.",
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
-
-    if (challenge.codeHash !== codeHash) {
-      const nextInvalidAttemptCount = challenge.invalidAttemptCount + 1;
-
-      await this.prisma.mobileOtpChallenge.update({
-        where: {
-          id: challenge.id,
-        },
-        data: {
-          invalidAttemptCount: nextInvalidAttemptCount,
-          lastAttemptAt: now,
-          ...(nextInvalidAttemptCount >= OTP_MAX_ATTEMPTS
-            ? { supersededAt: now }
-            : {}),
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      this.logSecurityEvent("warn", "Mobile OTP verification rejected", {
-        actorUserId: userId,
-        challengeId: challenge.id,
-        outcome:
-          nextInvalidAttemptCount >= OTP_MAX_ATTEMPTS
-            ? "attempt_limit_reached"
-            : "invalid_code",
-        invalidAttemptCount: nextInvalidAttemptCount,
-      });
-
-      if (nextInvalidAttemptCount >= OTP_MAX_ATTEMPTS) {
-        throw new HttpException(
-          "Too many incorrect codes. Request a new one.",
-          HttpStatus.TOO_MANY_REQUESTS,
+      if (otpVerifyThrottle) {
+        this.authMetricsService.recordOtpVerification(
+          "throttled",
+          otpVerifyThrottle.reason as
+            | "session_rate_limited"
+            | "ip_rate_limited",
+        );
+        this.throwThrottleException(
+          "auth.mobile_otp.verify",
+          otpVerifyThrottle,
+          AUTH_ERROR_MESSAGES.mobileOtpVerificationRateLimit,
+          {
+            actorUserId: userId,
+            requestContext: auditContext,
+            reason: otpVerifyThrottle.reason,
+          },
         );
       }
 
-      throw new BadRequestException("The code you entered is invalid.");
-    }
-
-    await this.prismaService.$transaction(async (tx: any) => {
-      await tx.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          phoneNumber: challenge.phoneNumber,
-          pendingPhoneNumber: null,
-          phoneVerifiedAt: now,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      await tx.mobileOtpChallenge.update({
-        where: {
-          id: challenge.id,
-        },
-        data: {
-          consumedAt: now,
-          lastAttemptAt: now,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      await tx.mobileOtpChallenge.updateMany({
+      const now = new Date();
+      const challengeId = this.normalizeOpaqueToken(
+        verifyMobileOtpDto.challengeId,
+      );
+      const codeHash = this.hashVerificationToken(verifyMobileOtpDto.code);
+      const challenge = await this.prisma.mobileOtpChallenge.findFirst({
         where: {
           userId,
+          id: challengeId,
           purpose: MOBILE_OTP_ENROLLMENT_PURPOSE,
-          id: {
-            not: challenge.id,
-          },
-          consumedAt: null,
-          supersededAt: null,
         },
-        data: {
-          supersededAt: now,
+        select: {
+          id: true,
+          phoneNumber: true,
+          codeHash: true,
+          expiresAt: true,
+          consumedAt: true,
+          supersededAt: true,
+          invalidAttemptCount: true,
+          lastAttemptAt: true,
         },
       });
-    });
 
-    this.logSecurityEvent("log", "Mobile OTP verified", {
-      actorUserId: userId,
-      challengeId: challenge.id,
-      phoneNumberMasked: this.maskPhoneNumber(challenge.phoneNumber),
-    });
+      if (!challenge) {
+        this.authMetricsService.recordOtpVerification(
+          "failed",
+          "challenge_not_found",
+        );
+        this.logAuthAuditEvent("auth.mobile_otp.verify", "failure", {
+          actorUserId: userId,
+          requestId: auditContext?.requestId,
+          reason: "challenge_not_found",
+        });
+        throw authBadRequest(AUTH_ERROR_MESSAGES.mobileOtpRequestRequired);
+      }
 
-    return {
-      verified: true,
-      phoneNumber: this.maskPhoneNumber(challenge.phoneNumber),
-      verifiedAt: now,
-    };
+      if (challenge.consumedAt || challenge.supersededAt) {
+        this.authMetricsService.recordOtpVerification(
+          "failed",
+          "inactive_challenge",
+        );
+        this.logAuthAuditEvent("auth.mobile_otp.verify", "failure", {
+          actorUserId: userId,
+          requestId: auditContext?.requestId,
+          targetType: "mobile_otp_challenge",
+          targetId: challenge.id,
+          reason: "inactive_challenge",
+        });
+        throw authBadRequest(AUTH_ERROR_MESSAGES.mobileOtpInactive);
+      }
+
+      if (challenge.expiresAt.getTime() <= now.getTime()) {
+        this.authMetricsService.recordOtpVerification(
+          "failed",
+          "expired_challenge",
+        );
+        this.logAuthAuditEvent("auth.mobile_otp.verify", "failure", {
+          actorUserId: userId,
+          requestId: auditContext?.requestId,
+          targetType: "mobile_otp_challenge",
+          targetId: challenge.id,
+          reason: "expired_challenge",
+        });
+        throw authBadRequest(AUTH_ERROR_MESSAGES.mobileOtpExpired);
+      }
+
+      if (challenge.invalidAttemptCount >= OTP_MAX_ATTEMPTS) {
+        this.authMetricsService.recordOtpVerification(
+          "throttled",
+          "attempt_limit_reached",
+        );
+        this.logAuthAuditEvent("auth.mobile_otp.verify", "rate_limited", {
+          actorUserId: userId,
+          requestId: auditContext?.requestId,
+          targetType: "mobile_otp_challenge",
+          targetId: challenge.id,
+          reason: "attempt_limit_reached",
+        });
+        throw authTooManyRequests(AUTH_ERROR_MESSAGES.mobileOtpAttemptRateLimit);
+      }
+
+      if (
+        challenge.lastAttemptAt &&
+        now.getTime() - challenge.lastAttemptAt.getTime() < OTP_ATTEMPT_COOLDOWN_MS
+      ) {
+        this.authMetricsService.recordOtpVerification(
+          "throttled",
+          "attempt_cooldown_active",
+        );
+        this.logAuthAuditEvent("auth.mobile_otp.verify", "rate_limited", {
+          actorUserId: userId,
+          requestId: auditContext?.requestId,
+          targetType: "mobile_otp_challenge",
+          targetId: challenge.id,
+          reason: "attempt_cooldown_active",
+        });
+        throw authTooManyRequests(AUTH_ERROR_MESSAGES.mobileOtpAttemptCooldown);
+      }
+
+      if (challenge.codeHash !== codeHash) {
+        const nextInvalidAttemptCount = challenge.invalidAttemptCount + 1;
+
+        await this.prisma.mobileOtpChallenge.update({
+          where: {
+            id: challenge.id,
+          },
+          data: {
+            invalidAttemptCount: nextInvalidAttemptCount,
+            lastAttemptAt: now,
+            ...(nextInvalidAttemptCount >= OTP_MAX_ATTEMPTS
+              ? { supersededAt: now }
+              : {}),
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        this.authMetricsService.recordOtpVerification(
+          nextInvalidAttemptCount >= OTP_MAX_ATTEMPTS ? "throttled" : "invalid",
+          nextInvalidAttemptCount >= OTP_MAX_ATTEMPTS
+            ? "attempt_limit_reached"
+            : "invalid_code",
+        );
+
+        this.logAuthAuditEvent(
+          "auth.mobile_otp.verify",
+          nextInvalidAttemptCount >= OTP_MAX_ATTEMPTS
+            ? "rate_limited"
+            : "failure",
+          {
+            actorUserId: userId,
+            requestId: auditContext?.requestId,
+            targetType: "mobile_otp_challenge",
+            targetId: challenge.id,
+            reason:
+              nextInvalidAttemptCount >= OTP_MAX_ATTEMPTS
+                ? "attempt_limit_reached"
+                : "invalid_code",
+            metadata: {
+              invalidAttemptCount: nextInvalidAttemptCount,
+            },
+          },
+        );
+
+        if (nextInvalidAttemptCount >= OTP_MAX_ATTEMPTS) {
+          throw authTooManyRequests(
+            AUTH_ERROR_MESSAGES.mobileOtpAttemptRateLimit,
+          );
+        }
+
+        throw authBadRequest(AUTH_ERROR_MESSAGES.mobileOtpInvalid);
+      }
+
+      await this.prismaService.$transaction(async (tx: any) => {
+        await tx.user.update({
+          where: {
+            id: userId,
+          },
+          data: {
+            phoneNumber: challenge.phoneNumber,
+            pendingPhoneNumber: null,
+            phoneVerifiedAt: now,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        await tx.mobileOtpChallenge.update({
+          where: {
+            id: challenge.id,
+          },
+          data: {
+            consumedAt: now,
+            lastAttemptAt: now,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        await tx.mobileOtpChallenge.updateMany({
+          where: {
+            userId,
+            purpose: MOBILE_OTP_ENROLLMENT_PURPOSE,
+            id: {
+              not: challenge.id,
+            },
+            consumedAt: null,
+            supersededAt: null,
+          },
+          data: {
+            supersededAt: now,
+          },
+        });
+      });
+
+      this.authMetricsService.recordOtpVerification("verified", "none");
+
+      this.logAuthAuditEvent("auth.mobile_otp.verify", "success", {
+        actorUserId: userId,
+        requestId: auditContext?.requestId,
+        targetType: "mobile_otp_challenge",
+        targetId: challenge.id,
+        metadata: {
+          phoneNumberMasked: this.maskPhoneNumber(challenge.phoneNumber),
+        },
+      });
+
+      return {
+        verified: true,
+        phoneNumber: this.maskPhoneNumber(challenge.phoneNumber),
+        verifiedAt: now,
+      };
+    } catch (error) {
+      if (!(error instanceof HttpException)) {
+        this.authMetricsService.recordOtpVerification("failed", "system_error");
+      }
+
+      throw error;
+    }
   }
 
   async listSessions(userId: string, currentSessionId?: string) {
@@ -956,88 +1563,188 @@ export class AuthService {
     userId: string,
     currentSessionId: string,
     dto: RevokeSessionDto,
+    auditContext?: AuditContext,
   ) {
-    const trackedCurrentSessionId = this.assertTrackedCurrentSessionId(
-      currentSessionId,
-    );
-    const requestedSessionId = this.normalizeOpaqueToken(dto.sessionId);
-
-    if (requestedSessionId === trackedCurrentSessionId) {
-      throw new BadRequestException(
-        "Use sign out if you want to leave the current device.",
+    try {
+      const trackedCurrentSessionId = this.assertTrackedCurrentSessionId(
+        currentSessionId,
       );
-    }
+      const requestedSessionId = this.normalizeOpaqueToken(dto.sessionId);
 
-    const revoked = await this.deviceSessionService.revokeSession(
-      userId,
-      requestedSessionId,
-      "remote_sign_out",
-    );
+      if (requestedSessionId === trackedCurrentSessionId) {
+        this.authMetricsService.recordSessionSecurity(
+          "revoke",
+          "blocked",
+          "current_session_protected",
+        );
+        this.logAuthAuditEvent("auth.session.revoke", "blocked", {
+          actorUserId: userId,
+          requestId: auditContext?.requestId,
+          sessionId: trackedCurrentSessionId,
+          targetType: "session",
+          targetId: requestedSessionId,
+          reason: "current_session_protected",
+        });
+        throw authBadRequest(AUTH_ERROR_MESSAGES.currentSessionRevokeBlocked);
+      }
 
-    if (!revoked) {
-      this.logSecurityEvent("warn", "Session revoke rejected", {
+      const revoked = await this.deviceSessionService.revokeSession(
+        userId,
+        requestedSessionId,
+        "remote_sign_out",
+      );
+
+      if (revoked.status === "not_found") {
+        this.authMetricsService.recordSessionSecurity(
+          "revoke",
+          "failure",
+          "session_not_found",
+        );
+        this.logAuthAuditEvent("auth.session.revoke", "failure", {
+          actorUserId: userId,
+          requestId: auditContext?.requestId,
+          sessionId: trackedCurrentSessionId,
+          targetType: "session",
+          targetId: requestedSessionId,
+          reason: "session_not_found",
+        });
+        throw authNotFound(AUTH_ERROR_MESSAGES.sessionNotFound);
+      }
+
+      const revokeOutcome = this.getSessionRevokeOutcome(revoked);
+
+      this.authMetricsService.recordSessionSecurity(
+        "revoke",
+        "success",
+        revokeOutcome,
+      );
+
+      this.logAuthAuditEvent("auth.session.revoke", "success", {
         actorUserId: userId,
-        currentSessionId: trackedCurrentSessionId,
-        targetSessionId: requestedSessionId,
-        outcome: "session_not_found",
+        requestId: auditContext?.requestId,
+        sessionId: trackedCurrentSessionId,
+        targetType: "session",
+        targetId: requestedSessionId,
+        reason: revokeOutcome,
+        metadata:
+          revoked.status === "already_inactive"
+            ? {
+                alreadyInactive: true,
+              }
+            : undefined,
       });
-      throw new NotFoundException("Session not found.");
+
+      return {
+        success: true,
+        ...(revoked.status === "already_inactive"
+          ? {
+              alreadyInactive: true,
+            }
+          : {}),
+      };
+    } catch (error) {
+      if (!(error instanceof HttpException)) {
+        this.authMetricsService.recordSessionSecurity(
+          "revoke",
+          "failure",
+          "system_error",
+        );
+      }
+
+      throw error;
     }
-
-    this.logSecurityEvent("log", "Session revoked", {
-      actorUserId: userId,
-      currentSessionId: trackedCurrentSessionId,
-      targetSessionId: requestedSessionId,
-      reason: "remote_sign_out",
-    });
-
-    return {
-      success: true,
-    };
   }
 
-  async revokeOtherSessions(userId: string, currentSessionId: string) {
-    const trackedCurrentSessionId = this.assertTrackedCurrentSessionId(
-      currentSessionId,
-    );
-    const revokedCount = await this.deviceSessionService.revokeOtherSessions(
-      userId,
-      trackedCurrentSessionId,
-      "sign_out_other_sessions",
-    );
+  async revokeOtherSessions(
+    userId: string,
+    currentSessionId: string,
+    auditContext?: AuditContext,
+  ) {
+    try {
+      const trackedCurrentSessionId = this.assertTrackedCurrentSessionId(
+        currentSessionId,
+      );
+      const revokedCount = await this.deviceSessionService.revokeOtherSessions(
+        userId,
+        trackedCurrentSessionId,
+        "sign_out_other_sessions",
+      );
 
-    this.logSecurityEvent("log", "Other sessions revoked", {
-      actorUserId: userId,
-      currentSessionId: trackedCurrentSessionId,
-      revokedCount,
-      reason: "sign_out_other_sessions",
-    });
+      this.authMetricsService.recordSessionSecurity(
+        "revoke_others",
+        "success",
+        "sign_out_other_sessions",
+      );
 
-    return {
-      success: true,
-      revokedCount,
-    };
+      this.logAuthAuditEvent("auth.session.revoke_others", "success", {
+        actorUserId: userId,
+        requestId: auditContext?.requestId,
+        sessionId: trackedCurrentSessionId,
+        reason: "sign_out_other_sessions",
+        metadata: {
+          revokedCount,
+        },
+      });
+
+      return {
+        success: true,
+        revokedCount,
+      };
+    } catch (error) {
+      if (!(error instanceof HttpException)) {
+        this.authMetricsService.recordSessionSecurity(
+          "revoke_others",
+          "failure",
+          "system_error",
+        );
+      }
+
+      throw error;
+    }
   }
 
-  async revokeCurrentSession(userId: string, currentSessionId: string) {
-    const trackedCurrentSessionId = this.assertTrackedCurrentSessionId(
-      currentSessionId,
-    );
-    await this.deviceSessionService.revokeSession(
-      userId,
-      trackedCurrentSessionId,
-      "logout",
-    );
+  async revokeCurrentSession(
+    userId: string,
+    currentSessionId: string,
+    auditContext?: AuditContext,
+  ) {
+    try {
+      const trackedCurrentSessionId = this.assertTrackedCurrentSessionId(
+        currentSessionId,
+      );
+      await this.deviceSessionService.revokeSession(
+        userId,
+        trackedCurrentSessionId,
+        "logout",
+      );
 
-    this.logSecurityEvent("log", "Current session revoked", {
-      actorUserId: userId,
-      currentSessionId: trackedCurrentSessionId,
-      reason: "logout",
-    });
+      this.authMetricsService.recordSessionSecurity(
+        "logout_current",
+        "success",
+        "logout",
+      );
 
-    return {
-      success: true,
-    };
+      this.logAuthAuditEvent("auth.session.logout_current", "success", {
+        actorUserId: userId,
+        requestId: auditContext?.requestId,
+        sessionId: trackedCurrentSessionId,
+        reason: "logout",
+      });
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      if (!(error instanceof HttpException)) {
+        this.authMetricsService.recordSessionSecurity(
+          "logout_current",
+          "failure",
+          "system_error",
+        );
+      }
+
+      throw error;
+    }
   }
 
   private async issueEmailVerificationToken(
@@ -1085,6 +1792,12 @@ export class AuthService {
       context,
       emailSent,
     });
+
+    this.authMetricsService.recordVerificationEmailIssued(context);
+
+    if (!emailSent) {
+      this.authMetricsService.recordVerificationEmailDeliveryFailed(context);
+    }
 
     return {
       emailSent,
@@ -1186,7 +1899,7 @@ export class AuthService {
       }>;
     });
 
-    await this.smsService.sendOtp({
+    const deliverySucceeded = await this.smsService.sendOtp({
       to: phoneNumber,
       code,
       expiresInMinutes: Math.round(OTP_TTL_MS / (60 * 1000)),
@@ -1197,10 +1910,14 @@ export class AuthService {
       purpose: createdChallenge.purpose,
       expiresAt,
       resendAvailableAt,
+      deliverySucceeded,
     };
   }
 
-  private async assertCanResendVerificationEmail(userId: string) {
+  private async assertCanResendVerificationEmail(
+    userId: string,
+    auditContext?: AuditContext,
+  ) {
     const now = new Date();
     const lastIssuedToken = await this.prisma.emailVerificationToken.findFirst({
       where: {
@@ -1219,10 +1936,16 @@ export class AuthService {
       now.getTime() - lastIssuedToken.createdAt.getTime() <
         EMAIL_VERIFICATION_RESEND_COOLDOWN_MS
     ) {
-      throw new HttpException(
-        "Please wait before requesting another verification email",
-        HttpStatus.TOO_MANY_REQUESTS,
+      this.authMetricsService.recordVerificationResend(
+        "throttled",
+        "cooldown_active",
       );
+      this.logAuthAuditEvent("auth.email_verification.resend", "rate_limited", {
+        actorUserId: userId,
+        requestId: auditContext?.requestId,
+        reason: "cooldown_active",
+      });
+      throw authTooManyRequests(AUTH_ERROR_MESSAGES.verificationEmailCooldown);
     }
 
     const recentIssueCount = await this.prisma.emailVerificationToken.count({
@@ -1235,9 +1958,20 @@ export class AuthService {
     });
 
     if (recentIssueCount >= EMAIL_VERIFICATION_RESEND_LIMIT) {
-      throw new HttpException(
-        "Too many verification emails requested. Please try again later",
-        HttpStatus.TOO_MANY_REQUESTS,
+      this.authMetricsService.recordVerificationResend(
+        "throttled",
+        "window_limit_exceeded",
+      );
+      this.logAuthAuditEvent("auth.email_verification.resend", "rate_limited", {
+        actorUserId: userId,
+        requestId: auditContext?.requestId,
+        reason: "window_limit_exceeded",
+        metadata: {
+          recentIssueCount,
+        },
+      });
+      throw authTooManyRequests(
+        AUTH_ERROR_MESSAGES.verificationEmailRateLimit,
       );
     }
   }
@@ -1280,7 +2014,10 @@ export class AuthService {
     return true;
   }
 
-  private async assertAnonymousPasswordResetAllowed(email: string) {
+  private async assertAnonymousPasswordResetAllowed(
+    email: string,
+    auditContext?: AuditContext,
+  ) {
     const normalizedEmail = this.normalizeEmailAddress(email);
     const keyHash = this.hashVerificationToken(`password-reset:${normalizedEmail}`);
     const cooldownKey = `auth:password-reset:cooldown:${keyHash}`;
@@ -1295,14 +2032,18 @@ export class AuthService {
     );
 
     if (cooldownAccepted === false) {
-      this.logSecurityEvent("warn", "Password reset request rate limited", {
-        outcome: "cooldown_active",
-        emailHash: this.hashSecurityIdentifier(normalizedEmail),
-      });
-      throw new HttpException(
-        "Please wait before requesting another password reset email.",
-        HttpStatus.TOO_MANY_REQUESTS,
+      this.authMetricsService.recordPasswordResetRequest(
+        "throttled",
+        "cooldown_active",
       );
+      this.logAuthAuditEvent("auth.password_reset.request", "rate_limited", {
+        requestId: auditContext?.requestId,
+        reason: "cooldown_active",
+        metadata: {
+          emailHash: this.hashSecurityIdentifier(normalizedEmail),
+        },
+      });
+      throw authTooManyRequests(AUTH_ERROR_MESSAGES.passwordResetCooldown);
     }
 
     const requestCount = await this.cacheService.increment(
@@ -1314,19 +2055,26 @@ export class AuthService {
       typeof requestCount === "number" &&
       requestCount > PASSWORD_RESET_WINDOW_LIMIT
     ) {
-      this.logSecurityEvent("warn", "Password reset request rate limited", {
-        outcome: "window_limit_exceeded",
-        emailHash: this.hashSecurityIdentifier(normalizedEmail),
-        requestCount,
-      });
-      throw new HttpException(
-        "Too many password reset requests. Please try again later.",
-        HttpStatus.TOO_MANY_REQUESTS,
+      this.authMetricsService.recordPasswordResetRequest(
+        "throttled",
+        "window_limit_exceeded",
       );
+      this.logAuthAuditEvent("auth.password_reset.request", "rate_limited", {
+        requestId: auditContext?.requestId,
+        reason: "window_limit_exceeded",
+        metadata: {
+          emailHash: this.hashSecurityIdentifier(normalizedEmail),
+          requestCount,
+        },
+      });
+      throw authTooManyRequests(AUTH_ERROR_MESSAGES.passwordResetRateLimit);
     }
   }
 
-  private async assertCanIssueMobileOtp(userId: string) {
+  private async assertCanIssueMobileOtp(
+    userId: string,
+    auditContext?: AuditContext,
+  ) {
     const now = new Date();
     const latestChallenge = await this.prisma.mobileOtpChallenge.findFirst({
       where: {
@@ -1345,14 +2093,13 @@ export class AuthService {
       latestChallenge &&
       latestChallenge.resendAvailableAt.getTime() > now.getTime()
     ) {
-      this.logSecurityEvent("warn", "Mobile OTP request rate limited", {
+      this.authMetricsService.recordOtpRequest("throttled", "cooldown_active");
+      this.logAuthAuditEvent("auth.mobile_otp.request", "rate_limited", {
         actorUserId: userId,
-        outcome: "cooldown_active",
+        requestId: auditContext?.requestId,
+        reason: "cooldown_active",
       });
-      throw new HttpException(
-        "Please wait before requesting another verification code.",
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
+      throw authTooManyRequests(AUTH_ERROR_MESSAGES.mobileOtpRequestCooldown);
     }
 
     const recentIssueCount = await this.prisma.mobileOtpChallenge.count({
@@ -1366,15 +2113,19 @@ export class AuthService {
     });
 
     if (recentIssueCount >= OTP_WINDOW_LIMIT) {
-      this.logSecurityEvent("warn", "Mobile OTP request rate limited", {
-        actorUserId: userId,
-        outcome: "window_limit_exceeded",
-        recentIssueCount,
-      });
-      throw new HttpException(
-        "Too many verification codes requested. Please try again later.",
-        HttpStatus.TOO_MANY_REQUESTS,
+      this.authMetricsService.recordOtpRequest(
+        "throttled",
+        "window_limit_exceeded",
       );
+      this.logAuthAuditEvent("auth.mobile_otp.request", "rate_limited", {
+        actorUserId: userId,
+        requestId: auditContext?.requestId,
+        reason: "window_limit_exceeded",
+        metadata: {
+          recentIssueCount,
+        },
+      });
+      throw authTooManyRequests(AUTH_ERROR_MESSAGES.mobileOtpRequestRateLimit);
     }
   }
 
@@ -1432,18 +2183,78 @@ export class AuthService {
     const normalizedSessionId = currentSessionId?.trim();
 
     if (!normalizedSessionId) {
-      throw new UnauthorizedException("Invalid authentication token");
+      throw authUnauthorized();
     }
 
     return normalizedSessionId;
   }
 
-  private logSecurityEvent(
-    level: "log" | "warn" | "debug" | "verbose",
+  private getSessionRevokeOutcome(
+    result: SessionRevokeResult,
+  ): "remote_sign_out" | "already_inactive" {
+    return result.status === "already_inactive"
+      ? "already_inactive"
+      : "remote_sign_out";
+  }
+
+  private throwThrottleException(
+    action: string,
+    decision: AuthThrottleDecision,
     message: string,
-    metadata: Record<string, unknown>,
+    input: {
+      actorUserId?: string | null;
+      requestContext?: AuthActionContext;
+      targetType?: string | null;
+      targetId?: string | null;
+      reason?: string | null;
+      metadata?: Record<string, unknown>;
+    },
+  ): never {
+    this.logAuthAuditEvent(action, "rate_limited", {
+      actorUserId: input.actorUserId,
+      requestId: input.requestContext?.requestId,
+      sessionId: input.requestContext?.sessionId,
+      targetType: input.targetType,
+      targetId: input.targetId,
+      reason: input.reason ?? decision.reason,
+      policySource: decision.policyName,
+      metadata: {
+        throttleDimension: decision.dimension,
+        riskLevel: decision.riskLevel,
+        challengeRecommended: decision.challengeRecommended,
+        ...input.metadata,
+      },
+    });
+
+    throw authTooManyRequests(message);
+  }
+
+  private logAuthAuditEvent(
+    action: string,
+    outcome: SecurityAuditOutcome,
+    input: {
+      actorUserId?: string | null;
+      requestId?: string | null;
+      sessionId?: string | null;
+      targetType?: string | null;
+      targetId?: string | null;
+      reason?: string | null;
+      policySource?: string | null;
+      metadata?: Record<string, unknown>;
+    },
   ) {
-    this.logger.logWithMeta(level, message, metadata, "AuthSecurity");
+    this.securityAuditService.log({
+      action,
+      outcome,
+      actorUserId: input.actorUserId,
+      requestId: input.requestId,
+      sessionId: input.sessionId,
+      targetType: input.targetType,
+      targetId: input.targetId,
+      reason: input.reason,
+      policySource: input.policySource,
+      metadata: input.metadata,
+    });
   }
 
   private maskPhoneNumber(phoneNumber: string): string {

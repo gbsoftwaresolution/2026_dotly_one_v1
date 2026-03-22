@@ -1,7 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 import { AppLoggerService } from "../logging/logging.service";
+import {
+  AuthMetricsService,
+  noopAuthMetricsService,
+} from "../../modules/auth/auth-metrics.service";
 
 import { buildEmailVerificationTemplate } from "./templates/email-verification.template";
 import { buildPasswordResetTemplate } from "./templates/password-reset.template";
@@ -15,6 +19,8 @@ type MailConfigurationKey =
 
 export interface MailConfigurationStatus {
   configured: boolean;
+  verificationConfigured: boolean;
+  passwordResetConfigured: boolean;
   missingSettings: MailConfigurationKey[];
 }
 
@@ -23,6 +29,8 @@ export class MailService {
   constructor(
     private readonly configService: ConfigService,
     private readonly logger: AppLoggerService,
+    @Optional()
+    private readonly authMetricsService: AuthMetricsService = noopAuthMetricsService,
   ) {}
 
   isConfigured(): boolean {
@@ -54,6 +62,8 @@ export class MailService {
 
     return {
       configured: missingSettings.length === 0,
+      verificationConfigured: this.isEmailVerificationConfigured(),
+      passwordResetConfigured: this.isPasswordResetConfigured(),
       missingSettings,
     };
   }
@@ -64,6 +74,12 @@ export class MailService {
     expiresAt: Date;
   }): Promise<boolean> {
     if (!this.isEmailVerificationConfigured()) {
+      this.authMetricsService.recordDelivery(
+        "email",
+        "verification",
+        "mailgun",
+        "provider_unavailable",
+      );
       this.logger.warn(
         "Mail delivery skipped because Mailgun is not fully configured",
         "MailService",
@@ -95,14 +111,22 @@ export class MailService {
       });
 
       if (!response.ok) {
-        const failureBody = await response.text();
+        await response.text();
+
+        this.authMetricsService.recordDelivery(
+          "email",
+          "verification",
+          "mailgun",
+          "provider_error",
+        );
 
         this.logger.errorWithMeta(
           "Mailgun email delivery failed",
           {
             status: response.status,
+            statusText: response.statusText,
             recipientDomain: this.getEmailDomain(options.to),
-            responseBody: failureBody.slice(0, 500),
+            providerRequestId: this.getProviderRequestId(response),
           },
           undefined,
           "MailService",
@@ -111,8 +135,22 @@ export class MailService {
         return false;
       }
 
+      this.authMetricsService.recordDelivery(
+        "email",
+        "verification",
+        "mailgun",
+        "sent",
+      );
+
       return true;
     } catch (error) {
+      this.authMetricsService.recordDelivery(
+        "email",
+        "verification",
+        "mailgun",
+        "provider_error",
+      );
+
       this.logger.errorWithMeta(
         "Mailgun email delivery request failed",
         {
@@ -136,6 +174,12 @@ export class MailService {
     expiresAt: Date;
   }): Promise<boolean> {
     if (!this.isPasswordResetConfigured()) {
+      this.authMetricsService.recordDelivery(
+        "email",
+        "password_reset",
+        "mailgun",
+        "provider_unavailable",
+      );
       this.logger.warn(
         "Password reset email skipped because mail delivery is not fully configured",
         "MailService",
@@ -212,14 +256,22 @@ export class MailService {
       });
 
       if (!response.ok) {
-        const failureBody = await response.text();
+        await response.text();
+
+        this.authMetricsService.recordDelivery(
+          "email",
+          "password_reset",
+          "mailgun",
+          "provider_error",
+        );
 
         this.logger.errorWithMeta(
           "Mailgun email delivery failed",
           {
             status: response.status,
+            statusText: response.statusText,
             recipientDomain: this.getEmailDomain(options.to),
-            responseBody: failureBody.slice(0, 500),
+            providerRequestId: this.getProviderRequestId(response),
           },
           undefined,
           "MailService",
@@ -228,8 +280,22 @@ export class MailService {
         return false;
       }
 
+      this.authMetricsService.recordDelivery(
+        "email",
+        "password_reset",
+        "mailgun",
+        "sent",
+      );
+
       return true;
     } catch (error) {
+      this.authMetricsService.recordDelivery(
+        "email",
+        "password_reset",
+        "mailgun",
+        "provider_error",
+      );
+
       this.logger.errorWithMeta(
         "Mailgun email delivery request failed",
         {
@@ -249,6 +315,14 @@ export class MailService {
 
   private getMailgunMessagesUrl(): string {
     return `https://api.mailgun.net/v3/${this.getMailgunDomain()}/messages`;
+  }
+
+  private getProviderRequestId(response: Response): string | null {
+    return (
+      response.headers.get("x-request-id") ??
+      response.headers.get("x-message-id") ??
+      response.headers.get("message-id")
+    );
   }
 
   private getEmailDomain(email: string): string {

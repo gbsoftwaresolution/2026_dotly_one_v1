@@ -28,7 +28,7 @@ describe("POST /api/users/me/sessions/revoke-others", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(401);
-    expect(payload).toEqual({ message: "Unauthorized" });
+    expect(payload).toEqual({ message: "Invalid authentication token" });
   });
 
   it("proxies the authenticated revoke-others request", async () => {

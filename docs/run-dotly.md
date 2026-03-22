@@ -9,6 +9,8 @@ This guide covers how to run Dotly locally in development mode and how to start 
 - PostgreSQL
 - Redis
 
+Backend password hashing uses `bcryptjs`, so there is no native `bcrypt` addon to compile or rebuild during install or deploy.
+
 ## Backend Environment
 
 Create the backend env file:
@@ -22,6 +24,7 @@ Minimum required backend values:
 ```env
 NODE_ENV=development
 PORT=3000
+TRUST_PROXY=false
 DATABASE_URL=postgresql://naveenprasath-p@localhost/dotly_one_id?host=/var/run/postgresql
 JWT_SECRET=replace-with-a-long-random-secret
 JWT_EXPIRES_IN=7d
@@ -41,6 +44,26 @@ TWILIO_AUTH_TOKEN=
 TWILIO_FROM_PHONE_NUMBER=
 QR_BASE_URL=http://localhost:3001/q
 ```
+
+Optional frontend auth cookie overrides:
+
+```env
+AUTH_COOKIE_SAME_SITE=lax
+AUTH_COOKIE_SECURE=
+AUTH_COOKIE_DOMAIN=
+```
+
+Production hardening rules:
+
+- `JWT_SECRET` must be at least 32 characters, use multiple character classes, and cannot be a placeholder.
+- `JWT_EXPIRES_IN` must use the supported duration format: `s`, `m`, `h`, or `d` suffixes.
+- `TRUST_PROXY` must be set explicitly in production to match the actual ingress chain. Use `false` for direct edge deployment, `true` only when every inbound hop is trusted, or a bounded hop count / named Express preset such as `1` or `loopback` when traffic crosses known reverse proxies.
+- `CORS_ORIGINS`, `FRONTEND_VERIFICATION_URL_BASE`, `FRONTEND_PASSWORD_RESET_URL_BASE`, and `QR_BASE_URL` must use trusted HTTPS origins in production. Localhost, `.local`, `.example`, and `.internal` hosts are rejected.
+- `NEXT_PUBLIC_API_BASE_URL` must point at the final HTTPS backend origin in production. Frontend startup now rejects insecure or localhost API origins.
+- Frontend auth cookies are `HttpOnly`, `priority=high`, `Secure` in production, and `SameSite=Lax` by default. If you need cross-subdomain auth continuity, set `AUTH_COOKIE_DOMAIN` to the registrable domain and keep `AUTH_COOKIE_SECURE=true`.
+- `AUTH_COOKIE_SAME_SITE=none` is only valid with `AUTH_COOKIE_SECURE=true` and should be reserved for deliberate cross-site embedding or federation cases.
+- Mailgun is optional in development, but production startup now fails fast unless `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, `MAIL_FROM_EMAIL`, `FRONTEND_VERIFICATION_URL_BASE`, and `FRONTEND_PASSWORD_RESET_URL_BASE` are all present.
+- Twilio is optional in every environment, but partial Twilio configuration is rejected. Configure all three values together or leave all three blank.
 
 Mail behavior:
 
@@ -88,7 +111,7 @@ Mail behavior:
 
 - The analytics summary now tracks verification link issuance, resend usage, successful verification completion, and trust-policy block frequency in addition to persona activity metrics.
 - The protected frontend analytics page surfaces those verification metrics so product and support teams can spot whether trust friction is rising.
-- `GET /v1/health/verification` returns verification runtime diagnostics for staging and support use, including mail configuration status, required migration coverage, trust-factor availability, and aggregate token counters.
+- `GET /v1/health/verification` returns verification runtime diagnostics for staging and support use, including mail and SMS configuration status, verification dependency readiness, required migration coverage, trust-factor availability, and aggregate token counters.
 - The diagnostics endpoint intentionally avoids PII and does not expose raw verification tokens or user email addresses.
 
 ## Frontend Environment
@@ -163,6 +186,10 @@ Frontend URL:
 
 Production mode assumes env files are already set correctly and the database is reachable.
 
+Before booting in production, ensure the frontend base URLs and allowed CORS origins already point to their final HTTPS domains. The backend now rejects placeholder secrets and untrusted/local URL bases during startup.
+
+If the backend runs behind a load balancer or ingress, set `TRUST_PROXY` before rollout so Express computes `request.ip` and `request.protocol` from the trusted forwarded chain. Rate limits, abuse controls, request correlation, and security diagnostics all depend on that setting being correct.
+
 ### 1. Build the backend
 
 From the repo root:
@@ -172,6 +199,8 @@ npm install
 npm run prisma:generate
 npm run build
 ```
+
+No extra native hashing rebuild step is required after install because the backend no longer depends on the native `bcrypt` module.
 
 If this is a fresh deployment, apply migrations before starting:
 
@@ -229,10 +258,13 @@ npm run build
 - Backend exposes `/v1/health/verification` for non-PII verification runtime diagnostics.
 - Frontend expects the backend at `NEXT_PUBLIC_API_BASE_URL`.
 - Local CORS is configured for `http://localhost:3001` by default.
+- Reverse proxy deployments should preserve `X-Forwarded-For`, `X-Forwarded-Proto`, and `X-Request-Id`. Dotly sanitizes invalid incoming request IDs and emits hardened response headers including HSTS in production.
 - Backend startup attempts a Redis connection in the background when `REDIS_ENABLED=true`; if Redis is unavailable the app still serves traffic and `/v1/health/ready` reports a degraded cache check.
 - Set `REDIS_ENABLED=false` in environments where Redis is intentionally not part of the runtime contract; readiness then reports cache as disabled.
 - Readiness checks do not force a fresh Redis reconnect on every probe; they report the latest known cache state and last attempted connection timestamp.
 - Backend logs are structured JSON and include `x-request-id` correlation for request/exception tracing.
+- Backend logs now redact secrets and mask auth-related identifiers such as user IDs, session IDs, challenge IDs, emails, and configured URL credentials when those values appear in structured metadata.
 - Unverified accounts can still log in, but trust-sensitive product surfaces continue to gate on the backend verification policy.
 - Twilio is the SMS gateway for mobile OTP enrollment. Use a verified sender number that can deliver to the regions you support.
+- Mailgun and Twilio failures intentionally degrade the affected auth flows without exposing provider internals to end users. Alert on repeated `provider_error` outcomes in metrics or repeated degraded `/v1/health/verification` responses before promoting traffic.
 - The current trust model is now email verification plus verified mobile OTP, with room for future linked auth methods or passkeys.

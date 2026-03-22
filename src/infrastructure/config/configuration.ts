@@ -1,7 +1,26 @@
+function parseTrustProxy(value: string | undefined): boolean | number | string {
+  const normalized = value?.trim().toLowerCase() ?? "";
+
+  if (!normalized || normalized === "false") {
+    return false;
+  }
+
+  if (normalized === "true") {
+    return true;
+  }
+
+  if (/^\d+$/.test(normalized)) {
+    return Number.parseInt(normalized, 10);
+  }
+
+  return normalized;
+}
+
 export const configuration = () => ({
   app: {
     nodeEnv: process.env.NODE_ENV ?? "development",
     port: Number.parseInt(process.env.PORT ?? "3000", 10),
+    trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
     corsOrigins: (process.env.CORS_ORIGINS ?? "")
       .split(",")
       .map((origin) => origin.trim())

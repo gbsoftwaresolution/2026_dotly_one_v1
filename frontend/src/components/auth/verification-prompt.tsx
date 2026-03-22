@@ -5,8 +5,8 @@ import { useState } from "react";
 
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { authApi } from "@/lib/api";
-import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
+import { classifyAuthError } from "@/lib/utils/auth-errors";
 import { cn } from "@/lib/utils/cn";
 
 import { VerificationStatusBadge } from "./verification-status-badge";
@@ -24,10 +24,7 @@ function buildVerifyHref(email: string): string {
 }
 
 function getResendFeedback(error: unknown): string {
-  if (
-    error instanceof ApiError &&
-    (error.status === 429 || /wait|too many/i.test(error.message))
-  ) {
+  if (classifyAuthError(error).kind === "throttled") {
     return "Check your inbox and spam folder. You can request another verification email in about a minute.";
   }
 

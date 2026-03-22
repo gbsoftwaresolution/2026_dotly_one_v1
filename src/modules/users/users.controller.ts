@@ -1,8 +1,18 @@
-import { Body, Controller, Get, HttpCode, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  Post,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import type { AuthenticatedUser } from "../../common/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { getClientIpAddress } from "../../common/utils/request-source.util";
 import { ChangePasswordDto } from "../auth/dto/change-password.dto";
 import { RequestMobileOtpDto } from "../auth/dto/request-mobile-otp.dto";
 import { RevokeSessionDto } from "../auth/dto/revoke-session.dto";
@@ -10,9 +20,29 @@ import { VerifyMobileOtpDto } from "../auth/dto/verify-mobile-otp.dto";
 
 import { UsersService } from "./users.service";
 
+type RequestLike = {
+  ip?: string;
+  headers?: { [key: string]: string | string[] | undefined };
+  socket?: { remoteAddress?: string };
+};
+
 @Controller("users")
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  private buildRequestContext(
+    requestId?: string,
+    userAgent?: string,
+    request?: RequestLike,
+    sessionId?: string,
+  ) {
+    return {
+      requestId,
+      userAgent,
+      sessionId,
+      ipAddress: getClientIpAddress(request),
+    };
+  }
 
   @UseGuards(JwtAuthGuard)
   @Get("me")
@@ -22,8 +52,16 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Post("me/verification/resend")
-  resendVerificationEmail(@CurrentUser() user: AuthenticatedUser) {
-    return this.usersService.resendVerificationEmail(user.id);
+  resendVerificationEmail(
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
+  ) {
+    return this.usersService.resendVerificationEmail(
+      user.id,
+      this.buildRequestContext(requestId, userAgent, request, user.sessionId),
+    );
   }
 
   @UseGuards(JwtAuthGuard)
@@ -31,11 +69,15 @@ export class UsersController {
   changePassword(
     @CurrentUser() user: AuthenticatedUser,
     @Body() changePasswordDto: ChangePasswordDto,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
   ) {
     return this.usersService.changePassword(
       user.id,
       changePasswordDto,
       user.sessionId,
+      this.buildRequestContext(requestId, userAgent, request, user.sessionId),
     );
   }
 
@@ -44,8 +86,15 @@ export class UsersController {
   requestMobileOtp(
     @CurrentUser() user: AuthenticatedUser,
     @Body() requestMobileOtpDto: RequestMobileOtpDto,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
   ) {
-    return this.usersService.requestMobileOtp(user.id, requestMobileOtpDto);
+    return this.usersService.requestMobileOtp(
+      user.id,
+      requestMobileOtpDto,
+      this.buildRequestContext(requestId, userAgent, request, user.sessionId),
+    );
   }
 
   @UseGuards(JwtAuthGuard)
@@ -53,8 +102,15 @@ export class UsersController {
   verifyMobileOtp(
     @CurrentUser() user: AuthenticatedUser,
     @Body() verifyMobileOtpDto: VerifyMobileOtpDto,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
   ) {
-    return this.usersService.verifyMobileOtp(user.id, verifyMobileOtpDto);
+    return this.usersService.verifyMobileOtp(
+      user.id,
+      verifyMobileOtpDto,
+      this.buildRequestContext(requestId, userAgent, request, user.sessionId),
+    );
   }
 
   @UseGuards(JwtAuthGuard)

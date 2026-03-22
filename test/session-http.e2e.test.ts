@@ -30,7 +30,15 @@ const sessionCalls = {
   revokeOthers: [] as Array<{ userId: string; currentSessionId: string }>,
 };
 
-let sessionValidationResult: { id: string } | null = { id: SESSION_CURRENT_ID };
+let sessionValidationResult:
+  | { status: "active"; session: { id: string; expiresAt: Date } }
+  | { status: "missing" } = {
+  status: "active",
+  session: {
+    id: SESSION_CURRENT_ID,
+    expiresAt: new Date("2026-03-28T09:00:00.000Z"),
+  },
+};
 
 const usersServiceMock = {
   listSessions: async (userId: string, sessionId?: string) => {
@@ -177,7 +185,13 @@ describe("Session HTTP E2E", () => {
 
   it("lists tracked sessions for the authenticated user", async () => {
     sessionCalls.list.length = 0;
-    sessionValidationResult = { id: SESSION_CURRENT_ID };
+    sessionValidationResult = {
+      status: "active",
+      session: {
+        id: SESSION_CURRENT_ID,
+        expiresAt: new Date("2026-03-28T09:00:00.000Z"),
+      },
+    };
     const token = await jwtService.signAsync({
       sub: "user-1",
       email: "user@example.com",
@@ -204,7 +218,13 @@ describe("Session HTTP E2E", () => {
 
   it("revokes a selected session for the authenticated user", async () => {
     sessionCalls.revoke.length = 0;
-    sessionValidationResult = { id: SESSION_CURRENT_ID };
+    sessionValidationResult = {
+      status: "active",
+      session: {
+        id: SESSION_CURRENT_ID,
+        expiresAt: new Date("2026-03-28T09:00:00.000Z"),
+      },
+    };
     const token = await jwtService.signAsync({
       sub: "user-1",
       email: "user@example.com",
@@ -236,7 +256,13 @@ describe("Session HTTP E2E", () => {
 
   it("revokes all other sessions for the authenticated user", async () => {
     sessionCalls.revokeOthers.length = 0;
-    sessionValidationResult = { id: SESSION_CURRENT_ID };
+    sessionValidationResult = {
+      status: "active",
+      session: {
+        id: SESSION_CURRENT_ID,
+        expiresAt: new Date("2026-03-28T09:00:00.000Z"),
+      },
+    };
     const token = await jwtService.signAsync({
       sub: "user-1",
       email: "user@example.com",
@@ -266,11 +292,38 @@ describe("Session HTTP E2E", () => {
   });
 
   it("rejects requests when the tracked session has been revoked", async () => {
-    sessionValidationResult = null;
+    sessionValidationResult = {
+      status: "missing",
+    };
     const token = await jwtService.signAsync({
       sub: "user-1",
       email: "user@example.com",
       sessionId: SESSION_CURRENT_ID,
+    });
+
+    const response = await fetch(`${baseUrl}/v1/users/me/sessions`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 401);
+    assert.equal(payload.success, false);
+    assert.equal(payload.message, "Invalid authentication token");
+  });
+
+  it("rejects requests when the JWT does not carry a tracked session id", async () => {
+    sessionValidationResult = {
+      status: "active",
+      session: {
+        id: SESSION_CURRENT_ID,
+        expiresAt: new Date("2026-03-28T09:00:00.000Z"),
+      },
+    };
+    const token = await jwtService.signAsync({
+      sub: "user-1",
+      email: "user@example.com",
     });
 
     const response = await fetch(`${baseUrl}/v1/users/me/sessions`, {

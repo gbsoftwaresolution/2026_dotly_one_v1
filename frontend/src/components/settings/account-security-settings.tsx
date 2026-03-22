@@ -19,10 +19,10 @@ import { TrustSignalCard } from "@/components/settings/trust-signal-card";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { authApi } from "@/lib/api";
-import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
 import { cn } from "@/lib/utils/cn";
 import type { RequestMobileOtpResult, SessionListResult } from "@/types/auth";
+import { classifyAuthError } from "@/lib/utils/auth-errors";
 import type {
   UserMobileOtpEnrollment,
   UserProfile,
@@ -93,10 +93,7 @@ function formatMobileOtpTime(isoTimestamp: string | undefined): string | null {
 }
 
 function getResendFeedback(error: unknown): FeedbackState {
-  if (
-    error instanceof ApiError &&
-    (error.status === 429 || /wait|too many/i.test(error.message))
-  ) {
+  if (classifyAuthError(error).kind === "throttled") {
     return {
       tone: "warning",
       message:
@@ -112,10 +109,9 @@ function getResendFeedback(error: unknown): FeedbackState {
 }
 
 function getOtpFeedback(error: unknown): FeedbackState {
-  if (
-    error instanceof ApiError &&
-    (error.status === 429 || /wait|too many/i.test(error.message))
-  ) {
+  const classifiedError = classifyAuthError(error);
+
+  if (classifiedError.kind === "throttled") {
     return {
       tone: "warning",
       message:
@@ -123,11 +119,18 @@ function getOtpFeedback(error: unknown): FeedbackState {
     };
   }
 
+  if (classifiedError.kind === "unauthorized") {
+    return {
+      tone: "warning",
+      message: "Your session expired. Sign in again to continue security changes.",
+    };
+  }
+
   return {
     tone: "error",
     message:
-      error instanceof ApiError
-        ? error.message
+      classifiedError.kind !== "unknown"
+        ? classifiedError.message
         : "Dotly could not complete mobile verification right now.",
   };
 }
@@ -607,11 +610,15 @@ function ChangePasswordCard() {
       };
       setFeedback(nextFeedback);
     } catch (error) {
+      const classifiedError = classifyAuthError(error);
+
       setFeedback({
-        tone: "error",
+        tone: classifiedError.kind === "unauthorized" ? "warning" : "error",
         message:
-          error instanceof ApiError
-            ? error.message
+          classifiedError.kind !== "unknown"
+            ? classifiedError.kind === "unauthorized"
+              ? "Your session expired. Sign in again to change your password."
+              : classifiedError.message
             : "Unable to change your password right now.",
       });
     } finally {
@@ -769,7 +776,9 @@ function MobileOtpCard({
           : "Twilio delivery is not configured in this environment, but the enrollment flow is wired and ready.",
       });
     } catch (error) {
-      if (error instanceof ApiError && error.status === 429) {
+      const classifiedError = classifyAuthError(error);
+
+      if (classifiedError.kind === "throttled") {
         setViewState("resend_blocked");
       }
 
@@ -999,11 +1008,15 @@ function SessionsCard() {
       const result: SessionListResult = await authApi.listSessions();
       setSessions(result.sessions);
     } catch (error) {
+      const classifiedError = classifyAuthError(error);
+
       setFeedback({
-        tone: "error",
+        tone: classifiedError.kind === "unauthorized" ? "warning" : "error",
         message:
-          error instanceof ApiError
-            ? error.message
+          classifiedError.kind !== "unknown"
+            ? classifiedError.kind === "unauthorized"
+              ? "Your session expired. Sign in again to load active sessions."
+              : classifiedError.message
             : "Unable to load active sessions right now.",
       });
     } finally {
@@ -1027,11 +1040,15 @@ function SessionsCard() {
       });
       await loadSessions();
     } catch (error) {
+      const classifiedError = classifyAuthError(error);
+
       setFeedback({
-        tone: "error",
+        tone: classifiedError.kind === "unauthorized" ? "warning" : "error",
         message:
-          error instanceof ApiError
-            ? error.message
+          classifiedError.kind !== "unknown"
+            ? classifiedError.kind === "unauthorized"
+              ? "Your session expired. Sign in again to manage device sign-outs."
+              : classifiedError.message
             : "Unable to sign out that device right now.",
       });
     } finally {
@@ -1054,11 +1071,15 @@ function SessionsCard() {
       });
       await loadSessions();
     } catch (error) {
+      const classifiedError = classifyAuthError(error);
+
       setFeedback({
-        tone: "error",
+        tone: classifiedError.kind === "unauthorized" ? "warning" : "error",
         message:
-          error instanceof ApiError
-            ? error.message
+          classifiedError.kind !== "unknown"
+            ? classifiedError.kind === "unauthorized"
+              ? "Your session expired. Sign in again to manage other sessions."
+              : classifiedError.message
             : "Unable to sign out your other sessions right now.",
       });
     } finally {

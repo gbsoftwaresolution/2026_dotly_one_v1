@@ -52,7 +52,11 @@ describe("JwtAuthGuard hardening", () => {
         validateSession: async (userId: string, sessionId: string) => {
           validateSessionArgs = { userId, sessionId };
           return {
-            id: sessionId,
+            status: "active",
+            session: {
+              id: sessionId,
+              expiresAt: new Date(Date.now() + 60_000),
+            },
           };
         },
       } as any,
@@ -110,7 +114,11 @@ describe("JwtAuthGuard hardening", () => {
       } as any,
       {
         validateSession: async () => ({
-          id: "session-1",
+          status: "active",
+          session: {
+            id: "session-1",
+            expiresAt: new Date(Date.now() + 60_000),
+          },
         }),
       } as any,
     );
@@ -155,7 +163,58 @@ describe("JwtAuthGuard hardening", () => {
         },
       } as any,
       {
-        validateSession: async () => null,
+        validateSession: async () => ({
+          status: "missing",
+        }),
+      } as any,
+    );
+
+    await assert.rejects(
+      guard.canActivate({
+        switchToHttp: () => ({
+          getRequest: () => ({
+            headers: {
+              authorization: "Bearer token",
+            },
+          }),
+        }),
+      } as any),
+      (error: unknown) => {
+        assert.ok(error instanceof UnauthorizedException);
+        assert.equal(error.message, "Invalid authentication token");
+        return true;
+      },
+    );
+  });
+
+  it("rejects authenticated tokens that are missing a tracked session id", async () => {
+    const guard = new JwtAuthGuard(
+      {
+        verifyAsync: async () => ({
+          sub: "user-1",
+          email: "user@example.com",
+        }),
+      } as any,
+      {
+        get: (_key: string, fallback: string) => fallback,
+      } as any,
+      {
+        user: {
+          findUnique: async () => ({
+            id: "user-1",
+            email: "user@example.com",
+            isVerified: false,
+          }),
+        },
+      } as any,
+      {
+        validateSession: async () => ({
+          status: "active",
+          session: {
+            id: "session-1",
+            expiresAt: new Date(Date.now() + 60_000),
+          },
+        }),
       } as any,
     );
 

@@ -7,10 +7,27 @@ import { NextFunction, Request, Response } from "express";
 
 import { AppModule } from "./app.module";
 import { ResponseEnvelopeInterceptor } from "./common/interceptors/response-envelope.interceptor";
+import {
+  getClientIpAddress,
+  getForwardedProtocol,
+  getHeaderValue,
+} from "./common/utils/request-source.util";
 import { CacheService } from "./infrastructure/cache/cache.service";
 import { PrismaService } from "./infrastructure/database/prisma.service";
 import { AppLoggerService } from "./infrastructure/logging/logging.service";
 import { VerificationDiagnosticsService } from "./modules/auth/verification-diagnostics.service";
+
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:/-]{1,128}$/;
+
+function resolveRequestId(request: Request): string {
+  const requestIdHeader = getHeaderValue(request, "x-request-id");
+
+  if (requestIdHeader && REQUEST_ID_PATTERN.test(requestIdHeader)) {
+    return requestIdHeader;
+  }
+
+  return randomUUID();
+}
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {
@@ -23,15 +40,35 @@ async function bootstrap(): Promise<void> {
   const verificationDiagnosticsService = app.get(VerificationDiagnosticsService);
   app.useLogger(logger);
   app.setGlobalPrefix("v1");
+  const configService = app.get(ConfigService);
+  const port = configService.get<number>("app.port", 3000);
+  const corsOrigins = configService.get<string[]>("app.corsOrigins", []);
+  const trustProxy = configService.get<boolean | number | string>(
+    "app.trustProxy",
+    false,
+  );
+  const nodeEnv = configService.get<string>("app.nodeEnv", "development");
+  const expressApp = app.getHttpAdapter().getInstance();
+
+  expressApp.set("trust proxy", trustProxy);
+  expressApp.disable("x-powered-by");
+
   app.use((request: Request, response: Response, next: NextFunction) => {
-    const requestIdHeader = request.headers["x-request-id"];
-    const requestId =
-      typeof requestIdHeader === "string" && requestIdHeader.trim().length > 0
-        ? requestIdHeader
-        : randomUUID();
+    const requestId = resolveRequestId(request);
 
     request.headers["x-request-id"] = requestId;
     response.setHeader("x-request-id", requestId);
+    response.setHeader("x-content-type-options", "nosniff");
+    response.setHeader("x-frame-options", "DENY");
+    response.setHeader("referrer-policy", "same-origin");
+
+    if (nodeEnv === "production") {
+      response.setHeader(
+        "strict-transport-security",
+        "max-age=31536000; includeSubDomains",
+      );
+    }
+
     next();
   });
   app.use((request: Request, response: Response, next: NextFunction) => {
@@ -48,6 +85,8 @@ async function bootstrap(): Promise<void> {
           path: request.originalUrl ?? request.url,
           statusCode: response.statusCode,
           requestId: response.getHeader("x-request-id"),
+          protocol: getForwardedProtocol(request),
+          clientIpPresent: Boolean(getClientIpAddress(request)),
           durationMs: Number(durationMs.toFixed(2)),
         },
         "HttpRequest",
@@ -69,17 +108,14 @@ async function bootstrap(): Promise<void> {
   app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
   app.enableShutdownHooks();
 
-  const configService = app.get(ConfigService);
-  const port = configService.get<number>("app.port", 3000);
-  const corsOrigins = configService.get<string[]>("app.corsOrigins", []);
-
   logger.logWithMeta(
     "log",
     "Starting Dotly backend",
     {
       port,
       corsOrigins,
-      redisUrl: cacheService.getRedisUrl(),
+      trustProxy,
+      redisEnabled: cacheService.isEnabled(),
     },
     "Bootstrap",
   );

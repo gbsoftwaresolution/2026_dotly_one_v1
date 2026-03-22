@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
+import { AuthAbuseProtectionService } from "../src/modules/auth/auth-abuse-protection.service";
+import { AuthMetricsService } from "../src/modules/auth/auth-metrics.service";
 import { AuthService } from "../src/modules/auth/auth.service";
 
 interface UserRecord {
@@ -23,6 +25,28 @@ interface EmailVerificationTokenRecord {
 
 function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
+}
+
+function createAuthAbuseProtectionService() {
+  const counters = new Map<string, number>();
+  const locks = new Map<string, string>();
+
+  return new AuthAbuseProtectionService({
+    get: async (key: string) => locks.get(key) ?? null,
+    increment: async (key: string) => {
+      const nextValue = (counters.get(key) ?? 0) + 1;
+      counters.set(key, nextValue);
+      return nextValue;
+    },
+    setIfAbsent: async (key: string, value: string) => {
+      if (locks.has(key)) {
+        return false;
+      }
+
+      locks.set(key, value);
+      return true;
+    },
+  } as any);
 }
 
 function selectFields<T>(
@@ -95,11 +119,14 @@ function createAuthServiceHarness(options?: {
   users?: UserRecord[];
   tokens?: EmailVerificationTokenRecord[];
   mailDeliveryEnabled?: boolean;
+  authMetricsService?: AuthMetricsService;
+  authAbuseProtectionService?: AuthAbuseProtectionService;
 }) {
   const state = {
     users: [...(options?.users ?? [])],
     tokens: [...(options?.tokens ?? [])],
     sentMails: [] as Array<{ to: string; token: string; expiresAt: Date }>,
+    audits: [] as Array<Record<string, unknown>>,
     analyticsEvents: [] as Array<{
       type: string;
       payload: Record<string, unknown>;
@@ -290,6 +317,15 @@ function createAuthServiceHarness(options?: {
     undefined as any,
     undefined as any,
     undefined as any,
+    undefined as any,
+    undefined as any,
+    {
+      log: (event: Record<string, unknown>) => {
+        state.audits.push(event);
+      },
+    } as any,
+    options?.authMetricsService,
+    options?.authAbuseProtectionService,
   );
 
   return {
@@ -300,7 +336,8 @@ function createAuthServiceHarness(options?: {
 
 describe("AuthService email verification hardening", () => {
   it("creates an unverified user and stores only a hashed verification token on signup", async () => {
-    const { service, state } = createAuthServiceHarness();
+    const authMetricsService = new AuthMetricsService();
+    const { service, state } = createAuthServiceHarness({ authMetricsService });
 
     const result = await service.signup({
       email: "new@dotly.one",
@@ -326,6 +363,44 @@ describe("AuthService email verification hardening", () => {
         emailSent: true,
       },
     });
+    assert.deepEqual(state.audits[0], {
+      action: "auth.signup",
+      outcome: "success",
+      actorUserId: "user-1",
+      requestId: undefined,
+      targetType: "user",
+      targetId: "user-1",
+      sessionId: undefined,
+      reason: undefined,
+      policySource: undefined,
+      metadata: {
+        verificationPending: true,
+        verificationEmailSent: true,
+        mailDeliveryAvailable: true,
+      },
+    });
+    assert.equal((state.audits[1] as any).action, "auth.email_verification.issue");
+    assert.equal((state.audits[1] as any).outcome, "accepted");
+    assert.equal((state.audits[1] as any).reason, "signup");
+    assert.equal((state.audits[1] as any).actorUserId, "user-1");
+    assert.equal((state.audits[1] as any).metadata.emailSent, true);
+    assert.equal(
+      authMetricsService.getCounterValue("dotly_auth_signup_total", {
+        outcome: "success",
+        reason: "none",
+      }),
+      1,
+    );
+    assert.equal(
+      authMetricsService.getCounterValue(
+        "dotly_auth_verification_email_issue_total",
+        {
+          context: "signup",
+          outcome: "issued",
+        },
+      ),
+      1,
+    );
   });
 
   it("keeps signup successful when verification email delivery is disabled", async () => {
@@ -354,7 +429,7 @@ describe("AuthService email verification hardening", () => {
   });
 
   it("allows unverified users to log in while verification remains pending", async () => {
-    const { service } = createAuthServiceHarness();
+    const { service, state } = createAuthServiceHarness();
 
     await service.signup({
       email: "pending@dotly.one",
@@ -367,10 +442,135 @@ describe("AuthService email verification hardening", () => {
     });
 
     assert.equal(result.accessToken, "access-token");
+    assert.deepEqual(state.audits.at(-1), {
+      action: "auth.login",
+      outcome: "success",
+      actorUserId: "user-1",
+      requestId: undefined,
+      sessionId: "session-test",
+      targetType: undefined,
+      targetId: undefined,
+      reason: undefined,
+      policySource: undefined,
+      metadata: {
+        expiresAt: result.expiresAt.toISOString(),
+        hasUserAgent: false,
+        hasIpAddress: false,
+      },
+    });
+  });
+
+  it("records failed logins without leaking raw credentials", async () => {
+    const authMetricsService = new AuthMetricsService();
+    const { service, state } = createAuthServiceHarness({ authMetricsService });
+
+    await service.signup({
+      email: "pending@dotly.one",
+      password: "SecurePass123!",
+    });
+
+    await assert.rejects(
+      () =>
+        service.login({
+          email: "pending@dotly.one",
+          password: "WrongPass123!",
+        }),
+      /invalid email or password/i,
+    );
+
+    assert.deepEqual(state.audits.at(-1), {
+      action: "auth.login",
+      outcome: "failure",
+      actorUserId: "user-1",
+      requestId: undefined,
+      sessionId: undefined,
+      targetType: undefined,
+      targetId: undefined,
+      reason: "invalid_password",
+      policySource: undefined,
+      metadata: undefined,
+    });
+    assert.doesNotMatch(JSON.stringify(state.audits), /WrongPass123!/);
+    assert.equal(
+      authMetricsService.getCounterValue("dotly_auth_login_total", {
+        outcome: "failure",
+        reason: "invalid_password",
+      }),
+      1,
+    );
+  });
+
+  it("temporarily locks repeated failed logins for the same account", async () => {
+    const authMetricsService = new AuthMetricsService();
+    const { service, state } = createAuthServiceHarness({
+      authMetricsService,
+      authAbuseProtectionService: createAuthAbuseProtectionService(),
+    });
+
+    await service.signup({
+      email: "pending@dotly.one",
+      password: "SecurePass123!",
+    });
+
+    for (let attemptIndex = 0; attemptIndex < 5; attemptIndex += 1) {
+      await assert.rejects(
+        () =>
+          service.login(
+            {
+              email: "pending@dotly.one",
+              password: "WrongPass123!",
+            },
+            { ipAddress: "203.0.113.8" },
+          ),
+        /invalid email or password/i,
+      );
+    }
+
+    await assert.rejects(
+      () =>
+        service.login(
+          {
+            email: "pending@dotly.one",
+            password: "WrongPass123!",
+          },
+          { ipAddress: "203.0.113.8" },
+        ),
+      (error: any) => {
+        assert.equal(error.getStatus(), 429);
+        assert.match(error.message, /too many failed sign-in attempts/i);
+        return true;
+      },
+    );
+
+    assert.equal(
+      authMetricsService.getCounterValue("dotly_auth_login_total", {
+        outcome: "throttled",
+        reason: "account_lockout",
+      }),
+      1,
+    );
+    assert.deepEqual(state.audits.at(-1), {
+      action: "auth.login",
+      outcome: "rate_limited",
+      actorUserId: undefined,
+      requestId: undefined,
+      sessionId: undefined,
+      targetType: undefined,
+      targetId: undefined,
+      reason: "account_lockout",
+      policySource: "auth.login.failure.account",
+      metadata: {
+        throttleDimension: "account",
+        riskLevel: "standard",
+        challengeRecommended: false,
+        emailHash: hashToken("pending@dotly.one").slice(0, 12),
+      },
+    });
   });
 
   it("verifies a user successfully and consumes the verification token", async () => {
     const rawToken = "verify-me-token";
+    const authMetricsService = new AuthMetricsService();
     const { service, state } = createAuthServiceHarness({
       users: [
         {
@@ -391,6 +591,7 @@ describe("AuthService email verification hardening", () => {
           createdAt: new Date(Date.now() - 60_000),
         },
       ],
+      authMetricsService,
     });
 
     const result = await service.verifyEmail({ token: rawToken });
@@ -406,6 +607,30 @@ describe("AuthService email verification hardening", () => {
         actorUserId: "user-1",
       },
     });
+    assert.deepEqual(state.audits[0], {
+      action: "auth.email_verification.complete",
+      outcome: "success",
+      actorUserId: "user-1",
+      requestId: undefined,
+      sessionId: undefined,
+      targetType: "user",
+      targetId: "user-1",
+      reason: undefined,
+      policySource: undefined,
+      metadata: {
+        alreadyVerified: false,
+      },
+    });
+    assert.equal(
+      authMetricsService.getCounterValue(
+        "dotly_auth_verification_email_complete_total",
+        {
+          outcome: "success",
+          reason: "none",
+        },
+      ),
+      1,
+    );
   });
 
   it("rejects invalid verification tokens", async () => {
@@ -505,6 +730,7 @@ describe("AuthService email verification hardening", () => {
   });
 
   it("rate limits immediate resend attempts", async () => {
+    const authMetricsService = new AuthMetricsService();
     const { service } = createAuthServiceHarness({
       users: [
         {
@@ -525,11 +751,20 @@ describe("AuthService email verification hardening", () => {
           createdAt: new Date(),
         },
       ],
+      authMetricsService,
     });
 
     await assert.rejects(
       () => service.resendVerificationEmail({ email: "user@dotly.one" }),
       /please wait/i,
+    );
+
+    assert.equal(
+      authMetricsService.getCounterValue("dotly_auth_verification_resend_total", {
+        outcome: "throttled",
+        reason: "cooldown_active",
+      }),
+      1,
     );
   });
 

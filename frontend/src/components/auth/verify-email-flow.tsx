@@ -6,8 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { authApi } from "@/lib/api";
-import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
+import { classifyAuthError } from "@/lib/utils/auth-errors";
 import { ShieldCheck, Mail, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 
 const INPUT_CLASSES =
@@ -17,10 +17,7 @@ const LABEL_CLASSES =
   "absolute left-4 top-4 z-10 origin-[0] -translate-y-2.5 scale-[0.85] transform text-[13px] text-muted-foreground duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-[0.85] peer-focus:text-brandRose dark:peer-focus:text-brandCyan pointer-events-none";
 
 function getResendErrorMessage(error: unknown): string {
-  if (
-    error instanceof ApiError &&
-    (error.status === 429 || /wait|too many/i.test(error.message))
-  ) {
+  if (classifyAuthError(error).kind === "throttled") {
     return "Please wait a minute before asking for another verification email.";
   }
 

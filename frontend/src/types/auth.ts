@@ -62,6 +62,7 @@ export interface RevokeSessionInput {
 export interface RevokeSessionResult {
   success: boolean;
   revokedCount?: number;
+  alreadyInactive?: boolean;
 }
 
 export interface SessionSnapshot {

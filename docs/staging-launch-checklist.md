@@ -5,10 +5,18 @@ Use this checklist before promoting the backend to production.
 ## Environment And Secrets
 
 - Verify `DATABASE_URL`, `JWT_SECRET`, `JWT_ISSUER`, `JWT_AUDIENCE`, `QR_BASE_URL`, `CORS_ORIGINS`, and `REDIS_URL` are set for staging.
+- Verify `TRUST_PROXY` is set explicitly to match the staging ingress topology.
+- Verify `JWT_SECRET` is a non-placeholder 32+ character secret and does not match example or bootstrap values.
+- Verify `FRONTEND_VERIFICATION_URL_BASE` and `FRONTEND_PASSWORD_RESET_URL_BASE` point to the intended HTTPS frontend routes.
+- Verify `NEXT_PUBLIC_API_BASE_URL` points to the final HTTPS backend origin used by the frontend build.
+- Verify `AUTH_COOKIE_SAME_SITE`, `AUTH_COOKIE_SECURE`, and `AUTH_COOKIE_DOMAIN` match the intended frontend domain topology. For host-only cookies, leave `AUTH_COOKIE_DOMAIN` unset.
 - Verify `REDIS_ENABLED` matches the intended staging runtime contract.
 - Confirm secrets come from the platform secret manager, not checked-in files or shell history.
 - Verify staging uses a dedicated PostgreSQL database and Redis instance.
 - Confirm TLS is enabled at the load balancer or ingress and external traffic is HTTPS only.
+- Confirm the ingress preserves `X-Forwarded-For`, `X-Forwarded-Proto`, and `X-Request-Id` without trusting caller-supplied spoofed values.
+- Verify Mailgun is fully configured for staging if signup verification and password recovery are expected to work there.
+- Verify Twilio is either fully configured or fully disabled; partial values now fail startup.
 
 ## Database And Migrations
 
@@ -23,9 +31,12 @@ Use this checklist before promoting the backend to production.
 - Verify `/v1` prefix is reachable through the staging ingress.
 - Verify `/v1/metrics` is reachable by the platform scraper or monitoring agent.
 - Verify `/v1/health/verification` is reachable from the staging support path and does not expose PII or token values.
+- Verify `/v1/health/verification` reports the expected mail, password-reset, SMS, and verification dependency readiness booleans for the staging environment.
 - Confirm CORS only allows intended staging frontend origins.
+- Confirm the frontend auth cookie is `Secure`, `HttpOnly`, and uses the expected `SameSite` value after a staging login.
 - Confirm the app logs do not print secrets, tokens, password hashes, or raw request bodies.
 - Confirm request logs and error logs include `x-request-id` for trace correlation.
+- Confirm request logs show secure transport metadata when traffic flows through the ingress.
 
 ## Security Verification
 
@@ -77,6 +88,7 @@ Use this checklist before promoting the backend to production.
 ## Rate Limiting And Concurrency
 
 - Verify rapid repeated request creation returns `429` after the configured threshold.
+- Verify auth rate limits still separate callers correctly behind the ingress and do not collapse all users onto a single proxy IP bucket.
 - Verify duplicate pending requests return `409` consistently.
 - Verify simultaneous quick-connect scans do not create inconsistent duplicate active relationships.
 - Verify simultaneous request approvals leave a single final approved state and no partial writes.
@@ -87,6 +99,7 @@ Use this checklist before promoting the backend to production.
 - Run `npm run lint`.
 - Run `npm test`.
 - Run a staging HTTP smoke pass for auth, personas, profiles, QR, contact requests, events, and notifications.
+- Include smoke coverage for login, email verification, password reset, OTP request and verify, logout, current-session revoke, revoke-all-other-sessions, and a deliberate provider-failure fallback check.
 
 ## Go / No-Go
 

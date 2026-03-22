@@ -1,13 +1,29 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 import { AppLoggerService } from "../logging/logging.service";
+import {
+  AuthMetricsService,
+  noopAuthMetricsService,
+} from "../../modules/auth/auth-metrics.service";
+
+type SmsConfigurationKey =
+  | "TWILIO_ACCOUNT_SID"
+  | "TWILIO_AUTH_TOKEN"
+  | "TWILIO_FROM_PHONE_NUMBER";
+
+export interface SmsConfigurationStatus {
+  configured: boolean;
+  missingSettings: SmsConfigurationKey[];
+}
 
 @Injectable()
 export class SmsService {
   constructor(
     private readonly configService: ConfigService,
     private readonly logger: AppLoggerService,
+    @Optional()
+    private readonly authMetricsService: AuthMetricsService = noopAuthMetricsService,
   ) {}
 
   isConfigured(): boolean {
@@ -16,12 +32,39 @@ export class SmsService {
     );
   }
 
+  getConfigurationStatus(): SmsConfigurationStatus {
+    const missingSettings: SmsConfigurationKey[] = [];
+
+    if (!this.getAccountSid()) {
+      missingSettings.push("TWILIO_ACCOUNT_SID");
+    }
+
+    if (!this.getAuthToken()) {
+      missingSettings.push("TWILIO_AUTH_TOKEN");
+    }
+
+    if (!this.getFromPhoneNumber()) {
+      missingSettings.push("TWILIO_FROM_PHONE_NUMBER");
+    }
+
+    return {
+      configured: missingSettings.length === 0,
+      missingSettings,
+    };
+  }
+
   async sendOtp(options: {
     to: string;
     code: string;
     expiresInMinutes: number;
   }) {
     if (!this.isConfigured()) {
+      this.authMetricsService.recordDelivery(
+        "sms",
+        "mobile_otp",
+        "twilio",
+        "provider_unavailable",
+      );
       this.logger.warn(
         "SMS delivery skipped because Twilio is not fully configured",
         "SmsService",
@@ -46,12 +89,19 @@ export class SmsService {
       });
 
       if (!response.ok) {
-        const failureBody = await response.text();
+        await response.text();
+        this.authMetricsService.recordDelivery(
+          "sms",
+          "mobile_otp",
+          "twilio",
+          "provider_error",
+        );
         this.logger.errorWithMeta(
           "Twilio SMS delivery failed",
           {
             status: response.status,
-            responseBody: failureBody.slice(0, 500),
+            statusText: response.statusText,
+            providerRequestId: this.getProviderRequestId(response),
           },
           undefined,
           "SmsService",
@@ -59,8 +109,21 @@ export class SmsService {
         return false;
       }
 
+      this.authMetricsService.recordDelivery(
+        "sms",
+        "mobile_otp",
+        "twilio",
+        "sent",
+      );
+
       return true;
     } catch (error) {
+      this.authMetricsService.recordDelivery(
+        "sms",
+        "mobile_otp",
+        "twilio",
+        "provider_error",
+      );
       this.logger.errorWithMeta(
         "Twilio SMS delivery request failed",
         {
@@ -78,6 +141,14 @@ export class SmsService {
 
   private getMessagesUrl(): string {
     return `https://api.twilio.com/2010-04-01/Accounts/${this.getAccountSid()}/Messages.json`;
+  }
+
+  private getProviderRequestId(response: Response): string | null {
+    return (
+      response.headers.get("twilio-request-id") ??
+      response.headers.get("x-request-id") ??
+      response.headers.get("request-id")
+    );
   }
 
   private getAccountSid(): string {

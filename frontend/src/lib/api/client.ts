@@ -2,11 +2,60 @@ import type { ApiRequestOptions, ApiResponse } from "@/types/api";
 
 const DEFAULT_API_BASE_URL = "http://localhost:3000/v1";
 
-function getApiBaseUrl(): string {
+function isLocalOrPlaceholderHost(hostname: string): boolean {
+  const normalized = hostname.trim().toLowerCase();
+
   return (
-    process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
-    DEFAULT_API_BASE_URL
+    normalized === "localhost" ||
+    normalized === "127.0.0.1" ||
+    normalized === "::1" ||
+    normalized.endsWith(".local") ||
+    normalized.endsWith(".example") ||
+    normalized.endsWith(".internal")
   );
+}
+
+function assertTrustedApiBaseUrl(baseUrl: string): void {
+  let parsed: URL;
+
+  try {
+    parsed = new URL(baseUrl);
+  } catch {
+    throw new Error(
+      "NEXT_PUBLIC_API_BASE_URL must be a valid absolute URL in production.",
+    );
+  }
+
+  if (parsed.protocol !== "https:") {
+    throw new Error("NEXT_PUBLIC_API_BASE_URL must use HTTPS in production.");
+  }
+
+  if (isLocalOrPlaceholderHost(parsed.hostname)) {
+    throw new Error(
+      "NEXT_PUBLIC_API_BASE_URL must not target localhost or placeholder hosts in production.",
+    );
+  }
+}
+
+export function getApiBaseUrl(): string {
+  const configuredBaseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") || "";
+
+  if (!configuredBaseUrl) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "NEXT_PUBLIC_API_BASE_URL must be configured with the trusted HTTPS backend origin in production.",
+      );
+    }
+
+    return DEFAULT_API_BASE_URL;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    assertTrustedApiBaseUrl(configuredBaseUrl);
+  }
+
+  return configuredBaseUrl;
 }
 
 function resolveApiUrl(path: string, baseUrl?: string): string {

@@ -1,10 +1,11 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { APP_FILTER } from "@nestjs/core";
+import { ScheduleModule } from "@nestjs/schedule";
 
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
 import { configuration } from "./infrastructure/config/configuration";
-import { envValidationSchema } from "./infrastructure/config/env.validation";
+import { validateEnvironment } from "./infrastructure/config/env.validation";
 import { CacheInfrastructureModule } from "./infrastructure/cache/cache.module";
 import { DatabaseModule } from "./infrastructure/database/database.module";
 import { LoggingModule } from "./infrastructure/logging/logging.module";
@@ -33,8 +34,9 @@ import { UsersModule } from "./modules/users/users.module";
       isGlobal: true,
       cache: true,
       load: [configuration],
-      validationSchema: envValidationSchema,
+      validate: validateEnvironment,
     }),
+    ScheduleModule.forRoot(),
     LoggingModule,
     DatabaseModule,
     CacheInfrastructureModule,

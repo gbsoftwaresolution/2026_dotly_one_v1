@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { createUnauthorizedRouteResponse } from "@/lib/api/auth-route-response";
 import { apiRequest } from "@/lib/api/client";
 import { createRouteErrorResponse } from "@/lib/api/route-error";
 import { getServerAccessToken } from "@/lib/auth/server-session";
@@ -9,7 +10,7 @@ export async function GET() {
   const accessToken = await getServerAccessToken();
 
   if (!accessToken) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return createUnauthorizedRouteResponse();
   }
 
   try {

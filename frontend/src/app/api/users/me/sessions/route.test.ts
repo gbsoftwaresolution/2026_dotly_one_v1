@@ -28,7 +28,7 @@ describe("GET /api/users/me/sessions", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(401);
-    expect(payload).toEqual({ message: "Unauthorized" });
+    expect(payload).toEqual({ message: "Invalid authentication token" });
   });
 
   it("proxies the authenticated session list request", async () => {

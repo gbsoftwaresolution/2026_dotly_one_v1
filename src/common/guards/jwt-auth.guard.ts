@@ -9,7 +9,11 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
-import { DeviceSessionService } from "../../modules/auth/device-session.service";
+import {
+  DeviceSessionService,
+  type SessionValidationResult,
+} from "../../modules/auth/device-session.service";
+import { AUTH_ERROR_MESSAGES } from "../../modules/auth/auth-error-policy";
 import type { JwtPayload } from "../../modules/auth/interfaces/jwt-payload.interface";
 import type { AuthenticatedUser } from "../decorators/current-user.decorator";
 
@@ -63,31 +67,19 @@ export class JwtAuthGuard implements CanActivate {
         throw new UnauthorizedException("Invalid authentication token");
       }
 
-      if (payload.sessionId) {
-        const session = this.deviceSessionService
-          ? await this.deviceSessionService.validateSession(
-              payload.sub,
-              payload.sessionId,
-            )
-          : await (this.prismaService as any)?.authSession?.findFirst?.({
-              where: {
-                id: payload.sessionId,
-                userId: payload.sub,
-              },
-              select: {
-                id: true,
-                revokedAt: true,
-                expiresAt: true,
-              },
-            });
+      if (!payload.sessionId) {
+        throw new UnauthorizedException(AUTH_ERROR_MESSAGES.invalidAuthenticationToken);
+      }
 
-        if (
-          !session ||
-          ("revokedAt" in session && session.revokedAt) ||
-          ("expiresAt" in session && session.expiresAt.getTime() <= Date.now())
-        ) {
-          throw new UnauthorizedException("Invalid authentication token");
-        }
+      const session: SessionValidationResult = this.deviceSessionService
+        ? await this.deviceSessionService.validateSession(
+            payload.sub,
+            payload.sessionId,
+          )
+        : await this.validateSessionFallback(payload.sub, payload.sessionId);
+
+      if (session.status !== "active") {
+        throw new UnauthorizedException(AUTH_ERROR_MESSAGES.invalidAuthenticationToken);
       }
 
       const user = await (
@@ -132,5 +124,56 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     return token;
+  }
+
+  private async validateSessionFallback(
+    userId: string,
+    sessionId: string,
+  ): Promise<SessionValidationResult> {
+    const session = await (this.prismaService as any)?.authSession?.findFirst?.({
+      where: {
+        id: sessionId,
+        userId,
+      },
+      select: {
+        id: true,
+        revokedAt: true,
+        expiresAt: true,
+      },
+    });
+
+    if (!session) {
+      return {
+        status: "missing",
+      };
+    }
+
+    if (session.revokedAt) {
+      return {
+        status: "revoked",
+        session: {
+          id: session.id,
+          revokedAt: session.revokedAt,
+        },
+      };
+    }
+
+    if (session.expiresAt.getTime() <= Date.now()) {
+      return {
+        status: "expired",
+        session: {
+          id: session.id,
+          expiresAt: session.expiresAt,
+        },
+      };
+    }
+
+    return {
+      status: "active",
+      session: {
+        id: session.id,
+        expiresAt: session.expiresAt,
+      },
+    };
   }
 }

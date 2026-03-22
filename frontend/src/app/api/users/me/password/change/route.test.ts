@@ -36,7 +36,7 @@ describe("POST /api/users/me/password/change", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(401);
-    expect(payload).toEqual({ message: "Unauthorized" });
+    expect(payload).toEqual({ message: "Invalid authentication token" });
   });
 
   it("proxies the authenticated password change request", async () => {

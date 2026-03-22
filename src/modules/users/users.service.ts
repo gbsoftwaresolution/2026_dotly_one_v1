@@ -8,6 +8,7 @@ import { ChangePasswordDto } from "../auth/dto/change-password.dto";
 import { RequestMobileOtpDto } from "../auth/dto/request-mobile-otp.dto";
 import { RevokeSessionDto } from "../auth/dto/revoke-session.dto";
 import { VerifyMobileOtpDto } from "../auth/dto/verify-mobile-otp.dto";
+import { AuthActionContext } from "../auth/auth-abuse-protection.service";
 import {
   TrustFactor,
   VerificationPolicyService,
@@ -205,9 +206,10 @@ export class UsersService {
     };
   }
 
-  async resendVerificationEmail(userId: string) {
+  async resendVerificationEmail(userId: string, context?: AuthActionContext) {
     return (this.authService as any).resendVerificationEmailForCurrentUser(
       userId,
+      context,
     );
   }
 
@@ -215,29 +217,38 @@ export class UsersService {
     userId: string,
     changePasswordDto: ChangePasswordDto,
     sessionId?: string,
+    context?: AuthActionContext,
   ) {
     return (this.authService as any).changePassword(
       userId,
       changePasswordDto,
       sessionId,
+      context,
     );
   }
 
   async requestMobileOtp(
     userId: string,
     requestMobileOtpDto: RequestMobileOtpDto,
+    context?: AuthActionContext,
   ) {
     return (this.authService as any).requestMobileOtp(
       userId,
       requestMobileOtpDto,
+      context,
     );
   }
 
   async verifyMobileOtp(
     userId: string,
     verifyMobileOtpDto: VerifyMobileOtpDto,
+    context?: AuthActionContext,
   ) {
-    return (this.authService as any).verifyMobileOtp(userId, verifyMobileOtpDto);
+    return (this.authService as any).verifyMobileOtp(
+      userId,
+      verifyMobileOtpDto,
+      context,
+    );
   }
 
   async listSessions(userId: string, sessionId?: string) {

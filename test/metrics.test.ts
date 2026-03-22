@@ -1,10 +1,20 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
+import { AuthMetricsService } from "../src/modules/auth/auth-metrics.service";
 import { MetricsService } from "../src/modules/health/metrics.service";
 
 describe("MetricsService", () => {
   it("renders prometheus-style health gauges", async () => {
+    const authMetricsService = new AuthMetricsService();
+    authMetricsService.recordLoginFailure("invalid_password");
+    authMetricsService.recordDelivery(
+      "sms",
+      "mobile_otp",
+      "twilio",
+      "provider_unavailable",
+    );
+
     const service = new MetricsService(
       {
         $queryRawUnsafe: async () => [{ result: 1 }],
@@ -42,6 +52,7 @@ describe("MetricsService", () => {
       {
         get: (_key: string, defaultValue: string) => defaultValue,
       } as any,
+      authMetricsService,
     );
 
     const metrics = await service.getPrometheusSnapshot();
@@ -58,5 +69,13 @@ describe("MetricsService", () => {
     assert.match(metrics, /dotly_auth_mobile_otp_issued_last_24h 9/);
     assert.match(metrics, /dotly_auth_sessions_active 11/);
     assert.match(metrics, /dotly_auth_sessions_revoked_last_24h 4/);
+    assert.match(
+      metrics,
+      /dotly_auth_login_total\{outcome="failure",reason="invalid_password"\} 1/,
+    );
+    assert.match(
+      metrics,
+      /dotly_auth_delivery_total\{channel="sms",template="mobile_otp",provider="twilio",outcome="provider_unavailable"\} 1/,
+    );
   });
 });

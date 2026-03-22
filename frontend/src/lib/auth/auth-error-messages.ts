@@ -1,4 +1,5 @@
 import { isApiError } from "@/lib/api/client";
+import { classifyAuthError } from "@/lib/utils/auth-errors";
 
 export type AuthMode = "login" | "signup";
 
@@ -64,8 +65,10 @@ export function getFriendlyAuthErrorMessage(
 
 export function getFriendlyAuthError(mode: AuthMode, error: unknown): string {
   if (isApiError(error)) {
+    const classifiedError = classifyAuthError(error);
+
     return getFriendlyAuthErrorMessage(mode, {
-      status: error.status,
+      status: classifiedError.status,
       message: error.message,
     });
   }

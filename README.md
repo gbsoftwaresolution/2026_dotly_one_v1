@@ -50,6 +50,8 @@ npm run prisma:migrate:dev
 npm run start:dev
 ```
 
+Password hashing uses `bcryptjs` rather than native `bcrypt`, so backend installs do not depend on a compiled `bcrypt_lib.node` addon or postinstall rebuild step.
+
 Backend mail env:
 
 - `MAILGUN_API_KEY`: Mailgun private API key
@@ -61,6 +63,14 @@ Backend mail env:
 - `TWILIO_AUTH_TOKEN`: Twilio auth token for SMS OTP delivery
 - `TWILIO_FROM_PHONE_NUMBER`: Twilio phone number used to send verification codes
 
+Production config posture:
+
+- `JWT_SECRET` must be a non-placeholder secret with at least 32 characters and strong entropy.
+- `JWT_EXPIRES_IN` must use the supported duration format such as `15m`, `12h`, or `7d`.
+- `CORS_ORIGINS`, `FRONTEND_VERIFICATION_URL_BASE`, `FRONTEND_PASSWORD_RESET_URL_BASE`, and `QR_BASE_URL` must use trusted HTTPS origins in production. Localhost and placeholder hosts are rejected.
+- Production startup now fails fast when Mailgun credentials or frontend verification/reset URLs are missing, instead of silently degrading verification and recovery.
+- Twilio remains optional, but partial Twilio configuration is rejected in every environment.
+
 Frontend:
 
 ```bash
@@ -71,6 +81,19 @@ npm run dev -- --port 3001
 ```
 
 Full development and production startup instructions live in `docs/run-dotly.md`.
+
+## Auth And Security Docs
+
+- `docs/auth-trust-architecture.md`: current auth, trust-factor, provider, and session architecture
+- `docs/auth-runbooks.md`: operator runbooks for delivery failures, abuse spikes, login spikes, and session anomalies
+- `docs/auth-operational-checklists.md`: staging, release, post-deploy, and final auth validation checklists
+- `docs/auth-developer-onboarding.md`: contributor map for auth entry points, policies, rate limiting, and safe extension patterns
+- `docs/auth-degraded-modes.md`: degraded-mode and fail-closed behavior by dependency and flow
+- `docs/auth-production-posture.md`: deployment assumptions for ingress, cookies, providers, and production smoke checks
+- `docs/auth-metrics.md`: auth-specific metrics and operational interpretation
+- `docs/security-audit-logging.md`: auth and trust audit event vocabulary and safe logging rules
+- `docs/session-security-contract.md`: tracked-session enforcement and revocation guarantees
+- `docs/staging-launch-checklist.md`: broader backend staging readiness checklist
 
 ## Quality Gates
 
@@ -114,10 +137,13 @@ CI workflows:
 - Mobile OTP verification enforces resend guardrails, a short retry cooldown between incorrect code attempts, and terminal lockout after repeated failures.
 - The trust-policy layer now evaluates allowed trust factors per action. Email verification and verified mobile OTP satisfy trust-sensitive requirements without changing downstream call sites.
 - Each successful login creates a stored session record with device metadata so current-device badges and remote sign-out can work predictably.
+- Authenticated JWTs are now valid only when they carry a tracked session id that still resolves to an active session record; revoked, expired, or missing session records are rejected uniformly.
+- Session listings intentionally show active sessions only. Revoked and expired sessions are treated as inactive state, excluded from active-device views, and remote sign-out remains idempotent when a target session is already inactive.
+- Password change and password reset now revoke sessions inside the same database transaction as the credential mutation so sensitive auth events cannot commit while leaving prior sessions active.
 - Resend verification accepts the request when the account is still pending, applies cooldown feedback when retried too quickly, and records verification analytics for issued links, resend usage, successful verification, and blocked trust actions.
 - Session-management endpoints require a tracked current session context, reject malformed revoke targets, and emit structured auth-security logs for device sign-out actions.
 - When `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, `MAIL_FROM_EMAIL`, or `FRONTEND_VERIFICATION_URL_BASE` are missing, signup still creates a pending account but verification email delivery is skipped safely
 - Browser clients can supply and read `x-request-id` for correlation across backend responses
 - `GET /v1/metrics` is safe for infrastructure scraping and returns plain-text gauges for service/database/cache health plus active password reset tokens, active OTP challenges, and active/recently revoked sessions
-- `GET /v1/health/verification` is safe for staging and support diagnostics and returns runtime verification readiness, trust-factor availability, required migration status, and token volume counters without exposing user emails or token values
+- `GET /v1/health/verification` is safe for staging and support diagnostics and returns runtime verification readiness, mail and SMS configuration status, required migration status, and token volume counters without exposing raw secrets, user emails, or token values
 - Use `docs/staging-launch-checklist.md` before promoting staging to production

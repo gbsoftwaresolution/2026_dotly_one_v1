@@ -127,6 +127,9 @@ model EmailVerificationToken {
 
   @@index([userId, createdAt])
   @@index([userId, expiresAt])
+  @@index([userId, consumedAt, supersededAt, expiresAt])
+  @@index([consumedAt])
+  @@index([supersededAt])
 }
 
 model PasswordResetToken {
@@ -141,6 +144,9 @@ model PasswordResetToken {
 
   @@index([userId, createdAt])
   @@index([userId, expiresAt])
+  @@index([userId, consumedAt, supersededAt, expiresAt])
+  @@index([consumedAt])
+  @@index([supersededAt])
 }
 
 model MobileOtpChallenge {
@@ -161,6 +167,9 @@ model MobileOtpChallenge {
   @@index([userId, createdAt])
   @@index([userId, expiresAt])
   @@index([userId, phoneNumber, createdAt])
+  @@index([userId, purpose, consumedAt, supersededAt, expiresAt])
+  @@index([consumedAt])
+  @@index([supersededAt])
 }
 
 model AuthSession {
@@ -180,6 +189,8 @@ model AuthSession {
   @@index([userId, createdAt])
   @@index([userId, revokedAt, createdAt])
   @@index([expiresAt])
+  @@index([revokedAt])
+  @@index([userId, revokedAt, expiresAt, lastActiveAt])
 }
 
 model Persona {

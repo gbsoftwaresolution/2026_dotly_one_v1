@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 import { BadRequestException } from "@nestjs/common";
 
 import { AuthService } from "../src/modules/auth/auth.service";
@@ -18,7 +18,11 @@ interface PasswordResetTokenRecord {
   supersededAt: Date | null;
 }
 
-async function createHarness() {
+function cloneValue<T>(value: T): T {
+  return globalThis.structuredClone(value);
+}
+
+async function createHarness(options?: { failSessionRevocation?: boolean }) {
   const state = {
     users: [
       {
@@ -44,6 +48,7 @@ async function createHarness() {
       | { type: "revokeOtherSessions"; userId: string; sessionId: string; reason: string }
       | { type: "revokeAllSessions"; userId: string; reason: string }
     >,
+    audits: [] as Array<Record<string, unknown>>,
   };
 
   const prisma = {
@@ -109,6 +114,24 @@ async function createHarness() {
         return { count };
       },
     },
+    $transaction: async <T>(callback: (tx: any) => Promise<T>) => {
+      const snapshot = cloneValue({
+        users: state.users,
+        passwordResetTokens: state.passwordResetTokens,
+      });
+
+      try {
+        return await callback(prisma);
+      } catch (error) {
+        state.users.splice(0, state.users.length, ...snapshot.users);
+        state.passwordResetTokens.splice(
+          0,
+          state.passwordResetTokens.length,
+          ...snapshot.passwordResetTokens,
+        );
+        throw error;
+      }
+    },
   };
 
   const service = new AuthService(
@@ -123,6 +146,10 @@ async function createHarness() {
         sessionId: string,
         reason: string,
       ) => {
+        if (options?.failSessionRevocation) {
+          throw new Error("session revoke failed");
+        }
+
         state.sessionCalls.push({
           type: "revokeOtherSessions",
           userId,
@@ -133,6 +160,10 @@ async function createHarness() {
         return 2;
       },
       revokeAllSessions: async (userId: string, reason: string) => {
+        if (options?.failSessionRevocation) {
+          throw new Error("session revoke failed");
+        }
+
         state.sessionCalls.push({
           type: "revokeAllSessions",
           userId,
@@ -144,6 +175,13 @@ async function createHarness() {
     } as any,
     undefined as any,
     undefined as any,
+    undefined as any,
+    undefined as any,
+    {
+      log: (event: Record<string, unknown>) => {
+        state.audits.push(event);
+      },
+    } as any,
   );
 
   return { service, state };
@@ -180,6 +218,20 @@ describe("AuthService changePassword", () => {
         reason: "password_changed",
       },
     ]);
+    assert.deepEqual(state.audits[0], {
+      action: "auth.password.change",
+      outcome: "success",
+      actorUserId: "user-1",
+      requestId: undefined,
+      sessionId: "session-current",
+      targetType: undefined,
+      targetId: undefined,
+      reason: undefined,
+      policySource: undefined,
+      metadata: {
+        retainedCurrentSession: true,
+      },
+    });
   });
 
   it("rejects an incorrect current password", async () => {
@@ -206,6 +258,18 @@ describe("AuthService changePassword", () => {
       true,
     );
     assert.deepEqual(state.sessionCalls, []);
+    assert.deepEqual(state.audits[0], {
+      action: "auth.password.change",
+      outcome: "failure",
+      actorUserId: "user-1",
+      requestId: undefined,
+      sessionId: "session-current",
+      targetType: undefined,
+      targetId: undefined,
+      reason: "incorrect_current_password",
+      policySource: undefined,
+      metadata: undefined,
+    });
   });
 
   it("rejects weak replacement passwords before updating credentials", async () => {
@@ -225,6 +289,31 @@ describe("AuthService changePassword", () => {
         assert.equal(error.message, "Use at least 10 characters for your password.");
         return true;
       },
+    );
+
+    assert.equal(
+      await bcrypt.compare("OldPass123!", state.users[0]!.passwordHash),
+      true,
+    );
+    assert.equal(state.passwordResetTokens[0]?.supersededAt, null);
+    assert.deepEqual(state.sessionCalls, []);
+  });
+
+  it("rolls the password change back when session revocation fails", async () => {
+    const { service, state } = await createHarness({
+      failSessionRevocation: true,
+    });
+
+    await assert.rejects(
+      service.changePassword(
+        "user-1",
+        {
+          currentPassword: "OldPass123!",
+          newPassword: "NewPass123!",
+        },
+        "session-current",
+      ),
+      /session revoke failed/i,
     );
 
     assert.equal(

@@ -3,11 +3,14 @@ import { describe, it } from "node:test";
 
 import { ForbiddenException } from "@nestjs/common";
 
+import { AuthMetricsService } from "../src/modules/auth/auth-metrics.service";
 import { VerificationPolicyService } from "../src/modules/auth/verification-policy.service";
 
 describe("VerificationPolicyService", () => {
   it("tracks blocked actions with missing trust factors", async () => {
     const tracked: Array<Record<string, unknown>> = [];
+    const audits: Array<Record<string, unknown>> = [];
+    const authMetricsService = new AuthMetricsService();
     const service = new VerificationPolicyService(
       {
         user: {
@@ -23,6 +26,12 @@ describe("VerificationPolicyService", () => {
           return true;
         },
       } as any,
+      {
+        log: (event: Record<string, unknown>) => {
+          audits.push(event);
+        },
+      } as any,
+      authMetricsService,
     );
 
     await assert.rejects(
@@ -43,6 +52,23 @@ describe("VerificationPolicyService", () => {
       allowedFactors: ["email_verified", "mobile_otp_verified"],
       missingFactors: ["email_verified", "mobile_otp_verified"],
     });
+    assert.deepEqual(audits[0], {
+      action: "auth.verification_requirement.enforcement",
+      outcome: "blocked",
+      actorUserId: "user-1",
+      reason: "join_event",
+      policySource: "verification_policy",
+      metadata: {
+        allowedFactors: ["email_verified", "mobile_otp_verified"],
+        missingFactors: ["email_verified", "mobile_otp_verified"],
+      },
+    });
+    assert.equal(
+      authMetricsService.getCounterValue("dotly_auth_trust_blocked_total", {
+        requirement: "join_event",
+      }),
+      1,
+    );
   });
 
   it("reports satisfied requirements for verified accounts", async () => {
@@ -55,6 +81,7 @@ describe("VerificationPolicyService", () => {
           }),
         },
       } as any,
+      undefined as any,
       undefined as any,
     );
 

@@ -1,7 +1,9 @@
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { MailService } from "../../infrastructure/mail/mail.service";
+import { SmsService } from "../../infrastructure/sms/sms.service";
 
 import {
   TrustFactor,
@@ -16,10 +18,15 @@ const REQUIRED_VERIFICATION_MIGRATION_NAMES = [
 
 export interface VerificationRuntimeDiagnostics extends Record<string, unknown> {
   status: "ok" | "degraded";
+  environment: string;
   mailConfigured: boolean;
+  passwordResetConfigured: boolean;
+  smsConfigured: boolean;
   missingMailSettings: string[];
+  missingSmsSettings: string[];
   emailVerificationTableExists: boolean;
   missingRequiredMigrations: string[];
+  verificationDependenciesOperational: boolean;
   trustFactors: Array<{
     factor: TrustFactor;
     available: boolean;
@@ -43,11 +50,14 @@ export class VerificationDiagnosticsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly mailService: MailService,
+    private readonly smsService: SmsService,
+    private readonly configService: ConfigService,
     private readonly verificationPolicyService: VerificationPolicyService,
   ) {}
 
   async getRuntimeDiagnostics(): Promise<VerificationRuntimeDiagnostics> {
     const mailConfigurationStatus = this.mailService.getConfigurationStatus();
+    const smsConfigurationStatus = this.smsService.getConfigurationStatus();
     const [appliedMigrationNames, emailVerificationTableExists] =
       await Promise.all([
         this.prismaService.getAppliedMigrationNames(),
@@ -110,17 +120,30 @@ export class VerificationDiagnosticsService {
       message: definition.message,
     }));
 
+    const verificationDependenciesOperational =
+      mailConfigurationStatus.verificationConfigured &&
+      emailVerificationTableExists &&
+      missingRequiredMigrations.length === 0;
+    const passwordResetConfigured =
+      mailConfigurationStatus.passwordResetConfigured;
+
     return {
       status:
-        mailConfigurationStatus.configured &&
-        emailVerificationTableExists &&
-        missingRequiredMigrations.length === 0
+        verificationDependenciesOperational && passwordResetConfigured
           ? "ok"
           : "degraded",
+      environment: this.configService.get<string>(
+        "app.nodeEnv",
+        "development",
+      ),
       mailConfigured: mailConfigurationStatus.configured,
+      passwordResetConfigured,
+      smsConfigured: smsConfigurationStatus.configured,
       missingMailSettings: mailConfigurationStatus.missingSettings,
+      missingSmsSettings: smsConfigurationStatus.missingSettings,
       emailVerificationTableExists,
       missingRequiredMigrations,
+      verificationDependenciesOperational,
       trustFactors,
       requirements,
       tokenMetrics,

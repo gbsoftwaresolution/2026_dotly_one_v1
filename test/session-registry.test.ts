@@ -7,6 +7,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
+import { AuthMetricsService } from "../src/modules/auth/auth-metrics.service";
 import { AuthService } from "../src/modules/auth/auth.service";
 
 interface SessionRecord {
@@ -21,7 +22,7 @@ interface SessionRecord {
   revokedReason: string | null;
 }
 
-function createSessionHarness() {
+function createSessionHarness(options?: { authMetricsService?: AuthMetricsService }) {
   const now = new Date("2026-03-21T12:00:00.000Z");
   const state = {
     sessions: [
@@ -69,6 +70,7 @@ function createSessionHarness() {
       sessionId: string;
       reason: string;
     }>,
+    audits: [] as Array<Record<string, unknown>>,
   };
 
   const deviceSessionService = {
@@ -88,17 +90,30 @@ function createSessionHarness() {
       const session = state.sessions.find(
         (candidate) =>
           candidate.userId === userId &&
-          candidate.id === sessionId &&
-          candidate.revokedAt === null,
+          candidate.id === sessionId,
       );
 
       if (!session) {
-        return false;
+        return {
+          status: "not_found",
+        };
+      }
+
+      if (
+        session.revokedAt !== null ||
+        session.expiresAt.getTime() <= now.getTime()
+      ) {
+        return {
+          status: "already_inactive",
+        };
       }
 
       session.revokedAt = now;
       session.revokedReason = reason;
-      return true;
+      return {
+        status: "revoked",
+        revokedAt: now,
+      };
     },
     revokeOtherSessions: async (
       userId: string,
@@ -137,6 +152,13 @@ function createSessionHarness() {
     undefined as any,
     undefined as any,
     undefined as any,
+    undefined as any,
+    {
+      log: (event: Record<string, unknown>) => {
+        state.audits.push(event);
+      },
+    } as any,
+    options?.authMetricsService,
   );
 
   return {
@@ -175,7 +197,8 @@ describe("AuthService session registry foundation", () => {
   });
 
   it("rejects revoking the current session through the remote revoke path", async () => {
-    const { service, state } = createSessionHarness();
+    const authMetricsService = new AuthMetricsService();
+    const { service, state } = createSessionHarness({ authMetricsService });
 
     await assert.rejects(
       service.revokeSession("user-1", "session-current", {
@@ -192,10 +215,19 @@ describe("AuthService session registry foundation", () => {
     );
 
     assert.deepEqual(state.revokeCalls, []);
+    assert.equal(
+      authMetricsService.getCounterValue("dotly_auth_session_security_total", {
+        action: "revoke",
+        outcome: "blocked",
+        reason: "current_session_protected",
+      }),
+      1,
+    );
   });
 
   it("revokes a specific other session and records the remote sign-out reason", async () => {
-    const { service, state } = createSessionHarness();
+    const authMetricsService = new AuthMetricsService();
+    const { service, state } = createSessionHarness({ authMetricsService });
 
     const result = await service.revokeSession("user-1", "session-current", {
       sessionId: "session-other",
@@ -215,6 +247,67 @@ describe("AuthService session registry foundation", () => {
       state.sessions.find((session) => session.id === "session-other")?.revokedReason,
       "remote_sign_out",
     );
+    assert.deepEqual(state.audits[0], {
+      action: "auth.session.revoke",
+      outcome: "success",
+      actorUserId: "user-1",
+      requestId: undefined,
+      sessionId: "session-current",
+      targetType: "session",
+      targetId: "session-other",
+      reason: "remote_sign_out",
+      policySource: undefined,
+      metadata: undefined,
+    });
+    assert.equal(
+      authMetricsService.getCounterValue("dotly_auth_session_security_total", {
+        action: "revoke",
+        outcome: "success",
+        reason: "remote_sign_out",
+      }),
+      1,
+    );
+  });
+
+  it("treats already inactive sessions as an idempotent remote sign-out result", async () => {
+    const authMetricsService = new AuthMetricsService();
+    const { service, state } = createSessionHarness({ authMetricsService });
+    state.sessions.find((session) => session.id === "session-other")!.revokedAt = new Date(
+      "2026-03-21T12:00:00.000Z",
+    );
+    state.sessions.find((session) => session.id === "session-other")!.revokedReason =
+      "logout";
+
+    const result = await service.revokeSession("user-1", "session-current", {
+      sessionId: "session-other",
+    });
+
+    assert.deepEqual(result, {
+      success: true,
+      alreadyInactive: true,
+    });
+    assert.equal(
+      authMetricsService.getCounterValue("dotly_auth_session_security_total", {
+        action: "revoke",
+        outcome: "success",
+        reason: "already_inactive",
+      }),
+      1,
+    );
+    assert.deepEqual(state.audits[0], {
+      action: "auth.session.revoke",
+      outcome: "success",
+      actorUserId: "user-1",
+      requestId: undefined,
+      sessionId: "session-current",
+      targetType: "session",
+      targetId: "session-other",
+      reason: "already_inactive",
+      policySource: undefined,
+      metadata: {
+        alreadyInactive: true,
+      },
+    });
   });
 
   it("returns not found when a requested session cannot be revoked", async () => {
@@ -233,7 +326,8 @@ describe("AuthService session registry foundation", () => {
   });
 
   it("revokes every other active session without touching the current one", async () => {
-    const { service, state } = createSessionHarness();
+    const authMetricsService = new AuthMetricsService();
+    const { service, state } = createSessionHarness({ authMetricsService });
 
     const result = await service.revokeOtherSessions("user-1", "session-current");
 
@@ -256,6 +350,28 @@ describe("AuthService session registry foundation", () => {
       state.sessions.find((session) => session.id === "session-other")?.revokedReason,
       "sign_out_other_sessions",
     );
+    assert.deepEqual(state.audits[0], {
+      action: "auth.session.revoke_others",
+      outcome: "success",
+      actorUserId: "user-1",
+      requestId: undefined,
+      sessionId: "session-current",
+      targetType: undefined,
+      targetId: undefined,
+      reason: "sign_out_other_sessions",
+      policySource: undefined,
+      metadata: {
+        revokedCount: 1,
+      },
+    });
+    assert.equal(
+      authMetricsService.getCounterValue("dotly_auth_session_security_total", {
+        action: "revoke_others",
+        outcome: "success",
+        reason: "sign_out_other_sessions",
+      }),
+      1,
+    );
   });
 
   it("rejects device-wide revoke actions without a tracked current session id", async () => {
@@ -274,7 +390,8 @@ describe("AuthService session registry foundation", () => {
   });
 
   it("revokes the current session with the logout reason", async () => {
-    const { service, state } = createSessionHarness();
+    const authMetricsService = new AuthMetricsService();
+    const { service, state } = createSessionHarness({ authMetricsService });
 
     const result = await service.revokeCurrentSession("user-1", "session-current");
 
@@ -288,5 +405,25 @@ describe("AuthService session registry foundation", () => {
         reason: "logout",
       },
     ]);
+    assert.deepEqual(state.audits[0], {
+      action: "auth.session.logout_current",
+      outcome: "success",
+      actorUserId: "user-1",
+      requestId: undefined,
+      sessionId: "session-current",
+      targetType: undefined,
+      targetId: undefined,
+      reason: "logout",
+      policySource: undefined,
+      metadata: undefined,
+    });
+    assert.equal(
+      authMetricsService.getCounterValue("dotly_auth_session_security_total", {
+        action: "logout_current",
+        outcome: "success",
+        reason: "logout",
+      }),
+      1,
+    );
   });
 });

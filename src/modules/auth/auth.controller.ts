@@ -13,6 +13,7 @@ import {
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import type { AuthenticatedUser } from "../../common/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { getClientIpAddress } from "../../common/utils/request-source.util";
 
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
@@ -27,59 +28,108 @@ import { VerifyMobileOtpDto } from "./dto/verify-mobile-otp.dto";
 
 import { AuthService } from "./auth.service";
 
+type RequestLike = {
+  ip?: string;
+  headers?: { [key: string]: string | string[] | undefined };
+  socket?: { remoteAddress?: string };
+};
+
 @Controller("auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  private buildRequestContext(
+    requestId?: string,
+    userAgent?: string,
+    request?: RequestLike,
+    sessionId?: string,
+  ) {
+    return {
+      requestId,
+      userAgent,
+      sessionId,
+      ipAddress: getClientIpAddress(request),
+    };
+  }
+
   @Post("signup")
-  signup(@Body() signupDto: SignupDto) {
-    return this.authService.signup(signupDto);
+  signup(
+    @Body() signupDto: SignupDto,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
+  ) {
+    return this.authService.signup(
+      signupDto,
+      this.buildRequestContext(requestId, userAgent, request),
+    );
   }
 
   @Post("login")
   login(
     @Body() loginDto: LoginDto,
+    @Headers("x-request-id") requestId?: string,
     @Headers("user-agent") userAgent?: string,
-    @Req()
-    request?: {
-      ip?: string;
-      headers?: { [key: string]: string | string[] | undefined };
-      socket?: { remoteAddress?: string };
-    },
+    @Req() request?: RequestLike,
   ) {
-    return this.authService.login(loginDto, {
-      userAgent,
-      ipAddress:
-        request?.ip ??
-        request?.socket?.remoteAddress ??
-        (typeof request?.headers?.["x-forwarded-for"] === "string"
-          ? request.headers["x-forwarded-for"].split(",")[0]?.trim()
-          : null),
-    });
+    return this.authService.login(
+      loginDto,
+      this.buildRequestContext(requestId, userAgent, request),
+    );
   }
 
   @Post("forgot-password")
   @HttpCode(200)
-  forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    return this.authService.requestPasswordReset(forgotPasswordDto);
+  forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
+  ) {
+    return this.authService.requestPasswordReset(
+      forgotPasswordDto,
+      this.buildRequestContext(requestId, userAgent, request),
+    );
   }
 
   @Post("reset-password")
   @HttpCode(200)
-  resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-    return this.authService.resetPassword(resetPasswordDto);
+  resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
+  ) {
+    return this.authService.resetPassword(
+      resetPasswordDto,
+      this.buildRequestContext(requestId, userAgent, request),
+    );
   }
 
   @Post("verify-email")
-  verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
-    return this.authService.verifyEmail(verifyEmailDto);
+  verifyEmail(
+    @Body() verifyEmailDto: VerifyEmailDto,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
+  ) {
+    return this.authService.verifyEmail(
+      verifyEmailDto,
+      this.buildRequestContext(requestId, userAgent, request),
+    );
   }
 
   @Post("verify-email/resend")
   resendVerificationEmail(
     @Body() resendVerificationEmailDto: ResendVerificationEmailDto,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
   ) {
-    return this.authService.resendVerificationEmail(resendVerificationEmailDto);
+    return this.authService.resendVerificationEmail(
+      resendVerificationEmailDto,
+      this.buildRequestContext(requestId, userAgent, request),
+    );
   }
 
   @UseGuards(JwtAuthGuard)
@@ -87,11 +137,15 @@ export class AuthController {
   changePassword(
     @CurrentUser() user: AuthenticatedUser,
     @Body() changePasswordDto: ChangePasswordDto,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
   ) {
     return this.authService.changePassword(
       user.id,
       changePasswordDto,
       user.sessionId,
+      this.buildRequestContext(requestId, userAgent, request, user.sessionId),
     );
   }
 
@@ -100,8 +154,15 @@ export class AuthController {
   requestMobileOtp(
     @CurrentUser() user: AuthenticatedUser,
     @Body() requestMobileOtpDto: RequestMobileOtpDto,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
   ) {
-    return this.authService.requestMobileOtp(user.id, requestMobileOtpDto);
+    return this.authService.requestMobileOtp(
+      user.id,
+      requestMobileOtpDto,
+      this.buildRequestContext(requestId, userAgent, request, user.sessionId),
+    );
   }
 
   @UseGuards(JwtAuthGuard)
@@ -109,8 +170,15 @@ export class AuthController {
   verifyMobileOtp(
     @CurrentUser() user: AuthenticatedUser,
     @Body() verifyMobileOtpDto: VerifyMobileOtpDto,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
   ) {
-    return this.authService.verifyMobileOtp(user.id, verifyMobileOtpDto);
+    return this.authService.verifyMobileOtp(
+      user.id,
+      verifyMobileOtpDto,
+      this.buildRequestContext(requestId, userAgent, request, user.sessionId),
+    );
   }
 
   @UseGuards(JwtAuthGuard)
@@ -121,14 +189,24 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Delete("sessions/current")
-  revokeCurrentSession(@CurrentUser() user: AuthenticatedUser) {
-    return this.authService.revokeCurrentSession(user.id, user.sessionId ?? "");
+  revokeCurrentSession(
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers("x-request-id") requestId?: string,
+  ) {
+    return this.authService.revokeCurrentSession(user.id, user.sessionId ?? "", {
+      requestId,
+    });
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete("sessions/others")
-  revokeOtherSessions(@CurrentUser() user: AuthenticatedUser) {
-    return this.authService.revokeOtherSessions(user.id, user.sessionId ?? "");
+  revokeOtherSessions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers("x-request-id") requestId?: string,
+  ) {
+    return this.authService.revokeOtherSessions(user.id, user.sessionId ?? "", {
+      requestId,
+    });
   }
 
   @UseGuards(JwtAuthGuard)
@@ -136,11 +214,13 @@ export class AuthController {
   revokeSession(
     @CurrentUser() user: AuthenticatedUser,
     @Body() revokeSessionDto: RevokeSessionDto,
+    @Headers("x-request-id") requestId?: string,
   ) {
     return this.authService.revokeSession(
       user.id,
       user.sessionId ?? "",
       revokeSessionDto,
+      { requestId },
     );
   }
 }

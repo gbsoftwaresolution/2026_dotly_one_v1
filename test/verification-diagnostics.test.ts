@@ -28,8 +28,19 @@ describe("VerificationDiagnosticsService", () => {
       {
         getConfigurationStatus: () => ({
           configured: true,
+          verificationConfigured: true,
+          passwordResetConfigured: true,
           missingSettings: [],
         }),
+      } as any,
+      {
+        getConfigurationStatus: () => ({
+          configured: false,
+          missingSettings: ["TWILIO_AUTH_TOKEN"],
+        }),
+      } as any,
+      {
+        get: () => "staging",
       } as any,
       {
         getAvailableTrustFactors: () => [
@@ -58,11 +69,16 @@ describe("VerificationDiagnosticsService", () => {
     const diagnostics = await service.getRuntimeDiagnostics();
 
     assert.equal(diagnostics.status, "degraded");
+    assert.equal(diagnostics.environment, "staging");
     assert.equal(diagnostics.mailConfigured, true);
+    assert.equal(diagnostics.passwordResetConfigured, true);
+    assert.equal(diagnostics.smsConfigured, false);
     assert.equal(diagnostics.emailVerificationTableExists, true);
+    assert.equal(diagnostics.verificationDependenciesOperational, false);
     assert.deepEqual(diagnostics.missingRequiredMigrations, [
       "20260321123805_phase10_verification_followups",
     ]);
+    assert.deepEqual(diagnostics.missingSmsSettings, ["TWILIO_AUTH_TOKEN"]);
     assert.deepEqual(diagnostics.tokenMetrics, {
       activeTokens: 3,
       issuedLast24Hours: 7,

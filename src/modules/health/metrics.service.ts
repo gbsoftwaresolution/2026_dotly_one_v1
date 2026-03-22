@@ -3,6 +3,10 @@ import { ConfigService } from "@nestjs/config";
 
 import { CacheService } from "../../infrastructure/cache/cache.service";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
+import {
+  AuthMetricsService,
+  noopAuthMetricsService,
+} from "../auth/auth-metrics.service";
 
 @Injectable()
 export class MetricsService {
@@ -10,6 +14,7 @@ export class MetricsService {
     private readonly prismaService: PrismaService,
     private readonly cacheService: CacheService,
     private readonly configService: ConfigService,
+    private readonly authMetricsService: AuthMetricsService = noopAuthMetricsService,
   ) {}
 
   async getPrometheusSnapshot(): Promise<string> {
@@ -49,7 +54,7 @@ export class MetricsService {
       `dotly_auth_sessions_revoked_last_24h ${authSecurity.revokedSessionsLast24Hours}`,
     ];
 
-    return `${lines.join("\n")}\n`;
+    return `${lines.join("\n")}\n${this.authMetricsService.renderPrometheusMetrics()}`;
   }
 
   private async getDatabaseMetricValue(): Promise<0 | 1> {

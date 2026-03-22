@@ -8,6 +8,26 @@ type SessionContext = {
   ipAddress?: string | null;
 };
 
+type AuthSessionStore = {
+  authSession: {
+    create: (args: any) => Promise<any>;
+    findFirst: (args: any) => Promise<any>;
+    findMany: (args: any) => Promise<any>;
+    updateMany: (args: any) => Promise<{ count: number }>;
+  };
+};
+
+export type SessionValidationResult =
+  | { status: "active"; session: { id: string; expiresAt: Date } }
+  | { status: "missing" }
+  | { status: "revoked"; session: { id: string; revokedAt: Date } }
+  | { status: "expired"; session: { id: string; expiresAt: Date } };
+
+export type SessionRevokeResult =
+  | { status: "revoked"; revokedAt: Date }
+  | { status: "already_inactive" }
+  | { status: "not_found" };
+
 @Injectable()
 export class DeviceSessionService {
   constructor(private readonly prismaService: PrismaService) {}
@@ -16,14 +36,20 @@ export class DeviceSessionService {
     return this.prismaService as any;
   }
 
+  private getStore(store?: AuthSessionStore): AuthSessionStore {
+    return store ?? (this.prisma as AuthSessionStore);
+  }
+
   async createSession(
     userId: string,
     expiresAt: Date,
     context?: SessionContext,
+    store?: AuthSessionStore,
   ) {
     const metadata = this.describeUserAgent(context?.userAgent ?? null);
+    const authSessionStore = this.getStore(store);
 
-    return this.prisma.authSession.create({
+    return authSessionStore.authSession.create({
       data: {
         userId,
         userAgent: context?.userAgent ?? null,
@@ -56,26 +82,58 @@ export class DeviceSessionService {
     });
 
     if (!session) {
-      return null;
+      return {
+        status: "missing",
+      } as const;
     }
 
-    if (session.revokedAt || session.expiresAt.getTime() <= now.getTime()) {
-      return null;
+    if (session.revokedAt) {
+      return {
+        status: "revoked",
+        session: {
+          id: session.id,
+          revokedAt: session.revokedAt,
+        },
+      } as const;
     }
 
-    await this.prisma.authSession.update({
+    if (session.expiresAt.getTime() <= now.getTime()) {
+      return {
+        status: "expired",
+        session: {
+          id: session.id,
+          expiresAt: session.expiresAt,
+        },
+      } as const;
+    }
+
+    const keepAlive = await this.prisma.authSession.updateMany({
       where: {
         id: session.id,
+        userId,
+        revokedAt: null,
+        expiresAt: {
+          gt: now,
+        },
       },
       data: {
         lastActiveAt: now,
       },
-      select: {
-        id: true,
-      },
     });
 
-    return session;
+    if (keepAlive.count === 0) {
+      return {
+        status: "missing",
+      } as const;
+    }
+
+    return {
+      status: "active",
+      session: {
+        id: session.id,
+        expiresAt: session.expiresAt,
+      },
+    } as const;
   }
 
   async listSessions(userId: string) {
@@ -99,13 +157,49 @@ export class DeviceSessionService {
     });
   }
 
-  async revokeSession(userId: string, sessionId: string, reason: string) {
+  async revokeSession(
+    userId: string,
+    sessionId: string,
+    reason: string,
+    store?: AuthSessionStore,
+  ) {
     const now = new Date();
-    const result = await this.prisma.authSession.updateMany({
+    const authSessionStore = this.getStore(store);
+    const existingSession = await authSessionStore.authSession.findFirst({
+      where: {
+        id: sessionId,
+        userId,
+      },
+      select: {
+        id: true,
+        revokedAt: true,
+        expiresAt: true,
+      },
+    });
+
+    if (!existingSession) {
+      return {
+        status: "not_found",
+      } as const;
+    }
+
+    if (
+      existingSession.revokedAt ||
+      existingSession.expiresAt.getTime() <= now.getTime()
+    ) {
+      return {
+        status: "already_inactive",
+      } as const;
+    }
+
+    const result = await authSessionStore.authSession.updateMany({
       where: {
         id: sessionId,
         userId,
         revokedAt: null,
+        expiresAt: {
+          gt: now,
+        },
       },
       data: {
         revokedAt: now,
@@ -113,18 +207,36 @@ export class DeviceSessionService {
       },
     });
 
-    return result.count > 0;
+    if (result.count > 0) {
+      return {
+        status: "revoked",
+        revokedAt: now,
+      } as const;
+    }
+
+    return {
+      status: "already_inactive",
+    } as const;
   }
 
-  async revokeOtherSessions(userId: string, sessionId: string, reason: string) {
+  async revokeOtherSessions(
+    userId: string,
+    sessionId: string,
+    reason: string,
+    store?: AuthSessionStore,
+  ) {
     const now = new Date();
-    const result = await this.prisma.authSession.updateMany({
+    const authSessionStore = this.getStore(store);
+    const result = await authSessionStore.authSession.updateMany({
       where: {
         userId,
         id: {
           not: sessionId,
         },
         revokedAt: null,
+        expiresAt: {
+          gt: now,
+        },
       },
       data: {
         revokedAt: now,
@@ -135,12 +247,16 @@ export class DeviceSessionService {
     return result.count;
   }
 
-  async revokeAllSessions(userId: string, reason: string) {
+  async revokeAllSessions(userId: string, reason: string, store?: AuthSessionStore) {
     const now = new Date();
-    const result = await this.prisma.authSession.updateMany({
+    const authSessionStore = this.getStore(store);
+    const result = await authSessionStore.authSession.updateMany({
       where: {
         userId,
         revokedAt: null,
+        expiresAt: {
+          gt: now,
+        },
       },
       data: {
         revokedAt: now,

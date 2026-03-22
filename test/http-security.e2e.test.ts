@@ -10,6 +10,7 @@ import { GlobalExceptionFilter } from "../src/common/filters/global-exception.fi
 import { ResponseEnvelopeInterceptor } from "../src/common/interceptors/response-envelope.interceptor";
 import { ContactRequestSourceType } from "../src/common/enums/contact-request-source-type.enum";
 import { JwtAuthGuard } from "../src/common/guards/jwt-auth.guard";
+import { DeviceSessionService } from "../src/modules/auth/device-session.service";
 import { ContactRequestsController } from "../src/modules/contact-requests/contact-requests.controller";
 import { ContactRequestsService } from "../src/modules/contact-requests/contact-requests.service";
 import { EventsController } from "../src/modules/events/events.controller";
@@ -26,6 +27,7 @@ import { QrService } from "../src/modules/qr/qr.service";
 const JWT_ISSUER = "dotly-backend";
 const JWT_AUDIENCE = "dotly-clients";
 const JWT_SECRET = "test-secret";
+const TEST_SESSION_ID = "session-current";
 
 const personasServiceMock = {
   findAllByUser: async (userId: string) => [{ id: `persona-for-${userId}` }],
@@ -97,6 +99,16 @@ const configServiceMock = {
   },
 };
 
+const deviceSessionServiceMock = {
+  validateSession: async (_userId: string, sessionId: string) => ({
+    status: "active" as const,
+    session: {
+      id: sessionId,
+      expiresAt: new Date("2026-03-28T09:00:00.000Z"),
+    },
+  }),
+};
+
 const jwtService = new JwtService({
   secret: JWT_SECRET,
   signOptions: {
@@ -153,6 +165,10 @@ const jwtService = new JwtService({
       provide: ConfigService,
       useValue: configServiceMock,
     },
+    {
+      provide: DeviceSessionService,
+      useValue: deviceSessionServiceMock,
+    },
   ],
 })
 class HttpSecurityTestModule {}
@@ -206,6 +222,7 @@ describe("HTTP Security E2E", () => {
       {
         sub: "user-1",
         email: "user@example.com",
+        sessionId: TEST_SESSION_ID,
       },
       {
         audience: "wrong-audience",
@@ -228,6 +245,7 @@ describe("HTTP Security E2E", () => {
     const token = await jwtService.signAsync({
       sub: "user-1",
       email: "user@example.com",
+      sessionId: TEST_SESSION_ID,
     });
 
     const response = await fetch(`${baseUrl}/v1/contact-requests`, {
@@ -296,6 +314,7 @@ describe("HTTP Security E2E", () => {
     const token = await jwtService.signAsync({
       sub: "user-42",
       email: "user42@example.com",
+      sessionId: TEST_SESSION_ID,
     });
 
     const response = await fetch(

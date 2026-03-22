@@ -6,10 +6,13 @@ import type { StringValue } from "ms";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { AnalyticsModule } from "../analytics/analytics.module";
 
+import { AuthAbuseProtectionService } from "./auth-abuse-protection.service";
 import { AuthController } from "./auth.controller";
+import { AuthMetricsService } from "./auth-metrics.service";
 import { AuthService } from "./auth.service";
 import { DeviceSessionService } from "./device-session.service";
 import { PasswordPolicyService } from "./password-policy.service";
+import { SecurityArtifactLifecycleService } from "./security-artifact-lifecycle.service";
 import { VerificationDiagnosticsService } from "./verification-diagnostics.service";
 import { VerificationPolicyService } from "./verification-policy.service";
 
@@ -34,17 +37,22 @@ import { VerificationPolicyService } from "./verification-policy.service";
   ],
   controllers: [AuthController],
   providers: [
+    AuthAbuseProtectionService,
+    AuthMetricsService,
     AuthService,
     JwtAuthGuard,
     PasswordPolicyService,
     DeviceSessionService,
+    SecurityArtifactLifecycleService,
     VerificationPolicyService,
     VerificationDiagnosticsService,
   ],
   exports: [
+    AuthMetricsService,
     AuthService,
     JwtAuthGuard,
     JwtModule,
+    SecurityArtifactLifecycleService,
     VerificationPolicyService,
     VerificationDiagnosticsService,
   ],
