@@ -49,6 +49,37 @@ export function formatTimeAgo(value: string | null | undefined): string {
   return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
 }
 
+export function formatDaysAgo(
+  value: number | null | undefined,
+  variant: "long" | "compact" = "long",
+): string {
+  if (typeof value !== "number" || Number.isNaN(value) || value < 0) {
+    return "today";
+  }
+
+  if (value === 0) {
+    return "today";
+  }
+
+  if (variant === "compact") {
+    if (value < 7) {
+      return `${value}d`;
+    }
+
+    if (value < 30) {
+      return `${Math.floor(value / 7)}w`;
+    }
+
+    if (value < 365) {
+      return `${Math.floor(value / 30)}mo`;
+    }
+
+    return `${Math.floor(value / 365)}y`;
+  }
+
+  return `${value} day${value === 1 ? "" : "s"} ago`;
+}
+
 export function formatTimeAgoShort(value: string | null | undefined): string | null {
   const timestamp = parseTimestamp(value);
 

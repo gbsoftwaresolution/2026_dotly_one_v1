@@ -8,20 +8,12 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { ApiError, apiRequest } from "@/lib/api/client";
 import { requireServerSession } from "@/lib/auth/protected-route";
 import { routes } from "@/lib/constants/routes";
+import {
+  formatRelationshipAge,
+  formatSourceLabel,
+} from "@/lib/utils/format-contact-relationship";
 import { formatTimeAgo } from "@/lib/utils/format-time-ago";
 import type { ContactDetail } from "@/types/contact";
-
-function formatSourceType(sourceType: ContactDetail["sourceType"]): string {
-  switch (sourceType) {
-    case "qr":
-      return "QR";
-    case "event":
-      return "Event";
-    case "profile":
-    default:
-      return "Profile";
-  }
-}
 
 function formatTimestamp(value: string): string {
   return new Intl.DateTimeFormat("en", {
@@ -47,6 +39,32 @@ function getStateBadge(state: ContactDetail["state"]) {
     default:
       return <StatusBadge label="Approved" tone="success" />;
   }
+}
+
+function InfoRow({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail?: string | null;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 px-4 py-3 sm:px-5">
+      <div className="min-w-0">
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+          {label}
+        </p>
+        {detail ? (
+          <p className="pt-1 font-sans text-xs text-muted">{detail}</p>
+        ) : null}
+      </div>
+      <p className="max-w-[60%] text-right font-sans text-sm font-medium text-foreground">
+        {value}
+      </p>
+    </div>
+  );
 }
 
 export default async function ContactDetailPage({
@@ -114,11 +132,23 @@ export default async function ContactDetailPage({
     lastInteractionAt,
     interactionCount,
     isExpired,
+    metadata,
   } = contact;
 
   const nearExpiry =
     !isExpired && accessEndAt ? isNearExpiry(accessEndAt) : false;
-  const lastInteractionLabel = formatTimeAgo(lastInteractionAt);
+  const sourceLabel = formatSourceLabel(memory.sourceLabel, sourceType);
+  const resolvedLastInteractionAt = metadata.lastInteractionAt ?? lastInteractionAt;
+  const resolvedInteractionCount = metadata.interactionCount ?? interactionCount;
+  const lastInteractionLabel = formatTimeAgo(resolvedLastInteractionAt);
+  const relationshipAgeLabel = formatRelationshipAge(
+    metadata.relationshipAgeDays,
+    createdAt,
+  );
+  const hasInteractions =
+    metadata.hasInteractions ||
+    resolvedInteractionCount > 0 ||
+    resolvedLastInteractionAt !== null;
 
   return (
     <section className="space-y-4">
@@ -151,117 +181,129 @@ export default async function ContactDetailPage({
         </div>
       )}
 
-      {/* Identity card */}
       <Card className={`space-y-6 ${isExpired ? "opacity-50 grayscale" : ""}`}>
-        <div className="flex flex-col items-center text-center gap-4 pt-2">
+        <div className="flex items-start gap-4 pt-1 sm:gap-5">
           {targetPersona.profilePhotoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={targetPersona.profilePhotoUrl}
               alt={targetPersona.fullName}
-              className="h-24 w-24 rounded-3xl object-cover shadow-sm"
+              className="h-20 w-20 rounded-3xl object-cover shadow-sm sm:h-24 sm:w-24"
             />
           ) : (
-            <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-slate-900 text-3xl font-semibold text-white dark:bg-white dark:text-zinc-950 shadow-sm">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-slate-900 text-2xl font-semibold text-white shadow-sm dark:bg-white dark:text-zinc-950 sm:h-24 sm:w-24 sm:text-3xl">
               {targetPersona.fullName.charAt(0).toUpperCase()}
             </div>
           )}
 
-          <div className="space-y-1">
-            <h2 className="font-sans text-xl font-bold text-foreground">
-              {targetPersona.fullName}
-            </h2>
-            <p className="font-sans text-sm text-muted">
-              @{targetPersona.username}
-            </p>
-            {targetPersona.tagline ? (
-              <p className="font-sans text-sm italic text-muted pt-1">
-                &ldquo;{targetPersona.tagline}&rdquo;
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="space-y-1">
+              <h2 className="font-sans text-xl font-bold text-foreground">
+                {targetPersona.fullName}
+              </h2>
+              <p className="font-sans text-sm text-muted">
+                @{targetPersona.username}
               </p>
-            ) : null}
-          </div>
-        </div>
+              <p className="font-sans text-sm text-foreground/85">
+                {targetPersona.jobTitle} at {targetPersona.companyName}
+              </p>
+              {targetPersona.tagline ? (
+                <p className="font-sans text-sm italic text-muted">
+                  &ldquo;{targetPersona.tagline}&rdquo;
+                </p>
+              ) : null}
+            </div>
 
-        <div className="grid grid-cols-2 gap-px bg-border overflow-hidden rounded-2xl border border-border">
-          <div className="bg-surface p-4 space-y-1">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-              Relationship State
-            </p>
-            <div className="pt-0.5">{getStateBadge(state)}</div>
-          </div>
-          <div className="bg-surface p-4 space-y-1">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-              Met Via
-            </p>
-            <div className="pt-0.5">
-              <StatusBadge label={formatSourceType(sourceType)} />
+            <div className="flex flex-wrap gap-2 pt-1">
+              {getStateBadge(state)}
+              {metadata.isRecentlyActive ? (
+                <StatusBadge label="Recently active" tone="neutral" dot />
+              ) : null}
             </div>
           </div>
-          <div className="bg-surface p-4 space-y-1">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-              Connected Since
-            </p>
-            <p className="font-mono text-sm text-foreground">
-              {formatTimestamp(createdAt)}
-            </p>
-          </div>
-          <div className="bg-surface p-4 space-y-1">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-              Last Interaction
-            </p>
-            <p className="font-sans text-sm text-foreground">
-              {lastInteractionLabel}
-            </p>
-            <p className="font-sans text-xs text-muted">
-              Interactions: {interactionCount}
-            </p>
-          </div>
-          {state === "instant_access" && accessEndAt ? (
-            <div
-              className={`bg-surface p-4 space-y-1 ${
-                nearExpiry ? "bg-amber-50/60 dark:bg-amber-950/20" : ""
-              }`}
-            >
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                Access Ends
-              </p>
-              <p
-                className={`font-mono text-sm ${
-                  nearExpiry
-                    ? "text-amber-700 dark:text-amber-400 font-semibold"
-                    : "text-foreground"
-                }`}
-              >
-                {formatTimestamp(accessEndAt)}
-                {nearExpiry ? " (soon)" : ""}
-              </p>
-            </div>
-          ) : null}
-          {state === "instant_access" && accessStartAt ? (
-            <div className="bg-surface p-4 space-y-1 col-span-2">
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                Access Window
-              </p>
-              <p className="font-sans text-sm text-foreground">
-                Started {formatTimestamp(accessStartAt)}
-                {accessEndAt ? ` and ends ${formatTimestamp(accessEndAt)}` : ""}
-              </p>
-            </div>
-          ) : null}
-          {memory.sourceLabel ? (
-            <div className="bg-surface p-4 space-y-1 col-span-2">
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                Met at
-              </p>
-              <p className="font-sans text-sm text-foreground">
-                {memory.sourceLabel}
-              </p>
-            </div>
-          ) : null}
         </div>
       </Card>
 
-      {/* Interactive upgrade / expire actions */}
+      <Card className={isExpired ? "opacity-50 grayscale" : ""}>
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-sans text-lg font-semibold text-foreground">
+              Relationship
+            </h2>
+            <p className="font-sans text-sm text-muted">
+              A compact view of how this connection has evolved.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-border bg-surface/60">
+            <InfoRow
+              label="Last interaction"
+              value={lastInteractionLabel}
+              detail={
+                hasInteractions && resolvedLastInteractionAt
+                  ? formatTimestamp(resolvedLastInteractionAt)
+                  : null
+              }
+            />
+            <div className="border-t border-border" />
+            <InfoRow
+              label="Interactions"
+              value={String(resolvedInteractionCount)}
+              detail={hasInteractions ? null : "No interactions yet"}
+            />
+            <div className="border-t border-border" />
+            <InfoRow
+              label="Connected"
+              value={relationshipAgeLabel}
+              detail={`Since ${formatTimestamp(createdAt)}`}
+            />
+            <div className="border-t border-border" />
+            <InfoRow label="Source" value={sourceLabel} />
+            {state === "instant_access" && accessEndAt ? (
+              <>
+                <div className="border-t border-border" />
+                <InfoRow
+                  label="Access ends"
+                  value={`${formatTimestamp(accessEndAt)}${nearExpiry ? " soon" : ""}`}
+                  detail={
+                    accessStartAt
+                      ? `Started ${formatTimestamp(accessStartAt)}`
+                      : null
+                  }
+                />
+              </>
+            ) : null}
+            {memory.metAt ? (
+              <>
+                <div className="border-t border-border" />
+                <InfoRow
+                  label="First recorded"
+                  value={formatTimestamp(memory.metAt)}
+                />
+              </>
+            ) : null}
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-sans text-lg font-semibold text-foreground">
+              Notes
+            </h2>
+            <p className="font-sans text-sm text-muted">
+              Keep a lightweight memory of how you know each other.
+            </p>
+          </div>
+          <NoteEditor
+            relationshipId={relationshipId}
+            initialNote={memory.note}
+            disabled={isExpired}
+          />
+        </div>
+      </Card>
+
       <RelationshipActions
         relationshipId={relationshipId}
         initialState={state}
@@ -269,15 +311,6 @@ export default async function ContactDetailPage({
         targetPersonaId={targetPersona.id}
         displayName={targetPersona.fullName}
       />
-
-      {/* Note editor */}
-      <Card>
-        <NoteEditor
-          relationshipId={relationshipId}
-          initialNote={memory.note}
-          disabled={isExpired}
-        />
-      </Card>
     </section>
   );
 }

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  formatDaysAgo,
   formatTimeAgo,
   formatTimeAgoShort,
   isRecentTimestamp,
@@ -33,6 +34,13 @@ describe("formatTimeAgo", () => {
   it("returns compact labels for list surfaces", () => {
     expect(formatTimeAgoShort("2026-03-22T10:00:00.000Z")).toBe("2h");
     expect(formatTimeAgoShort("2026-03-20T12:00:00.000Z")).toBe("2d");
+  });
+
+  it("formats relationship age text in long and compact variants", () => {
+    expect(formatDaysAgo(0)).toBe("today");
+    expect(formatDaysAgo(3)).toBe("3 days ago");
+    expect(formatDaysAgo(10, "compact")).toBe("1w");
+    expect(formatDaysAgo(65, "compact")).toBe("2mo");
   });
 
   it("treats invalid and future timestamps as missing data", () => {

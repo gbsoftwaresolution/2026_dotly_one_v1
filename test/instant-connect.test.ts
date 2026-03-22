@@ -21,6 +21,7 @@ import { RelationshipsService } from "../src/modules/relationships/relationships
 
 const INSTANT_ACCESS_STATE = "INSTANT_ACCESS" as PrismaContactRelationshipState;
 const EXPIRED_STATE = "EXPIRED" as PrismaContactRelationshipState;
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 describe("QrService.connectQuickConnectQr", () => {
   it("creates an instant access relationship from a quick connect QR", async () => {
@@ -616,6 +617,9 @@ describe("RelationshipsService", () => {
 describe("ContactsService", () => {
   it("returns approved and active instant access contacts", async () => {
     let findManyPayload: Record<string, unknown> | null = null;
+    const recentInteractionAt = new Date(Date.now() - 2 * DAY_IN_MS);
+    const approvedCreatedAt = new Date(Date.now() - 4 * DAY_IN_MS);
+    const instantCreatedAt = new Date(Date.now() - 3 * DAY_IN_MS);
 
     const service = new ContactsService(
       {
@@ -629,9 +633,9 @@ describe("ContactsService", () => {
                 state: PrismaContactRelationshipState.APPROVED,
                 accessStartAt: null,
                 accessEndAt: null,
-                lastInteractionAt: new Date("2026-03-22T09:30:00.000Z"),
+                lastInteractionAt: recentInteractionAt,
                 interactionCount: 4,
-                createdAt: new Date("2026-03-20T10:00:00.000Z"),
+                createdAt: approvedCreatedAt,
                 sourceType: PrismaContactRequestSourceType.PROFILE,
                 targetPersona: {
                   id: "persona-1",
@@ -650,11 +654,11 @@ describe("ContactsService", () => {
                 id: "instant-id",
                 ownerUserId: "owner-user",
                 state: INSTANT_ACCESS_STATE,
-                accessStartAt: new Date("2026-03-20T11:00:00.000Z"),
-                accessEndAt: new Date("2026-03-20T15:00:00.000Z"),
+                accessStartAt: instantCreatedAt,
+                accessEndAt: new Date(Date.now() + DAY_IN_MS),
                 lastInteractionAt: null,
                 interactionCount: 0,
-                createdAt: new Date("2026-03-20T11:00:00.000Z"),
+                createdAt: instantCreatedAt,
                 sourceType: PrismaContactRequestSourceType.QR,
                 targetPersona: {
                   id: "persona-2",
@@ -670,7 +674,7 @@ describe("ContactsService", () => {
                 memories: [
                   {
                     id: "memory-id",
-                    metAt: new Date("2026-03-20T11:00:00.000Z"),
+                    metAt: instantCreatedAt,
                     sourceLabel: "Quick Connect QR",
                     note: null,
                   },
@@ -693,18 +697,130 @@ describe("ContactsService", () => {
     assert.equal(result[1].state, "instant_access");
     assert.equal(
       result[0].lastInteractionAt?.toISOString(),
-      "2026-03-22T09:30:00.000Z",
+      recentInteractionAt.toISOString(),
     );
     assert.equal(result[0].interactionCount, 4);
+    assert.equal(result[0].metadata.lastInteractionAt?.toISOString(), recentInteractionAt.toISOString());
+    assert.equal(result[0].metadata.interactionCount, 4);
+    assert.equal(result[0].metadata.hasInteractions, true);
+    assert.equal(result[0].metadata.isRecentlyActive, true);
+    assert.equal(result[0].metadata.relationshipAgeDays, 4);
     assert.equal(result[1].memory.sourceLabel, "Quick Connect QR");
     assert.equal(result[1].interactionCount, 0);
+    assert.equal(result[1].metadata.lastInteractionAt, null);
+    assert.equal(result[1].metadata.hasInteractions, false);
+    assert.equal(result[1].metadata.isRecentlyActive, false);
+    assert.equal(result[1].metadata.relationshipAgeDays, 3);
     assert.equal(
       ((findManyPayload as any)?.where?.OR?.[1]?.state as string) ?? "",
       INSTANT_ACCESS_STATE,
     );
   });
 
+  it("filters contacts by recent relationship activity when requested", async () => {
+    const recentInteractionAt = new Date(Date.now() - DAY_IN_MS);
+    const staleInteractionAt = new Date(Date.now() - 10 * DAY_IN_MS);
+    let findManyPayload: Record<string, unknown> | null = null;
+
+    const service = new ContactsService(
+      {
+        contactRelationship: {
+          findMany: async (payload: Record<string, unknown>) => {
+            findManyPayload = payload;
+
+            const recentRange = (payload.where as Record<string, any> | undefined)
+              ?.lastInteractionAt;
+
+            const results = [
+            {
+              id: "recent-id",
+              ownerUserId: "owner-user",
+              state: PrismaContactRelationshipState.APPROVED,
+              accessStartAt: null,
+              accessEndAt: null,
+              lastInteractionAt: recentInteractionAt,
+              interactionCount: 1,
+              createdAt: new Date(Date.now() - 4 * DAY_IN_MS),
+              sourceType: PrismaContactRequestSourceType.PROFILE,
+              targetPersona: {
+                id: "persona-recent",
+                username: "recent",
+                publicUrl: "recent",
+                fullName: "Recent User",
+                jobTitle: "Engineer",
+                companyName: "Dotly",
+                tagline: "Recent",
+                profilePhotoUrl: null,
+                accessMode: PrismaPersonaAccessMode.OPEN,
+              },
+              memories: [],
+            },
+            {
+              id: "stale-id",
+              ownerUserId: "owner-user",
+              state: PrismaContactRelationshipState.APPROVED,
+              accessStartAt: null,
+              accessEndAt: null,
+              lastInteractionAt: staleInteractionAt,
+              interactionCount: 2,
+              createdAt: new Date(Date.now() - 12 * DAY_IN_MS),
+              sourceType: PrismaContactRequestSourceType.EVENT,
+              targetPersona: {
+                id: "persona-stale",
+                username: "stale",
+                publicUrl: "stale",
+                fullName: "Stale User",
+                jobTitle: "Designer",
+                companyName: "Dotly",
+                tagline: "Stale",
+                profilePhotoUrl: null,
+                accessMode: PrismaPersonaAccessMode.REQUEST,
+              },
+              memories: [],
+            },
+            ];
+
+            if (!recentRange) {
+              return results;
+            }
+
+            return results.filter((relationship) => {
+              const lastInteractionAt = relationship.lastInteractionAt;
+
+              return (
+                lastInteractionAt instanceof Date &&
+                lastInteractionAt >= recentRange.gte &&
+                lastInteractionAt <= recentRange.lte
+              );
+            });
+          },
+        },
+      } as any,
+      {} as any,
+      {
+        expireOwnedExpiredRelationships: async () => undefined,
+      } as any,
+    );
+
+    const result = await service.findAll("owner-user", { recent: true });
+
+    assert.equal(result.length, 1);
+    assert.equal(result[0]?.relationshipId, "recent-id");
+    assert.equal(result[0]?.metadata.isRecentlyActive, true);
+    assert.equal(
+      ((findManyPayload as any)?.where?.lastInteractionAt?.gte instanceof Date),
+      true,
+    );
+    assert.equal(
+      ((findManyPayload as any)?.where?.lastInteractionAt?.lte instanceof Date),
+      true,
+    );
+  });
+
   it("returns interaction metadata in contact detail responses", async () => {
+    const lastInteractionAt = new Date(Date.now() - DAY_IN_MS);
+    const createdAt = new Date(Date.now() - 3 * DAY_IN_MS - 60 * 1000);
+
     const service = new ContactsService(
       {
         contactRelationship: {
@@ -714,9 +830,9 @@ describe("ContactsService", () => {
             state: PrismaContactRelationshipState.APPROVED,
             accessStartAt: null,
             accessEndAt: null,
-            lastInteractionAt: new Date("2026-03-22T10:45:00.000Z"),
+            lastInteractionAt,
             interactionCount: 2,
-            createdAt: new Date("2026-03-20T08:00:00.000Z"),
+            createdAt,
             sourceType: PrismaContactRequestSourceType.PROFILE,
             targetPersona: {
               id: "persona-id",
@@ -746,9 +862,63 @@ describe("ContactsService", () => {
 
     assert.equal(
       result.lastInteractionAt?.toISOString(),
-      "2026-03-22T10:45:00.000Z",
+      lastInteractionAt.toISOString(),
     );
     assert.equal(result.interactionCount, 2);
+    assert.equal(result.metadata.lastInteractionAt?.toISOString(), lastInteractionAt.toISOString());
+    assert.equal(result.metadata.interactionCount, 2);
+    assert.equal(result.metadata.hasInteractions, true);
+    assert.equal(result.metadata.isRecentlyActive, true);
+    assert.equal(result.metadata.relationshipAgeDays, 3);
+  });
+
+  it("returns null-safe detail metadata for sparse or future interaction values", async () => {
+    const service = new ContactsService(
+      {
+        contactRelationship: {
+          findFirst: async () => ({
+            id: "relationship-id",
+            ownerUserId: "owner-user",
+            state: PrismaContactRelationshipState.APPROVED,
+            accessStartAt: null,
+            accessEndAt: null,
+            lastInteractionAt: new Date(Date.now() + DAY_IN_MS),
+            interactionCount: -3,
+            createdAt: new Date(Date.now() + DAY_IN_MS),
+            sourceType: PrismaContactRequestSourceType.PROFILE,
+            targetPersona: {
+              id: "persona-id",
+              username: "detail",
+              publicUrl: "dotly.id/detail",
+              fullName: "Detail User",
+              jobTitle: "Engineer",
+              companyName: "Dotly",
+              tagline: "Approved",
+              profilePhotoUrl: null,
+              accessMode: PrismaPersonaAccessMode.OPEN,
+            },
+            memories: [],
+          }),
+        },
+      } as any,
+      {} as any,
+      {
+        expireRelationshipIfNeeded: async (
+          _tx: unknown,
+          relationship: Record<string, unknown>,
+        ) => relationship,
+      } as any,
+    );
+
+    const result = await service.findOne("owner-user", "relationship-id");
+
+    assert.equal(result.lastInteractionAt, null);
+    assert.equal(result.interactionCount, 0);
+    assert.equal(result.metadata.lastInteractionAt, null);
+    assert.equal(result.metadata.interactionCount, 0);
+    assert.equal(result.metadata.hasInteractions, false);
+    assert.equal(result.metadata.isRecentlyActive, false);
+    assert.equal(result.metadata.relationshipAgeDays, 0);
   });
 
   it("updates interaction metadata when a contact note changes", async () => {

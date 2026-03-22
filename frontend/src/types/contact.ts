@@ -26,6 +26,14 @@ export interface ContactMemory {
   note: string | null;
 }
 
+export interface ContactRelationshipMetadata {
+  lastInteractionAt: string | null;
+  interactionCount: number;
+  hasInteractions: boolean;
+  isRecentlyActive: boolean;
+  relationshipAgeDays: number;
+}
+
 export interface Contact {
   relationshipId: string;
   state: ContactRelationshipState;
@@ -36,6 +44,7 @@ export interface Contact {
   sourceType: ContactRequestSourceType;
   targetPersona: ContactTargetPersona;
   memory: ContactMemory;
+  metadata: ContactRelationshipMetadata;
 }
 
 export interface ContactDetail {
@@ -50,6 +59,7 @@ export interface ContactDetail {
   sourceType: ContactRequestSourceType;
   targetPersona: ContactTargetPersonaDetail;
   memory: ContactMemory;
+  metadata: ContactRelationshipMetadata;
 }
 
 export interface UpdateContactNoteInput {

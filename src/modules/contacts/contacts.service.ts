@@ -19,6 +19,9 @@ import { RelationshipsService } from "../relationships/relationships.service";
 import { ListContactsQueryDto } from "./dto/list-contacts-query.dto";
 import { UpdateContactNoteDto } from "./dto/update-contact-note.dto";
 
+const RECENT_ACTIVITY_WINDOW_DAYS = 7;
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
 const contactTargetPersonaSelect = {
   id: true,
   username: true,
@@ -65,6 +68,14 @@ type ContactRelationshipRecord = Prisma.ContactRelationshipGetPayload<{
   select: typeof contactRelationshipSelect;
 }>;
 
+type RelationshipMetadata = {
+  lastInteractionAt: Date | null;
+  interactionCount: number;
+  hasInteractions: boolean;
+  isRecentlyActive: boolean;
+  relationshipAgeDays: number;
+};
+
 @Injectable()
 export class ContactsService {
   constructor(
@@ -76,6 +87,7 @@ export class ContactsService {
   async findAll(userId: string, query: ListContactsQueryDto) {
     await this.relationshipsService.expireOwnedExpiredRelationships(userId);
     const now = new Date();
+    const recentActivityCutoff = getRecentActivityCutoff(now);
     const relationships = await this.prismaService.contactRelationship.findMany(
       {
         where: {
@@ -118,6 +130,14 @@ export class ContactsService {
                 },
               }
             : {}),
+          ...(query.recent
+            ? {
+                lastInteractionAt: {
+                  gte: recentActivityCutoff,
+                  lte: now,
+                },
+              }
+            : {}),
         },
         orderBy: {
           createdAt: "desc",
@@ -127,7 +147,7 @@ export class ContactsService {
     );
 
     return relationships.map((relationship) =>
-      this.toContactListItem(relationship),
+      this.toContactListItem(relationship, now),
     );
   }
 
@@ -148,7 +168,7 @@ export class ContactsService {
       throw new NotFoundException("Contact not found");
     }
 
-    return this.toContactDetail(normalizedRelationship);
+    return this.toContactDetail(normalizedRelationship, new Date());
   }
 
   async updateNote(
@@ -257,16 +277,20 @@ export class ContactsService {
     return relationship;
   }
 
-  private toContactListItem(relationship: ContactRelationshipRecord) {
+  private toContactListItem(
+    relationship: ContactRelationshipRecord,
+    now: Date,
+  ) {
     const memory = relationship.memories[0];
+    const metadata = this.buildRelationshipMetadata(relationship, now);
 
     return {
       relationshipId: relationship.id,
       state: toApiRelationshipState(relationship.state),
       createdAt: relationship.createdAt,
       accessEndAt: relationship.accessEndAt,
-      lastInteractionAt: relationship.lastInteractionAt ?? null,
-      interactionCount: toSafeInteractionCount(relationship.interactionCount),
+      lastInteractionAt: metadata.lastInteractionAt,
+      interactionCount: metadata.interactionCount,
       sourceType: toApiContactRequestSourceType(relationship.sourceType),
       targetPersona: {
         id: relationship.targetPersona.id,
@@ -284,11 +308,16 @@ export class ContactsService {
           memory?.sourceLabel ?? toSourceLabel(relationship.sourceType),
         note: memory?.note ?? null,
       },
+      metadata,
     };
   }
 
-  private toContactDetail(relationship: ContactRelationshipRecord) {
+  private toContactDetail(
+    relationship: ContactRelationshipRecord,
+    now: Date,
+  ) {
     const memory = relationship.memories[0];
+    const metadata = this.buildRelationshipDetailMetadata(relationship, now);
 
     return {
       relationshipId: relationship.id,
@@ -297,8 +326,8 @@ export class ContactsService {
       accessEndAt: relationship.accessEndAt,
       isExpired: relationship.state === PrismaContactRelationshipState.EXPIRED,
       createdAt: relationship.createdAt,
-      lastInteractionAt: relationship.lastInteractionAt ?? null,
-      interactionCount: toSafeInteractionCount(relationship.interactionCount),
+      lastInteractionAt: metadata.lastInteractionAt,
+      interactionCount: metadata.interactionCount,
       sourceType: toApiContactRequestSourceType(relationship.sourceType),
       targetPersona: {
         id: relationship.targetPersona.id,
@@ -317,7 +346,83 @@ export class ContactsService {
           memory?.sourceLabel ?? toSourceLabel(relationship.sourceType),
         note: memory?.note ?? null,
       },
+      metadata,
     };
+  }
+
+  private buildRelationshipMetadata(
+    relationship: Pick<
+      ContactRelationshipRecord,
+      "createdAt" | "lastInteractionAt" | "interactionCount"
+    >,
+    now: Date,
+  ): RelationshipMetadata {
+    const lastInteractionAt = this.getSafeLastInteractionAt(
+      relationship.lastInteractionAt,
+      now,
+    );
+    const interactionCount = toSafeInteractionCount(relationship.interactionCount);
+    const hasInteractions = interactionCount > 0 || lastInteractionAt !== null;
+
+    return {
+      lastInteractionAt,
+      interactionCount,
+      hasInteractions,
+      isRecentlyActive: this.isRecentlyActive(lastInteractionAt, now),
+      relationshipAgeDays: this.getRelationshipAgeDays(relationship.createdAt, now),
+    };
+  }
+
+  private buildRelationshipDetailMetadata(
+    relationship: Pick<
+      ContactRelationshipRecord,
+      "createdAt" | "lastInteractionAt" | "interactionCount"
+    >,
+    now: Date,
+  ): RelationshipMetadata {
+    return this.buildRelationshipMetadata(relationship, now);
+  }
+
+  private isRecentlyActive(lastInteractionAt: Date | null, now: Date): boolean {
+    if (lastInteractionAt === null) {
+      return false;
+    }
+
+    return now.getTime() - lastInteractionAt.getTime() <= recentActivityWindowMs();
+  }
+
+  private getRelationshipAgeDays(createdAt: Date | null | undefined, now: Date): number {
+    if (!(createdAt instanceof Date)) {
+      return 0;
+    }
+
+    const createdAtMs = createdAt.getTime();
+
+    if (Number.isNaN(createdAtMs)) {
+      return 0;
+    }
+
+    return Math.max(0, Math.floor((now.getTime() - createdAtMs) / MILLISECONDS_PER_DAY));
+  }
+
+  private getSafeLastInteractionAt(
+    lastInteractionAt: Date | null | undefined,
+    now: Date,
+  ): Date | null {
+    if (!(lastInteractionAt instanceof Date)) {
+      return null;
+    }
+
+    const lastInteractionAtMs = lastInteractionAt.getTime();
+
+    if (
+      Number.isNaN(lastInteractionAtMs) ||
+      lastInteractionAtMs > now.getTime()
+    ) {
+      return null;
+    }
+
+    return lastInteractionAt;
   }
 }
 
@@ -402,4 +507,12 @@ function toSafeInteractionCount(interactionCount: number | null | undefined) {
   }
 
   return interactionCount;
+}
+
+function recentActivityWindowMs() {
+  return RECENT_ACTIVITY_WINDOW_DAYS * MILLISECONDS_PER_DAY;
+}
+
+function getRecentActivityCutoff(now: Date) {
+  return new Date(now.getTime() - recentActivityWindowMs());
 }

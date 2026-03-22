@@ -4,20 +4,12 @@ import { Card } from "@/components/shared/card";
 import { ExpiryBadge } from "@/components/shared/expiry-badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { routes } from "@/lib/constants/routes";
-import { formatTimeAgoShort, isRecentTimestamp } from "@/lib/utils/format-time-ago";
+import {
+  formatRelationshipAge,
+  formatSourceLabel,
+  getRecentActivityLabel,
+} from "@/lib/utils/format-contact-relationship";
 import type { Contact } from "@/types/contact";
-
-function formatSourceType(sourceType: Contact["sourceType"]): string {
-  switch (sourceType) {
-    case "qr":
-      return "QR";
-    case "event":
-      return "Event";
-    case "profile":
-    default:
-      return "Profile";
-  }
-}
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("en", {
@@ -58,6 +50,8 @@ export function ContactCard({ contact }: ContactCardProps) {
     state,
     accessEndAt,
     lastInteractionAt,
+    memory,
+    metadata,
   } = contact;
 
   const nearExpiry =
@@ -67,11 +61,16 @@ export function ContactCard({ contact }: ContactCardProps) {
       ? isNearExpiry(accessEndAt)
       : false;
 
-  const recentInteractionLabel = lastInteractionAt
-    ? formatTimeAgoShort(lastInteractionAt)
-    : null;
-  const showRecentInteraction =
-    recentInteractionLabel !== null && isRecentTimestamp(lastInteractionAt, 14);
+  const sourceLabel = formatSourceLabel(memory.sourceLabel, sourceType);
+  const recentActivityLabel = getRecentActivityLabel(
+    metadata.isRecentlyActive,
+    metadata.lastInteractionAt ?? lastInteractionAt,
+  );
+  const relationshipAgeLabel = formatRelationshipAge(
+    metadata.relationshipAgeDays,
+    createdAt,
+    "compact",
+  );
 
   return (
     <Link
@@ -111,6 +110,9 @@ export function ContactCard({ contact }: ContactCardProps) {
             <p className="truncate font-sans text-sm text-muted">
               {targetPersona.jobTitle} at {targetPersona.companyName}
             </p>
+            <p className="truncate font-sans text-xs text-muted/90">
+              Met via {sourceLabel}
+            </p>
             {state === "instant_access" && accessEndAt && (
               <div className="pt-0.5">
                 <ExpiryBadge accessEndAt={accessEndAt} isExpired={false} />
@@ -120,17 +122,22 @@ export function ContactCard({ contact }: ContactCardProps) {
 
           <div className="shrink-0 space-y-2 pt-1 text-right">
             <div>{getStateBadge(contact)}</div>
-            {showRecentInteraction ? (
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                {recentInteractionLabel}
-              </p>
+            {recentActivityLabel ? (
+              <StatusBadge label={recentActivityLabel} tone="neutral" dot />
             ) : null}
           </div>
         </div>
 
-        <div className="flex items-center gap-4 border-t border-border pt-3 font-mono text-[10px] uppercase tracking-widest text-muted flex-wrap">
-          <span>Via {formatSourceType(sourceType)}</span>
-          <span>Connected {formatDate(createdAt)}</span>
+        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-slate-600 dark:bg-white/[0.06] dark:text-white/60">
+            Connected {relationshipAgeLabel}
+          </span>
+          <span className="font-sans text-xs text-muted">
+            Since {formatDate(createdAt)}
+          </span>
+          {metadata.isRecentlyActive && !recentActivityLabel ? (
+            <span className="font-sans text-xs text-muted">Recently active</span>
+          ) : null}
         </div>
       </Card>
     </Link>
