@@ -195,6 +195,12 @@ describe("RequestAccessPanel", () => {
               email: false,
               vcard: false,
             },
+            actionLinks: {
+              call: null,
+              whatsapp: "https://wa.me/15551234567",
+              email: null,
+              vcard: null,
+            },
           },
           smartCardConfig: {
             primaryAction: "request_access",
@@ -270,6 +276,12 @@ describe("RequestAccessPanel", () => {
               email: false,
               vcard: true,
             },
+            actionLinks: {
+              call: null,
+              whatsapp: "https://wa.me/15551234567",
+              email: null,
+              vcard: "/v1/public/personas/target/vcard",
+            },
           },
           smartCardConfig: {
             primaryAction: "instant_connect",
@@ -319,6 +331,12 @@ describe("RequestAccessPanel", () => {
               whatsapp: false,
               email: false,
               vcard: false,
+            },
+            actionLinks: {
+              call: null,
+              whatsapp: null,
+              email: null,
+              vcard: null,
             },
           },
           smartCardConfig: {

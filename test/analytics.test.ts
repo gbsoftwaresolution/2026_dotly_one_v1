@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
-import { ForbiddenException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
 
 import { AnalyticsEventType as PrismaAnalyticsEventType } from "@prisma/client";
 
@@ -247,6 +247,12 @@ describe("ProfilesService analytics hook", () => {
           email: false,
           vcard: false,
         },
+        actionLinks: {
+          call: null,
+          whatsapp: "https://wa.me/15551234567",
+          email: null,
+          vcard: null,
+        },
       },
       smartCardConfig: {
         primaryAction: "request_access",
@@ -330,6 +336,12 @@ describe("ProfilesService analytics hook", () => {
         email: false,
         vcard: false,
       },
+      actionLinks: {
+        call: "tel:+15551234567",
+        whatsapp: null,
+        email: null,
+        vcard: null,
+      },
     });
 
     assert.deepEqual(result.smartCardConfig, {
@@ -342,6 +354,51 @@ describe("ProfilesService analytics hook", () => {
 
     assert.deepEqual(result.publicActions, {
       phone: "+15551234567",
+      whatsappNumber: null,
+      email: null,
+    });
+  });
+
+  it("fails closed for controlled profiles with legacy smart card data", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "CONTROLLED",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: true,
+              allowWhatsapp: false,
+              allowEmail: true,
+              allowVcard: true,
+            },
+            publicPhone: "+15551234567",
+            publicWhatsappNumber: null,
+            publicEmail: "alice@example.com",
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    const result = await service.getPublicProfile("alice");
+
+    assert.equal(result.smartCard, null);
+    assert.equal(result.smartCardConfig, null);
+    assert.deepEqual(result.publicActions, {
+      phone: null,
       whatsappNumber: null,
       email: null,
     });
@@ -454,6 +511,173 @@ describe("ProfilesService analytics hook", () => {
     const result = await service.getPublicProfile("alice");
 
     assert.equal(result.instantConnectUrl, "https://dotly.id/q/profile-qr-1");
+  });
+
+  it("builds a public vcard with only safe public fields", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            publicUrl: "dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: true,
+              allowWhatsapp: true,
+              allowEmail: true,
+              allowVcard: true,
+            },
+            publicPhone: "+1 (555) 123-4567",
+            publicWhatsappNumber: "+1 (555) 123-4567",
+            publicEmail: "alice@example.com",
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    const result = await service.getPublicVcard("alice");
+
+    assert.equal(result.filename, "alice.vcf");
+    assert.match(result.content, /BEGIN:VCARD/);
+    assert.match(result.content, /FN:Alice Demo/);
+    assert.match(result.content, /TITLE:Founder/);
+    assert.match(result.content, /ORG:Dotly/);
+    assert.match(result.content, /EMAIL:alice@example.com/);
+    assert.match(result.content, /TEL:\+1 \(555\) 123-4567/);
+    assert.match(result.content, /URL:https:\/\/dotly.id\/alice/);
+    assert.match(result.content, /NOTE:Connect fast/);
+    assert.doesNotMatch(result.content, /persona-id/);
+  });
+
+  it("returns 404 when a public vcard is disabled", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "request_access",
+              allowCall: false,
+              allowWhatsapp: false,
+              allowEmail: false,
+              allowVcard: false,
+            },
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    await assert.rejects(service.getPublicVcard("alice"), NotFoundException);
+  });
+
+  it("returns 404 for controlled profiles even when legacy vcard config remains", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "CONTROLLED",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: true,
+              allowWhatsapp: false,
+              allowEmail: false,
+              allowVcard: true,
+            },
+            publicPhone: "+15551234567",
+            publicWhatsappNumber: null,
+            publicEmail: null,
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    await assert.rejects(service.getPublicVcard("alice"), NotFoundException);
+  });
+
+  it("rejects vcard generation when enabled public action values are malformed", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: true,
+              allowWhatsapp: false,
+              allowEmail: true,
+              allowVcard: true,
+            },
+            publicPhone: "invalid-phone",
+            publicWhatsappNumber: null,
+            publicEmail: "alice@example.com",
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    await assert.rejects(
+      service.getPublicVcard("alice"),
+      (error: unknown) => {
+        assert(error instanceof BadRequestException);
+        assert.equal(error.message, "Malformed public action values: publicPhone");
+
+        return true;
+      },
+    );
   });
 
   it("does not block public profile loading when analytics is slow", async () => {

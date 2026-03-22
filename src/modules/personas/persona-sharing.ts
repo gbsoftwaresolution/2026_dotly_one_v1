@@ -28,10 +28,27 @@ export interface PersonaSmartCardActions {
   vcard: boolean;
 }
 
+export interface PersonaSmartCardActionLinks {
+  call: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  vcard: string | null;
+}
+
 export interface PersonaPublicActionValues {
   phone: string | null;
   whatsappNumber: string | null;
   email: string | null;
+}
+
+export interface PersonaPublicSmartCardActionSource
+  extends PersonaSmartCardActionSource {
+  username: string;
+}
+
+export interface PersonaPublicSmartCardActions {
+  actions: PersonaSmartCardActions;
+  actionLinks: PersonaSmartCardActionLinks;
 }
 
 export interface PersonaSmartCardActionSource extends PersonaPublicActionFields {
@@ -91,6 +108,10 @@ function hasPublicValue(value: string | null | undefined): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+export function isEmailLikeValue(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim().toLowerCase());
+}
+
 export function isPhoneLikeValue(value: string): boolean {
   const trimmedValue = value.trim();
 
@@ -100,6 +121,40 @@ export function isPhoneLikeValue(value: string): boolean {
 
   const digits = trimmedValue.replace(/\D/g, "");
   return digits.length >= 7 && digits.length <= 15;
+}
+
+function normalizePhoneDigits(value: string): string | null {
+  if (!isPhoneLikeValue(value)) {
+    return null;
+  }
+
+  const digits = value.trim().replace(/\D/g, "");
+
+  if (digits.length < 7 || digits.length > 15) {
+    return null;
+  }
+
+  return digits;
+}
+
+function normalizeTelValue(value: string): string | null {
+  const digits = normalizePhoneDigits(value);
+
+  if (digits === null) {
+    return null;
+  }
+
+  return value.trim().startsWith("+") ? `+${digits}` : digits;
+}
+
+function normalizeEmailValue(value: string): string | null {
+  const normalizedValue = value.trim().toLowerCase();
+
+  if (!isEmailLikeValue(normalizedValue)) {
+    return null;
+  }
+
+  return normalizedValue;
 }
 
 export function toPrismaSharingMode(
@@ -171,7 +226,11 @@ export function isContactMeEnabled(
 export function isCallEnabled(persona: PersonaSmartCardActionSource): boolean {
   const config = toSafeSmartCardConfig(persona.smartCardConfig);
 
-  return Boolean(config?.allowCall && hasPublicValue(persona.publicPhone));
+  return Boolean(
+    config?.allowCall &&
+      typeof persona.publicPhone === "string" &&
+      normalizeTelValue(persona.publicPhone) !== null,
+  );
 }
 
 export function isWhatsappEnabled(
@@ -180,14 +239,20 @@ export function isWhatsappEnabled(
   const config = toSafeSmartCardConfig(persona.smartCardConfig);
 
   return Boolean(
-    config?.allowWhatsapp && hasPublicValue(persona.publicWhatsappNumber),
+    config?.allowWhatsapp &&
+      typeof persona.publicWhatsappNumber === "string" &&
+      normalizePhoneDigits(persona.publicWhatsappNumber) !== null,
   );
 }
 
 export function isEmailEnabled(persona: PersonaSmartCardActionSource): boolean {
   const config = toSafeSmartCardConfig(persona.smartCardConfig);
 
-  return Boolean(config?.allowEmail && hasPublicValue(persona.publicEmail));
+  return Boolean(
+    config?.allowEmail &&
+      typeof persona.publicEmail === "string" &&
+      normalizeEmailValue(persona.publicEmail) !== null,
+  );
 }
 
 export function isVcardEnabled(persona: PersonaSmartCardActionSource): boolean {
@@ -215,15 +280,85 @@ export function hasDirectSmartCardActions(
   return actions.call || actions.whatsapp || actions.email || actions.vcard;
 }
 
+export function buildCallLink(
+  persona: PersonaSmartCardActionSource,
+): string | null {
+  if (!isCallEnabled(persona) || persona.publicPhone === null) {
+    return null;
+  }
+
+  const normalizedPhone = normalizeTelValue(persona.publicPhone);
+
+  return normalizedPhone === null ? null : `tel:${normalizedPhone}`;
+}
+
+export function buildWhatsappLink(
+  persona: PersonaSmartCardActionSource,
+): string | null {
+  if (!isWhatsappEnabled(persona) || persona.publicWhatsappNumber === null) {
+    return null;
+  }
+
+  const normalizedPhone = normalizePhoneDigits(persona.publicWhatsappNumber);
+
+  return normalizedPhone === null ? null : `https://wa.me/${normalizedPhone}`;
+}
+
+export function buildEmailLink(
+  persona: PersonaSmartCardActionSource,
+): string | null {
+  if (!isEmailEnabled(persona) || persona.publicEmail === null) {
+    return null;
+  }
+
+  const normalizedEmail = normalizeEmailValue(persona.publicEmail);
+
+  return normalizedEmail === null ? null : `mailto:${normalizedEmail}`;
+}
+
+export function buildVcardLink(
+  persona: Pick<PersonaPublicSmartCardActionSource, "smartCardConfig" | "username">,
+): string | null {
+  const config = toSafeSmartCardConfig(persona.smartCardConfig);
+
+  if (!config?.allowVcard) {
+    return null;
+  }
+
+  return `/v1/public/personas/${encodeURIComponent(
+    persona.username.trim().toLowerCase(),
+  )}/vcard`;
+}
+
+export function buildPublicSmartCardActions(
+  persona: PersonaPublicSmartCardActionSource,
+): PersonaPublicSmartCardActions {
+  return {
+    actions: buildSmartCardActions(persona),
+    actionLinks: {
+      call: buildCallLink(persona),
+      whatsapp: buildWhatsappLink(persona),
+      email: buildEmailLink(persona),
+      vcard: buildVcardLink(persona),
+    },
+  };
+}
+
 export function buildSafePublicActionValues(
   persona: PersonaSmartCardActionSource,
 ): PersonaPublicActionValues {
   return {
-    phone: isCallEnabled(persona) ? persona.publicPhone : null,
+    phone:
+      isCallEnabled(persona) && typeof persona.publicPhone === "string"
+        ? persona.publicPhone.trim()
+        : null,
     whatsappNumber: isWhatsappEnabled(persona)
-      ? persona.publicWhatsappNumber
+      ? persona.publicWhatsappNumber?.trim() ?? null
       : null,
-    email: isEmailEnabled(persona) ? persona.publicEmail : null,
+    email:
+      isEmailEnabled(persona) && typeof persona.publicEmail === "string"
+        ? normalizeEmailValue(persona.publicEmail)
+        : null,
   };
 }
 

@@ -22,6 +22,13 @@ export interface PersonaSmartCardActions {
   vcard: boolean;
 }
 
+export interface PersonaSmartCardActionLinks {
+  call: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  vcard: string | null;
+}
+
 export interface PersonaSmartCardConfig {
   primaryAction: PersonaSmartCardPrimaryAction;
   allowCall: boolean;
@@ -40,6 +47,7 @@ export interface PublicProfilePublicActions {
 export interface PublicProfileSmartCard extends PersonaSmartCardConfig {
   actionState: PersonaSmartCardActionState;
   actions: PersonaSmartCardActions;
+  actionLinks: PersonaSmartCardActionLinks;
 }
 
 export interface PublicProfileChannels {

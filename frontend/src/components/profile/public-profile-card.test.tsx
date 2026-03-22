@@ -81,6 +81,12 @@ describe("PublicProfileCard", () => {
               email: true,
               vcard: false,
             },
+            actionLinks: {
+              call: "tel:+15551234567",
+              whatsapp: null,
+              email: "mailto:jane@dotly.one",
+              vcard: null,
+            },
           },
           smartCardConfig: {
             primaryAction: "instant_connect",

@@ -89,6 +89,12 @@ const profilesServiceMock = {
         email: false,
         vcard: true,
       },
+      actionLinks: {
+        call: null,
+        whatsapp: "https://wa.me/15551234567",
+        email: null,
+        vcard: "/v1/public/personas/alice/vcard",
+      },
     },
     smartCardConfig: {
       primaryAction: "request_access",
@@ -102,6 +108,19 @@ const profilesServiceMock = {
       whatsappNumber: "+15551234567",
       email: null,
     },
+  }),
+  getPublicVcard: async () => ({
+    filename: "alice.vcf",
+    content: [
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      "FN:Alice Demo",
+      "TITLE:Founder",
+      "ORG:Dotly",
+      "URL:https://dotly.id/alice",
+      "END:VCARD",
+      "",
+    ].join("\r\n"),
   }),
 };
 
@@ -484,6 +503,12 @@ describe("HTTP Security E2E", () => {
           email: false,
           vcard: true,
         },
+        actionLinks: {
+          call: null,
+          whatsapp: "https://wa.me/15551234567",
+          email: null,
+          vcard: "/v1/public/personas/alice/vcard",
+        },
       },
       smartCardConfig: {
         primaryAction: "request_access",
@@ -501,6 +526,24 @@ describe("HTTP Security E2E", () => {
     assert.equal(payload.data.id, undefined);
     assert.equal(payload.data.accessMode, undefined);
     assert.equal(payload.data.verifiedOnly, undefined);
+  });
+
+  it("downloads public vcards without a JSON envelope", async () => {
+    const response = await fetch(`${baseUrl}/v1/public/personas/alice/vcard`);
+    const payload = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(
+      response.headers.get("content-type") ?? "",
+      /^text\/vcard; charset=utf-8$/,
+    );
+    assert.equal(
+      response.headers.get("content-disposition"),
+      'attachment; filename="alice.vcf"',
+    );
+    assert.match(payload, /BEGIN:VCARD/);
+    assert.match(payload, /FN:Alice Demo/);
+    assert.doesNotMatch(payload, /"success":true/);
   });
 
   it("serves QR resolution without leaking internal QR metadata", async () => {

@@ -1,4 +1,5 @@
 import type {
+  PersonaSmartCardActionLinks,
   PersonaSmartCardActionState,
   PersonaSmartCardConfig,
   PersonaSmartCardPrimaryAction,
@@ -30,18 +31,25 @@ type PublicSmartCardActionProfile = Pick<
   smartCard: PublicProfileSmartCard | PersonaSmartCardConfig | null;
 };
 
-function getPublicCallNumber(profile: PublicSmartCardActionProfile): string | null {
-  return profile.publicActions?.phone ?? profile.channels.phoneNumber;
+type PublicSmartCardDirectAction = "call" | "whatsapp" | "email" | "vcard";
+
+const directActionOrder: PublicSmartCardDirectAction[] = [
+  "call",
+  "whatsapp",
+  "email",
+  "vcard",
+];
+
+function hasActionLinks(
+  config: PersonaSmartCardConfig | PublicProfileSmartCard,
+): config is PublicProfileSmartCard {
+  return "actionLinks" in config;
 }
 
-function getPublicWhatsappNumber(
-  profile: PublicSmartCardActionProfile,
-): string | null {
-  return profile.publicActions?.whatsappNumber ?? profile.channels.phoneNumber;
-}
-
-function getPublicEmail(profile: PublicSmartCardActionProfile): string | null {
-  return profile.publicActions?.email ?? profile.channels.email;
+function isRenderableActionLink(
+  value: string | null | undefined,
+): value is string {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 export interface ResolvedPublicSmartCardPrimaryCta {
@@ -98,35 +106,19 @@ function getPrimaryActionAvailability(
 
 export function getPublicSmartCardDirectActions(
   config: PersonaSmartCardConfig | PublicProfileSmartCard | null | undefined,
-  profile: PublicSmartCardActionProfile,
-): Array<"call" | "whatsapp" | "email" | "vcard"> {
+  _profile: PublicSmartCardActionProfile,
+): PublicSmartCardDirectAction[] {
   if (!config) {
     return [];
   }
 
-  const actions: Array<"call" | "whatsapp" | "email" | "vcard"> = [];
-  const resolvedActions = "actions" in config ? config.actions : null;
-
-  if ((resolvedActions?.call ?? false) || (config.allowCall && getPublicCallNumber(profile))) {
-    actions.push("call");
+  if (!hasActionLinks(config)) {
+    return [];
   }
 
-  if (
-    (resolvedActions?.whatsapp ?? false) ||
-    (config.allowWhatsapp && getPublicWhatsappNumber(profile))
-  ) {
-    actions.push("whatsapp");
-  }
-
-  if ((resolvedActions?.email ?? false) || (config.allowEmail && getPublicEmail(profile))) {
-    actions.push("email");
-  }
-
-  if ((resolvedActions?.vcard ?? false) || config.allowVcard) {
-    actions.push("vcard");
-  }
-
-  return actions;
+  return directActionOrder.filter((action) =>
+    isRenderableActionLink(config.actionLinks[action]),
+  );
 }
 
 export function hasPublicSmartCardDirectActions(
@@ -135,12 +127,14 @@ export function hasPublicSmartCardDirectActions(
   return getPublicSmartCardDirectActions(profile.smartCard, profile).length > 0;
 }
 
-export function getPublicSmartCardActionValues(profile: PublicSmartCardActionProfile) {
-  return {
-    phone: getPublicCallNumber(profile),
-    whatsappNumber: getPublicWhatsappNumber(profile),
-    email: getPublicEmail(profile),
-  };
+export function getPublicSmartCardActionLinks(
+  smartCard: PublicProfileSmartCard | PersonaSmartCardConfig | null | undefined,
+): PersonaSmartCardActionLinks | null {
+  if (!smartCard || !hasActionLinks(smartCard)) {
+    return null;
+  }
+
+  return smartCard.actionLinks;
 }
 
 export function normalizeSmartCardPrimaryAction(

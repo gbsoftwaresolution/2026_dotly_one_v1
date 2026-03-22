@@ -9,10 +9,79 @@ import {
 
 import { PersonaSharingMode } from "../src/common/enums/persona-sharing-mode.enum";
 import { PersonaSmartCardPrimaryAction } from "../src/common/enums/persona-smart-card-primary-action.enum";
-import { buildSmartCardActionState } from "../src/modules/personas/persona-sharing";
+import {
+  buildCallLink,
+  buildPublicSmartCardActions,
+  buildSmartCardActionState,
+  buildWhatsappLink,
+} from "../src/modules/personas/persona-sharing";
 import { PersonasService } from "../src/modules/personas/personas.service";
 
 describe("PersonasService sharing mode", () => {
+  it("builds action-ready public smart card links only for enabled safe actions", () => {
+    assert.deepEqual(
+      buildPublicSmartCardActions({
+        username: "alice",
+        smartCardConfig: {
+          primaryAction: PersonaSmartCardPrimaryAction.ContactMe,
+          allowCall: true,
+          allowWhatsapp: true,
+          allowEmail: true,
+          allowVcard: true,
+        },
+        publicPhone: "+1 (555) 123-4567",
+        publicWhatsappNumber: "+1 (555) 999-0000",
+        publicEmail: "Alice@Example.com",
+      }),
+      {
+        actions: {
+          call: true,
+          whatsapp: true,
+          email: true,
+          vcard: true,
+        },
+        actionLinks: {
+          call: "tel:+15551234567",
+          whatsapp: "https://wa.me/15559990000",
+          email: "mailto:alice@example.com",
+          vcard: "/v1/public/personas/alice/vcard",
+        },
+      },
+    );
+  });
+
+  it("fails closed with null direct-action links for malformed legacy values", () => {
+    const persona = {
+      smartCardConfig: {
+        primaryAction: PersonaSmartCardPrimaryAction.ContactMe,
+        allowCall: true,
+        allowWhatsapp: true,
+        allowEmail: false,
+        allowVcard: false,
+      },
+      publicPhone: "not-a-phone",
+      publicWhatsappNumber: "still-not-a-phone",
+      publicEmail: null,
+    };
+
+    assert.equal(buildCallLink(persona), null);
+    assert.equal(buildWhatsappLink(persona), null);
+    assert.deepEqual(buildPublicSmartCardActions({ username: "alice", ...persona }), {
+      actions: {
+        call: false,
+        whatsapp: false,
+        email: false,
+        vcard: false,
+      },
+      actionLinks: {
+        call: null,
+        whatsapp: null,
+        email: null,
+        vcard: null,
+      },
+    });
+  });
+
   it("reports contact_me as unavailable on public cards without vcard", () => {
     assert.deepEqual(
       buildSmartCardActionState(

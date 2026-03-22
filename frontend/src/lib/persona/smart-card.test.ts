@@ -86,7 +86,7 @@ describe("smart-card primary action helpers", () => {
     });
   });
 
-  it("treats vcard as the only direct action available in the redacted public payload", () => {
+  it("treats only non-null action links as renderable direct actions", () => {
     expect(
       hasPublicSmartCardDirectActions({
         channels: {
@@ -104,6 +104,23 @@ describe("smart-card primary action helpers", () => {
           allowWhatsapp: true,
           allowEmail: true,
           allowVcard: false,
+          actionState: {
+            requestAccessEnabled: true,
+            instantConnectEnabled: false,
+            contactMeEnabled: true,
+          },
+          actions: {
+            call: true,
+            whatsapp: true,
+            email: true,
+            vcard: false,
+          },
+          actionLinks: {
+            call: null,
+            whatsapp: null,
+            email: null,
+            vcard: null,
+          },
         },
       }),
     ).toBe(false);
@@ -125,6 +142,23 @@ describe("smart-card primary action helpers", () => {
           allowWhatsapp: false,
           allowEmail: false,
           allowVcard: true,
+          actionState: {
+            requestAccessEnabled: true,
+            instantConnectEnabled: false,
+            contactMeEnabled: true,
+          },
+          actions: {
+            call: false,
+            whatsapp: false,
+            email: false,
+            vcard: true,
+          },
+          actionLinks: {
+            call: null,
+            whatsapp: null,
+            email: null,
+            vcard: "/api/public/jane/vcard",
+          },
         },
       }),
     ).toBe(true);

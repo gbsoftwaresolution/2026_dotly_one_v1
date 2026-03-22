@@ -16,7 +16,7 @@ import { Card } from "@/components/shared/card";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { formatPrimaryAction } from "@/lib/persona/labels";
 import {
-  getPublicSmartCardActionValues,
+  getPublicSmartCardActionLinks,
   getPublicSmartCardDirectActions,
   hasPublicSmartCardDirectActions,
   resolvePublicSmartCardPrimaryCta,
@@ -35,58 +35,30 @@ interface PublicSmartCardProps {
 interface SmartAction {
   key: "call" | "whatsapp" | "email" | "vcard";
   label: string;
-  href?: string;
+  href: string;
   icon: typeof Phone;
   onClick?: () => void;
-}
-
-function toDialHref(phoneNumber: string): string {
-  return `tel:${phoneNumber.replace(/\s+/g, "")}`;
-}
-
-function toWhatsappHref(phoneNumber: string): string {
-  const digits = phoneNumber.replace(/\D+/g, "");
-  return `https://wa.me/${digits}`;
 }
 
 function avatarHue(seed: string): number {
   return ((seed.charCodeAt(0) || 72) * 137) % 360;
 }
 
-function buildVcard(profile: PublicProfile): string {
-  const publicActionValues = getPublicSmartCardActionValues(profile);
-  const lines = [
-    "BEGIN:VCARD",
-    "VERSION:3.0",
-    `FN:${profile.fullName}`,
-    `N:${profile.fullName};;;;`,
-    `TITLE:${profile.jobTitle || ""}`,
-    `ORG:${profile.companyName || ""}`,
-    `NOTE:${profile.tagline || ""}`,
-    `URL:${profile.publicUrl}`,
-  ];
-
-  if (publicActionValues.email) {
-    lines.push(`EMAIL;TYPE=INTERNET:${publicActionValues.email}`);
-  }
-
-  if (publicActionValues.phone) {
-    lines.push(`TEL;TYPE=CELL:${publicActionValues.phone}`);
-  }
-
-  lines.push("END:VCARD");
-  return lines.join("\n");
-}
-
-function downloadVcard(profile: PublicProfile) {
-  const file = new Blob([buildVcard(profile)], {
-    type: "text/vcard;charset=utf-8",
+async function downloadVcard(href: string, username: string) {
+  const response = await window.fetch(href, {
+    method: "GET",
   });
+
+  if (!response.ok) {
+    throw new Error("Unable to download vCard");
+  }
+
+  const file = await response.blob();
   const url = URL.createObjectURL(file);
   const anchor = document.createElement("a");
 
   anchor.href = url;
-  anchor.download = `${profile.username}.vcf`;
+  anchor.download = `${username}.vcf`;
   anchor.click();
 
   URL.revokeObjectURL(url);
@@ -112,6 +84,11 @@ type PrimaryCtaState =
   | { status: "success"; message: string }
   | { status: "error"; message: string };
 
+type DirectActionState =
+  | { status: "idle" }
+  | { status: "success"; message: string }
+  | { status: "error"; message: string };
+
 export function PublicSmartCard({
   profile,
   requestAccessHref = "#request-access-panel",
@@ -122,7 +99,11 @@ export function PublicSmartCard({
   const [primaryCtaState, setPrimaryCtaState] = useState<PrimaryCtaState>({
     status: "idle",
   });
+  const [directActionState, setDirectActionState] = useState<DirectActionState>({
+    status: "idle",
+  });
   const feedbackTimeoutRef = useRef<number | null>(null);
+  const directActionFeedbackTimeoutRef = useRef<number | null>(null);
   const panelHighlightTimeoutRef = useRef<number | null>(null);
   const contactPanelRef = useRef<HTMLDivElement | null>(null);
 
@@ -130,6 +111,10 @@ export function PublicSmartCard({
     return () => {
       if (feedbackTimeoutRef.current !== null) {
         window.clearTimeout(feedbackTimeoutRef.current);
+      }
+
+      if (directActionFeedbackTimeoutRef.current !== null) {
+        window.clearTimeout(directActionFeedbackTimeoutRef.current);
       }
 
       if (panelHighlightTimeoutRef.current !== null) {
@@ -159,43 +144,46 @@ export function PublicSmartCard({
 
   const hue = avatarHue(profile.username);
   const hasDirectActions = hasPublicSmartCardDirectActions(profile);
-  const publicActionValues = getPublicSmartCardActionValues(profile);
+  const actionLinks = getPublicSmartCardActionLinks(config);
   const directActionKeys = getPublicSmartCardDirectActions(config, profile);
   const smartActions: SmartAction[] = [];
 
-  if (directActionKeys.includes("call") && publicActionValues.phone) {
+  if (directActionKeys.includes("call") && actionLinks?.call) {
     smartActions.push({
       key: "call",
       label: "Call",
-      href: toDialHref(publicActionValues.phone),
+      href: actionLinks.call,
       icon: Phone,
     });
   }
 
-  if (directActionKeys.includes("whatsapp") && publicActionValues.whatsappNumber) {
+  if (directActionKeys.includes("whatsapp") && actionLinks?.whatsapp) {
     smartActions.push({
       key: "whatsapp",
       label: "WhatsApp",
-      href: toWhatsappHref(publicActionValues.whatsappNumber),
+      href: actionLinks.whatsapp,
       icon: MessageCircle,
     });
   }
 
-  if (directActionKeys.includes("email") && publicActionValues.email) {
+  if (directActionKeys.includes("email") && actionLinks?.email) {
     smartActions.push({
       key: "email",
       label: "Email",
-      href: `mailto:${publicActionValues.email}`,
+      href: actionLinks.email,
       icon: AtSign,
     });
   }
 
-  if (directActionKeys.includes("vcard")) {
+  if (directActionKeys.includes("vcard") && actionLinks?.vcard) {
     smartActions.push({
       key: "vcard",
       label: "Save Contact",
+      href: actionLinks.vcard,
       icon: Download,
-      onClick: () => downloadVcard(profile),
+      onClick: () => {
+        void handleVcardAction(actionLinks.vcard!);
+      },
     });
   }
 
@@ -224,7 +212,7 @@ export function PublicSmartCard({
           ? "Continue instantly from this card."
           : "Choose a direct way to reach out.";
 
-  const shouldShowDirectActions = hasDirectActions;
+  const shouldShowDirectActions = smartActions.length > 0;
   const isPrimaryActionDisabled = resolvedPrimaryCta.isDisabled;
 
   function clearFeedbackTimeout() {
@@ -238,6 +226,13 @@ export function PublicSmartCard({
     if (panelHighlightTimeoutRef.current !== null) {
       window.clearTimeout(panelHighlightTimeoutRef.current);
       panelHighlightTimeoutRef.current = null;
+    }
+  }
+
+  function clearDirectActionFeedbackTimeout() {
+    if (directActionFeedbackTimeoutRef.current !== null) {
+      window.clearTimeout(directActionFeedbackTimeoutRef.current);
+      directActionFeedbackTimeoutRef.current = null;
     }
   }
 
@@ -262,6 +257,20 @@ export function PublicSmartCard({
   function setErrorState(message: string) {
     clearFeedbackTimeout();
     setPrimaryCtaState({ status: "error", message });
+  }
+
+  function setDirectActionSuccessState(message: string) {
+    clearDirectActionFeedbackTimeout();
+    setDirectActionState({ status: "success", message });
+    directActionFeedbackTimeoutRef.current = window.setTimeout(() => {
+      setDirectActionState({ status: "idle" });
+      directActionFeedbackTimeoutRef.current = null;
+    }, 2200);
+  }
+
+  function setDirectActionErrorState(message: string) {
+    clearDirectActionFeedbackTimeout();
+    setDirectActionState({ status: "error", message });
   }
 
   function handleRequestAccessAction() {
@@ -309,6 +318,15 @@ export function PublicSmartCard({
       window.location.assign(profile.instantConnectUrl);
     } catch {
       setErrorState("Instant Connect is unavailable right now.");
+    }
+  }
+
+  async function handleVcardAction(href: string) {
+    try {
+      await downloadVcard(href, profile.username);
+      setDirectActionSuccessState("Contact download started.");
+    } catch {
+      setDirectActionErrorState("Save Contact is unavailable right now.");
     }
   }
 
@@ -464,11 +482,11 @@ export function PublicSmartCard({
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3">
               {smartActions.map((action) => {
                 const Icon = action.icon;
 
-                if (action.href) {
+                if (action.key !== "vcard") {
                   return (
                     <a
                       key={action.key}
@@ -515,6 +533,17 @@ export function PublicSmartCard({
                 );
               })}
             </div>
+
+            {directActionState.status === "error" ? (
+              <p role="alert" className="text-sm leading-6 text-rose-500 dark:text-rose-300">
+                {directActionState.message}
+              </p>
+            ) : null}
+            {directActionState.status === "success" ? (
+              <p aria-live="polite" className="text-sm leading-6 text-muted">
+                {directActionState.message}
+              </p>
+            ) : null}
           </div>
         ) : null}
 

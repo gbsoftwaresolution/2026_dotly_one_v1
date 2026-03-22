@@ -5,12 +5,14 @@ import {
 
 import { PersonaSharingMode } from "../../../common/enums/persona-sharing-mode.enum";
 import {
+  buildPublicSmartCardActions,
   buildSafePublicActionValues,
-  buildSmartCardActions,
   type PersonaPublicActionValues,
   type PersonaSmartCardActionState,
+  type PersonaSmartCardActionLinks,
   type PersonaSmartCardConfig,
   type PersonaSmartCardActions,
+  type PersonaPublicSmartCardActions,
   toApiSharingMode,
   toSafeSmartCardConfig,
 } from "../../personas/persona-sharing";
@@ -85,6 +87,27 @@ export class PublicPersonaSmartCardActionsDto {
   }
 }
 
+export class PublicPersonaSmartCardActionLinksDto {
+  call!: string | null;
+
+  whatsapp!: string | null;
+
+  email!: string | null;
+
+  vcard!: string | null;
+
+  static fromLinks(
+    links: PersonaSmartCardActionLinks,
+  ): PublicPersonaSmartCardActionLinksDto {
+    return {
+      call: links.call,
+      whatsapp: links.whatsapp,
+      email: links.email,
+      vcard: links.vcard,
+    } satisfies PublicPersonaSmartCardActionLinksDto;
+  }
+}
+
 export class PublicPersonaPublicActionsDto {
   phone!: string | null;
 
@@ -142,15 +165,22 @@ export class PublicPersonaSmartCardDto {
 
   actions!: PublicPersonaSmartCardActionsDto;
 
+  actionLinks!: PublicPersonaSmartCardActionLinksDto;
+
   static fromConfig(
     config: PersonaSmartCardConfig,
     actionState: PersonaSmartCardActionState,
-    actions: PersonaSmartCardActions,
+    publicActions: PersonaPublicSmartCardActions,
   ): PublicPersonaSmartCardDto {
     return {
       ...PublicPersonaSmartCardConfigDto.fromConfig(config),
       actionState: PublicPersonaSmartCardActionStateDto.fromState(actionState),
-      actions: PublicPersonaSmartCardActionsDto.fromActions(actions),
+      actions: PublicPersonaSmartCardActionsDto.fromActions(
+        publicActions.actions,
+      ),
+      actionLinks: PublicPersonaSmartCardActionLinksDto.fromLinks(
+        publicActions.actionLinks,
+      ),
     } satisfies PublicPersonaSmartCardDto;
   }
 }
@@ -210,19 +240,45 @@ export class PublicPersonaDto {
     },
   ): PublicPersonaDto {
     const sharingMode = toApiSharingMode(persona.sharingMode);
-    const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
-    const directActions = buildSmartCardActions({
-      smartCardConfig: safeSmartCardConfig,
-      publicPhone: persona.publicPhone,
-      publicWhatsappNumber: persona.publicWhatsappNumber,
-      publicEmail: persona.publicEmail,
-    });
-    const publicActions = buildSafePublicActionValues({
-      smartCardConfig: safeSmartCardConfig,
-      publicPhone: persona.publicPhone,
-      publicWhatsappNumber: persona.publicWhatsappNumber,
-      publicEmail: persona.publicEmail,
-    });
+    const rawSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
+    const safeSmartCardConfig =
+      sharingMode === PersonaSharingMode.SmartCard ? rawSmartCardConfig : null;
+    const smartCardActions =
+      safeSmartCardConfig === null
+        ? {
+            actions: {
+              call: false,
+              whatsapp: false,
+              email: false,
+              vcard: false,
+            },
+            actionLinks: {
+              call: null,
+              whatsapp: null,
+              email: null,
+              vcard: null,
+            },
+          }
+        : buildPublicSmartCardActions({
+            username: persona.username,
+            smartCardConfig: safeSmartCardConfig,
+            publicPhone: persona.publicPhone,
+            publicWhatsappNumber: persona.publicWhatsappNumber,
+            publicEmail: persona.publicEmail,
+          });
+    const publicActions =
+      safeSmartCardConfig === null
+        ? {
+            phone: null,
+            whatsappNumber: null,
+            email: null,
+          }
+        : buildSafePublicActionValues({
+            smartCardConfig: safeSmartCardConfig,
+            publicPhone: persona.publicPhone,
+            publicWhatsappNumber: persona.publicWhatsappNumber,
+            publicEmail: persona.publicEmail,
+          });
     const publicUrl = PublicPersonaDto.toCanonicalPublicUrl(
       persona.publicUrl,
       persona.username,
@@ -236,7 +292,7 @@ export class PublicPersonaDto {
         : PublicPersonaSmartCardDto.fromConfig(
             safeSmartCardConfig,
             options.actionState,
-            directActions,
+            smartCardActions,
           );
 
     return {
