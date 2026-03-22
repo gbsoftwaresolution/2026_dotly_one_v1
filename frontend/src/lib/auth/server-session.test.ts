@@ -5,9 +5,18 @@ const ORIGINAL_AUTH_COOKIE_SAME_SITE = process.env.AUTH_COOKIE_SAME_SITE;
 const ORIGINAL_AUTH_COOKIE_SECURE = process.env.AUTH_COOKIE_SECURE;
 const ORIGINAL_AUTH_COOKIE_DOMAIN = process.env.AUTH_COOKIE_DOMAIN;
 
+function setNodeEnv(value: string | undefined) {
+  Object.defineProperty(process.env, "NODE_ENV", {
+    value,
+    configurable: true,
+    writable: true,
+    enumerable: true,
+  });
+}
+
 describe("resolveAuthCookieOptions", () => {
   afterEach(() => {
-    process.env.NODE_ENV = ORIGINAL_NODE_ENV;
+    setNodeEnv(ORIGINAL_NODE_ENV);
     process.env.AUTH_COOKIE_SAME_SITE = ORIGINAL_AUTH_COOKIE_SAME_SITE;
     process.env.AUTH_COOKIE_SECURE = ORIGINAL_AUTH_COOKIE_SECURE;
     process.env.AUTH_COOKIE_DOMAIN = ORIGINAL_AUTH_COOKIE_DOMAIN;
@@ -15,7 +24,7 @@ describe("resolveAuthCookieOptions", () => {
   });
 
   it("defaults to lax non-secure cookies in development", async () => {
-    process.env.NODE_ENV = "development";
+    setNodeEnv("development");
     delete process.env.AUTH_COOKIE_SAME_SITE;
     delete process.env.AUTH_COOKIE_SECURE;
     delete process.env.AUTH_COOKIE_DOMAIN;
@@ -32,7 +41,7 @@ describe("resolveAuthCookieOptions", () => {
   });
 
   it("rejects insecure same-site none cookies", async () => {
-    process.env.NODE_ENV = "development";
+    setNodeEnv("development");
     process.env.AUTH_COOKIE_SAME_SITE = "none";
     process.env.AUTH_COOKIE_SECURE = "false";
 
@@ -44,7 +53,7 @@ describe("resolveAuthCookieOptions", () => {
   });
 
   it("rejects localhost cookie domains in production", async () => {
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     delete process.env.AUTH_COOKIE_SAME_SITE;
     delete process.env.AUTH_COOKIE_SECURE;
     process.env.AUTH_COOKIE_DOMAIN = "localhost";

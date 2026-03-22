@@ -73,7 +73,7 @@ describe("ResetPasswordPage", () => {
           callback();
         }
 
-        return 0 as ReturnType<typeof setTimeout>;
+        return 0 as unknown as ReturnType<typeof setTimeout>;
       });
     mocks.getToken.mockReturnValue("valid-token");
     mocks.resetPassword.mockResolvedValue({
