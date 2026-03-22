@@ -52,26 +52,45 @@ function isRenderableActionLink(
   return typeof value === "string" && value.trim().length > 0;
 }
 
-function isRenderableDirectActionLink(
+function getRenderableDirectActionLink(
   action: PublicSmartCardDirectAction,
   value: string | null | undefined,
-): value is string {
+): string | null {
   if (!isRenderableActionLink(value)) {
-    return false;
+    return null;
   }
 
-  if (action !== "vcard") {
-    return true;
-  }
+  const trimmedValue = value.trim();
 
   try {
-    const resolvedUrl = new URL(value, "https://dotly.local");
+    const resolvedUrl = new URL(trimmedValue, "https://dotly.local");
 
-    return (
-      resolvedUrl.protocol === "http:" || resolvedUrl.protocol === "https:"
-    );
+    switch (action) {
+      case "call":
+        return resolvedUrl.protocol === "tel:" && resolvedUrl.pathname.length > 0
+          ? trimmedValue
+          : null;
+      case "whatsapp":
+        return resolvedUrl.protocol === "https:" &&
+          resolvedUrl.hostname === "wa.me" &&
+          /^\/\d+$/.test(resolvedUrl.pathname) &&
+          resolvedUrl.search.length === 0 &&
+          resolvedUrl.hash.length === 0
+          ? trimmedValue
+          : null;
+      case "email":
+        return resolvedUrl.protocol === "mailto:" &&
+          resolvedUrl.pathname.length > 0
+          ? trimmedValue
+          : null;
+      case "vcard":
+        return resolvedUrl.protocol === "http:" ||
+          resolvedUrl.protocol === "https:"
+          ? trimmedValue
+          : null;
+    }
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -131,16 +150,14 @@ export function getPublicSmartCardDirectActions(
   config: PersonaSmartCardConfig | PublicProfileSmartCard | null | undefined,
   _profile: PublicSmartCardActionProfile,
 ): PublicSmartCardDirectAction[] {
-  if (!config) {
-    return [];
-  }
+  const actionLinks = getPublicSmartCardActionLinks(config);
 
-  if (!hasActionLinks(config)) {
+  if (!actionLinks) {
     return [];
   }
 
   return directActionOrder.filter((action) =>
-    isRenderableDirectActionLink(action, config.actionLinks[action]),
+    actionLinks[action] !== null,
   );
 }
 
@@ -157,7 +174,15 @@ export function getPublicSmartCardActionLinks(
     return null;
   }
 
-  return smartCard.actionLinks;
+  return {
+    call: getRenderableDirectActionLink("call", smartCard.actionLinks.call),
+    whatsapp: getRenderableDirectActionLink(
+      "whatsapp",
+      smartCard.actionLinks.whatsapp,
+    ),
+    email: getRenderableDirectActionLink("email", smartCard.actionLinks.email),
+    vcard: getRenderableDirectActionLink("vcard", smartCard.actionLinks.vcard),
+  };
 }
 
 export function normalizeSmartCardPrimaryAction(

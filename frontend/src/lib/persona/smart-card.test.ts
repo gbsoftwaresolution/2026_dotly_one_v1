@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  getPublicSmartCardActionLinks,
   hasPublicSmartCardDirectActions,
   normalizeSmartCardPrimaryAction,
   resolvePublicSmartCardPrimaryAction,
@@ -200,5 +201,66 @@ describe("smart-card primary action helpers", () => {
         },
       }),
     ).toBe(true);
+  });
+
+  it("fails closed for malformed call, whatsapp, and email links", () => {
+    const smartCard = {
+      primaryAction: "contact_me" as const,
+      allowCall: true,
+      allowWhatsapp: true,
+      allowEmail: true,
+      allowVcard: false,
+      actionState: {
+        requestAccessEnabled: true,
+        instantConnectEnabled: false,
+        contactMeEnabled: true,
+      },
+      actions: {
+        call: true,
+        whatsapp: true,
+        email: true,
+        vcard: false,
+      },
+      actionLinks: {
+        call: "https://dotly.id/not-a-tel-link",
+        whatsapp: "mailto:hello@example.com",
+        email: "javascript:alert('xss')",
+        vcard: null,
+      },
+    };
+
+    expect(getPublicSmartCardActionLinks(smartCard)).toEqual({
+      call: null,
+      whatsapp: null,
+      email: null,
+      vcard: null,
+    });
+
+    expect(
+      hasPublicSmartCardDirectActions({
+        channels: {
+          phoneNumber: null,
+          email: null,
+        },
+        publicActions: {
+          phone: null,
+          whatsappNumber: null,
+          email: null,
+        },
+        smartCard,
+      }),
+    ).toBe(false);
+
+    expect(
+      resolvePublicSmartCardPrimaryCta("contact_me", {
+        actionState: smartCard.actionState,
+        hasDirectActions: false,
+      }),
+    ).toMatchObject({
+      requestedAction: "contact_me",
+      action: "request_access",
+      isFallback: true,
+      isDisabled: false,
+    });
   });
 });

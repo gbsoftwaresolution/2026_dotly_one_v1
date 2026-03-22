@@ -1,12 +1,10 @@
 import {
   PersonaAccessMode as PrismaPersonaAccessMode,
-  PersonaSharingMode as PrismaPersonaSharingMode,
   PersonaType as PrismaPersonaType,
   Prisma,
 } from "@prisma/client";
 
 import { PersonaAccessMode } from "../../common/enums/persona-access-mode.enum";
-import { PersonaSharingMode } from "../../common/enums/persona-sharing-mode.enum";
 import { PersonaType } from "../../common/enums/persona-type.enum";
 import { PublicPersonaDto } from "../profiles/dto/public-persona.dto";
 import {

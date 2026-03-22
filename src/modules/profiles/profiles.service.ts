@@ -20,7 +20,8 @@ import {
 } from "../personas/persona.presenter";
 import {
   buildSmartCardActionState,
-  buildSafePublicActionValues,
+  canExposeVcard,
+  getSafePublicContactValues,
   supportsRequestAccessFlow,
   toSafeSmartCardConfig,
 } from "../personas/persona-sharing";
@@ -110,7 +111,12 @@ export class ProfilesService {
   async getPublicVcard(username: string) {
     const persona = await this.findPublicPersonaByUsername(username);
 
-    if (!this.canExposeVcard(persona)) {
+    if (
+      !canExposeVcard({
+        sharingMode: persona.sharingMode,
+        smartCardConfig: persona.smartCardConfig,
+      })
+    ) {
       throw new NotFoundException("Public vCard not found");
     }
 
@@ -204,17 +210,6 @@ export class ProfilesService {
     return persona;
   }
 
-  private canExposeVcard(
-    persona: Pick<PublicPersonaRecord, "sharingMode" | "smartCardConfig">,
-  ): boolean {
-    const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
-
-    return Boolean(
-      persona.sharingMode === PrismaPersonaSharingMode.SMART_CARD &&
-        safeSmartCardConfig?.allowVcard,
-    );
-  }
-
   private buildVcardPayload(
     persona: Pick<
       PublicPersonaRecord,
@@ -231,7 +226,8 @@ export class ProfilesService {
     >,
   ): PublicVcardPayload {
     const publicUrl = this.toCanonicalPublicUrl(persona.publicUrl, persona.username);
-    const publicActionValues = buildSafePublicActionValues({
+    const publicActionValues = getSafePublicContactValues({
+      sharingMode: PrismaPersonaSharingMode.SMART_CARD,
       smartCardConfig: persona.smartCardConfig,
       publicPhone: persona.publicPhone,
       publicWhatsappNumber: persona.publicWhatsappNumber,

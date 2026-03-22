@@ -39,6 +39,53 @@ interface SmartAction {
   icon: typeof Phone;
 }
 
+function getActionPanelCopy(actions: SmartAction[]): {
+  badge: string;
+  description: string;
+} {
+  const actionCount = actions.length;
+  const hasDirectChannel = actions.some((action) => action.key !== "vcard");
+  const hasSaveContact = actions.some((action) => action.key === "vcard");
+
+  if (hasSaveContact && !hasDirectChannel) {
+    return {
+      badge: actionCount === 1 ? "1 action available" : `${actionCount} actions available`,
+      description: "Save this contact to your device for later.",
+    };
+  }
+
+  if (hasDirectChannel && hasSaveContact) {
+    return {
+      badge: `${actionCount} actions available`,
+      description: "Reach out now or save this contact for later.",
+    };
+  }
+
+  if (actionCount === 1) {
+    return {
+      badge: "1 action available",
+      description: "Use the available public channel to get in touch.",
+    };
+  }
+
+  return {
+    badge: `${actionCount} actions available`,
+    description: "Choose the fastest public channel for this conversation.",
+  };
+}
+
+function getActionGridClassName(actionCount: number): string {
+  if (actionCount <= 1) {
+    return "grid-cols-1";
+  }
+
+  if (actionCount === 2) {
+    return "grid-cols-1 min-[360px]:grid-cols-2";
+  }
+
+  return "grid-cols-1 min-[420px]:grid-cols-2";
+}
+
 function avatarHue(seed: string): number {
   return ((seed.charCodeAt(0) || 72) * 137) % 360;
 }
@@ -255,6 +302,8 @@ export function PublicSmartCard({
 
   const shouldShowDirectActions = smartActions.length > 0;
   const isPrimaryActionDisabled = resolvedPrimaryCta.isDisabled;
+  const actionPanelCopy = getActionPanelCopy(smartActions);
+  const actionGridClassName = getActionGridClassName(smartActions.length);
 
   function clearFeedbackTimeout() {
     if (feedbackTimeoutRef.current !== null) {
@@ -404,25 +453,25 @@ export function PublicSmartCard({
   return (
     <Card className="overflow-hidden p-0 shadow-shell border-border/60">
       <div
-        className="relative overflow-hidden px-6 pb-6 pt-7"
+        className="relative overflow-hidden px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-7"
         style={{
           background: `radial-gradient(circle at top right, hsla(${(hue + 28) % 360}, 90%, 72%, 0.24), transparent 34%), linear-gradient(160deg, hsl(${hue}, 56%, 13%) 0%, hsl(${(hue + 22) % 360}, 48%, 11%) 46%, hsl(${(hue + 58) % 360}, 44%, 9%) 100%)`,
         }}
       >
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.12)_0%,rgba(255,255,255,0)_42%)]" />
 
-        <div className="relative space-y-6">
-          <div className="flex items-start gap-4">
+        <div className="relative space-y-5 sm:space-y-6">
+          <div className="flex items-start gap-3.5 sm:gap-4">
             {profile.profilePhotoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={profile.profilePhotoUrl}
                 alt={profile.fullName}
-                className="h-20 w-20 rounded-[26px] object-cover ring-1 ring-white/20"
+                className="h-16 w-16 rounded-[22px] object-cover ring-1 ring-white/20 sm:h-20 sm:w-20 sm:rounded-[26px]"
               />
             ) : (
               <div
-                className="flex h-20 w-20 items-center justify-center rounded-[26px] text-2xl font-bold text-white ring-1 ring-white/20"
+                className="flex h-16 w-16 items-center justify-center rounded-[22px] text-xl font-bold text-white ring-1 ring-white/20 sm:h-20 sm:w-20 sm:rounded-[26px] sm:text-2xl"
                 style={{ background: `hsl(${hue}, 58%, 44%)` }}
               >
                 {profile.fullName.charAt(0).toUpperCase()}
@@ -434,7 +483,7 @@ export function PublicSmartCard({
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-white/60">
                   Smart Card
                 </p>
-                <h1 className="text-[2rem] font-black leading-none tracking-tight text-white">
+                <h1 className="text-[1.75rem] font-black leading-none tracking-tight text-white sm:text-[2rem]">
                   {profile.fullName}
                 </h1>
               </div>
@@ -456,7 +505,7 @@ export function PublicSmartCard({
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-white/12 bg-white/[0.08] p-4 backdrop-blur-sm">
+          <div className="rounded-[28px] border border-white/12 bg-white/[0.08] p-3.5 backdrop-blur-sm sm:p-4">
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-white/55">
@@ -478,7 +527,7 @@ export function PublicSmartCard({
 
             <div className="pt-4">
               <PrimaryButton
-                className="h-[68px] w-full gap-3 rounded-[24px] text-base"
+                className="h-16 w-full gap-3 rounded-[24px] text-base sm:h-[68px]"
                 isLoading={primaryCtaState.status === "loading"}
                 isSuccess={primaryCtaState.status === "success"}
                 disabled={isPrimaryActionDisabled}
@@ -509,12 +558,12 @@ export function PublicSmartCard({
         </div>
       </div>
 
-      <div className="space-y-4 px-6 py-6">
+      <div className="space-y-4 px-4 py-5 sm:px-6 sm:py-6">
         {shouldShowDirectActions ? (
           <div
             ref={contactPanelRef}
             className={cn(
-              "space-y-3 rounded-[24px] border border-border bg-surface/60 p-4 transition-colors",
+              "space-y-3 rounded-[24px] border border-border bg-surface/60 p-3.5 transition-colors sm:p-4",
               isContactPanelHighlighted &&
                 "border-brandRose/35 bg-brandRose/5 dark:border-brandCyan/35 dark:bg-brandCyan/10",
             )}
@@ -522,41 +571,54 @@ export function PublicSmartCard({
             <div className="space-y-1">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-muted">
-                  Direct actions
+                  Quick actions
                 </p>
                 <span className="rounded-full border border-border bg-background px-3 py-1 text-[11px] font-semibold text-muted">
-                  Direct contact available
+                  {actionPanelCopy.badge}
                 </span>
               </div>
               <p className="text-sm leading-6 text-muted">
-                Choose the fastest channel for this conversation.
+                {actionPanelCopy.description}
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div
+              data-testid="smart-card-actions-grid"
+              data-action-count={smartActions.length}
+              className={cn("grid gap-2.5 sm:gap-3", actionGridClassName)}
+            >
               {smartActions.map((action) => {
                 const Icon = action.icon;
+                const isDownloadAction = action.key === "vcard";
+                const actionLabel =
+                  isDownloadAction && isVcardDownloading
+                    ? "Saving contact..."
+                    : action.label;
 
-                if (action.key !== "vcard") {
+                if (!isDownloadAction) {
                   return (
                     <a
                       key={action.key}
                       href={action.href}
                       target={action.key === "whatsapp" ? "_blank" : undefined}
                       rel={action.key === "whatsapp" ? "noreferrer" : undefined}
+                      aria-label={action.label}
                       className={cn(
-                        "flex min-h-[84px] flex-col justify-between rounded-[24px] border border-border bg-surface/70 p-4 transition-all",
+                        "flex min-h-[72px] items-center gap-3 rounded-[24px] border border-border bg-surface/70 px-3.5 py-3 text-left transition-all sm:min-h-[84px] sm:px-4 sm:py-4",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brandRose/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                         "hover:-translate-y-0.5 hover:border-brandRose/30 hover:bg-surface",
                         "dark:hover:border-brandCyan/30",
                       )}
                     >
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brandRose/10 text-brandRose dark:bg-brandCyan/10 dark:text-brandCyan">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brandRose/10 text-brandRose dark:bg-brandCyan/10 dark:text-brandCyan sm:h-11 sm:w-11">
                         <Icon className="h-5 w-5" />
                       </div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-semibold text-foreground">
-                          {action.label}
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold leading-5 text-foreground">
+                          {actionLabel}
                         </span>
+                      </div>
+                      <div className="flex shrink-0 items-center self-center">
                         <ExternalLink className="h-4 w-4 text-muted" />
                       </div>
                     </a>
@@ -572,20 +634,27 @@ export function PublicSmartCard({
                     }}
                     disabled={isVcardDownloading}
                     aria-busy={isVcardDownloading}
+                    aria-label={action.label}
                     className={cn(
-                      "flex min-h-[84px] flex-col justify-between rounded-[24px] border border-border bg-surface/70 p-4 text-left transition-all",
+                      "flex min-h-[72px] items-center gap-3 rounded-[24px] border border-border bg-surface/70 px-3.5 py-3 text-left transition-all sm:min-h-[84px] sm:px-4 sm:py-4",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brandRose/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                       "hover:-translate-y-0.5 hover:border-brandRose/30 hover:bg-surface",
                       "dark:hover:border-brandCyan/30",
                       isVcardDownloading &&
                         "cursor-wait opacity-70 hover:translate-y-0 hover:border-border hover:bg-surface/70 dark:hover:border-border",
                     )}
                   >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brandRose/10 text-brandRose dark:bg-brandCyan/10 dark:text-brandCyan">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brandRose/10 text-brandRose dark:bg-brandCyan/10 dark:text-brandCyan sm:h-11 sm:w-11">
                       <Icon className="h-5 w-5" />
                     </div>
-                    <span className="text-sm font-semibold text-foreground">
-                      {isVcardDownloading ? "Saving contact..." : action.label}
-                    </span>
+                    <div className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold leading-5 text-foreground">
+                        {actionLabel}
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 items-center self-center">
+                      <Download className="h-4 w-4 text-muted" />
+                    </div>
                   </button>
                 );
               })}

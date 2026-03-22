@@ -5,8 +5,7 @@ import {
 
 import { PersonaSharingMode } from "../../../common/enums/persona-sharing-mode.enum";
 import {
-  buildPublicSmartCardActions,
-  buildSafePublicActionValues,
+  buildPublicSmartCardResponse,
   type PersonaPublicActionValues,
   type PersonaSmartCardActionState,
   type PersonaSmartCardActionLinks,
@@ -14,7 +13,6 @@ import {
   type PersonaSmartCardActions,
   type PersonaPublicSmartCardActions,
   toApiSharingMode,
-  toSafeSmartCardConfig,
 } from "../../personas/persona-sharing";
 
 interface PublicPersonaSource {
@@ -240,45 +238,15 @@ export class PublicPersonaDto {
     },
   ): PublicPersonaDto {
     const sharingMode = toApiSharingMode(persona.sharingMode);
-    const rawSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
-    const safeSmartCardConfig =
-      sharingMode === PersonaSharingMode.SmartCard ? rawSmartCardConfig : null;
-    const smartCardActions =
-      safeSmartCardConfig === null
-        ? {
-            actions: {
-              call: false,
-              whatsapp: false,
-              email: false,
-              vcard: false,
-            },
-            actionLinks: {
-              call: null,
-              whatsapp: null,
-              email: null,
-              vcard: null,
-            },
-          }
-        : buildPublicSmartCardActions({
-            username: persona.username,
-            smartCardConfig: safeSmartCardConfig,
-            publicPhone: persona.publicPhone,
-            publicWhatsappNumber: persona.publicWhatsappNumber,
-            publicEmail: persona.publicEmail,
-          });
-    const publicActions =
-      safeSmartCardConfig === null
-        ? {
-            phone: null,
-            whatsappNumber: null,
-            email: null,
-          }
-        : buildSafePublicActionValues({
-            smartCardConfig: safeSmartCardConfig,
-            publicPhone: persona.publicPhone,
-            publicWhatsappNumber: persona.publicWhatsappNumber,
-            publicEmail: persona.publicEmail,
-          });
+    const publicSmartCardResponse = buildPublicSmartCardResponse({
+      username: persona.username,
+      sharingMode: persona.sharingMode,
+      smartCardConfig: persona.smartCardConfig,
+      publicPhone: persona.publicPhone,
+      publicWhatsappNumber: persona.publicWhatsappNumber,
+      publicEmail: persona.publicEmail,
+    });
+    const safeSmartCardConfig = publicSmartCardResponse.smartCardConfig;
     const publicUrl = PublicPersonaDto.toCanonicalPublicUrl(
       persona.publicUrl,
       persona.username,
@@ -292,7 +260,7 @@ export class PublicPersonaDto {
         : PublicPersonaSmartCardDto.fromConfig(
             safeSmartCardConfig,
             options.actionState,
-            smartCardActions,
+            publicSmartCardResponse.smartCardActions,
           );
 
     return {
@@ -317,7 +285,9 @@ export class PublicPersonaDto {
         safeSmartCardConfig === null
           ? null
           : PublicPersonaSmartCardConfigDto.fromConfig(safeSmartCardConfig),
-      publicActions: PublicPersonaPublicActionsDto.fromValues(publicActions),
+      publicActions: PublicPersonaPublicActionsDto.fromValues(
+        publicSmartCardResponse.publicActions,
+      ),
     } satisfies PublicPersonaDto;
   }
 }

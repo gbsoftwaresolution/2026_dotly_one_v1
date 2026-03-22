@@ -404,6 +404,73 @@ describe("ProfilesService analytics hook", () => {
     });
   });
 
+  it("does not expose stored public values when the matching actions are disabled", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: false,
+              allowWhatsapp: false,
+              allowEmail: false,
+              allowVcard: false,
+            },
+            publicPhone: "+15551234567",
+            publicWhatsappNumber: "+15557654321",
+            publicEmail: "alice@example.com",
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    const result = await service.getPublicProfile("alice");
+
+    assert.deepEqual(result.smartCard, {
+      primaryAction: "contact_me",
+      allowCall: false,
+      allowWhatsapp: false,
+      allowEmail: false,
+      allowVcard: false,
+      actionState: {
+        requestAccessEnabled: true,
+        instantConnectEnabled: false,
+        contactMeEnabled: false,
+      },
+      actions: {
+        call: false,
+        whatsapp: false,
+        email: false,
+        vcard: false,
+      },
+      actionLinks: {
+        call: null,
+        whatsapp: null,
+        email: null,
+        vcard: null,
+      },
+    });
+    assert.deepEqual(result.publicActions, {
+      phone: null,
+      whatsappNumber: null,
+      email: null,
+    });
+  });
+
   it("rejects request targets when smart card mode does not allow request access", async () => {
     const service = new ProfilesService(
       {
@@ -673,6 +740,47 @@ describe("ProfilesService analytics hook", () => {
 
     assert.doesNotMatch(result.content, /TEL:/);
     assert.match(result.content, /EMAIL:alice@example.com/);
+  });
+
+  it("omits stored public values from the generated vcard when they are disabled", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: false,
+              allowWhatsapp: false,
+              allowEmail: false,
+              allowVcard: true,
+            },
+            publicPhone: "+1 (555) 123-4567",
+            publicWhatsappNumber: "+1 (555) 765-4321",
+            publicEmail: "alice@example.com",
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    const result = await service.getPublicVcard("alice");
+
+    assert.doesNotMatch(result.content, /TEL:/);
+    assert.doesNotMatch(result.content, /EMAIL:/);
+    assert.doesNotMatch(result.content, /15557654321/);
   });
 
   it("never leaks whatsapp values into the generated vcard", async () => {

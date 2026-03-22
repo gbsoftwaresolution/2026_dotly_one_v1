@@ -1,6 +1,7 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
+import { PersonaSharingMode as PrismaPersonaSharingMode } from "@prisma/client";
 import {
   BadRequestException,
   ForbiddenException,
@@ -22,6 +23,7 @@ describe("PersonasService sharing mode", () => {
     assert.deepEqual(
       buildPublicSmartCardActions({
         username: "alice",
+        sharingMode: PrismaPersonaSharingMode.SMART_CARD,
         smartCardConfig: {
           primaryAction: PersonaSmartCardPrimaryAction.ContactMe,
           allowCall: true,
@@ -66,20 +68,60 @@ describe("PersonasService sharing mode", () => {
 
     assert.equal(buildCallLink(persona), null);
     assert.equal(buildWhatsappLink(persona), null);
-    assert.deepEqual(buildPublicSmartCardActions({ username: "alice", ...persona }), {
-      actions: {
-        call: false,
-        whatsapp: false,
-        email: false,
-        vcard: false,
+    assert.deepEqual(
+      buildPublicSmartCardActions({
+        username: "alice",
+        sharingMode: PrismaPersonaSharingMode.SMART_CARD,
+        ...persona,
+      }),
+      {
+        actions: {
+          call: false,
+          whatsapp: false,
+          email: false,
+          vcard: false,
+        },
+        actionLinks: {
+          call: null,
+          whatsapp: null,
+          email: null,
+          vcard: null,
+        },
       },
-      actionLinks: {
-        call: null,
-        whatsapp: null,
-        email: null,
-        vcard: null,
+    );
+  });
+
+  it("never exposes vcard actions outside smart card mode", () => {
+    assert.deepEqual(
+      buildPublicSmartCardActions({
+        username: "alice",
+        sharingMode: PrismaPersonaSharingMode.CONTROLLED,
+        smartCardConfig: {
+          primaryAction: PersonaSmartCardPrimaryAction.ContactMe,
+          allowCall: true,
+          allowWhatsapp: true,
+          allowEmail: true,
+          allowVcard: true,
+        },
+        publicPhone: "+1 (555) 123-4567",
+        publicWhatsappNumber: "+1 (555) 999-0000",
+        publicEmail: "Alice@Example.com",
+      }),
+      {
+        actions: {
+          call: false,
+          whatsapp: false,
+          email: false,
+          vcard: false,
+        },
+        actionLinks: {
+          call: null,
+          whatsapp: null,
+          email: null,
+          vcard: null,
+        },
       },
-    });
+    );
   });
 
   it("reports contact_me as unavailable on public cards without vcard", () => {

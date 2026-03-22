@@ -28,7 +28,6 @@ import {
 import {
   isPhoneLikeValue,
   type PersonaPublicActionFields,
-  type PersonaSmartCardConfig,
   toPrismaSharingMode,
   validateSmartCardConfig,
   validateSmartCardConfigCompatibility,

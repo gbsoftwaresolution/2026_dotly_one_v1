@@ -194,7 +194,14 @@ describe("PublicSmartCard", () => {
     );
 
     expect(screen.getByRole("button", { name: /request access/i })).toBeEnabled();
-    expect(screen.getByText(/direct contact available/i)).toBeInTheDocument();
+    expect(screen.getByText(/4 actions available/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/reach out now or save this contact for later/i),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("smart-card-actions-grid")).toHaveAttribute(
+      "data-action-count",
+      "4",
+    );
     expect(screen.getByRole("link", { name: /call/i })).toHaveAttribute(
       "href",
       "tel:+15551234567",
@@ -470,6 +477,78 @@ describe("PublicSmartCard", () => {
     );
   });
 
+  it("keeps save contact available for retry after a failed download", async () => {
+    const user = userEvent.setup();
+    const blob = new Blob(["BEGIN:VCARD\nEND:VCARD"], {
+      type: "text/vcard;charset=utf-8",
+    });
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: false,
+        blob: vi.fn(),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        blob: vi.fn().mockResolvedValue(blob),
+      });
+
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: createProfile({
+          smartCard: {
+            primaryAction: "request_access",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: true,
+            actions: {
+              call: false,
+              whatsapp: false,
+              email: false,
+              vcard: true,
+            },
+            actionLinks: {
+              call: null,
+              whatsapp: null,
+              email: null,
+              vcard: "/api/public/jane/vcard",
+            },
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
+          },
+          smartCardConfig: {
+            primaryAction: "request_access",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: true,
+          },
+        }),
+      }),
+    );
+
+    const saveContactButton = screen.getByRole("button", {
+      name: /save contact/i,
+    });
+
+    await user.click(saveContactButton);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /unable to download contact/i,
+    );
+    expect(saveContactButton).toBeEnabled();
+
+    await user.click(saveContactButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/contact download started/i)).toBeInTheDocument();
+    });
+  });
+
   it("hides save contact when the vcard link is malformed", () => {
     render(
       React.createElement(PublicSmartCard, {
@@ -518,7 +597,7 @@ describe("PublicSmartCard", () => {
       screen.queryByRole("button", { name: /save contact/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByText(/^direct actions$/i),
+      screen.queryByText(/^quick actions$/i),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /request access/i })).toBeEnabled();
   });
@@ -667,8 +746,63 @@ describe("PublicSmartCard", () => {
     expect(screen.getByRole("button", { name: /^contact$/i })).toBeDisabled();
     expect(screen.getAllByText(/direct contact unavailable/i)).toHaveLength(2);
     expect(
-      screen.queryByText(/^direct actions$/i),
+      screen.queryByText(/^quick actions$/i),
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps the panel clean when save contact is the only available action", () => {
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: createProfile({
+          smartCard: {
+            primaryAction: "request_access",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: true,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
+            actions: {
+              call: false,
+              whatsapp: false,
+              email: false,
+              vcard: true,
+            },
+            actionLinks: {
+              call: null,
+              whatsapp: null,
+              email: null,
+              vcard: "/api/public/jane/vcard",
+            },
+          },
+          smartCardConfig: {
+            primaryAction: "request_access",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: true,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
+          },
+        }),
+      }),
+    );
+
+    expect(screen.getByText(/1 action available/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/save this contact to your device for later/i),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("smart-card-actions-grid")).toHaveAttribute(
+      "data-action-count",
+      "1",
+    );
+    expect(screen.getByRole("button", { name: /save contact/i })).toBeEnabled();
   });
 
   it("shows the empty configuration state", () => {
@@ -769,8 +903,49 @@ describe("PublicSmartCard", () => {
     );
 
     expect(
-      screen.queryByText(/^direct actions$/i),
+      screen.queryByText(/^quick actions$/i),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /request access/i })).toBeEnabled();
+  });
+
+  it("fails closed when action links are missing from a partial smart card payload", () => {
+    const profile = createProfile({
+      smartCard: {
+        primaryAction: "contact_me",
+        allowCall: true,
+        allowWhatsapp: false,
+        allowEmail: false,
+        allowVcard: false,
+        actionState: {
+          requestAccessEnabled: true,
+          instantConnectEnabled: false,
+          contactMeEnabled: true,
+        },
+        actions: {
+          call: true,
+          whatsapp: false,
+          email: false,
+          vcard: false,
+        },
+        actionLinks: {
+          call: "tel:+15551234567",
+          whatsapp: null,
+          email: null,
+          vcard: null,
+        },
+      },
+    });
+
+    delete (profile.smartCard as { actionLinks?: unknown }).actionLinks;
+
+    render(
+      React.createElement(PublicSmartCard, {
+        profile,
+      }),
+    );
+
+    expect(screen.queryByText(/^quick actions$/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /call/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /request access/i })).toBeEnabled();
   });
 });

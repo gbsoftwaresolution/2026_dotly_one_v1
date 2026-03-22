@@ -41,6 +41,12 @@ export interface PersonaPublicActionValues {
   email: string | null;
 }
 
+export interface PersonaPublicSmartCardResponse {
+  smartCardConfig: PersonaSmartCardConfig | null;
+  smartCardActions: PersonaPublicSmartCardActions;
+  publicActions: PersonaPublicActionValues;
+}
+
 export interface PersonaPublicSmartCardActionSource
   extends PersonaSmartCardActionSource {
   username: string;
@@ -53,6 +59,7 @@ export interface PersonaPublicSmartCardActions {
 
 export interface PersonaSmartCardActionSource extends PersonaPublicActionFields {
   smartCardConfig: unknown;
+  sharingMode?: PrismaPersonaSharingMode;
 }
 
 export interface PersonaSmartCardActionState {
@@ -83,6 +90,26 @@ const allowedPrimaryActions = new Set<string>([
   PersonaSmartCardPrimaryAction.ContactMe,
 ]);
 
+const emptySmartCardActions: PersonaSmartCardActions = {
+  call: false,
+  whatsapp: false,
+  email: false,
+  vcard: false,
+};
+
+const emptySmartCardActionLinks: PersonaSmartCardActionLinks = {
+  call: null,
+  whatsapp: null,
+  email: null,
+  vcard: null,
+};
+
+const emptyPublicActionValues: PersonaPublicActionValues = {
+  phone: null,
+  whatsappNumber: null,
+  email: null,
+};
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -104,8 +131,13 @@ function normalizeBoolean(
   return value;
 }
 
-function hasPublicValue(value: string | null | undefined): boolean {
-  return typeof value === "string" && value.trim().length > 0;
+function isSmartCardSharingMode(
+  sharingMode: PrismaPersonaSharingMode | undefined,
+): boolean {
+  return (
+    sharingMode === undefined ||
+    sharingMode === PrismaPersonaSharingMode.SMART_CARD
+  );
 }
 
 export function isEmailLikeValue(value: string): boolean {
@@ -155,6 +187,16 @@ function normalizeEmailValue(value: string): string | null {
   }
 
   return normalizedValue;
+}
+
+function normalizePublicTextValue(value: string | null | undefined): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmedValue = value.trim();
+
+  return trimmedValue.length > 0 ? trimmedValue : null;
 }
 
 export function toPrismaSharingMode(
@@ -227,6 +269,7 @@ export function isCallEnabled(persona: PersonaSmartCardActionSource): boolean {
   const config = toSafeSmartCardConfig(persona.smartCardConfig);
 
   return Boolean(
+    isSmartCardSharingMode(persona.sharingMode) &&
     config?.allowCall &&
       typeof persona.publicPhone === "string" &&
       normalizeTelValue(persona.publicPhone) !== null,
@@ -239,6 +282,7 @@ export function isWhatsappEnabled(
   const config = toSafeSmartCardConfig(persona.smartCardConfig);
 
   return Boolean(
+    isSmartCardSharingMode(persona.sharingMode) &&
     config?.allowWhatsapp &&
       typeof persona.publicWhatsappNumber === "string" &&
       normalizePhoneDigits(persona.publicWhatsappNumber) !== null,
@@ -249,6 +293,7 @@ export function isEmailEnabled(persona: PersonaSmartCardActionSource): boolean {
   const config = toSafeSmartCardConfig(persona.smartCardConfig);
 
   return Boolean(
+    isSmartCardSharingMode(persona.sharingMode) &&
     config?.allowEmail &&
       typeof persona.publicEmail === "string" &&
       normalizeEmailValue(persona.publicEmail) !== null,
@@ -256,9 +301,7 @@ export function isEmailEnabled(persona: PersonaSmartCardActionSource): boolean {
 }
 
 export function isVcardEnabled(persona: PersonaSmartCardActionSource): boolean {
-  const config = toSafeSmartCardConfig(persona.smartCardConfig);
-
-  return Boolean(config?.allowVcard);
+  return canExposeVcard(persona);
 }
 
 export function buildSmartCardActions(
@@ -317,11 +360,12 @@ export function buildEmailLink(
 }
 
 export function buildVcardLink(
-  persona: Pick<PersonaPublicSmartCardActionSource, "smartCardConfig" | "username">,
+  persona: Pick<
+    PersonaPublicSmartCardActionSource,
+    "sharingMode" | "smartCardConfig" | "username"
+  >,
 ): string | null {
-  const config = toSafeSmartCardConfig(persona.smartCardConfig);
-
-  if (!config?.allowVcard) {
+  if (!canExposeVcard(persona)) {
     return null;
   }
 
@@ -330,7 +374,7 @@ export function buildVcardLink(
   )}/vcard`;
 }
 
-export function buildPublicSmartCardActions(
+export function getSafePublicActions(
   persona: PersonaPublicSmartCardActionSource,
 ): PersonaPublicSmartCardActions {
   return {
@@ -344,21 +388,91 @@ export function buildPublicSmartCardActions(
   };
 }
 
-export function buildSafePublicActionValues(
+export function buildPublicSmartCardActions(
+  persona: PersonaPublicSmartCardActionSource,
+): PersonaPublicSmartCardActions {
+  return getSafePublicActions(persona);
+}
+
+export function getSafePublicContactValues(
   persona: PersonaSmartCardActionSource,
 ): PersonaPublicActionValues {
   return {
-    phone:
-      isCallEnabled(persona) && typeof persona.publicPhone === "string"
-        ? persona.publicPhone.trim()
-        : null,
+    phone: isCallEnabled(persona)
+      ? normalizePublicTextValue(persona.publicPhone)
+      : null,
     whatsappNumber: isWhatsappEnabled(persona)
-      ? persona.publicWhatsappNumber?.trim() ?? null
+      ? normalizePublicTextValue(persona.publicWhatsappNumber)
       : null,
     email:
       isEmailEnabled(persona) && typeof persona.publicEmail === "string"
         ? normalizeEmailValue(persona.publicEmail)
         : null,
+  };
+}
+
+export function buildSafePublicActionValues(
+  persona: PersonaSmartCardActionSource,
+): PersonaPublicActionValues {
+  return getSafePublicContactValues(persona);
+}
+
+export function canExposeVcard(
+  persona: Pick<PersonaSmartCardActionSource, "sharingMode" | "smartCardConfig">,
+): boolean {
+  if (!isSmartCardSharingMode(persona.sharingMode)) {
+    return false;
+  }
+
+  const config = toSafeSmartCardConfig(persona.smartCardConfig);
+
+  return Boolean(config?.allowVcard);
+}
+
+export function buildPublicSmartCardResponse(
+  persona: PersonaPublicSmartCardActionSource & {
+    sharingMode: PrismaPersonaSharingMode;
+  },
+): PersonaPublicSmartCardResponse {
+  if (persona.sharingMode !== PrismaPersonaSharingMode.SMART_CARD) {
+    return {
+      smartCardConfig: null,
+      smartCardActions: {
+        actions: { ...emptySmartCardActions },
+        actionLinks: { ...emptySmartCardActionLinks },
+      },
+      publicActions: { ...emptyPublicActionValues },
+    };
+  }
+
+  const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
+
+  if (safeSmartCardConfig === null) {
+    return {
+      smartCardConfig: null,
+      smartCardActions: {
+        actions: { ...emptySmartCardActions },
+        actionLinks: { ...emptySmartCardActionLinks },
+      },
+      publicActions: { ...emptyPublicActionValues },
+    };
+  }
+
+  const actionSource: PersonaSmartCardActionSource = {
+    sharingMode: persona.sharingMode,
+    smartCardConfig: safeSmartCardConfig,
+    publicPhone: persona.publicPhone,
+    publicWhatsappNumber: persona.publicWhatsappNumber,
+    publicEmail: persona.publicEmail,
+  };
+
+  return {
+    smartCardConfig: safeSmartCardConfig,
+    smartCardActions: getSafePublicActions({
+      username: persona.username,
+      ...actionSource,
+    }),
+    publicActions: getSafePublicContactValues(actionSource),
   };
 }
 
@@ -371,6 +485,7 @@ export function buildSmartCardActionState(
     requestAccessEnabled: isRequestAccessEnabled(persona),
     instantConnectEnabled: isInstantConnectEnabled(persona),
     contactMeEnabled: hasDirectSmartCardActions({
+      sharingMode: persona.sharingMode,
       smartCardConfig: config,
       publicPhone: publicFields?.publicPhone ?? null,
       publicWhatsappNumber: publicFields?.publicWhatsappNumber ?? null,
