@@ -14,6 +14,7 @@ import {
   type PersonaPublicSmartCardActions,
   toApiSharingMode,
 } from "../../personas/persona-sharing";
+import { canonicalizePublicUrl } from "../../personas/public-url";
 
 interface PublicPersonaSource {
   id?: string;
@@ -30,20 +31,6 @@ interface PublicPersonaSource {
   publicPhone: string | null;
   publicWhatsappNumber: string | null;
   publicEmail: string | null;
-}
-
-export class PublicPersonaChannelsDto {
-  phoneNumber!: string | null;
-
-  email!: string | null;
-}
-
-export class PublicPersonaLinkDto {
-  label!: string;
-
-  href!: string;
-
-  kind!: "website" | "social";
 }
 
 export class PublicPersonaSmartCardActionStateDto {
@@ -204,10 +191,6 @@ export class PublicPersonaDto {
 
   sharingMode!: PersonaSharingMode;
 
-  channels!: PublicPersonaChannelsDto;
-
-  links!: PublicPersonaLinkDto[];
-
   instantConnectUrl!: string | null;
 
   smartCard!: PublicPersonaSmartCardDto | null;
@@ -215,20 +198,6 @@ export class PublicPersonaDto {
   smartCardConfig!: PublicPersonaSmartCardConfigDto | null;
 
   publicActions!: PublicPersonaPublicActionsDto;
-
-  private static toCanonicalPublicUrl(publicUrl: string, username: string): string {
-    const trimmedPublicUrl = publicUrl.trim();
-
-    if (trimmedPublicUrl.startsWith("http://") || trimmedPublicUrl.startsWith("https://")) {
-      return trimmedPublicUrl;
-    }
-
-    if (trimmedPublicUrl.length > 0) {
-      return `https://${trimmedPublicUrl.replace(/^\/+/, "")}`;
-    }
-
-    return `https://dotly.id/${username}`;
-  }
 
   static fromRecord(
     persona: PublicPersonaSource,
@@ -247,10 +216,7 @@ export class PublicPersonaDto {
       publicEmail: persona.publicEmail,
     });
     const safeSmartCardConfig = publicSmartCardResponse.smartCardConfig;
-    const publicUrl = PublicPersonaDto.toCanonicalPublicUrl(
-      persona.publicUrl,
-      persona.username,
-    );
+    const publicUrl = canonicalizePublicUrl(persona.publicUrl, persona.username);
     const smartCard =
       sharingMode === PersonaSharingMode.Controlled ||
       safeSmartCardConfig === null ||
@@ -274,11 +240,6 @@ export class PublicPersonaDto {
       profilePhotoUrl: persona.profilePhotoUrl ?? null,
       tagline: persona.tagline,
       sharingMode,
-      channels: {
-        phoneNumber: null,
-        email: null,
-      },
-      links: [],
       instantConnectUrl: options?.instantConnectUrl ?? null,
       smartCard,
       smartCardConfig:

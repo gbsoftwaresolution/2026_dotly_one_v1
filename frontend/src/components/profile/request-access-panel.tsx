@@ -119,6 +119,18 @@ export function RequestAccessPanel({
         : null
       : null;
   const smartCardPrimaryAction = smartCardPrimaryCta?.action ?? null;
+  const smartCardLoginDescription =
+    smartCardPrimaryAction === null
+      ? "This Smart Card is missing its primary action right now. Log in to continue once the shared action is available."
+      : `This smart card starts with ${formatPrimaryAction(smartCardPrimaryAction)}. Log in to continue from one of your personas.`;
+  const smartCardPrimaryActionHeading =
+    smartCardPrimaryAction === null
+      ? "This Smart Card is currently unavailable"
+      : `${formatPrimaryAction(smartCardPrimaryAction)} is the primary card action`;
+  const smartCardRequestDescription =
+    smartCardPrimaryAction === null
+      ? `This Smart Card is missing its primary action. Send a permission request to ${profile.fullName}.`
+      : `${formatPrimaryAction(smartCardPrimaryAction)} is configured as the primary card action. Send a permission request to ${profile.fullName}.`;
   const isSmartCardMisconfigured =
     profile.sharingMode === "smart_card" && profile.smartCard === null;
   const supportsRequestAccess =
@@ -195,7 +207,7 @@ export function RequestAccessPanel({
           </h2>
           <p className="text-sm leading-6 text-muted">
             {profile.sharingMode === "smart_card"
-              ? `This smart card starts with ${formatPrimaryAction(smartCardPrimaryAction!)}. Log in to continue from one of your personas.`
+              ? smartCardLoginDescription
               : "Use one of your personas to request access in a permissioned, approval-based flow."}
           </p>
         </div>
@@ -236,8 +248,7 @@ export function RequestAccessPanel({
             Smart Card mode
           </p>
           <h2 className="font-sans text-lg font-semibold text-foreground">
-            {formatPrimaryAction(smartCardPrimaryAction!)} is the primary card
-            action
+            {smartCardPrimaryActionHeading}
           </h2>
           <p className="text-sm leading-6 text-muted">
             This public profile does not use the approval-based request flow.
@@ -300,7 +311,7 @@ export function RequestAccessPanel({
         </h2>
         <p className="text-sm leading-6 text-muted">
           {profile.sharingMode === "smart_card"
-            ? `${formatPrimaryAction(smartCardPrimaryAction!)} is configured as the primary card action. Send a permission request to ${profile.fullName}.`
+            ? smartCardRequestDescription
             : `Send a permission request to ${profile.fullName}. They can approve or reject it from their requests screen.`}
         </p>
       </div>

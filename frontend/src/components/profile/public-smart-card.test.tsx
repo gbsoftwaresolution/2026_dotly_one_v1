@@ -24,16 +24,11 @@ function createProfile(overrides: Partial<React.ComponentProps<typeof PublicSmar
     profilePhoto: null,
     profilePhotoUrl: null,
     sharingMode: "smart_card" as const,
-    channels: {
-      phoneNumber: null,
-      email: null,
-    },
     publicActions: {
       phone: null,
       whatsappNumber: null,
       email: null,
     },
-    links: [],
     smartCard: {
       primaryAction: "request_access" as const,
       allowCall: false,
@@ -78,10 +73,6 @@ function createProfile(overrides: Partial<React.ComponentProps<typeof PublicSmar
     publicActions: {
       ...baseProfile.publicActions,
       ...overrides.publicActions,
-    },
-    channels: {
-      ...baseProfile.channels,
-      ...overrides.channels,
     },
     smartCard:
       overrides.smartCard === null

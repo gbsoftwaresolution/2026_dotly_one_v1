@@ -340,6 +340,7 @@ model ContactRelationship {
   followUps       FollowUp[]
 
   @@unique([ownerUserId, targetUserId, ownerPersonaId, targetPersonaId])
+  @@unique([id, ownerUserId])
   @@index([ownerUserId, state, accessEndAt, createdAt])
   @@index([targetUserId, createdAt])
 }
@@ -356,7 +357,7 @@ model FollowUp {
   updatedAt      DateTime       @updatedAt
   completedAt    DateTime?
   ownerUser      User           @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
-  relationship   ContactRelationship @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
+  relationship   ContactRelationship @relation(fields: [relationshipId, ownerUserId], references: [id, ownerUserId], onDelete: Cascade)
 
   @@index([ownerUserId, status, remindAt])
   @@index([ownerUserId, status, triggeredAt, remindAt])

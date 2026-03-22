@@ -26,7 +26,7 @@ interface ResolvePublicSmartCardPrimaryActionOptions {
 
 type PublicSmartCardActionProfile = Pick<
   PublicProfile,
-  "channels" | "publicActions"
+  "publicActions"
 > & {
   smartCard: PublicProfileSmartCard | PersonaSmartCardConfig | null;
 };

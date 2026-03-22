@@ -67,11 +67,6 @@ const profilesServiceMock = {
     profilePhoto: null,
     profilePhotoUrl: null,
     sharingMode: "smart_card",
-    channels: {
-      phoneNumber: null,
-      email: null,
-    },
-    links: [],
     smartCard: {
       primaryAction: "request_access",
       allowCall: false,
@@ -481,11 +476,6 @@ describe("HTTP Security E2E", () => {
       profilePhoto: null,
       profilePhotoUrl: null,
       sharingMode: "smart_card",
-      channels: {
-        phoneNumber: null,
-        email: null,
-      },
-      links: [],
       smartCard: {
         primaryAction: "request_access",
         allowCall: false,

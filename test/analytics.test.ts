@@ -224,11 +224,6 @@ describe("ProfilesService analytics hook", () => {
       profilePhoto: null,
       profilePhotoUrl: null,
       sharingMode: "smart_card",
-      channels: {
-        phoneNumber: null,
-        email: null,
-      },
-      links: [],
       instantConnectUrl: null,
       smartCard: {
         primaryAction: "request_access",
@@ -312,11 +307,6 @@ describe("ProfilesService analytics hook", () => {
 
     const result = await service.getPublicProfile("alice");
 
-    assert.deepEqual(result.channels, {
-      phoneNumber: null,
-      email: null,
-    });
-    assert.deepEqual(result.links, []);
     assert.equal(result.instantConnectUrl, null);
 
     assert.deepEqual(result.smartCard, {

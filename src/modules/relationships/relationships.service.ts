@@ -330,13 +330,17 @@ export class RelationshipsService {
     });
   }
 
-  async expireOwnedExpiredRelationships(
-    userId: string,
+  async expireExpiredRelationships(
+    userId?: string,
     prisma: Prisma.TransactionClient | PrismaService = this.prismaService,
   ) {
     await prisma.contactRelationship.updateMany({
       where: {
-        ownerUserId: userId,
+        ...(userId
+          ? {
+              ownerUserId: userId,
+            }
+          : {}),
         state: PrismaContactRelationshipState.INSTANT_ACCESS,
         accessEndAt: {
           lt: new Date(),
@@ -346,6 +350,13 @@ export class RelationshipsService {
         state: PrismaContactRelationshipState.EXPIRED,
       },
     });
+  }
+
+  async expireOwnedExpiredRelationships(
+    userId: string,
+    prisma: Prisma.TransactionClient | PrismaService = this.prismaService,
+  ) {
+    await this.expireExpiredRelationships(userId, prisma);
   }
 
   async expireRelationshipIfNeeded<

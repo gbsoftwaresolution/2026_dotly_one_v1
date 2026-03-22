@@ -90,10 +90,6 @@ describe("smart-card primary action helpers", () => {
   it("treats only non-null action links as renderable direct actions", () => {
     expect(
       hasPublicSmartCardDirectActions({
-        channels: {
-          phoneNumber: null,
-          email: null,
-        },
         publicActions: {
           phone: null,
           whatsappNumber: null,
@@ -128,10 +124,6 @@ describe("smart-card primary action helpers", () => {
 
     expect(
       hasPublicSmartCardDirectActions({
-        channels: {
-          phoneNumber: null,
-          email: null,
-        },
         publicActions: {
           phone: null,
           whatsappNumber: null,
@@ -166,10 +158,6 @@ describe("smart-card primary action helpers", () => {
 
     expect(
       hasPublicSmartCardDirectActions({
-        channels: {
-          phoneNumber: null,
-          email: null,
-        },
         publicActions: {
           phone: null,
           whatsappNumber: null,
@@ -238,10 +226,6 @@ describe("smart-card primary action helpers", () => {
 
     expect(
       hasPublicSmartCardDirectActions({
-        channels: {
-          phoneNumber: null,
-          email: null,
-        },
         publicActions: {
           phone: null,
           whatsappNumber: null,

@@ -96,6 +96,7 @@ export class FollowUpsService {
     const followUps = await this.prismaService.followUp.findMany({
       where: {
         ownerUserId: userId,
+        ...buildActiveRelationshipFollowUpWhere(now, userId),
         ...(query.status
           ? {
               status: toPrismaFollowUpStatus(query.status),
@@ -130,6 +131,7 @@ export class FollowUpsService {
     const followUps = await this.prismaService.followUp.findMany({
       where: {
         ownerUserId: userId,
+        ...buildActiveRelationshipFollowUpWhere(now, userId),
         status: PrismaFollowUpStatus.PENDING,
         remindAt: {
           lte: now,
@@ -154,11 +156,14 @@ export class FollowUpsService {
   }
 
   async markTriggeredIfDue(userId: string, id: string) {
+    await this.relationshipsService.expireOwnedExpiredRelationships(userId);
+
     const now = new Date();
     const result = await this.prismaService.followUp.updateMany({
       where: {
         id,
         ownerUserId: userId,
+        ...buildActiveRelationshipFollowUpWhere(now, userId),
         status: PrismaFollowUpStatus.PENDING,
         triggeredAt: null,
         remindAt: {
@@ -182,6 +187,8 @@ export class FollowUpsService {
   async processDueFollowUps(options?: { userId?: string; limit?: number }) {
     const now = new Date();
 
+    await this.relationshipsService.expireExpiredRelationships(options?.userId);
+
     if (options?.limit !== undefined) {
       const dueFollowUps = await this.prismaService.followUp.findMany({
         where: {
@@ -190,6 +197,7 @@ export class FollowUpsService {
                 ownerUserId: options.userId,
               }
             : {}),
+          ...buildActiveRelationshipFollowUpWhere(now, options?.userId),
           status: PrismaFollowUpStatus.PENDING,
           triggeredAt: null,
           remindAt: {
@@ -214,6 +222,7 @@ export class FollowUpsService {
           id: {
             in: dueFollowUps.map((followUp) => followUp.id),
           },
+          ...buildActiveRelationshipFollowUpWhere(now, options?.userId),
           status: PrismaFollowUpStatus.PENDING,
           triggeredAt: null,
           remindAt: {
@@ -237,6 +246,7 @@ export class FollowUpsService {
               ownerUserId: options.userId,
             }
           : {}),
+        ...buildActiveRelationshipFollowUpWhere(now, options?.userId),
         status: PrismaFollowUpStatus.PENDING,
         triggeredAt: null,
         remindAt: {
@@ -254,10 +264,13 @@ export class FollowUpsService {
   }
 
   async getFollowUpSummaryForRelationship(userId: string, relationshipId: string) {
+    await this.relationshipsService.expireOwnedExpiredRelationships(userId);
+
     const now = new Date();
     const where = {
       ownerUserId: userId,
       relationshipId,
+      ...buildActiveRelationshipFollowUpWhere(now, userId),
       status: PrismaFollowUpStatus.PENDING,
     } satisfies Prisma.FollowUpWhereInput;
 
@@ -607,6 +620,41 @@ function toRemindAtDate(remindAt: string) {
   }
 
   return remindAtDate;
+}
+
+function buildActiveRelationshipFollowUpWhere(
+  now: Date,
+  ownerUserId?: string,
+): Prisma.FollowUpWhereInput {
+  return {
+    relationship: {
+      is: {
+        ...(ownerUserId
+          ? {
+              ownerUserId,
+            }
+          : {}),
+        OR: [
+          {
+            state: PrismaContactRelationshipState.APPROVED,
+          },
+          {
+            state: PrismaContactRelationshipState.INSTANT_ACCESS,
+            OR: [
+              {
+                accessEndAt: null,
+              },
+              {
+                accessEndAt: {
+                  gte: now,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  } satisfies Prisma.FollowUpWhereInput;
 }
 
 function toPrismaFollowUpStatus(status: FollowUpStatus): PrismaFollowUpStatus {

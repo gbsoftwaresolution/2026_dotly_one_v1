@@ -47,6 +47,11 @@ function createFollowUpRecord(overrides: Record<string, unknown> = {}) {
   };
 }
 
+const noopRelationshipExpiryService = {
+  expireOwnedExpiredRelationships: async () => undefined,
+  expireExpiredRelationships: async () => undefined,
+};
+
 describe("FollowUpsService", () => {
   it("creates a follow-up for an owned active relationship", async () => {
     let createPayload: Record<string, unknown> | null = null;
@@ -231,6 +236,10 @@ describe("FollowUpsService", () => {
 
     assert.deepEqual(expireCalls, ["user-1"]);
     assert.equal((findManyArgs as any)?.where.ownerUserId, "user-1");
+    assert.equal(
+      (findManyArgs as any)?.where.relationship.is.ownerUserId,
+      "user-1",
+    );
     assert.equal((findManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
     assert.ok((findManyArgs as any)?.where.remindAt.gte instanceof Date);
     assert.deepEqual(
@@ -273,6 +282,10 @@ describe("FollowUpsService", () => {
 
     assert.deepEqual(expireCalls, ["user-1"]);
     assert.equal((findManyArgs as any)?.where.ownerUserId, "user-1");
+    assert.equal(
+      (findManyArgs as any)?.where.relationship.is.ownerUserId,
+      "user-1",
+    );
     assert.equal((findManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
     assert.ok((findManyArgs as any)?.where.remindAt.lte instanceof Date);
     assert.deepEqual(
@@ -299,13 +312,17 @@ describe("FollowUpsService", () => {
             }),
         },
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     const result = await service.markTriggeredIfDue("user-1", "follow-up-1");
 
     assert.equal((updateManyArgs as any)?.where.id, "follow-up-1");
     assert.equal((updateManyArgs as any)?.where.ownerUserId, "user-1");
+    assert.equal(
+      (updateManyArgs as any)?.where.relationship.is.ownerUserId,
+      "user-1",
+    );
     assert.equal((updateManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
     assert.equal((updateManyArgs as any)?.where.triggeredAt, null);
     assert.ok((updateManyArgs as any)?.where.remindAt.lte instanceof Date);
@@ -327,7 +344,7 @@ describe("FollowUpsService", () => {
             }),
         },
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     const result = await service.markTriggeredIfDue("user-1", "follow-up-1");
@@ -348,7 +365,7 @@ describe("FollowUpsService", () => {
           },
         },
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     const result = await service.processDueFollowUps({
@@ -356,6 +373,10 @@ describe("FollowUpsService", () => {
     });
 
     assert.equal((updateManyArgs as any)?.where.ownerUserId, "user-1");
+    assert.equal(
+      (updateManyArgs as any)?.where.relationship.is.ownerUserId,
+      "user-1",
+    );
     assert.equal((updateManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
     assert.equal((updateManyArgs as any)?.where.triggeredAt, null);
     assert.ok((updateManyArgs as any)?.where.remindAt.lte instanceof Date);
@@ -378,7 +399,7 @@ describe("FollowUpsService", () => {
           },
         },
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     const result = await service.processDueFollowUps({
@@ -386,6 +407,10 @@ describe("FollowUpsService", () => {
       limit: 1,
     });
 
+    assert.equal(
+      (updateManyArgs as any)?.where.relationship.is.ownerUserId,
+      "user-1",
+    );
     assert.equal((updateManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
     assert.equal((updateManyArgs as any)?.where.triggeredAt, null);
     assert.ok((updateManyArgs as any)?.where.remindAt.lte instanceof Date);
@@ -416,10 +441,15 @@ describe("FollowUpsService", () => {
     } as any);
 
     assert.deepEqual(result, []);
-    assert.deepEqual((findManyArgs as any)?.where, {
-      ownerUserId: "user-1",
-      relationshipId: "relationship-foreign",
-    });
+    assert.equal((findManyArgs as any)?.where.ownerUserId, "user-1");
+    assert.equal(
+      (findManyArgs as any)?.where.relationshipId,
+      "relationship-foreign",
+    );
+    assert.equal(
+      (findManyArgs as any)?.where.relationship.is.ownerUserId,
+      "user-1",
+    );
   });
 
   it("rejects updates for non-pending follow-ups", async () => {
@@ -699,7 +729,7 @@ describe("FollowUpsService", () => {
           },
         },
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     const result = await service.getFollowUpSummaryForRelationship(
@@ -707,16 +737,20 @@ describe("FollowUpsService", () => {
       "relationship-1",
     );
 
-    assert.deepEqual((aggregateArgs as any)?.where, {
-      ownerUserId: "user-1",
-      relationshipId: "relationship-1",
-      status: PrismaFollowUpStatus.PENDING,
-    });
-    assert.deepEqual((findFirstArgs as any)?.where, {
-      ownerUserId: "user-1",
-      relationshipId: "relationship-1",
-      status: PrismaFollowUpStatus.PENDING,
-    });
+    assert.equal((aggregateArgs as any)?.where.ownerUserId, "user-1");
+    assert.equal((aggregateArgs as any)?.where.relationshipId, "relationship-1");
+    assert.equal(
+      (aggregateArgs as any)?.where.relationship.is.ownerUserId,
+      "user-1",
+    );
+    assert.equal((aggregateArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
+    assert.equal((findFirstArgs as any)?.where.ownerUserId, "user-1");
+    assert.equal((findFirstArgs as any)?.where.relationshipId, "relationship-1");
+    assert.equal(
+      (findFirstArgs as any)?.where.relationship.is.ownerUserId,
+      "user-1",
+    );
+    assert.equal((findFirstArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
     assert.equal(result.hasPendingFollowUp, true);
     assert.equal(result.pendingFollowUpCount, 2);
     assert.equal(

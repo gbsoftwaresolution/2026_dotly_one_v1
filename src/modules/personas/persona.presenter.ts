@@ -119,7 +119,3 @@ export function toPrivatePersonaView(persona: PrivatePersonaRecord) {
 export function toPublicPersonaView(persona: PublicPersonaRecord) {
   return PublicPersonaDto.fromRecord(persona);
 }
-
-export function buildPublicUrl(username: string): string {
-  return `https://dotly.id/${username}`;
-}

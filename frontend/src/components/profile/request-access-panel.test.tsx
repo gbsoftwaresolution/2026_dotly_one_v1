@@ -36,16 +36,11 @@ const profileFixture = {
   profilePhoto: null,
   profilePhotoUrl: null,
   sharingMode: "controlled" as const,
-  channels: {
-    phoneNumber: null,
-    email: null,
-  },
   publicActions: {
     phone: null,
     whatsappNumber: null,
     email: null,
   },
-  links: [],
   smartCard: null,
   smartCardConfig: null,
 } as const;

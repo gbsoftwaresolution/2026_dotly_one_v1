@@ -25,6 +25,7 @@ import {
   supportsRequestAccessFlow,
   toSafeSmartCardConfig,
 } from "../personas/persona-sharing";
+import { canonicalizePublicUrl } from "../personas/public-url";
 import { PublicPersonaDto } from "./dto/public-persona.dto";
 import { toQrLink } from "../qr/qr.presenter";
 
@@ -225,7 +226,10 @@ export class ProfilesService {
       | "smartCardConfig"
     >,
   ): PublicVcardPayload {
-    const publicUrl = this.toCanonicalPublicUrl(persona.publicUrl, persona.username);
+    const publicUrl = canonicalizePublicUrl(
+      persona.publicUrl,
+      persona.username,
+    );
     const publicActionValues = getSafePublicContactValues({
       sharingMode: PrismaPersonaSharingMode.SMART_CARD,
       smartCardConfig: persona.smartCardConfig,
@@ -362,23 +366,6 @@ export class ProfilesService {
     }
 
     return segments.join("\r\n");
-  }
-
-  private toCanonicalPublicUrl(publicUrl: string, username: string): string {
-    const trimmedPublicUrl = publicUrl.trim();
-
-    if (
-      trimmedPublicUrl.startsWith("http://") ||
-      trimmedPublicUrl.startsWith("https://")
-    ) {
-      return trimmedPublicUrl;
-    }
-
-    if (trimmedPublicUrl.length > 0) {
-      return `https://${trimmedPublicUrl.replace(/^\/+/, "")}`;
-    }
-
-    return `https://dotly.id/${username}`;
   }
 
   private getInstantConnectUrl(

@@ -678,28 +678,6 @@ export function PublicSmartCard({
           </div>
         ) : null}
 
-        {profile.links.length > 0 ? (
-          <div className="space-y-3 rounded-[24px] border border-border bg-surface/60 p-4">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-muted">
-              Links
-            </p>
-            <div className="space-y-2">
-              {profile.links.map((link) => (
-                <a
-                  key={`${link.kind}:${link.href}`}
-                  href={link.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition hover:border-brandRose/30 dark:hover:border-brandCyan/30"
-                >
-                  <span>{link.label}</span>
-                  <ExternalLink className="h-4 w-4 text-muted" />
-                </a>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
         <div className="rounded-[24px] border border-border bg-surface/60 p-4">
           <div className="space-y-2">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-muted">

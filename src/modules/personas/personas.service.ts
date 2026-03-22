@@ -19,12 +19,12 @@ import { CreatePersonaDto } from "./dto/create-persona.dto";
 import { UpdatePersonaSharingDto } from "./dto/update-persona-sharing.dto";
 import { UpdatePersonaDto } from "./dto/update-persona.dto";
 import {
-  buildPublicUrl,
   privatePersonaSelect,
   toPrismaAccessMode,
   toPrismaPersonaType,
   toPrivatePersonaView,
 } from "./persona.presenter";
+import { buildPublicUrl } from "./public-url";
 import {
   isPhoneLikeValue,
   type PersonaPublicActionFields,

@@ -50,17 +50,6 @@ export interface PublicProfileSmartCard extends PersonaSmartCardConfig {
   actionLinks: PersonaSmartCardActionLinks;
 }
 
-export interface PublicProfileChannels {
-  phoneNumber: string | null;
-  email: string | null;
-}
-
-export interface PublicProfileLink {
-  label: string;
-  href: string;
-  kind: "website" | "social";
-}
-
 export interface PersonaSummary {
   id: string;
   type: PersonaType;
@@ -121,8 +110,6 @@ export interface PublicProfile {
   profilePhoto: string | null;
   profilePhotoUrl?: string | null;
   sharingMode: PersonaSharingMode;
-  channels: PublicProfileChannels;
-  links: ReadonlyArray<PublicProfileLink>;
   instantConnectUrl?: string | null;
   smartCard: PublicProfileSmartCard | null;
   smartCardConfig: PersonaSmartCardConfig | null;

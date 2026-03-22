@@ -20,16 +20,11 @@ describe("PublicProfileCard", () => {
           profilePhoto: null,
           profilePhotoUrl: null,
           sharingMode: "controlled",
-          channels: {
-            phoneNumber: null,
-            email: null,
-          },
           publicActions: {
             phone: null,
             whatsappNumber: null,
             email: null,
           },
-          links: [],
           smartCard: null,
           smartCardConfig: null,
         },
@@ -54,16 +49,11 @@ describe("PublicProfileCard", () => {
           profilePhoto: null,
           profilePhotoUrl: null,
           sharingMode: "smart_card",
-          channels: {
-            phoneNumber: null,
-            email: null,
-          },
           publicActions: {
             phone: "+15551234567",
             whatsappNumber: null,
             email: "jane@dotly.one",
           },
-          links: [],
           smartCard: {
             primaryAction: "instant_connect",
             allowCall: true,
