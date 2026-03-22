@@ -6,6 +6,7 @@ import {
   ForbiddenException,
   INestApplication,
   Module,
+  NotFoundException,
   ValidationPipe,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -43,6 +44,7 @@ function createMockFollowUp() {
     completedAt: null,
     relationship: {
       relationshipId: "relationship-1",
+      state: "approved",
       targetPersona: {
         id: "persona-1",
         username: "alice",
@@ -51,6 +53,10 @@ function createMockFollowUp() {
         companyName: "Dotly",
         profilePhotoUrl: null,
       },
+    },
+    metadata: {
+      isOverdue: false,
+      isUpcomingSoon: true,
     },
   };
 }
@@ -275,6 +281,63 @@ describe("Follow-ups HTTP E2E", () => {
     );
   });
 
+  it("rejects invalid follow-up status query params before reaching the service", async () => {
+    const token = await jwtService.signAsync({
+      sub: "user-84",
+      email: "user84@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(`${baseUrl}/v1/follow-ups?status=archived`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.success, false);
+  });
+
+  it("rejects invalid list relationship ids before reaching the service", async () => {
+    const token = await jwtService.signAsync({
+      sub: "user-84",
+      email: "user84@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(
+      `${baseUrl}/v1/follow-ups?relationshipId=not-a-uuid`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    const payload = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.success, false);
+  });
+
+  it("rejects invalid upcoming query params before reaching the service", async () => {
+    const token = await jwtService.signAsync({
+      sub: "user-84",
+      email: "user84@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(`${baseUrl}/v1/follow-ups?upcoming=soon`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.success, false);
+  });
+
   it("returns the authenticated user's follow-up by id", async () => {
     const token = await jwtService.signAsync({
       sub: "user-84",
@@ -300,10 +363,10 @@ describe("Follow-ups HTTP E2E", () => {
     });
   });
 
-  it("returns 403 when the service rejects access to another user's follow-up", async () => {
+  it("returns 404 when the service hides another user's follow-up", async () => {
     const originalGetFollowUp = followUpsServiceMock.getFollowUp;
     followUpsServiceMock.getFollowUp = async () => {
-      throw new ForbiddenException("You are not allowed to access this follow-up");
+      throw new NotFoundException("Follow-up not found");
     };
 
     try {
@@ -323,7 +386,7 @@ describe("Follow-ups HTTP E2E", () => {
       );
       const payload = await response.json();
 
-      assert.equal(response.status, 403);
+      assert.equal(response.status, 404);
       assert.equal(payload.success, false);
     } finally {
       followUpsServiceMock.getFollowUp = originalGetFollowUp;

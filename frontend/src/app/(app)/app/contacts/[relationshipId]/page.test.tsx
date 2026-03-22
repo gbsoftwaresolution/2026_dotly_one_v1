@@ -49,8 +49,24 @@ vi.mock("@/components/contacts/note-editor", () => ({
 }));
 
 vi.mock("@/components/follow-ups/contact-follow-up-form", () => ({
-  ContactFollowUpForm: ({ contactName }: { contactName: string }) =>
-    React.createElement("div", { "data-testid": "follow-up-form" }, `Remind ${contactName}`),
+  ContactFollowUpForm: ({
+    contactName,
+    initialFollowUpSummary,
+  }: {
+    contactName: string;
+    initialFollowUpSummary?: {
+      hasPendingFollowUp: boolean;
+      pendingFollowUpCount: number;
+    };
+  }) =>
+    React.createElement(
+      "div",
+      { "data-testid": "follow-up-form" },
+      `Remind ${contactName}`,
+      initialFollowUpSummary?.hasPendingFollowUp
+        ? ` Pending ${initialFollowUpSummary.pendingFollowUpCount}`
+        : "",
+    ),
 }));
 
 vi.mock("@/components/contacts/relationship-actions", () => ({
@@ -88,6 +104,11 @@ function createContactDetail(
       metAt: "2026-03-08T12:00:00.000Z",
       sourceLabel: "Launch Week",
       note: null,
+    },
+    followUpSummary: {
+      hasPendingFollowUp: false,
+      nextFollowUpAt: null,
+      pendingFollowUpCount: 0,
     },
     metadata: {
       lastInteractionAt: "2026-03-21T12:00:00.000Z",
@@ -171,5 +192,27 @@ describe("ContactDetailPage", () => {
     expect(screen.getByText("120 days ago")).toBeInTheDocument();
     expect(screen.queryByText("No interactions yet")).not.toBeInTheDocument();
     expect(screen.queryByText("Recently active")).not.toBeInTheDocument();
+  });
+
+  it("passes follow-up summary context to the reminder block", async () => {
+    mocks.apiRequest.mockResolvedValue(
+      createContactDetail({
+        followUpSummary: {
+          hasPendingFollowUp: true,
+          nextFollowUpAt: "2026-03-24T09:30:00.000Z",
+          pendingFollowUpCount: 2,
+        },
+      }),
+    );
+
+    const element = await ContactDetailPage({
+      params: Promise.resolve({ relationshipId: "relationship-id" }),
+    });
+
+    render(element);
+
+    expect(screen.getByTestId("follow-up-form")).toHaveTextContent(
+      "Pending 2",
+    );
   });
 });

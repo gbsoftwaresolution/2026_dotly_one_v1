@@ -34,6 +34,12 @@ export interface ContactRelationshipMetadata {
   relationshipAgeDays: number;
 }
 
+export interface ContactFollowUpSummary {
+  hasPendingFollowUp: boolean;
+  nextFollowUpAt: string | null;
+  pendingFollowUpCount: number;
+}
+
 export interface Contact {
   relationshipId: string;
   state: ContactRelationshipState;
@@ -59,6 +65,7 @@ export interface ContactDetail {
   sourceType: ContactRequestSourceType;
   targetPersona: ContactTargetPersonaDetail;
   memory: ContactMemory;
+  followUpSummary: ContactFollowUpSummary;
   metadata: ContactRelationshipMetadata;
 }
 

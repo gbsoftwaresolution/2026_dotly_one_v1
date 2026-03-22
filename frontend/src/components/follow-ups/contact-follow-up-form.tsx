@@ -9,12 +9,14 @@ import { followUpsApi } from "@/lib/api/follow-ups-api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
 import { cn } from "@/lib/utils/cn";
+import type { ContactFollowUpSummary } from "@/types/contact";
 
 const MAX_NOTE_LENGTH = 1000;
 
 interface ContactFollowUpFormProps {
   relationshipId: string;
   contactName: string;
+  initialFollowUpSummary?: ContactFollowUpSummary | null;
   disabled?: boolean;
 }
 
@@ -50,9 +52,38 @@ function toIsoString(date: string, time: string) {
   return combined.toISOString();
 }
 
+function formatReminder(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(new Date(value));
+}
+
+function mergeFollowUpSummary(
+  current: ContactFollowUpSummary | null,
+  remindAt: string,
+): ContactFollowUpSummary {
+  const nextFollowUpAt =
+    current?.nextFollowUpAt &&
+    new Date(current.nextFollowUpAt).getTime() <= new Date(remindAt).getTime()
+      ? current.nextFollowUpAt
+      : remindAt;
+
+  return {
+    hasPendingFollowUp: true,
+    nextFollowUpAt,
+    pendingFollowUpCount: (current?.pendingFollowUpCount ?? 0) + 1,
+  };
+}
+
 export function ContactFollowUpForm({
   relationshipId,
   contactName,
+  initialFollowUpSummary = null,
   disabled = false,
 }: ContactFollowUpFormProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,6 +93,9 @@ export function ContactFollowUpForm({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [followUpSummary, setFollowUpSummary] = useState<ContactFollowUpSummary | null>(
+    initialFollowUpSummary,
+  );
 
   useEffect(() => {
     if (!successMessage) {
@@ -74,6 +108,8 @@ export function ContactFollowUpForm({
 
   const isOverLimit = note.length > MAX_NOTE_LENGTH;
   const charsLeft = MAX_NOTE_LENGTH - note.length;
+  const hasPendingReminder =
+    followUpSummary?.hasPendingFollowUp && followUpSummary.nextFollowUpAt;
 
   function resetForm() {
     const nextDefaults = getDefaultReminderValues();
@@ -96,7 +132,7 @@ export function ContactFollowUpForm({
     }
 
     if (!date || !time) {
-      setError("Choose both a date and time.");
+      setError("Choose a date and time.");
       return;
     }
 
@@ -108,12 +144,12 @@ export function ContactFollowUpForm({
     const remindAt = toIsoString(date, time);
 
     if (!remindAt) {
-      setError("Enter a valid future reminder time.");
+      setError("Enter a valid reminder time.");
       return;
     }
 
     if (new Date(remindAt).getTime() <= Date.now()) {
-      setError("Reminder time must be in the future.");
+      setError("Pick a time in the future.");
       return;
     }
 
@@ -121,7 +157,7 @@ export function ContactFollowUpForm({
     setError(null);
 
     try {
-      await followUpsApi.create({
+      const created = await followUpsApi.create({
         relationshipId,
         remindAt,
         note: note.trim() ? note.trim() : null,
@@ -129,7 +165,8 @@ export function ContactFollowUpForm({
 
       resetForm();
       setIsOpen(false);
-      setSuccessMessage(`Reminder saved for ${contactName}.`);
+      setFollowUpSummary((current) => mergeFollowUpSummary(current, created.remindAt));
+      setSuccessMessage(`Reminder added for ${contactName}.`);
     } catch (submissionError) {
       setError(
         submissionError instanceof ApiError
@@ -143,6 +180,33 @@ export function ContactFollowUpForm({
 
   return (
     <div className="space-y-4">
+      {hasPendingReminder ? (
+        <div className="rounded-2xl border border-border bg-surface/70 px-4 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+                Next reminder
+              </p>
+              <p className="text-sm font-medium text-foreground">
+                {formatReminder(followUpSummary.nextFollowUpAt!)}
+              </p>
+              {followUpSummary.pendingFollowUpCount > 1 ? (
+                <p className="text-xs text-muted">
+                  {followUpSummary.pendingFollowUpCount} pending reminders
+                </p>
+              ) : null}
+            </div>
+
+            <Link
+              href={routes.app.followUps}
+              className="inline-flex min-h-12 items-center rounded-2xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:border-black/15 hover:bg-white dark:hover:border-white/15 dark:hover:bg-white/[0.08]"
+            >
+              Manage reminders
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
       {successMessage ? (
         <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3">
           <p className="font-sans text-sm font-semibold text-emerald-700 dark:text-emerald-300">
@@ -164,7 +228,7 @@ export function ContactFollowUpForm({
           onClick={handleOpen}
           disabled={disabled}
         >
-          Remind me
+          {hasPendingReminder ? "Add reminder" : "Remind me"}
         </SecondaryButton>
       ) : (
         <form className="space-y-4" onSubmit={(event) => void handleSubmit(event)}>

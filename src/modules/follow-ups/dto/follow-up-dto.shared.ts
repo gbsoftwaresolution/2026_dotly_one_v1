@@ -3,6 +3,7 @@ import {
   ValidationOptions,
   registerDecorator,
 } from "class-validator";
+import { BadRequestException } from "@nestjs/common";
 
 export function toTrimmedNullableString(value: unknown): unknown {
   if (value === null) {
@@ -32,7 +33,7 @@ export function toBooleanQueryValue(value: unknown): unknown {
     return false;
   }
 
-  return value;
+  throw new BadRequestException("upcoming must be a boolean value");
 }
 
 export function IsFutureDateString(validationOptions?: ValidationOptions) {

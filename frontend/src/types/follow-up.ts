@@ -11,7 +11,13 @@ export interface FollowUpTargetPersona {
 
 export interface FollowUpRelationship {
   relationshipId: string;
-  targetPersona: FollowUpTargetPersona;
+  state: "approved" | "instant_access" | "expired" | null;
+  targetPersona: FollowUpTargetPersona | null;
+}
+
+export interface FollowUpMetadata {
+  isOverdue: boolean;
+  isUpcomingSoon: boolean;
 }
 
 export interface FollowUp {
@@ -24,6 +30,7 @@ export interface FollowUp {
   updatedAt: string;
   completedAt: string | null;
   relationship: FollowUpRelationship;
+  metadata: FollowUpMetadata;
 }
 
 export interface CreateFollowUpInput {

@@ -42,6 +42,7 @@ function createFollowUp(overrides: Record<string, unknown> = {}) {
     completedAt: null,
     relationship: {
       relationshipId: "relationship-1",
+      state: "approved",
       targetPersona: {
         id: "persona-1",
         username: "alice",
@@ -50,6 +51,10 @@ function createFollowUp(overrides: Record<string, unknown> = {}) {
         companyName: "Dotly",
         profilePhotoUrl: null,
       },
+    },
+    metadata: {
+      isOverdue: false,
+      isUpcomingSoon: false,
     },
     ...overrides,
   };
@@ -69,7 +74,8 @@ describe("FollowUpsScreen", () => {
 
     render(React.createElement(FollowUpsScreen));
 
-    expect(await screen.findByText(/no follow-ups yet/i)).toBeInTheDocument();
+    expect(mocks.list).toHaveBeenCalledWith({ status: "pending" });
+    expect(await screen.findByText(/no follow-ups scheduled/i)).toBeInTheDocument();
   });
 
   it("renders the load error state and retry action", async () => {
@@ -84,12 +90,6 @@ describe("FollowUpsScreen", () => {
   it("completes a follow-up and refreshes the rendered sections", async () => {
     mocks.list.mockResolvedValue([
       createFollowUp(),
-      createFollowUp({
-        id: "follow-up-2",
-        status: "completed",
-        completedAt: "2099-04-11T10:00:00.000Z",
-        updatedAt: "2099-04-11T10:00:00.000Z",
-      }),
     ]);
     mocks.complete.mockResolvedValue(
       createFollowUp({
@@ -105,14 +105,14 @@ describe("FollowUpsScreen", () => {
     expect(
       await screen.findByRole("heading", { name: /pending/i }),
     ).toBeInTheDocument();
-    await user.click(screen.getAllByRole("button", { name: /complete/i })[0]);
+    await user.click(screen.getByRole("button", { name: /^complete$/i }));
 
     await waitFor(() => {
       expect(mocks.complete).toHaveBeenCalledWith("follow-up-1");
     });
 
-    expect(screen.queryByRole("button", { name: /^complete$/i })).not.toBeInTheDocument();
-    expect(screen.getAllByText(/completed/i).length).toBeGreaterThan(0);
+    expect(await screen.findByText(/reminder completed/i)).toBeInTheDocument();
+    expect(screen.queryByText("Alice Demo")).not.toBeInTheDocument();
   });
 
   it("shows action errors without breaking the current list", async () => {
@@ -123,9 +123,51 @@ describe("FollowUpsScreen", () => {
     render(React.createElement(FollowUpsScreen));
 
     expect(await screen.findByText("Alice Demo")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /cancel/i }));
+    await user.click(screen.getByRole("button", { name: /^cancel$/i }));
 
     expect(await screen.findByText(/could not cancel this follow-up right now/i)).toBeInTheDocument();
     expect(screen.getByText("Alice Demo")).toBeInTheDocument();
+  });
+
+  it("loads a different status when a filter is selected", async () => {
+    mocks.list
+      .mockResolvedValueOnce([createFollowUp()])
+      .mockResolvedValueOnce([
+        createFollowUp({
+          id: "follow-up-2",
+          status: "completed",
+          completedAt: "2099-04-11T10:00:00.000Z",
+          updatedAt: "2099-04-11T10:00:00.000Z",
+        }),
+      ]);
+    const user = userEvent.setup();
+
+    render(React.createElement(FollowUpsScreen));
+
+    expect(await screen.findByText("Alice Demo")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /completed/i }));
+
+    await waitFor(() => {
+      expect(mocks.list).toHaveBeenLastCalledWith({ status: "completed" });
+    });
+
+    expect(await screen.findByText(/completed apr/i)).toBeInTheDocument();
+  });
+
+  it("degrades safely when relationship summary data is partial", async () => {
+    mocks.list.mockResolvedValue([
+      createFollowUp({
+        relationship: {
+          relationshipId: "relationship-1",
+          state: null,
+          targetPersona: null,
+        },
+      }),
+    ]);
+
+    render(React.createElement(FollowUpsScreen));
+
+    expect(await screen.findByText("Contact unavailable")).toBeInTheDocument();
+    expect(screen.queryByText("Alice Demo")).not.toBeInTheDocument();
   });
 });

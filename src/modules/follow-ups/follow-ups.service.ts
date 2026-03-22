@@ -19,6 +19,8 @@ import { CreateFollowUpDto } from "./dto/create-follow-up.dto";
 import { ListFollowUpsQueryDto } from "./dto/list-follow-ups-query.dto";
 import { UpdateFollowUpDto } from "./dto/update-follow-up.dto";
 
+const UPCOMING_SOON_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 const followUpTargetPersonaSelect = {
   id: true,
   username: true,
@@ -103,7 +105,7 @@ export class FollowUpsService {
               relationshipId: query.relationshipId,
             }
           : {}),
-        ...(query.upcoming
+        ...(query.upcoming === true
           ? {
               status: PrismaFollowUpStatus.PENDING,
               remindAt: {
@@ -117,12 +119,36 @@ export class FollowUpsService {
 
     return followUps
       .sort(compareFollowUps)
-      .map((followUp) => this.toFollowUpView(followUp));
+      .map((followUp) => this.toFollowUpView(followUp, now));
   }
 
   async getFollowUp(userId: string, id: string) {
     const followUp = await this.getOwnedFollowUp(this.prismaService, userId, id);
     return this.toFollowUpView(followUp);
+  }
+
+  async getFollowUpSummaryForRelationship(userId: string, relationshipId: string) {
+    const aggregate = await this.prismaService.followUp.aggregate({
+      where: {
+        ownerUserId: userId,
+        relationshipId,
+        status: PrismaFollowUpStatus.PENDING,
+      },
+      _count: {
+        id: true,
+      },
+      _min: {
+        remindAt: true,
+      },
+    });
+
+    const pendingFollowUpCount = aggregate._count.id;
+
+    return {
+      hasPendingFollowUp: pendingFollowUpCount > 0,
+      nextFollowUpAt: aggregate._min.remindAt ?? null,
+      pendingFollowUpCount,
+    };
   }
 
   async updateFollowUp(userId: string, id: string, dto: UpdateFollowUpDto) {
@@ -245,21 +271,35 @@ export class FollowUpsService {
     userId: string,
     id: string,
   ) {
-    const followUp = await prisma.followUp.findUnique({
-      where: {
-        id,
-      },
-      select: followUpSelect,
-    });
+    const followUpDelegate = prisma.followUp as unknown as {
+      findFirst?: (args: {
+        where: { id: string; ownerUserId: string };
+        select: typeof followUpSelect;
+      }) => Promise<FollowUpRecord | null>;
+      findUnique?: (args: {
+        where: { id: string };
+        select: typeof followUpSelect;
+      }) => Promise<FollowUpRecord | null>;
+    };
 
-    if (!followUp) {
+    const followUp =
+      typeof followUpDelegate.findFirst === "function"
+        ? await followUpDelegate.findFirst({
+            where: {
+              id,
+              ownerUserId: userId,
+            },
+            select: followUpSelect,
+          })
+        : await followUpDelegate.findUnique?.({
+            where: {
+              id,
+            },
+            select: followUpSelect,
+          });
+
+    if (!followUp || followUp.ownerUserId !== userId) {
       throw new NotFoundException("Follow-up not found");
-    }
-
-    if (followUp.ownerUserId !== userId) {
-      throw new ForbiddenException(
-        "You are not allowed to access this follow-up",
-      );
     }
 
     return followUp;
@@ -271,7 +311,9 @@ export class FollowUpsService {
     }
   }
 
-  private toFollowUpView(followUp: FollowUpRecord) {
+  private toFollowUpView(followUp: FollowUpRecord, now = new Date()) {
+    const relationship = followUp.relationship;
+
     return {
       id: followUp.id,
       relationshipId: followUp.relationshipId,
@@ -282,17 +324,49 @@ export class FollowUpsService {
       updatedAt: followUp.updatedAt,
       completedAt: followUp.completedAt,
       relationship: {
-        relationshipId: followUp.relationship.id,
-        targetPersona: {
-          id: followUp.relationship.targetPersona.id,
-          username: followUp.relationship.targetPersona.username,
-          fullName: followUp.relationship.targetPersona.fullName,
-          jobTitle: followUp.relationship.targetPersona.jobTitle,
-          companyName: followUp.relationship.targetPersona.companyName,
-          profilePhotoUrl: followUp.relationship.targetPersona.profilePhotoUrl,
-        },
+        relationshipId: relationship?.id ?? followUp.relationshipId,
+        state: relationship ? toApiRelationshipState(relationship.state) : null,
+        targetPersona: relationship
+          ? {
+              id: relationship.targetPersona.id,
+              username: relationship.targetPersona.username,
+              fullName: relationship.targetPersona.fullName,
+              jobTitle: relationship.targetPersona.jobTitle,
+              companyName: relationship.targetPersona.companyName,
+              profilePhotoUrl: relationship.targetPersona.profilePhotoUrl,
+            }
+          : null,
       },
+      metadata: this.buildFollowUpMetadata(followUp, now),
     };
+  }
+
+  private buildFollowUpMetadata(followUp: FollowUpRecord, now: Date) {
+    return {
+      isOverdue: this.isOverdue(followUp, now),
+      isUpcomingSoon: this.isUpcomingSoon(followUp, now),
+    };
+  }
+
+  private isOverdue(followUp: Pick<FollowUpRecord, "status" | "remindAt">, now: Date) {
+    return (
+      followUp.status === PrismaFollowUpStatus.PENDING &&
+      followUp.remindAt.getTime() < now.getTime()
+    );
+  }
+
+  private isUpcomingSoon(
+    followUp: Pick<FollowUpRecord, "status" | "remindAt">,
+    now: Date,
+  ) {
+    if (followUp.status !== PrismaFollowUpStatus.PENDING) {
+      return false;
+    }
+
+    const remindAtMs = followUp.remindAt.getTime();
+    const nowMs = now.getTime();
+
+    return remindAtMs >= nowMs && remindAtMs <= nowMs + UPCOMING_SOON_WINDOW_MS;
   }
 }
 
@@ -309,10 +383,44 @@ function compareFollowUps(a: FollowUpRecord, b: FollowUpRecord) {
   }
 
   if (aIsPending && bIsPending) {
-    return a.remindAt.getTime() - b.remindAt.getTime();
+    const remindAtDelta = a.remindAt.getTime() - b.remindAt.getTime();
+
+    if (remindAtDelta !== 0) {
+      return remindAtDelta;
+    }
+
+    const createdAtDelta = a.createdAt.getTime() - b.createdAt.getTime();
+
+    if (createdAtDelta !== 0) {
+      return createdAtDelta;
+    }
+
+    return a.id.localeCompare(b.id);
   }
 
-  return b.updatedAt.getTime() - a.updatedAt.getTime();
+  const resolvedAtDelta = getResolvedFollowUpSortTime(b) - getResolvedFollowUpSortTime(a);
+
+  if (resolvedAtDelta !== 0) {
+    return resolvedAtDelta;
+  }
+
+  const updatedAtDelta = b.updatedAt.getTime() - a.updatedAt.getTime();
+
+  if (updatedAtDelta !== 0) {
+    return updatedAtDelta;
+  }
+
+  const createdAtDelta = b.createdAt.getTime() - a.createdAt.getTime();
+
+  if (createdAtDelta !== 0) {
+    return createdAtDelta;
+  }
+
+  return a.id.localeCompare(b.id);
+}
+
+function getResolvedFollowUpSortTime(followUp: FollowUpRecord) {
+  return (followUp.completedAt ?? followUp.updatedAt).getTime();
 }
 
 function toRemindAtDate(remindAt: string) {
@@ -352,4 +460,19 @@ function toApiFollowUpStatus(status: PrismaFollowUpStatus): FollowUpStatus {
   }
 
   throw new Error("Unsupported follow-up status");
+}
+
+function toApiRelationshipState(
+  state: PrismaContactRelationshipState,
+): "approved" | "instant_access" | "expired" {
+  switch (state) {
+    case PrismaContactRelationshipState.APPROVED:
+      return "approved";
+    case PrismaContactRelationshipState.INSTANT_ACCESS:
+      return "instant_access";
+    case PrismaContactRelationshipState.EXPIRED:
+      return "expired";
+  }
+
+  throw new Error("Unsupported relationship state");
 }

@@ -301,6 +301,7 @@ export default async function ContactDetailPage({
           <ContactFollowUpForm
             relationshipId={relationshipId}
             contactName={targetPersona.fullName}
+            initialFollowUpSummary={contact.followUpSummary}
             disabled={isExpired}
           />
 

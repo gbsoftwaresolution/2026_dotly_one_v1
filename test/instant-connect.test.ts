@@ -820,6 +820,7 @@ describe("ContactsService", () => {
   it("returns interaction metadata in contact detail responses", async () => {
     const lastInteractionAt = new Date(Date.now() - DAY_IN_MS);
     const createdAt = new Date(Date.now() - 3 * DAY_IN_MS - 60 * 1000);
+    const nextFollowUpAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
 
     const service = new ContactsService(
       {
@@ -856,6 +857,13 @@ describe("ContactsService", () => {
           relationship: Record<string, unknown>,
         ) => relationship,
       } as any,
+      {
+        getFollowUpSummaryForRelationship: async () => ({
+          hasPendingFollowUp: true,
+          nextFollowUpAt,
+          pendingFollowUpCount: 2,
+        }),
+      } as any,
     );
 
     const result = await service.findOne("owner-user", "relationship-id");
@@ -870,6 +878,12 @@ describe("ContactsService", () => {
     assert.equal(result.metadata.hasInteractions, true);
     assert.equal(result.metadata.isRecentlyActive, true);
     assert.equal(result.metadata.relationshipAgeDays, 3);
+    assert.equal(result.followUpSummary.hasPendingFollowUp, true);
+    assert.equal(result.followUpSummary.pendingFollowUpCount, 2);
+    assert.equal(
+      result.followUpSummary.nextFollowUpAt?.toISOString(),
+      nextFollowUpAt.toISOString(),
+    );
   });
 
   it("returns null-safe detail metadata for sparse or future interaction values", async () => {
@@ -919,6 +933,11 @@ describe("ContactsService", () => {
     assert.equal(result.metadata.hasInteractions, false);
     assert.equal(result.metadata.isRecentlyActive, false);
     assert.equal(result.metadata.relationshipAgeDays, 0);
+    assert.deepEqual(result.followUpSummary, {
+      hasPendingFollowUp: false,
+      nextFollowUpAt: null,
+      pendingFollowUpCount: 0,
+    });
   });
 
   it("updates interaction metadata when a contact note changes", async () => {

@@ -17,5 +17,5 @@ export class ListFollowUpsQueryDto {
   @IsOptional()
   @Transform(({ value }) => toBooleanQueryValue(value))
   @IsBoolean()
-  upcoming?: boolean;
+  upcoming?: boolean | "true" | "false";
 }

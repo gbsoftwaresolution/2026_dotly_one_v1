@@ -86,6 +86,8 @@ describe("FollowUpsService", () => {
     assert.equal((createPayload as any)?.data.relationshipId, "relationship-1");
     assert.equal(result.id, "follow-up-1");
     assert.equal(result.status, "pending");
+    assert.equal(result.relationship.state, "approved");
+    assert.ok(result.relationship.targetPersona);
     assert.equal(result.relationship.targetPersona.username, "alice");
   });
 
@@ -193,7 +195,7 @@ describe("FollowUpsService", () => {
     );
   });
 
-  it("lists only the current user's follow-ups and sorts pending items first", async () => {
+  it("lists only the current user's pending follow-ups in remindAt order for upcoming queries", async () => {
     let findManyArgs: Record<string, unknown> | null = null;
     const expireCalls: string[] = [];
 
@@ -203,12 +205,6 @@ describe("FollowUpsService", () => {
           findMany: async (args: Record<string, unknown>) => {
             findManyArgs = args;
             return [
-              createFollowUpRecord({
-                id: "completed-1",
-                status: PrismaFollowUpStatus.COMPLETED,
-                updatedAt: new Date("2099-04-05T10:00:00.000Z"),
-                completedAt: new Date("2099-04-05T10:00:00.000Z"),
-              }),
               createFollowUpRecord({
                 id: "pending-later",
                 remindAt: new Date("2099-04-12T10:00:00.000Z"),
@@ -238,8 +234,36 @@ describe("FollowUpsService", () => {
     assert.ok((findManyArgs as any)?.where.remindAt.gte instanceof Date);
     assert.deepEqual(
       result.map((followUp) => followUp.id),
-      ["pending-sooner", "pending-later", "completed-1"],
+      ["pending-sooner", "pending-later"],
     );
+  });
+
+  it("returns an empty result for foreign relationship filters without leaking presence", async () => {
+    let findManyArgs: Record<string, unknown> | null = null;
+
+    const service = new FollowUpsService(
+      {
+        followUp: {
+          findMany: async (args: Record<string, unknown>) => {
+            findManyArgs = args;
+            return [];
+          },
+        },
+      } as any,
+      {
+        expireOwnedExpiredRelationships: async () => undefined,
+      } as any,
+    );
+
+    const result = await service.listFollowUps("user-1", {
+      relationshipId: "relationship-foreign",
+    } as any);
+
+    assert.deepEqual(result, []);
+    assert.deepEqual((findManyArgs as any)?.where, {
+      ownerUserId: "user-1",
+      relationshipId: "relationship-foreign",
+    });
   });
 
   it("rejects updates for non-pending follow-ups", async () => {
@@ -271,14 +295,11 @@ describe("FollowUpsService", () => {
     );
   });
 
-  it("rejects access to another user's follow-up", async () => {
+  it("returns not found for another user's follow-up", async () => {
     const service = new FollowUpsService(
       {
         followUp: {
-          findUnique: async () =>
-            createFollowUpRecord({
-              ownerUserId: "user-2",
-            }),
+          findFirst: async () => null,
         },
       } as any,
       {} as any,
@@ -287,8 +308,8 @@ describe("FollowUpsService", () => {
     await assert.rejects(
       service.getFollowUp("user-1", "follow-up-1"),
       (error: unknown) => {
-        assert.ok(error instanceof ForbiddenException);
-        assert.equal(error.message, "You are not allowed to access this follow-up");
+        assert.ok(error instanceof NotFoundException);
+        assert.equal(error.message, "Follow-up not found");
         return true;
       },
     );
@@ -444,10 +465,14 @@ describe("FollowUpsService", () => {
 
     const result = await service.getFollowUp("user-1", "follow-up-1");
 
+    assert.equal(result.relationshipId, "relationship-1");
+    assert.ok(result.updatedAt instanceof Date);
     assert.deepEqual(Object.keys(result.relationship).sort(), [
       "relationshipId",
+      "state",
       "targetPersona",
     ]);
+    assert.ok(result.relationship.targetPersona);
     assert.deepEqual(Object.keys(result.relationship.targetPersona).sort(), [
       "companyName",
       "fullName",
@@ -456,5 +481,73 @@ describe("FollowUpsService", () => {
       "profilePhotoUrl",
       "username",
     ]);
+    assert.deepEqual(Object.keys(result.metadata).sort(), [
+      "isOverdue",
+      "isUpcomingSoon",
+    ]);
+  });
+
+  it("returns metadata flags and degrades safely when relationship data is missing", async () => {
+    const service = new FollowUpsService(
+      {
+        followUp: {
+          findUnique: async () =>
+            createFollowUpRecord({
+              remindAt: new Date(Date.now() - 60 * 1000),
+              relationship: null,
+            }),
+        },
+      } as any,
+      {} as any,
+    );
+
+    const result = await service.getFollowUp("user-1", "follow-up-1");
+
+    assert.equal(result.relationship.relationshipId, "relationship-1");
+    assert.equal(result.relationship.state, null);
+    assert.equal(result.relationship.targetPersona, null);
+    assert.equal(result.metadata.isOverdue, true);
+    assert.equal(result.metadata.isUpcomingSoon, false);
+  });
+
+  it("returns pending follow-up summary for a relationship", async () => {
+    let aggregateArgs: Record<string, unknown> | null = null;
+
+    const service = new FollowUpsService(
+      {
+        followUp: {
+          aggregate: async (args: Record<string, unknown>) => {
+            aggregateArgs = args;
+
+            return {
+              _count: {
+                id: 2,
+              },
+              _min: {
+                remindAt: new Date("2099-04-09T10:00:00.000Z"),
+              },
+            };
+          },
+        },
+      } as any,
+      {} as any,
+    );
+
+    const result = await service.getFollowUpSummaryForRelationship(
+      "user-1",
+      "relationship-1",
+    );
+
+    assert.deepEqual((aggregateArgs as any)?.where, {
+      ownerUserId: "user-1",
+      relationshipId: "relationship-1",
+      status: PrismaFollowUpStatus.PENDING,
+    });
+    assert.equal(result.hasPendingFollowUp, true);
+    assert.equal(result.pendingFollowUpCount, 2);
+    assert.equal(
+      result.nextFollowUpAt?.toISOString(),
+      "2099-04-09T10:00:00.000Z",
+    );
   });
 });

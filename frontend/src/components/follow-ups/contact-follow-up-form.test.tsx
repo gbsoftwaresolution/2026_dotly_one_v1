@@ -22,6 +22,35 @@ function formatLocalDefaults(value: Date) {
   };
 }
 
+function createFollowUp(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "follow-up-1",
+    relationshipId: "relationship-id",
+    remindAt: "2026-03-23T14:00:00.000Z",
+    status: "pending",
+    note: null,
+    createdAt: "2026-03-22T12:00:00.000Z",
+    updatedAt: "2026-03-22T12:00:00.000Z",
+    completedAt: null,
+    relationship: {
+      relationshipId: "relationship-id",
+      targetPersona: {
+        id: "persona-id",
+        username: "alex",
+        fullName: "Alex Parker",
+        jobTitle: "Engineer",
+        companyName: "Dotly",
+        profilePhotoUrl: null,
+      },
+    },
+    metadata: {
+      isOverdue: false,
+      isUpcomingSoon: false,
+    },
+    ...overrides,
+  };
+}
+
 vi.mock("@/lib/api/follow-ups-api", () => ({
   followUpsApi: {
     create: mocks.create,
@@ -78,7 +107,7 @@ describe("ContactFollowUpForm", () => {
   });
 
   it("submits a trimmed note and shows success state", async () => {
-    mocks.create.mockResolvedValue({ id: "follow-up-1" });
+    mocks.create.mockResolvedValue(createFollowUp({ note: "Follow up after demo" }));
     const user = userEvent.setup();
 
     render(
@@ -100,10 +129,33 @@ describe("ContactFollowUpForm", () => {
       relationshipId: "relationship-id",
       note: "Follow up after demo",
     });
-    expect(screen.getByText(/reminder saved for alex parker/i)).toBeInTheDocument();
+    expect(screen.getByText(/reminder added for alex parker/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /view follow-ups/i })).toHaveAttribute(
       "href",
       "/app/follow-ups",
     );
+    expect(screen.getByText(/next reminder/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /manage reminders/i })).toHaveAttribute(
+      "href",
+      "/app/follow-ups",
+    );
+  });
+
+  it("shows the current pending reminder summary when one exists", () => {
+    render(
+      React.createElement(ContactFollowUpForm, {
+        relationshipId: "relationship-id",
+        contactName: "Alex Parker",
+        initialFollowUpSummary: {
+          hasPendingFollowUp: true,
+          nextFollowUpAt: "2026-03-23T14:00:00.000Z",
+          pendingFollowUpCount: 2,
+        },
+      }),
+    );
+
+    expect(screen.getByText(/next reminder/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 pending reminders/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add reminder/i })).toBeInTheDocument();
   });
 });

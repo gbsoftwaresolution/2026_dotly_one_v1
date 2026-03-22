@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import {
   ContactRelationshipState as PrismaContactRelationshipState,
@@ -14,6 +15,7 @@ import { ContactRequestSourceType } from "../../common/enums/contact-request-sou
 import { PersonaAccessMode } from "../../common/enums/persona-access-mode.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { ContactMemoryService } from "../contact-memory/contact-memory.service";
+import { FollowUpsService } from "../follow-ups/follow-ups.service";
 import { RelationshipsService } from "../relationships/relationships.service";
 
 import { ListContactsQueryDto } from "./dto/list-contacts-query.dto";
@@ -82,6 +84,7 @@ export class ContactsService {
     private readonly prismaService: PrismaService,
     private readonly contactMemoryService: ContactMemoryService,
     private readonly relationshipsService: RelationshipsService,
+    @Optional() private readonly followUpsService?: FollowUpsService,
   ) {}
 
   async findAll(userId: string, query: ListContactsQueryDto) {
@@ -168,7 +171,11 @@ export class ContactsService {
       throw new NotFoundException("Contact not found");
     }
 
-    return this.toContactDetail(normalizedRelationship, new Date());
+    return this.toContactDetail(
+      normalizedRelationship,
+      new Date(),
+      await this.getFollowUpSummary(userId, normalizedRelationship.id),
+    );
   }
 
   async updateNote(
@@ -315,6 +322,11 @@ export class ContactsService {
   private toContactDetail(
     relationship: ContactRelationshipRecord,
     now: Date,
+    followUpSummary: {
+      hasPendingFollowUp: boolean;
+      nextFollowUpAt: Date | null;
+      pendingFollowUpCount: number;
+    },
   ) {
     const memory = relationship.memories[0];
     const metadata = this.buildRelationshipDetailMetadata(relationship, now);
@@ -346,8 +358,20 @@ export class ContactsService {
           memory?.sourceLabel ?? toSourceLabel(relationship.sourceType),
         note: memory?.note ?? null,
       },
+      followUpSummary,
       metadata,
     };
+  }
+
+  private async getFollowUpSummary(userId: string, relationshipId: string) {
+    if (!this.followUpsService) {
+      return buildEmptyFollowUpSummary();
+    }
+
+    return this.followUpsService.getFollowUpSummaryForRelationship(
+      userId,
+      relationshipId,
+    );
   }
 
   private buildRelationshipMetadata(
@@ -515,4 +539,12 @@ function recentActivityWindowMs() {
 
 function getRecentActivityCutoff(now: Date) {
   return new Date(now.getTime() - recentActivityWindowMs());
+}
+
+function buildEmptyFollowUpSummary() {
+  return {
+    hasPendingFollowUp: false,
+    nextFollowUpAt: null,
+    pendingFollowUpCount: 0,
+  };
 }
