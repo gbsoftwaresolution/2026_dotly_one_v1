@@ -17,6 +17,7 @@ import {
   publicPersonaSelect,
 } from "../personas/persona.presenter";
 import {
+  buildSmartCardActionState,
   supportsRequestAccessFlow,
   toSafeSmartCardConfig,
 } from "../personas/persona-sharing";
@@ -66,6 +67,9 @@ export class ProfilesService {
       throw new NotFoundException("Public profile not found");
     }
 
+    const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
+    const activeProfileQrCode = await this.getActiveProfileQrCode(persona.id);
+
     void this.analyticsService.trackProfileView({
       personaId: persona.id,
       viewerUserId: tracking?.viewerUserId ?? null,
@@ -73,9 +77,17 @@ export class ProfilesService {
     });
 
     return PublicPersonaDto.fromRecord(persona, {
-      instantConnectUrl: await this.getInstantConnectUrl(
-        persona.id,
-        persona.smartCardConfig,
+      instantConnectUrl: this.getInstantConnectUrl(
+        safeSmartCardConfig,
+        activeProfileQrCode,
+      ),
+      actionState: buildSmartCardActionState(
+        {
+          sharingMode: persona.sharingMode,
+          accessMode: persona.accessMode,
+          hasActiveProfileQr: activeProfileQrCode !== null,
+        },
+        safeSmartCardConfig,
       ),
     });
   }
@@ -95,10 +107,7 @@ export class ProfilesService {
       throw new NotFoundException("Public profile not found");
     }
 
-    const hasActiveProfileQr = await this.hasActiveProfileQr(
-      persona.id,
-      persona.smartCardConfig,
-    );
+    const hasActiveProfileQr = await this.hasActiveProfileQr(persona.id);
 
     if (
       !supportsRequestAccessFlow(persona.sharingMode, persona.smartCardConfig, {
@@ -118,45 +127,16 @@ export class ProfilesService {
     };
   }
 
-  private async hasActiveProfileQr(
-    personaId: string,
-    smartCardConfig: unknown,
-  ): Promise<boolean> {
-    const config = toSafeSmartCardConfig(smartCardConfig);
+  private async hasActiveProfileQr(personaId: string): Promise<boolean> {
+    const activeProfileQrCode = await this.getActiveProfileQrCode(personaId);
 
-    if (
-      config?.primaryAction !== PersonaSmartCardPrimaryAction.InstantConnect
-    ) {
-      return true;
-    }
-
-    const activeProfileQr = await this.prismaService.qRAccessToken.findFirst({
-      where: {
-        personaId,
-        type: PrismaQrType.profile,
-        status: PrismaQrStatus.active,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    return activeProfileQr !== null;
+    return activeProfileQrCode !== null;
   }
 
-  private async getInstantConnectUrl(
+  private async getActiveProfileQrCode(
     personaId: string,
-    smartCardConfig: unknown,
   ): Promise<string | null> {
-    const config = toSafeSmartCardConfig(smartCardConfig);
-
-    if (
-      config?.primaryAction !== PersonaSmartCardPrimaryAction.InstantConnect
-    ) {
-      return null;
-    }
-
-    const activeProfileQr = await this.prismaService.qRAccessToken.findFirst({
+    const activeProfileQr = await this.prismaService.qRAccessToken?.findFirst({
       where: {
         personaId,
         type: PrismaQrType.profile,
@@ -166,11 +146,23 @@ export class ProfilesService {
         createdAt: "desc",
       },
       select: {
+        id: true,
         code: true,
       },
     });
 
-    if (!activeProfileQr) {
+    return activeProfileQr?.code ?? activeProfileQr?.id ?? null;
+  }
+
+  private getInstantConnectUrl(
+    smartCardConfig: ReturnType<typeof toSafeSmartCardConfig>,
+    activeProfileQrCode: string | null,
+  ): string | null {
+    if (
+      smartCardConfig?.primaryAction !==
+        PersonaSmartCardPrimaryAction.InstantConnect ||
+      activeProfileQrCode === null
+    ) {
       return null;
     }
 
@@ -179,6 +171,6 @@ export class ProfilesService {
       "https://dotly.id/q",
     );
 
-    return toQrLink(baseUrl, activeProfileQr.code);
+    return toQrLink(baseUrl, activeProfileQrCode);
   }
 }

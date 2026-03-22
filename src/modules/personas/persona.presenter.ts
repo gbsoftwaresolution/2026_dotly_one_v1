@@ -41,14 +41,9 @@ export const publicPersonaSelect = {
   companyName: true,
   tagline: true,
   profilePhotoUrl: true,
+  accessMode: true,
   sharingMode: true,
   smartCardConfig: true,
-  user: {
-    select: {
-      email: true,
-      phoneNumber: true,
-    },
-  },
 } satisfies Prisma.PersonaSelect;
 
 export type PrivatePersonaRecord = Prisma.PersonaGetPayload<{

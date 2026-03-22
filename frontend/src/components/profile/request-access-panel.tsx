@@ -11,7 +11,10 @@ import { publicApi, requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
 import { formatPrimaryAction } from "@/lib/persona/labels";
-import { resolvePublicSmartCardPrimaryAction } from "@/lib/persona/smart-card";
+import {
+  hasPublicSmartCardDirectActions,
+  resolvePublicSmartCardPrimaryCta,
+} from "@/lib/persona/smart-card";
 import { cn } from "@/lib/utils/cn";
 import type {
   PersonaSummary,
@@ -105,19 +108,23 @@ export function RequestAccessPanel({
       initialPersonas.some((persona) => persona.username === profile.username),
     [initialPersonas, profile.username],
   );
-  const smartCardPrimaryAction =
+  const smartCardPrimaryCta =
     profile.sharingMode === "smart_card"
       ? profile.smartCard
-        ? resolvePublicSmartCardPrimaryAction(profile.smartCard.primaryAction, {
+        ? resolvePublicSmartCardPrimaryCta(profile.smartCard.primaryAction, {
             instantConnectUrl: profile.instantConnectUrl,
+            actionState: profile.smartCard.actionState,
+            hasDirectActions: hasPublicSmartCardDirectActions(profile),
           })
         : null
       : null;
+  const smartCardPrimaryAction = smartCardPrimaryCta?.action ?? null;
   const isSmartCardMisconfigured =
     profile.sharingMode === "smart_card" && profile.smartCard === null;
   const supportsRequestAccess =
     profile.sharingMode === "controlled" ||
-    smartCardPrimaryAction === "request_access";
+    (smartCardPrimaryCta?.action === "request_access" &&
+      !smartCardPrimaryCta.isDisabled);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

@@ -9,12 +9,19 @@ export type PersonaSmartCardPrimaryAction =
   | "instant_connect"
   | "contact_me";
 
+export interface PersonaSmartCardActionState {
+  requestAccessEnabled: boolean;
+  instantConnectEnabled: boolean;
+  contactMeEnabled: boolean;
+}
+
 export interface PersonaSmartCardConfig {
   primaryAction: PersonaSmartCardPrimaryAction;
   allowCall: boolean;
   allowWhatsapp: boolean;
   allowEmail: boolean;
   allowVcard: boolean;
+  actionState?: PersonaSmartCardActionState | null;
 }
 
 export interface PublicProfileChannels {

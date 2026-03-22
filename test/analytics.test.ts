@@ -237,6 +237,11 @@ describe("ProfilesService analytics hook", () => {
         allowWhatsapp: true,
         allowEmail: false,
         allowVcard: false,
+        actionState: {
+          requestAccessEnabled: true,
+          instantConnectEnabled: false,
+          contactMeEnabled: false,
+        },
       },
       smartCardConfig: {
         primaryAction: "request_access",
@@ -293,7 +298,7 @@ describe("ProfilesService analytics hook", () => {
     const result = await service.getPublicProfile("alice");
 
     assert.deepEqual(result.channels, {
-      phoneNumber: "+15551234567",
+      phoneNumber: null,
       email: null,
     });
     assert.deepEqual(result.links, []);
@@ -305,6 +310,11 @@ describe("ProfilesService analytics hook", () => {
       allowWhatsapp: false,
       allowEmail: false,
       allowVcard: false,
+      actionState: {
+        requestAccessEnabled: true,
+        instantConnectEnabled: false,
+        contactMeEnabled: false,
+      },
     });
 
     assert.deepEqual(result.smartCardConfig, {

@@ -192,6 +192,7 @@ export class PersonasService {
       },
       select: {
         userId: true,
+        accessMode: true,
         sharingMode: true,
         smartCardConfig: true,
       },
@@ -226,9 +227,16 @@ export class PersonasService {
 
             const normalizedConfig = validateSmartCardConfig(requestedConfig);
 
+            const hasActiveProfileQr =
+              normalizedConfig.primaryAction ===
+              PersonaSmartCardPrimaryAction.InstantConnect
+                ? await this.hasActiveProfileQrEnabled(personaId)
+                : false;
+
             return validateSmartCardConfigCompatibility(normalizedConfig, {
-              hasActiveProfileQr:
-                await this.hasActiveProfileQrEnabled(personaId, normalizedConfig),
+              sharingMode: nextSharingMode,
+              accessMode: existingPersona.accessMode,
+              hasActiveProfileQr,
             });
           })();
 
@@ -285,15 +293,7 @@ export class PersonasService {
 
   private async hasActiveProfileQrEnabled(
     personaId: string,
-    smartCardConfig: PersonaSmartCardConfig,
   ): Promise<boolean> {
-    if (
-      smartCardConfig.primaryAction !==
-      PersonaSmartCardPrimaryAction.InstantConnect
-    ) {
-      return true;
-    }
-
     const activeProfileQr = await this.prismaService.qRAccessToken.findFirst({
       where: {
         personaId,

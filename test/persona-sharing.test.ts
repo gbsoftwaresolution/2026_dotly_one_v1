@@ -9,14 +9,40 @@ import {
 
 import { PersonaSharingMode } from "../src/common/enums/persona-sharing-mode.enum";
 import { PersonaSmartCardPrimaryAction } from "../src/common/enums/persona-smart-card-primary-action.enum";
+import { buildSmartCardActionState } from "../src/modules/personas/persona-sharing";
 import { PersonasService } from "../src/modules/personas/personas.service";
 
 describe("PersonasService sharing mode", () => {
+  it("reports contact_me as unavailable on public cards without vcard", () => {
+    assert.deepEqual(
+      buildSmartCardActionState(
+        {
+          sharingMode: "SMART_CARD" as const,
+          accessMode: "REQUEST" as const,
+          hasActiveProfileQr: false,
+        },
+        {
+          primaryAction: PersonaSmartCardPrimaryAction.ContactMe,
+          allowCall: true,
+          allowWhatsapp: true,
+          allowEmail: true,
+          allowVcard: false,
+        },
+      ),
+      {
+        requestAccessEnabled: true,
+        instantConnectEnabled: false,
+        contactMeEnabled: false,
+      },
+    );
+  });
+
   it("updates smart card config and defaults missing flags to false", async () => {
     const service = new PersonasService({
       persona: {
         findUnique: async () => ({
           userId: "user-1",
+          accessMode: "REQUEST",
           sharingMode: "CONTROLLED",
           smartCardConfig: null,
         }),
@@ -84,6 +110,7 @@ describe("PersonasService sharing mode", () => {
       persona: {
         findUnique: async () => ({
           userId: "user-2",
+          accessMode: "REQUEST",
           sharingMode: "CONTROLLED",
           smartCardConfig: null,
         }),
@@ -103,6 +130,7 @@ describe("PersonasService sharing mode", () => {
       persona: {
         findUnique: async () => ({
           userId: "user-1",
+          accessMode: "REQUEST",
           sharingMode: "CONTROLLED",
           smartCardConfig: null,
         }),
@@ -122,6 +150,7 @@ describe("PersonasService sharing mode", () => {
       persona: {
         findUnique: async () => ({
           userId: "user-1",
+          accessMode: "REQUEST",
           sharingMode: "CONTROLLED",
           smartCardConfig: null,
         }),
@@ -159,6 +188,7 @@ describe("PersonasService sharing mode", () => {
       persona: {
         findUnique: async () => ({
           userId: "user-1",
+          accessMode: "REQUEST",
           sharingMode: "SMART_CARD",
           smartCardConfig: {
             primaryAction: "request_access",
@@ -213,6 +243,7 @@ describe("PersonasService sharing mode", () => {
       persona: {
         findUnique: async () => ({
           userId: "user-1",
+          accessMode: "REQUEST",
           sharingMode: "SMART_CARD",
           smartCardConfig: {
             primaryAction: "contact_me",
@@ -257,5 +288,75 @@ describe("PersonasService sharing mode", () => {
       allowEmail: false,
       allowVcard: false,
     });
+  });
+
+  it("rejects request_access for private personas", async () => {
+    const service = new PersonasService({
+      persona: {
+        findUnique: async () => ({
+          userId: "user-1",
+          accessMode: "PRIVATE",
+          sharingMode: "CONTROLLED",
+          smartCardConfig: null,
+        }),
+      },
+    } as any);
+
+    await assert.rejects(
+      service.updateSharingMode("user-1", "persona-1", {
+        sharingMode: PersonaSharingMode.SmartCard,
+        smartCardConfig: {
+          primaryAction: PersonaSmartCardPrimaryAction.RequestAccess,
+          allowCall: false,
+          allowWhatsapp: false,
+          allowEmail: false,
+          allowVcard: false,
+        },
+      }),
+      (error: unknown) => {
+        assert(error instanceof BadRequestException);
+        assert.equal(
+          error.message,
+          "smartCardConfig.primaryAction request_access is not supported for private personas",
+        );
+
+        return true;
+      },
+    );
+  });
+
+  it("rejects contact_me when all direct actions are disabled", async () => {
+    const service = new PersonasService({
+      persona: {
+        findUnique: async () => ({
+          userId: "user-1",
+          accessMode: "REQUEST",
+          sharingMode: "CONTROLLED",
+          smartCardConfig: null,
+        }),
+      },
+    } as any);
+
+    await assert.rejects(
+      service.updateSharingMode("user-1", "persona-1", {
+        sharingMode: PersonaSharingMode.SmartCard,
+        smartCardConfig: {
+          primaryAction: PersonaSmartCardPrimaryAction.ContactMe,
+          allowCall: false,
+          allowWhatsapp: false,
+          allowEmail: false,
+          allowVcard: false,
+        },
+      }),
+      (error: unknown) => {
+        assert(error instanceof BadRequestException);
+        assert.equal(
+          error.message,
+          "smartCardConfig.primaryAction contact_me requires at least one direct action to be enabled",
+        );
+
+        return true;
+      },
+    );
   });
 });

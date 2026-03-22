@@ -14,9 +14,11 @@ import {
 
 import { Card } from "@/components/shared/card";
 import { PrimaryButton } from "@/components/shared/primary-button";
-import { SecondaryButton } from "@/components/shared/secondary-button";
 import { formatPrimaryAction } from "@/lib/persona/labels";
-import { resolvePublicSmartCardPrimaryAction } from "@/lib/persona/smart-card";
+import {
+  hasPublicSmartCardDirectActions,
+  resolvePublicSmartCardPrimaryCta,
+} from "@/lib/persona/smart-card";
 import { cn } from "@/lib/utils/cn";
 import type {
   PersonaSmartCardPrimaryAction,
@@ -112,17 +114,23 @@ export function PublicSmartCard({
   requestAccessHref = "#request-access-panel",
 }: PublicSmartCardProps) {
   const config = profile.smartCard;
-  const [isContactPanelOpen, setIsContactPanelOpen] = useState(false);
+  const [isContactPanelHighlighted, setIsContactPanelHighlighted] =
+    useState(false);
   const [primaryCtaState, setPrimaryCtaState] = useState<PrimaryCtaState>({
     status: "idle",
   });
   const feedbackTimeoutRef = useRef<number | null>(null);
+  const panelHighlightTimeoutRef = useRef<number | null>(null);
   const contactPanelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     return () => {
       if (feedbackTimeoutRef.current !== null) {
         window.clearTimeout(feedbackTimeoutRef.current);
+      }
+
+      if (panelHighlightTimeoutRef.current !== null) {
+        window.clearTimeout(panelHighlightTimeoutRef.current);
       }
     };
   }, []);
@@ -147,14 +155,7 @@ export function PublicSmartCard({
   }
 
   const hue = avatarHue(profile.username);
-  const primaryAction = resolvePublicSmartCardPrimaryAction(
-    config.primaryAction,
-    {
-      instantConnectUrl: profile.instantConnectUrl,
-    },
-  );
-  const primaryCta = getPrimaryCtaCopy(primaryAction);
-  const PrimaryIcon = primaryCta.icon;
+  const hasDirectActions = hasPublicSmartCardDirectActions(profile);
   const smartActions: SmartAction[] = [];
 
   if (config.allowCall && profile.channels.phoneNumber) {
@@ -193,19 +194,55 @@ export function PublicSmartCard({
     });
   }
 
-  const showContactPanel =
-    primaryAction === "contact_me"
-      ? isContactPanelOpen
-      : smartActions.length > 0;
+  const resolvedPrimaryCta = resolvePublicSmartCardPrimaryCta(
+    config.primaryAction,
+    {
+      instantConnectUrl: profile.instantConnectUrl,
+      actionState: config.actionState,
+      hasDirectActions,
+    },
+  );
+  const primaryAction = resolvedPrimaryCta.action;
+  const primaryCta = getPrimaryCtaCopy(primaryAction);
+  const PrimaryIcon = primaryCta.icon;
+  const requestedPrimaryActionLabel = formatPrimaryAction(
+    resolvedPrimaryCta.requestedAction,
+  );
+  const effectivePrimaryActionLabel = formatPrimaryAction(primaryAction);
+  const primarySummary = resolvedPrimaryCta.isDisabled
+    ? `${requestedPrimaryActionLabel} is unavailable right now.`
+    : resolvedPrimaryCta.isFallback
+      ? `${requestedPrimaryActionLabel} is unavailable. Showing ${effectivePrimaryActionLabel} instead.`
+      : primaryAction === "request_access"
+        ? "Request approval to continue."
+        : primaryAction === "instant_connect"
+          ? "Continue instantly from this card."
+          : "Choose a direct way to reach out.";
 
-  const isPrimaryActionDisabled =
-    primaryAction === "contact_me" && smartActions.length === 0;
+  const shouldShowDirectActions = hasDirectActions;
+  const isPrimaryActionDisabled = resolvedPrimaryCta.isDisabled;
 
   function clearFeedbackTimeout() {
     if (feedbackTimeoutRef.current !== null) {
       window.clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = null;
     }
+  }
+
+  function clearPanelHighlightTimeout() {
+    if (panelHighlightTimeoutRef.current !== null) {
+      window.clearTimeout(panelHighlightTimeoutRef.current);
+      panelHighlightTimeoutRef.current = null;
+    }
+  }
+
+  function highlightContactPanel() {
+    clearPanelHighlightTimeout();
+    setIsContactPanelHighlighted(true);
+    panelHighlightTimeoutRef.current = window.setTimeout(() => {
+      setIsContactPanelHighlighted(false);
+      panelHighlightTimeoutRef.current = null;
+    }, 1800);
   }
 
   function setSuccessState(message: string) {
@@ -247,14 +284,14 @@ export function PublicSmartCard({
       return;
     }
 
-    setIsContactPanelOpen(true);
+    highlightContactPanel();
     window.requestAnimationFrame(() => {
       contactPanelRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
     });
-    setSuccessState("Contact options are ready below.");
+    setSuccessState("Direct contact is ready below.");
   }
 
   function handleInstantConnectAction() {
@@ -346,13 +383,22 @@ export function PublicSmartCard({
           </div>
 
           <div className="rounded-[28px] border border-white/12 bg-white/[0.08] p-4 backdrop-blur-sm">
-            <div className="space-y-2">
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-white/55">
-                Primary action
-              </p>
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-white/55">
+                  Primary action
+                </p>
+                <span className="rounded-full border border-white/12 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/78">
+                  {resolvedPrimaryCta.helperText}
+                </span>
+                {resolvedPrimaryCta.isFallback ? (
+                  <span className="rounded-full border border-amber-300/35 bg-amber-300/12 px-3 py-1 text-[11px] font-semibold text-amber-100">
+                    Fallback shown
+                  </span>
+                ) : null}
+              </div>
               <p className="text-sm leading-6 text-white/72">
-                {formatPrimaryAction(primaryAction)} is the main entry
-                point for this profile.
+                {primarySummary}
               </p>
             </div>
 
@@ -369,6 +415,11 @@ export function PublicSmartCard({
                 )}
                 {primaryCta.label}
               </PrimaryButton>
+              {isPrimaryActionDisabled ? (
+                <p className="pt-3 text-sm leading-6 text-white/72">
+                  {resolvedPrimaryCta.helperText}. Try again later.
+                </p>
+              ) : null}
               {primaryCtaState.status === "error" ? (
                 <p role="alert" className="pt-3 text-sm leading-6 text-rose-200">
                   {primaryCtaState.message}
@@ -385,24 +436,30 @@ export function PublicSmartCard({
       </div>
 
       <div className="space-y-4 px-6 py-6">
-        {showContactPanel ? (
-          <div ref={contactPanelRef} className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-muted">
-                Direct actions
+        {shouldShowDirectActions ? (
+          <div
+            ref={contactPanelRef}
+            className={cn(
+              "space-y-3 rounded-[24px] border border-border bg-surface/60 p-4 transition-colors",
+              isContactPanelHighlighted &&
+                "border-brandRose/35 bg-brandRose/5 dark:border-brandCyan/35 dark:bg-brandCyan/10",
+            )}
+          >
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-muted">
+                  Direct actions
+                </p>
+                <span className="rounded-full border border-border bg-background px-3 py-1 text-[11px] font-semibold text-muted">
+                  Direct contact available
+                </span>
+              </div>
+              <p className="text-sm leading-6 text-muted">
+                Choose the fastest channel for this conversation.
               </p>
-              {primaryAction === "contact_me" ? (
-                <button
-                  type="button"
-                  onClick={() => setIsContactPanelOpen((value) => !value)}
-                  className="text-xs font-semibold text-brandRose transition hover:opacity-80 dark:text-brandCyan"
-                >
-                  {isContactPanelOpen ? "Hide" : "Show"}
-                </button>
-              ) : null}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {smartActions.map((action) => {
                 const Icon = action.icon;
 
@@ -478,14 +535,6 @@ export function PublicSmartCard({
           </div>
         ) : null}
 
-        {primaryAction === "contact_me" && smartActions.length === 0 ? (
-          <div className="rounded-[24px] border border-border bg-surface/60 p-4">
-            <p className="text-sm leading-6 text-muted">
-              No direct contact actions are available on this card yet.
-            </p>
-          </div>
-        ) : null}
-
         <div className="rounded-[24px] border border-border bg-surface/60 p-4">
           <div className="space-y-2">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-muted">
@@ -496,17 +545,6 @@ export function PublicSmartCard({
               direct, and tap-friendly.
             </p>
           </div>
-
-          {primaryAction !== "request_access" && smartActions.length > 0 ? (
-            <div className="pt-4">
-              <SecondaryButton
-                className="w-full"
-                onClick={() => setIsContactPanelOpen((value) => !value)}
-              >
-                {isContactPanelOpen ? "Hide contact options" : "Show contact options"}
-              </SecondaryButton>
-            </div>
-          ) : null}
         </div>
       </div>
     </Card>

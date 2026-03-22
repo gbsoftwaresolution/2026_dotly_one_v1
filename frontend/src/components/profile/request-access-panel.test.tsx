@@ -176,6 +176,11 @@ describe("RequestAccessPanel", () => {
             allowWhatsapp: true,
             allowEmail: false,
             allowVcard: false,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
           },
           smartCardConfig: {
             primaryAction: "request_access",
@@ -183,6 +188,11 @@ describe("RequestAccessPanel", () => {
             allowWhatsapp: true,
             allowEmail: false,
             allowVcard: false,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
           },
         },
         initialPersonas: [personaFixture],
@@ -235,6 +245,11 @@ describe("RequestAccessPanel", () => {
             allowWhatsapp: true,
             allowEmail: false,
             allowVcard: true,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: true,
+              contactMeEnabled: true,
+            },
           },
           smartCardConfig: {
             primaryAction: "instant_connect",
@@ -242,6 +257,11 @@ describe("RequestAccessPanel", () => {
             allowWhatsapp: true,
             allowEmail: false,
             allowVcard: true,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: true,
+              contactMeEnabled: true,
+            },
           },
         },
         initialPersonas: [personaFixture],
@@ -255,6 +275,69 @@ describe("RequestAccessPanel", () => {
     expect(
       screen.queryByRole("button", { name: /request access/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps the request flow available when smart card falls back to request access", () => {
+    render(
+      React.createElement(RequestAccessPanel, {
+        profile: {
+          ...profileFixture,
+          sharingMode: "smart_card",
+          smartCard: {
+            primaryAction: "contact_me",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: false,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: false,
+            },
+          },
+          smartCardConfig: {
+            primaryAction: "contact_me",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: false,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: false,
+            },
+          },
+        },
+        initialPersonas: [personaFixture],
+        isAuthenticated: true,
+        currentUser: {
+          id: "user-1",
+          email: "user@dotly.one",
+          isVerified: true,
+          security: {
+            trustBadge: "verified",
+            maskedEmail: "us**@dotly.one",
+            mailDeliveryAvailable: true,
+            passwordResetAvailable: true,
+            smsDeliveryAvailable: true,
+            maskedPhoneNumber: null,
+            phoneVerificationStatus: "not_enrolled",
+            mobileOtpEnrollment: null,
+            explanation:
+              "Email verification is the first trust factor for your Dotly identity.",
+            unlockedActions: ["Send contact requests"],
+            restrictedActions: [],
+            requirements: [],
+            trustFactors: [],
+          },
+        },
+      }),
+    );
+
+    expect(
+      screen.getByText(/request access from this smart card/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /request access/i })).toBeEnabled();
   });
 
   it("shows a clear unavailable state when smart card config is missing", () => {

@@ -7,7 +7,10 @@ import { RequestAccessPanel } from "@/components/profile/request-access-panel";
 import { personaApi, publicApi, userApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { getServerAccessToken } from "@/lib/auth/server-session";
-import { resolvePublicSmartCardPrimaryAction } from "@/lib/persona/smart-card";
+import {
+  hasPublicSmartCardDirectActions,
+  resolvePublicSmartCardPrimaryCta,
+} from "@/lib/persona/smart-card";
 import type { PersonaSummary } from "@/types";
 
 interface PublicUserPageProps {
@@ -56,15 +59,18 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
     }
 
     const isSmartCard = profile.sharingMode === "smart_card";
-    const normalizedSmartCardPrimaryAction =
+    const resolvedSmartCardPrimaryCta =
       profile.sharingMode === "smart_card" && profile.smartCard
-        ? resolvePublicSmartCardPrimaryAction(profile.smartCard.primaryAction, {
+        ? resolvePublicSmartCardPrimaryCta(profile.smartCard.primaryAction, {
             instantConnectUrl: profile.instantConnectUrl,
+            actionState: profile.smartCard.actionState,
+            hasDirectActions: hasPublicSmartCardDirectActions(profile),
           })
         : null;
     const showRequestAccessPanel =
       profile.sharingMode === "controlled" ||
-      normalizedSmartCardPrimaryAction === "request_access";
+      (resolvedSmartCardPrimaryCta?.action === "request_access" &&
+        !resolvedSmartCardPrimaryCta.isDisabled);
 
     return (
       <main

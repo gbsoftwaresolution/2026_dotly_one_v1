@@ -1,6 +1,6 @@
 import React from "react";
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -10,6 +10,51 @@ const createObjectUrl = vi.fn(() => "blob:smart-card");
 const revokeObjectUrl = vi.fn();
 const scrollIntoView = vi.fn();
 const assignLocation = vi.fn();
+
+function createProfile(overrides: Partial<React.ComponentProps<typeof PublicSmartCard>["profile"]> = {}) {
+  return {
+    username: "jane",
+    publicUrl: "https://dotly.id/jane",
+    name: "Jane Doe",
+    fullName: "Jane Doe",
+    jobTitle: "Founder",
+    companyName: "Dotly",
+    tagline: "Trusted identity, zero clutter.",
+    profilePhoto: null,
+    profilePhotoUrl: null,
+    sharingMode: "smart_card" as const,
+    channels: {
+      phoneNumber: null,
+      email: null,
+    },
+    links: [],
+    smartCard: {
+      primaryAction: "request_access" as const,
+      allowCall: false,
+      allowWhatsapp: false,
+      allowEmail: false,
+      allowVcard: false,
+      actionState: {
+        requestAccessEnabled: true,
+        instantConnectEnabled: false,
+        contactMeEnabled: false,
+      },
+    },
+    smartCardConfig: {
+      primaryAction: "request_access" as const,
+      allowCall: false,
+      allowWhatsapp: false,
+      allowEmail: false,
+      allowVcard: false,
+      actionState: {
+        requestAccessEnabled: true,
+        instantConnectEnabled: false,
+        contactMeEnabled: false,
+      },
+    },
+    ...overrides,
+  };
+}
 
 describe("PublicSmartCard", () => {
   beforeEach(() => {
@@ -36,28 +81,22 @@ describe("PublicSmartCard", () => {
   it("renders a request access primary button and direct action links", () => {
     render(
       React.createElement(PublicSmartCard, {
-        profile: {
-          username: "jane",
-          publicUrl: "https://dotly.id/jane",
-          name: "Jane Doe",
-          fullName: "Jane Doe",
-          jobTitle: "Founder",
-          companyName: "Dotly",
-          tagline: "Trusted identity, zero clutter.",
-          profilePhoto: null,
-          profilePhotoUrl: null,
-          sharingMode: "smart_card",
+        profile: createProfile({
           channels: {
             phoneNumber: "+1 555 123 4567",
             email: "jane@dotly.one",
           },
-          links: [],
           smartCard: {
             primaryAction: "request_access",
             allowCall: true,
             allowWhatsapp: true,
             allowEmail: true,
             allowVcard: true,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
           },
           smartCardConfig: {
             primaryAction: "request_access",
@@ -65,12 +104,18 @@ describe("PublicSmartCard", () => {
             allowWhatsapp: true,
             allowEmail: true,
             allowVcard: true,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
           },
-        },
+        }),
       }),
     );
 
     expect(screen.getByRole("button", { name: /request access/i })).toBeEnabled();
+    expect(screen.getByText(/direct contact available/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /call/i })).toHaveAttribute(
       "href",
       "tel:+15551234567",
@@ -93,37 +138,7 @@ describe("PublicSmartCard", () => {
         React.Fragment,
         null,
         React.createElement(PublicSmartCard, {
-          profile: {
-            username: "jane",
-            publicUrl: "https://dotly.id/jane",
-            name: "Jane Doe",
-            fullName: "Jane Doe",
-            jobTitle: "Founder",
-            companyName: "Dotly",
-            tagline: "Trusted identity, zero clutter.",
-            profilePhoto: null,
-            profilePhotoUrl: null,
-            sharingMode: "smart_card",
-            channels: {
-              phoneNumber: null,
-              email: null,
-            },
-            links: [],
-            smartCard: {
-              primaryAction: "request_access",
-              allowCall: false,
-              allowWhatsapp: false,
-              allowEmail: false,
-              allowVcard: false,
-            },
-            smartCardConfig: {
-              primaryAction: "request_access",
-              allowCall: false,
-              allowWhatsapp: false,
-              allowEmail: false,
-              allowVcard: false,
-            },
-          },
+          profile: createProfile(),
         }),
         React.createElement("div", { id: "request-access-panel" }),
       ),
@@ -142,28 +157,22 @@ describe("PublicSmartCard", () => {
 
     render(
       React.createElement(PublicSmartCard, {
-        profile: {
-          username: "jane",
-          publicUrl: "https://dotly.id/jane",
-          name: "Jane Doe",
-          fullName: "Jane Doe",
-          jobTitle: "Founder",
-          companyName: "Dotly",
-          tagline: "Trusted identity, zero clutter.",
-          profilePhoto: null,
-          profilePhotoUrl: null,
-          sharingMode: "smart_card",
+        profile: createProfile({
           channels: {
             phoneNumber: "+1 555 123 4567",
             email: null,
           },
-          links: [],
           smartCard: {
             primaryAction: "contact_me",
             allowCall: true,
             allowWhatsapp: false,
             allowEmail: false,
             allowVcard: false,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
           },
           smartCardConfig: {
             primaryAction: "contact_me",
@@ -171,20 +180,25 @@ describe("PublicSmartCard", () => {
             allowWhatsapp: false,
             allowEmail: false,
             allowVcard: false,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
           },
-        },
+        }),
       }),
     );
 
-    expect(
-      screen.queryByRole("link", { name: /call/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /call/i })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /^contact$/i }));
 
-    expect(screen.getByRole("link", { name: /call/i })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(scrollIntoView).toHaveBeenCalled();
+    });
     expect(
-      screen.getByText(/contact options are ready below/i),
+      screen.getByText(/direct contact is ready below/i),
     ).toBeInTheDocument();
   });
 
@@ -193,29 +207,19 @@ describe("PublicSmartCard", () => {
 
     render(
       React.createElement(PublicSmartCard, {
-        profile: {
-          username: "jane",
-          publicUrl: "https://dotly.id/jane",
-          name: "Jane Doe",
-          fullName: "Jane Doe",
-          jobTitle: "Founder",
-          companyName: "Dotly",
-          tagline: "Trusted identity, zero clutter.",
-          profilePhoto: null,
-          profilePhotoUrl: null,
-          sharingMode: "smart_card",
-          channels: {
-            phoneNumber: null,
-            email: null,
-          },
+        profile: createProfile({
           instantConnectUrl: "https://dotly.id/q/profile-qr-1",
-          links: [],
           smartCard: {
             primaryAction: "instant_connect",
             allowCall: false,
             allowWhatsapp: false,
             allowEmail: false,
             allowVcard: false,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: true,
+              contactMeEnabled: false,
+            },
           },
           smartCardConfig: {
             primaryAction: "instant_connect",
@@ -223,8 +227,13 @@ describe("PublicSmartCard", () => {
             allowWhatsapp: false,
             allowEmail: false,
             allowVcard: false,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: true,
+              contactMeEnabled: false,
+            },
           },
-        },
+        }),
       }),
     );
 
@@ -240,28 +249,22 @@ describe("PublicSmartCard", () => {
 
     render(
       React.createElement(PublicSmartCard, {
-        profile: {
-          username: "jane",
-          publicUrl: "https://dotly.id/jane",
-          name: "Jane Doe",
-          fullName: "Jane Doe",
-          jobTitle: "Founder",
-          companyName: "Dotly",
-          tagline: "Trusted identity, zero clutter.",
-          profilePhoto: null,
-          profilePhotoUrl: null,
-          sharingMode: "smart_card",
+        profile: createProfile({
           channels: {
             phoneNumber: null,
             email: "jane@dotly.one",
           },
-          links: [],
           smartCard: {
             primaryAction: "request_access",
             allowCall: false,
             allowWhatsapp: false,
             allowEmail: false,
             allowVcard: true,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
           },
           smartCardConfig: {
             primaryAction: "request_access",
@@ -269,8 +272,13 @@ describe("PublicSmartCard", () => {
             allowWhatsapp: false,
             allowEmail: false,
             allowVcard: true,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
           },
-        },
+        }),
       }),
     );
 
@@ -283,29 +291,19 @@ describe("PublicSmartCard", () => {
   it("falls back to request access when instant connect has no public QR target", () => {
     render(
       React.createElement(PublicSmartCard, {
-        profile: {
-          username: "jane",
-          publicUrl: "https://dotly.id/jane",
-          name: "Jane Doe",
-          fullName: "Jane Doe",
-          jobTitle: "Founder",
-          companyName: "Dotly",
-          tagline: "Trusted identity, zero clutter.",
-          profilePhoto: null,
-          profilePhotoUrl: null,
-          sharingMode: "smart_card",
-          channels: {
-            phoneNumber: null,
-            email: null,
-          },
+        profile: createProfile({
           instantConnectUrl: null,
-          links: [],
           smartCard: {
             primaryAction: "instant_connect",
             allowCall: false,
             allowWhatsapp: false,
             allowEmail: false,
             allowVcard: false,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: true,
+              contactMeEnabled: false,
+            },
           },
           smartCardConfig: {
             primaryAction: "instant_connect",
@@ -313,39 +311,35 @@ describe("PublicSmartCard", () => {
             allowWhatsapp: false,
             allowEmail: false,
             allowVcard: false,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: true,
+              contactMeEnabled: false,
+            },
           },
-        },
+        }),
       }),
     );
 
     expect(screen.getByRole("button", { name: /request access/i })).toBeInTheDocument();
+    expect(screen.getByText(/fallback shown/i)).toBeInTheDocument();
   });
 
-  it("disables contact when no direct actions are available", () => {
+  it("falls back to request access when contact me is unavailable but requests are enabled", () => {
     render(
       React.createElement(PublicSmartCard, {
-        profile: {
-          username: "jane",
-          publicUrl: "https://dotly.id/jane",
-          name: "Jane Doe",
-          fullName: "Jane Doe",
-          jobTitle: "Founder",
-          companyName: "Dotly",
-          tagline: "Trusted identity, zero clutter.",
-          profilePhoto: null,
-          profilePhotoUrl: null,
-          sharingMode: "smart_card",
-          channels: {
-            phoneNumber: null,
-            email: null,
-          },
-          links: [],
+        profile: createProfile({
           smartCard: {
             primaryAction: "contact_me",
             allowCall: false,
             allowWhatsapp: false,
             allowEmail: false,
             allowVcard: false,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: false,
+            },
           },
           smartCardConfig: {
             primaryAction: "contact_me",
@@ -353,36 +347,66 @@ describe("PublicSmartCard", () => {
             allowWhatsapp: false,
             allowEmail: false,
             allowVcard: false,
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: false,
+            },
           },
-        },
+        }),
+      }),
+    );
+
+    expect(screen.getByRole("button", { name: /request access/i })).toBeEnabled();
+    expect(screen.getByText(/contact me is unavailable/i)).toBeInTheDocument();
+  });
+
+  it("shows a disabled CTA with helper text when no fallback is available", () => {
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: createProfile({
+          smartCard: {
+            primaryAction: "contact_me",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: false,
+            actionState: {
+              requestAccessEnabled: false,
+              instantConnectEnabled: false,
+              contactMeEnabled: false,
+            },
+          },
+          smartCardConfig: {
+            primaryAction: "contact_me",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: false,
+            actionState: {
+              requestAccessEnabled: false,
+              instantConnectEnabled: false,
+              contactMeEnabled: false,
+            },
+          },
+        }),
       }),
     );
 
     expect(screen.getByRole("button", { name: /^contact$/i })).toBeDisabled();
+    expect(screen.getAllByText(/direct contact unavailable/i)).toHaveLength(2);
+    expect(
+      screen.queryByText(/^direct actions$/i),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the empty configuration state", () => {
     render(
       React.createElement(PublicSmartCard, {
-        profile: {
-          username: "jane",
-          publicUrl: "https://dotly.id/jane",
-          name: "Jane Doe",
-          fullName: "Jane Doe",
-          jobTitle: "Founder",
-          companyName: "Dotly",
-          tagline: "Trusted identity, zero clutter.",
-          profilePhoto: null,
-          profilePhotoUrl: null,
-          sharingMode: "smart_card",
-          channels: {
-            phoneNumber: null,
-            email: null,
-          },
-          links: [],
+        profile: createProfile({
           smartCard: null,
           smartCardConfig: null,
-        },
+        }),
       }),
     );
 

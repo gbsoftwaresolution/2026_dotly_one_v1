@@ -1,7 +1,11 @@
-import { PersonaSharingMode as PrismaPersonaSharingMode } from "@prisma/client";
+import {
+  PersonaAccessMode as PrismaPersonaAccessMode,
+  PersonaSharingMode as PrismaPersonaSharingMode,
+} from "@prisma/client";
 
 import { PersonaSharingMode } from "../../../common/enums/persona-sharing-mode.enum";
 import {
+  type PersonaSmartCardActionState,
   type PersonaSmartCardConfig,
   toApiSharingMode,
   toSafeSmartCardConfig,
@@ -16,12 +20,9 @@ interface PublicPersonaSource {
   companyName: string;
   tagline: string;
   profilePhotoUrl: string | null;
+  accessMode: PrismaPersonaAccessMode;
   sharingMode: PrismaPersonaSharingMode;
   smartCardConfig: unknown;
-  user?: {
-    email: string;
-    phoneNumber: string | null;
-  } | null;
 }
 
 export class PublicPersonaChannelsDto {
@@ -38,7 +39,25 @@ export class PublicPersonaLinkDto {
   kind!: "website" | "social";
 }
 
-export class PublicPersonaSmartCardDto {
+export class PublicPersonaSmartCardActionStateDto {
+  requestAccessEnabled!: boolean;
+
+  instantConnectEnabled!: boolean;
+
+  contactMeEnabled!: boolean;
+
+  static fromState(
+    actionState: PersonaSmartCardActionState,
+  ): PublicPersonaSmartCardActionStateDto {
+    return {
+      requestAccessEnabled: actionState.requestAccessEnabled,
+      instantConnectEnabled: actionState.instantConnectEnabled,
+      contactMeEnabled: actionState.contactMeEnabled,
+    } satisfies PublicPersonaSmartCardActionStateDto;
+  }
+}
+
+export class PublicPersonaSmartCardConfigDto {
   primaryAction!: PersonaSmartCardConfig["primaryAction"];
 
   allowCall!: boolean;
@@ -51,13 +70,37 @@ export class PublicPersonaSmartCardDto {
 
   static fromConfig(
     config: PersonaSmartCardConfig,
-  ): PublicPersonaSmartCardDto {
+  ): PublicPersonaSmartCardConfigDto {
     return {
       primaryAction: config.primaryAction,
       allowCall: config.allowCall,
       allowWhatsapp: config.allowWhatsapp,
       allowEmail: config.allowEmail,
       allowVcard: config.allowVcard,
+    } satisfies PublicPersonaSmartCardConfigDto;
+  }
+}
+
+export class PublicPersonaSmartCardDto {
+  primaryAction!: PersonaSmartCardConfig["primaryAction"];
+
+  allowCall!: boolean;
+
+  allowWhatsapp!: boolean;
+
+  allowEmail!: boolean;
+
+  allowVcard!: boolean;
+
+  actionState!: PublicPersonaSmartCardActionStateDto;
+
+  static fromConfig(
+    config: PersonaSmartCardConfig,
+    actionState: PersonaSmartCardActionState,
+  ): PublicPersonaSmartCardDto {
+    return {
+      ...PublicPersonaSmartCardConfigDto.fromConfig(config),
+      actionState: PublicPersonaSmartCardActionStateDto.fromState(actionState),
     } satisfies PublicPersonaSmartCardDto;
   }
 }
@@ -91,7 +134,7 @@ export class PublicPersonaDto {
 
   smartCard!: PublicPersonaSmartCardDto | null;
 
-  smartCardConfig!: PublicPersonaSmartCardDto | null;
+  smartCardConfig!: PublicPersonaSmartCardConfigDto | null;
 
   private static toCanonicalPublicUrl(publicUrl: string, username: string): string {
     const trimmedPublicUrl = publicUrl.trim();
@@ -111,6 +154,7 @@ export class PublicPersonaDto {
     persona: PublicPersonaSource,
     options?: {
       instantConnectUrl?: string | null;
+      actionState?: PersonaSmartCardActionState | null;
     },
   ): PublicPersonaDto {
     const sharingMode = toApiSharingMode(persona.sharingMode);
@@ -119,23 +163,16 @@ export class PublicPersonaDto {
       persona.publicUrl,
       persona.username,
     );
-    const canSharePhone = Boolean(
-      safeSmartCardConfig &&
-        (safeSmartCardConfig.allowCall ||
-          safeSmartCardConfig.allowWhatsapp ||
-          safeSmartCardConfig.allowVcard),
-    );
-    const canShareEmail = Boolean(
-      safeSmartCardConfig &&
-        (safeSmartCardConfig.allowEmail || safeSmartCardConfig.allowVcard),
-    );
-    const email = persona.user?.email ?? null;
-    const phoneNumber = persona.user?.phoneNumber ?? null;
     const smartCard =
       sharingMode === PersonaSharingMode.Controlled ||
-      safeSmartCardConfig === null
+      safeSmartCardConfig === null ||
+      options?.actionState === null ||
+      options?.actionState === undefined
         ? null
-        : PublicPersonaSmartCardDto.fromConfig(safeSmartCardConfig);
+        : PublicPersonaSmartCardDto.fromConfig(
+            safeSmartCardConfig,
+            options.actionState,
+          );
 
     return {
       username: persona.username,
@@ -149,8 +186,8 @@ export class PublicPersonaDto {
       tagline: persona.tagline,
       sharingMode,
       channels: {
-        phoneNumber: canSharePhone ? phoneNumber : null,
-        email: canShareEmail ? email : null,
+        phoneNumber: null,
+        email: null,
       },
       links: [],
       instantConnectUrl: options?.instantConnectUrl ?? null,
@@ -158,7 +195,7 @@ export class PublicPersonaDto {
       smartCardConfig:
         safeSmartCardConfig === null
           ? null
-          : PublicPersonaSmartCardDto.fromConfig(safeSmartCardConfig),
+          : PublicPersonaSmartCardConfigDto.fromConfig(safeSmartCardConfig),
     } satisfies PublicPersonaDto;
   }
 }

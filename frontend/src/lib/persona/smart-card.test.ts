@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  hasPublicSmartCardDirectActions,
   normalizeSmartCardPrimaryAction,
   resolvePublicSmartCardPrimaryAction,
+  resolvePublicSmartCardPrimaryCta,
 } from "./smart-card";
 
 describe("smart-card primary action helpers", () => {
@@ -26,5 +28,95 @@ describe("smart-card primary action helpers", () => {
         instantConnectUrl: "https://dotly.id/q/profile-qr-1",
       }),
     ).toBe("instant_connect");
+  });
+
+  it("falls back to request access when the chosen action is disabled but requests remain available", () => {
+    expect(
+      resolvePublicSmartCardPrimaryCta("contact_me", {
+        actionState: {
+          requestAccessEnabled: true,
+          instantConnectEnabled: false,
+          contactMeEnabled: false,
+        },
+        hasDirectActions: false,
+      }),
+    ).toMatchObject({
+      requestedAction: "contact_me",
+      action: "request_access",
+      helperText: "Request required",
+      isFallback: true,
+      isDisabled: false,
+    });
+  });
+
+  it("falls back to request access when no public direct actions are renderable", () => {
+    expect(
+      resolvePublicSmartCardPrimaryCta("contact_me", {
+        actionState: {
+          requestAccessEnabled: true,
+          instantConnectEnabled: false,
+          contactMeEnabled: true,
+        },
+        hasDirectActions: false,
+      }),
+    ).toMatchObject({
+      requestedAction: "contact_me",
+      action: "request_access",
+      isFallback: true,
+      isDisabled: false,
+    });
+  });
+
+  it("keeps the chosen action disabled when no fallback is available", () => {
+    expect(
+      resolvePublicSmartCardPrimaryCta("contact_me", {
+        actionState: {
+          requestAccessEnabled: false,
+          instantConnectEnabled: false,
+          contactMeEnabled: false,
+        },
+        hasDirectActions: false,
+      }),
+    ).toMatchObject({
+      requestedAction: "contact_me",
+      action: "contact_me",
+      helperText: "Direct contact unavailable",
+      isFallback: false,
+      isDisabled: true,
+    });
+  });
+
+  it("treats vcard as the only direct action available in the redacted public payload", () => {
+    expect(
+      hasPublicSmartCardDirectActions({
+        channels: {
+          phoneNumber: null,
+          email: null,
+        },
+        smartCard: {
+          primaryAction: "contact_me",
+          allowCall: true,
+          allowWhatsapp: true,
+          allowEmail: true,
+          allowVcard: false,
+        },
+      }),
+    ).toBe(false);
+
+    expect(
+      hasPublicSmartCardDirectActions({
+        channels: {
+          phoneNumber: null,
+          email: null,
+        },
+        smartCard: {
+          primaryAction: "contact_me",
+          allowCall: false,
+          allowWhatsapp: false,
+          allowEmail: false,
+          allowVcard: true,
+        },
+      }),
+    ).toBe(true);
   });
 });

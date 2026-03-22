@@ -75,6 +75,11 @@ const profilesServiceMock = {
       allowWhatsapp: true,
       allowEmail: false,
       allowVcard: true,
+      actionState: {
+        requestAccessEnabled: true,
+        instantConnectEnabled: false,
+        contactMeEnabled: true,
+      },
     },
     smartCardConfig: {
       primaryAction: "request_access",
@@ -452,6 +457,11 @@ describe("HTTP Security E2E", () => {
         allowWhatsapp: true,
         allowEmail: false,
         allowVcard: true,
+        actionState: {
+          requestAccessEnabled: true,
+          instantConnectEnabled: false,
+          contactMeEnabled: true,
+        },
       },
       smartCardConfig: {
         primaryAction: "request_access",

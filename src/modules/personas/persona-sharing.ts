@@ -1,5 +1,8 @@
 import { BadRequestException } from "@nestjs/common";
-import { PersonaSharingMode as PrismaPersonaSharingMode } from "@prisma/client";
+import {
+  PersonaAccessMode as PrismaPersonaAccessMode,
+  PersonaSharingMode as PrismaPersonaSharingMode,
+} from "@prisma/client";
 
 import { PersonaSharingMode } from "../../common/enums/persona-sharing-mode.enum";
 import { PersonaSmartCardPrimaryAction } from "../../common/enums/persona-smart-card-primary-action.enum";
@@ -10,6 +13,18 @@ export interface PersonaSmartCardConfig {
   allowWhatsapp: boolean;
   allowEmail: boolean;
   allowVcard: boolean;
+}
+
+export interface PersonaSmartCardActionState {
+  requestAccessEnabled: boolean;
+  instantConnectEnabled: boolean;
+  contactMeEnabled: boolean;
+}
+
+export interface PersonaSmartCardCompatibilityContext {
+  sharingMode: PrismaPersonaSharingMode;
+  accessMode: PrismaPersonaAccessMode;
+  hasActiveProfileQr?: boolean;
 }
 
 const prismaSharingModeMap: Record<PersonaSharingMode, PrismaPersonaSharingMode> = {
@@ -81,18 +96,87 @@ export function validateSmartCardConfig(value: unknown): PersonaSmartCardConfig 
   };
 }
 
+export function isRequestAccessEnabled(
+  persona: Pick<
+    PersonaSmartCardCompatibilityContext,
+    "sharingMode" | "accessMode"
+  >,
+): boolean {
+  return (
+    persona.sharingMode === PrismaPersonaSharingMode.SMART_CARD &&
+    persona.accessMode !== PrismaPersonaAccessMode.PRIVATE
+  );
+}
+
+export function isInstantConnectEnabled(
+  persona: PersonaSmartCardCompatibilityContext,
+): boolean {
+  return (
+    persona.sharingMode === PrismaPersonaSharingMode.SMART_CARD &&
+    persona.accessMode !== PrismaPersonaAccessMode.PRIVATE &&
+    persona.hasActiveProfileQr === true
+  );
+}
+
+export function isContactMeEnabled(
+  config: PersonaSmartCardConfig | null | undefined,
+): boolean {
+  return Boolean(
+    config &&
+      (config.allowCall ||
+        config.allowWhatsapp ||
+        config.allowEmail ||
+        config.allowVcard),
+  );
+}
+
+export function isPublicContactMeEnabled(
+  config: PersonaSmartCardConfig | null | undefined,
+): boolean {
+  return Boolean(config?.allowVcard);
+}
+
+export function buildSmartCardActionState(
+  persona: PersonaSmartCardCompatibilityContext,
+  config: PersonaSmartCardConfig | null | undefined,
+): PersonaSmartCardActionState {
+  return {
+    requestAccessEnabled: isRequestAccessEnabled(persona),
+    instantConnectEnabled: isInstantConnectEnabled(persona),
+    contactMeEnabled: isPublicContactMeEnabled(config),
+  };
+}
+
 export function validateSmartCardConfigCompatibility(
   config: PersonaSmartCardConfig,
-  options: {
-    hasActiveProfileQr: boolean;
-  },
+  context: PersonaSmartCardCompatibilityContext,
 ): PersonaSmartCardConfig {
   if (
-    config.primaryAction === PersonaSmartCardPrimaryAction.InstantConnect &&
-    !options.hasActiveProfileQr
+    config.primaryAction === PersonaSmartCardPrimaryAction.RequestAccess &&
+    !isRequestAccessEnabled(context)
   ) {
     throw new BadRequestException(
-      "smartCardConfig.primaryAction instant_connect requires an active profile QR",
+      "smartCardConfig.primaryAction request_access is not supported for private personas",
+    );
+  }
+
+  if (
+    config.primaryAction === PersonaSmartCardPrimaryAction.InstantConnect &&
+    !isInstantConnectEnabled(context)
+  ) {
+    throw new BadRequestException(
+      context.accessMode === PrismaPersonaAccessMode.PRIVATE
+        ? "smartCardConfig.primaryAction instant_connect is not supported for private personas"
+        : "smartCardConfig.primaryAction instant_connect requires an active profile QR",
+    );
+  }
+
+  if (
+    config.primaryAction === PersonaSmartCardPrimaryAction.ContactMe &&
+    !isContactMeEnabled(config)
+  ) {
+    throw new BadRequestException(
+      "smartCardConfig.primaryAction contact_me requires at least one direct action to be enabled",
     );
   }
 
