@@ -46,6 +46,7 @@ const contactRelationshipSelect = {
   interactionCount: true,
   createdAt: true,
   sourceType: true,
+  connectionContext: true,
   targetPersona: {
     select: {
       ...contactTargetPersonaSelect,
@@ -59,6 +60,8 @@ const contactRelationshipSelect = {
     take: 1,
     select: {
       id: true,
+      eventId: true,
+      contextLabel: true,
       metAt: true,
       sourceLabel: true,
       note: true,
@@ -309,6 +312,7 @@ export class ContactsService {
         tagline: relationship.targetPersona.tagline,
         profilePhotoUrl: relationship.targetPersona.profilePhotoUrl,
       },
+      context: this.buildPublicContext(relationship),
       memory: {
         metAt: memory?.metAt ?? relationship.createdAt,
         sourceLabel:
@@ -355,6 +359,7 @@ export class ContactsService {
         profilePhotoUrl: relationship.targetPersona.profilePhotoUrl,
         accessMode: toApiAccessMode(relationship.targetPersona.accessMode),
       },
+      context: this.buildPublicContext(relationship),
       memory: {
         metAt: memory?.metAt ?? relationship.createdAt,
         sourceLabel:
@@ -451,6 +456,33 @@ export class ContactsService {
 
     return lastInteractionAt;
   }
+
+  private buildPublicContext(
+    relationship: Pick<
+      ContactRelationshipRecord,
+      "sourceType" | "connectionContext" | "memories"
+    >,
+  ) {
+    const memory = relationship.memories[0];
+    const storedContext = parseConnectionContext(relationship.connectionContext);
+    const type = storedContext?.type ?? toRelationshipContextType(relationship.sourceType);
+    const label =
+      normalizeContextLabel(memory?.contextLabel) ??
+      normalizeContextLabel(storedContext?.label) ??
+      memory?.sourceLabel ??
+      toSourceLabel(relationship.sourceType) ??
+      "Profile";
+
+    return {
+      type,
+      label,
+      ...(type === "event"
+        ? {
+            eventName: label,
+          }
+        : {}),
+    };
+  }
 }
 
 function toPrismaContactRequestSourceType(
@@ -526,6 +558,53 @@ function toSourceLabel(
   }
 
   throw new Error("Unsupported contact request source type");
+}
+
+function toRelationshipContextType(
+  sourceType: PrismaContactRequestSourceType,
+): "profile" | "qr" | "event" {
+  switch (sourceType) {
+    case PrismaContactRequestSourceType.PROFILE:
+      return "profile";
+    case PrismaContactRequestSourceType.QR:
+      return "qr";
+    case PrismaContactRequestSourceType.EVENT:
+      return "event";
+  }
+
+  throw new Error("Unsupported contact request source type");
+}
+
+function parseConnectionContext(
+  value: Prisma.JsonValue | null | undefined,
+):
+  | {
+      type: "profile" | "qr" | "event";
+      label: string | null;
+    }
+  | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const type = candidate.type;
+  const label = candidate.label;
+
+  if (type !== "profile" && type !== "qr" && type !== "event") {
+    return null;
+  }
+
+  return {
+    type,
+    label: typeof label === "string" ? label : null,
+  };
+}
+
+function normalizeContextLabel(value: string | null | undefined) {
+  const trimmedValue = value?.trim() ?? "";
+
+  return trimmedValue.length > 0 ? trimmedValue : null;
 }
 
 function toSafeInteractionCount(interactionCount: number | null | undefined) {

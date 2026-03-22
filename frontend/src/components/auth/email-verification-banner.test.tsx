@@ -37,13 +37,16 @@ describe("EmailVerificationBanner", () => {
         id: "user-1",
         email: "user@dotly.one",
         isVerified: false,
+        security: {
+          requirements: [],
+        },
       },
     });
 
     render(React.createElement(EmailVerificationBanner));
 
     expect(
-      screen.getByText(/verify your email to unlock trust actions/i),
+      screen.getByText(/add a trust factor to unlock trust actions/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/email unverified/i)).toBeInTheDocument();
   });
@@ -56,6 +59,9 @@ describe("EmailVerificationBanner", () => {
         id: "user-1",
         email: "user@dotly.one",
         isVerified: false,
+        security: {
+          requirements: [],
+        },
       },
     });
     mocks.resendVerificationEmail.mockRejectedValue(

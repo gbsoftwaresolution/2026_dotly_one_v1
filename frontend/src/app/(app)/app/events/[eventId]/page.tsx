@@ -28,8 +28,7 @@ export default async function EventDetailPage({
       />
       <EventDetailScreen
         eventId={eventId}
-        isVerified={user.isVerified}
-        currentUserEmail={user.email}
+        user={user}
       />
     </section>
   );

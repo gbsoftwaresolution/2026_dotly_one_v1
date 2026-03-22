@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/context/ThemeContext";
+import { dotlyPositioning } from "@/lib/constants/positioning";
 import { pwaConfig } from "@/lib/constants/pwa";
 import { buildThemeInitScript } from "@/lib/theme/theme";
 
@@ -26,7 +27,7 @@ const themeInitScript = buildThemeInitScript();
 // ── Metadata ────────────────────────────────────────────────
 export const metadata: Metadata = {
   title: {
-    default: "Dotly",
+    default: dotlyPositioning.seo.title,
     template: "%s | Dotly",
   },
   description: pwaConfig.description,
@@ -71,7 +72,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Dotly",
-    title: "Dotly — Permissioned Identity",
+    title: dotlyPositioning.seo.title,
     description: pwaConfig.description,
   },
 

@@ -191,6 +191,9 @@ describe("ProfilesService analytics hook", () => {
             accessMode: "OPEN",
             verifiedOnly: false,
             sharingMode: "SMART_CARD",
+            emailVerified: true,
+            phoneVerified: false,
+            businessVerified: false,
             smartCardConfig: {
               primaryAction: "request_access",
               allowWhatsapp: true,
@@ -216,31 +219,24 @@ describe("ProfilesService analytics hook", () => {
     assert.deepEqual(result, {
       username: "alice",
       publicUrl: "https://dotly.id/alice",
-      name: "Alice Demo",
       fullName: "Alice Demo",
       jobTitle: "Founder",
       companyName: "Dotly",
       tagline: "Connect fast",
-      profilePhoto: null,
       profilePhotoUrl: null,
       sharingMode: "smart_card",
       instantConnectUrl: null,
+      trust: {
+        isVerified: true,
+        isStrongVerified: false,
+        isBusinessVerified: false,
+      },
       smartCard: {
         primaryAction: "request_access",
-        allowCall: false,
-        allowWhatsapp: true,
-        allowEmail: false,
-        allowVcard: false,
         actionState: {
           requestAccessEnabled: true,
           instantConnectEnabled: false,
           contactMeEnabled: true,
-        },
-        actions: {
-          call: false,
-          whatsapp: true,
-          email: false,
-          vcard: false,
         },
         actionLinks: {
           call: null,
@@ -248,18 +244,6 @@ describe("ProfilesService analytics hook", () => {
           email: null,
           vcard: null,
         },
-      },
-      smartCardConfig: {
-        primaryAction: "request_access",
-        allowCall: false,
-        allowWhatsapp: true,
-        allowEmail: false,
-        allowVcard: false,
-      },
-      publicActions: {
-        phone: null,
-        whatsappNumber: "+15551234567",
-        email: null,
       },
     });
 
@@ -286,6 +270,9 @@ describe("ProfilesService analytics hook", () => {
             accessMode: "OPEN",
             verifiedOnly: false,
             sharingMode: "SMART_CARD",
+            emailVerified: true,
+            phoneVerified: true,
+            businessVerified: false,
             smartCardConfig: {
               primaryAction: "contact_me",
               allowCall: true,
@@ -308,23 +295,18 @@ describe("ProfilesService analytics hook", () => {
     const result = await service.getPublicProfile("alice");
 
     assert.equal(result.instantConnectUrl, null);
+    assert.deepEqual(result.trust, {
+      isVerified: true,
+      isStrongVerified: true,
+      isBusinessVerified: false,
+    });
 
     assert.deepEqual(result.smartCard, {
       primaryAction: "contact_me",
-      allowCall: true,
-      allowWhatsapp: false,
-      allowEmail: false,
-      allowVcard: false,
       actionState: {
         requestAccessEnabled: true,
         instantConnectEnabled: false,
         contactMeEnabled: true,
-      },
-      actions: {
-        call: true,
-        whatsapp: false,
-        email: false,
-        vcard: false,
       },
       actionLinks: {
         call: "tel:+15551234567",
@@ -332,20 +314,6 @@ describe("ProfilesService analytics hook", () => {
         email: null,
         vcard: null,
       },
-    });
-
-    assert.deepEqual(result.smartCardConfig, {
-      primaryAction: "contact_me",
-      allowCall: true,
-      allowWhatsapp: false,
-      allowEmail: false,
-      allowVcard: false,
-    });
-
-    assert.deepEqual(result.publicActions, {
-      phone: "+15551234567",
-      whatsappNumber: null,
-      email: null,
     });
   });
 
@@ -386,11 +354,10 @@ describe("ProfilesService analytics hook", () => {
     const result = await service.getPublicProfile("alice");
 
     assert.equal(result.smartCard, null);
-    assert.equal(result.smartCardConfig, null);
-    assert.deepEqual(result.publicActions, {
-      phone: null,
-      whatsappNumber: null,
-      email: null,
+    assert.deepEqual(result.trust, {
+      isVerified: false,
+      isStrongVerified: false,
+      isBusinessVerified: false,
     });
   });
 
@@ -430,22 +397,17 @@ describe("ProfilesService analytics hook", () => {
 
     const result = await service.getPublicProfile("alice");
 
+    assert.deepEqual(result.trust, {
+      isVerified: false,
+      isStrongVerified: false,
+      isBusinessVerified: false,
+    });
     assert.deepEqual(result.smartCard, {
       primaryAction: "contact_me",
-      allowCall: false,
-      allowWhatsapp: false,
-      allowEmail: false,
-      allowVcard: false,
       actionState: {
         requestAccessEnabled: true,
         instantConnectEnabled: false,
         contactMeEnabled: false,
-      },
-      actions: {
-        call: false,
-        whatsapp: false,
-        email: false,
-        vcard: false,
       },
       actionLinks: {
         call: null,
@@ -453,11 +415,6 @@ describe("ProfilesService analytics hook", () => {
         email: null,
         vcard: null,
       },
-    });
-    assert.deepEqual(result.publicActions, {
-      phone: null,
-      whatsappNumber: null,
-      email: null,
     });
   });
 
@@ -540,6 +497,9 @@ describe("ProfilesService analytics hook", () => {
             accessMode: "OPEN",
             verifiedOnly: false,
             sharingMode: "SMART_CARD",
+            emailVerified: false,
+            phoneVerified: false,
+            businessVerified: true,
             smartCardConfig: {
               primaryAction: "instant_connect",
               allowCall: false,
@@ -568,6 +528,11 @@ describe("ProfilesService analytics hook", () => {
     const result = await service.getPublicProfile("alice");
 
     assert.equal(result.instantConnectUrl, "https://dotly.id/q/profile-qr-1");
+    assert.deepEqual(result.trust, {
+      isVerified: false,
+      isStrongVerified: false,
+      isBusinessVerified: true,
+    });
   });
 
   it("builds a public vcard with only safe public fields", async () => {
@@ -1010,6 +975,11 @@ describe("ProfilesService analytics hook", () => {
 
     assert.equal(resolved, true);
     assert.equal(result.smartCard, null);
+    assert.deepEqual(result.trust, {
+      isVerified: false,
+      isStrongVerified: false,
+      isBusinessVerified: false,
+    });
   });
 });
 

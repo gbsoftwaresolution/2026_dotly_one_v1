@@ -8,6 +8,7 @@ import { PersonaAccessMode } from "../../common/enums/persona-access-mode.enum";
 import { PersonaType } from "../../common/enums/persona-type.enum";
 import { PublicPersonaDto } from "../profiles/dto/public-persona.dto";
 import {
+  getSharingConfigSource,
   toApiSharingMode,
   toSafeSmartCardConfig,
 } from "./persona-sharing";
@@ -44,6 +45,9 @@ export const publicPersonaSelect = {
   profilePhotoUrl: true,
   accessMode: true,
   sharingMode: true,
+  emailVerified: true,
+  phoneVerified: true,
+  businessVerified: true,
   smartCardConfig: true,
   publicPhone: true,
   publicWhatsappNumber: true,
@@ -53,6 +57,15 @@ export const publicPersonaSelect = {
 export type PrivatePersonaRecord = Prisma.PersonaGetPayload<{
   select: typeof privatePersonaSelect;
 }>;
+
+export interface PrivatePersonaSharingCapabilities {
+  hasActiveProfileQr: boolean;
+  primaryActions: {
+    requestAccess: boolean;
+    instantConnect: boolean;
+    contactMe: boolean;
+  };
+}
 
 export type PublicPersonaRecord = Prisma.PersonaGetPayload<{
   select: typeof publicPersonaSelect;
@@ -93,7 +106,10 @@ export function toPrismaAccessMode(
   return prismaAccessModeMap[accessMode];
 }
 
-export function toPrivatePersonaView(persona: PrivatePersonaRecord) {
+export function toPrivatePersonaView(
+  persona: PrivatePersonaRecord,
+  sharingCapabilities?: PrivatePersonaSharingCapabilities,
+) {
   return {
     id: persona.id,
     type: apiPersonaTypeMap[persona.type],
@@ -107,7 +123,9 @@ export function toPrivatePersonaView(persona: PrivatePersonaRecord) {
     accessMode: apiAccessModeMap[persona.accessMode],
     verifiedOnly: persona.verifiedOnly,
     sharingMode: toApiSharingMode(persona.sharingMode),
+    sharingConfigSource: getSharingConfigSource(persona.smartCardConfig),
     smartCardConfig: toSafeSmartCardConfig(persona.smartCardConfig),
+    sharingCapabilities,
     publicPhone: persona.publicPhone,
     publicWhatsappNumber: persona.publicWhatsappNumber,
     publicEmail: persona.publicEmail,

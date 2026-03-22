@@ -84,7 +84,7 @@ describe("AnalyticsScreen", () => {
     });
 
     expect(screen.getByText(/sender persona/i)).toBeInTheDocument();
-    expect(screen.getByText(/total contacts/i)).toBeInTheDocument();
+    expect(screen.getByText(/total connections/i)).toBeInTheDocument();
     expect(screen.getByText(/verification emails/i)).toBeInTheDocument();
     expect(screen.getByText(/trust blocks/i)).toBeInTheDocument();
   });

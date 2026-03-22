@@ -10,6 +10,7 @@ import { ApiError, apiRequest } from "@/lib/api/client";
 import { requireServerSession } from "@/lib/auth/protected-route";
 import { routes } from "@/lib/constants/routes";
 import {
+  formatConnectionContext,
   formatRelationshipAge,
   formatSourceLabel,
 } from "@/lib/utils/format-contact-relationship";
@@ -139,6 +140,7 @@ export default async function ContactDetailPage({
   const nearExpiry =
     !isExpired && accessEndAt ? isNearExpiry(accessEndAt) : false;
   const sourceLabel = formatSourceLabel(memory.sourceLabel, sourceType);
+  const connectionContext = formatConnectionContext(sourceType, memory.sourceLabel);
   const resolvedLastInteractionAt = metadata.lastInteractionAt ?? lastInteractionAt;
   const resolvedInteractionCount = metadata.interactionCount ?? interactionCount;
   const lastInteractionLabel = formatTimeAgo(resolvedLastInteractionAt);
@@ -258,6 +260,8 @@ export default async function ContactDetailPage({
               value={relationshipAgeLabel}
               detail={`Since ${formatTimestamp(createdAt)}`}
             />
+            <div className="border-t border-border" />
+            <InfoRow label="Connection" value={connectionContext} />
             <div className="border-t border-border" />
             <InfoRow label="Source" value={sourceLabel} />
             {state === "instant_access" && accessEndAt ? (

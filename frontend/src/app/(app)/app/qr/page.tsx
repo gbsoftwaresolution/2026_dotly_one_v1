@@ -7,6 +7,7 @@ import { SecondaryButton } from "@/components/shared/secondary-button";
 import { personaApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { requireServerSession } from "@/lib/auth/protected-route";
+import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
 
 export default async function QrPage() {
@@ -19,17 +20,17 @@ export default async function QrPage() {
       <section className="mx-auto flex w-full max-w-xl flex-col items-center justify-center space-y-8 py-12">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-            QR Sharing
+            Share in person
           </h1>
           <p className="text-sm text-slate-500 dark:text-zinc-400">
-            Select a persona to generate a standard or quick-connect QR.
+            Share your Dotly in real life with control, context, and trust.
           </p>
         </div>
 
         {personas.length === 0 ? (
           <EmptyState
             title="Create a persona first"
-            description="You need at least one persona before you can generate a QR code for sharing."
+            description={dotlyPositioning.app.noPersonas}
             action={
               <Link href={routes.app.createPersona}>
                 <SecondaryButton className="w-full py-5 h-[60px] active:scale-95">
@@ -42,8 +43,7 @@ export default async function QrPage() {
           <div className="w-full">
             <QrGeneratorPanel
               personas={personas}
-              isVerified={user.isVerified}
-              currentUserEmail={user.email}
+              user={user}
             />
           </div>
         )}
@@ -58,10 +58,10 @@ export default async function QrPage() {
       <section className="mx-auto flex w-full max-w-xl flex-col items-center justify-center space-y-8 py-12">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-            QR Sharing
+            Share in person
           </h1>
           <p className="text-sm text-slate-500 dark:text-zinc-400">
-            Select a persona to generate a standard or quick-connect QR.
+            Share your Dotly in real life with control, context, and trust.
           </p>
         </div>
         <EmptyState

@@ -15,6 +15,8 @@ export interface PersonaSmartCardConfig {
   allowVcard: boolean;
 }
 
+export type PersonaSharingConfigSource = "system_default" | "user_custom";
+
 export interface PersonaPublicActionFields {
   publicPhone: string | null;
   publicWhatsappNumber: string | null;
@@ -110,8 +112,19 @@ const emptyPublicActionValues: PersonaPublicActionValues = {
   email: null,
 };
 
+const sharingConfigSources = new Set<PersonaSharingConfigSource>([
+  "system_default",
+  "user_custom",
+]);
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isSharingConfigSource(
+  value: unknown,
+): value is PersonaSharingConfigSource {
+  return typeof value === "string" && sharingConfigSources.has(value as PersonaSharingConfigSource);
 }
 
 function normalizeBoolean(
@@ -555,6 +568,34 @@ export function validateSmartCardConfigCompatibility(
   }
 
   return config;
+}
+
+export function getSharingConfigSource(
+  value: unknown,
+): PersonaSharingConfigSource | null {
+  if (!isPlainObject(value)) {
+    return null;
+  }
+
+  const meta = value._meta;
+
+  if (!isPlainObject(meta) || !isSharingConfigSource(meta.source)) {
+    return null;
+  }
+
+  return meta.source;
+}
+
+export function toStoredSmartCardConfig(
+  config: PersonaSmartCardConfig | null | undefined,
+  source: PersonaSharingConfigSource,
+): Record<string, unknown> {
+  return {
+    ...(config ?? {}),
+    _meta: {
+      source,
+    },
+  };
 }
 
 export function toSafeSmartCardConfig(

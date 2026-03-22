@@ -31,7 +31,7 @@ describe("ContactRequestsService", () => {
       {
         assertUserIsVerified: async () => {
           throw new ForbiddenException(
-            "Verify your email before sending connection requests. Check your inbox for the verification link, or resend it.",
+            "Verify your email or complete mobile OTP before sending connection requests.",
           );
         },
       } as any,
@@ -47,7 +47,7 @@ describe("ContactRequestsService", () => {
         assert.ok(error instanceof ForbiddenException);
         assert.equal(
           error.message,
-          "Verify your email before sending connection requests. Check your inbox for the verification link, or resend it.",
+          "Verify your email or complete mobile OTP before sending connection requests.",
         );
         return true;
       },

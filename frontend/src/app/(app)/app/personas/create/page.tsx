@@ -9,8 +9,8 @@ export default function CreatePersonaPage() {
   return (
     <section className="space-y-4">
       <PageHeader
-        title="Create persona"
-        description="Create an identity card for Dotly and choose how visible it should be."
+        title="Create a persona"
+        description="Set up the version of you that people should remember after the conversation."
         action={
           <Link href="/app/personas">
             <SecondaryButton>Back to personas</SecondaryButton>
@@ -19,8 +19,7 @@ export default function CreatePersonaPage() {
       />
       <Card className="space-y-5">
         <p className="text-sm leading-6 text-muted">
-          Usernames are unique. Only personas with open access will resolve on
-          their public Dotly link.
+          Usernames are unique. Your persona gives people a clearer first impression before any deeper access is shared.
         </p>
         <PersonaForm />
       </Card>

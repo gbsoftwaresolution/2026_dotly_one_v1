@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 import {
   ContactRelationshipState as PrismaContactRelationshipState,
+  ContactRequestSourceType as PrismaContactRequestSourceType,
   FollowUpStatus as PrismaFollowUpStatus,
 } from "@prisma/client";
 
@@ -33,7 +34,15 @@ function createFollowUpRecord(overrides: Record<string, unknown> = {}) {
       id: "relationship-1",
       ownerUserId: "user-1",
       state: PrismaContactRelationshipState.APPROVED,
+      sourceType: PrismaContactRequestSourceType.EVENT,
+      connectionContext: { type: "event", label: "Tech Summit" },
       accessEndAt: null,
+      memories: [
+        {
+          contextLabel: "Tech Summit",
+          sourceLabel: "Event",
+        },
+      ],
       targetPersona: {
         id: "persona-1",
         username: "alice",
@@ -93,6 +102,8 @@ describe("FollowUpsService", () => {
     assert.equal(result.id, "follow-up-1");
     assert.equal(result.status, "pending");
     assert.equal(result.relationship.state, "approved");
+    assert.equal(result.relationship.sourceType, "event");
+    assert.equal(result.relationship.sourceLabel, "Tech Summit");
     assert.ok(result.relationship.targetPersona);
     assert.equal(result.relationship.targetPersona.username, "alice");
   });
@@ -655,6 +666,8 @@ describe("FollowUpsService", () => {
     assert.ok(result.updatedAt instanceof Date);
     assert.deepEqual(Object.keys(result.relationship).sort(), [
       "relationshipId",
+      "sourceLabel",
+      "sourceType",
       "state",
       "targetPersona",
     ]);

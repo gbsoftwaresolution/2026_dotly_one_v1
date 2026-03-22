@@ -10,7 +10,7 @@ interface QrModeToggleProps {
 }
 
 const modeOptions: Array<{ value: QrMode; label: string }> = [
-  { value: "standard", label: "Standard" },
+  { value: "standard", label: "Profile" },
   { value: "quick_connect", label: "Quick Connect" },
 ];
 

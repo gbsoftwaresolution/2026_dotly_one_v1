@@ -4,6 +4,7 @@ import type {
   PersonaSmartCardPrimaryAction,
   PersonaType,
 } from "@/types/persona";
+import { dotlyPositioning } from "@/lib/constants/positioning";
 
 export const personaTypeOptions: Array<{
   value: PersonaType;
@@ -31,12 +32,12 @@ export const personaSharingModeOptions: Array<{
   {
     value: "controlled",
     label: "Controlled Mode",
-    description: "People must request access",
+    description: "Start with a request before direct contact details are shared",
   },
   {
     value: "smart_card",
     label: "Smart Card Mode",
-    description: "Allow direct interaction options",
+    description: "Lead with one clear action and optional contact buttons",
   },
 ];
 

@@ -2,11 +2,18 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Shield, QrCode, Clock, Grid, ArrowRight, Lock, Repeat } from "lucide-react";
+import {
+  Shield,
+  QrCode,
+  Check,
+  ArrowRight,
+  Lock,
+  Sparkles,
+} from "lucide-react";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { dotlyPositioning } from "@/lib/constants/positioning";
 
 const fadeInY = {
   hidden: { opacity: 0, y: 24, filter: "blur(4px)" },
@@ -17,10 +24,31 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.1 } }
 };
 
+const problemPoints = ["no control", "no context", "no memory", "too much spam"];
+
+const solutionPoints = [
+  "Approve or reject access.",
+  "Connect instantly when you want.",
+  "Keep context for every relationship.",
+];
+
+const steps = [
+  "Share Dotly",
+  "They request or connect",
+  "You stay in control",
+];
+
+const smartCardPoints = [
+  "One-tap connect.",
+  "Keep the connection when it matters.",
+  "Share the next step only when you choose to.",
+];
+
+const realWorldExamples = ["Events", "Meetings", "Networking"];
+
 export default function LandingPage() {
   return (
     <div className="relative w-full overflow-x-hidden">
-      {/* Dynamic ambient background blobs */}
       <div className="absolute inset-0 z-[-1] pointer-events-none -mx-10">
         <div className="absolute top-[5%] right-[-10%] w-[250px] h-[250px] rounded-full bg-brandCyan/20 blur-[80px] mix-blend-screen" />
         <div className="absolute top-[20%] left-[-10%] w-[300px] h-[300px] rounded-full bg-brandViolet/15 blur-[100px] mix-blend-screen" />
@@ -31,127 +59,193 @@ export default function LandingPage() {
         initial="hidden" 
         animate="visible" 
         variants={stagger}
-        className="space-y-12"
+        className="space-y-12 pb-8"
       >
-        {/* ── Hero ─────────────────────────────────────── */}
-        <div className="space-y-6 pt-8 text-center flex flex-col items-center">
-          <motion.div variants={fadeInY}>
-            <StatusBadge label="Dotly 1.0 is Live" tone="cyan" dot />
-          </motion.div>
-
+        <div className="space-y-7 pt-6 text-center">
           <motion.div variants={fadeInY} className="space-y-4">
-            <h1 className="text-[2.75rem] font-black leading-[1.1] tracking-[-0.04em] text-foreground max-w-[400px]">
-              Your identity, <br />
-              <span className="text-gradient-brand">permissioned.</span>
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.24em] text-muted">
+              {dotlyPositioning.category}
+            </p>
+            <h1 className="mx-auto max-w-[11ch] text-[2.75rem] font-black leading-[1.02] tracking-[-0.05em] text-foreground sm:text-[3.35rem]">
+              {dotlyPositioning.headline}
             </h1>
-            <p className="text-[1.05rem] leading-relaxed text-muted max-w-[340px] mx-auto font-medium">
-              Create dynamic personas, control exactly who sees what, and share frictionlessly.
+            <p className="mx-auto max-w-[34ch] text-[1rem] leading-relaxed text-muted sm:text-[1.05rem]">
+              {dotlyPositioning.subheadline}
             </p>
           </motion.div>
           
-          <motion.div variants={fadeInY} className="w-full flex justify-center pt-2">
+          <motion.div variants={fadeInY} className="flex flex-col gap-3 pt-1 sm:flex-row sm:justify-center">
             <Link href="/signup" className="group rounded-pill">
               <div className="relative flex items-center justify-center gap-2 rounded-pill bg-foreground px-6 py-3.5 text-sm font-bold text-background transition-all duration-300 hover:scale-[1.02] hover:shadow-glow active:scale-[0.98]">
-                <span>Claim your link</span>
+                <span>{dotlyPositioning.cta.primary}</span>
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </div>
             </Link>
+            <Link href="#how-it-works" className="block sm:min-w-[160px]">
+              <SecondaryButton fullWidth>{dotlyPositioning.cta.secondary}</SecondaryButton>
+            </Link>
+          </motion.div>
+
+          <motion.div
+            variants={fadeInY}
+            className="glass-strong mx-auto max-w-[420px] rounded-[2rem] border border-border/60 p-5 text-left shadow-shell"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.35rem] bg-brandRose/12 text-brandRose dark:bg-brandCyan/12 dark:text-brandCyan">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                  Identity for real-world connection.
+                </h2>
+                <p className="text-sm leading-6 text-muted">
+                  {dotlyPositioning.shortExplainer}
+                </p>
+              </div>
+            </div>
           </motion.div>
         </div>
 
-        {/* ── Bento Grid ───────────────────────────────── */}
-        <motion.div variants={stagger} className="grid grid-cols-2 gap-4">
-          
-          {/* Card 1: Personas - Full width */}
-          <motion.div variants={fadeInY} className="col-span-2 relative overflow-hidden rounded-[1.5rem] dark:bg-surface1 bg-white border dark:border-white/[0.08] border-black/[0.05] p-6 shadow-card-light dark:shadow-card group">
-            <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-40 transition-opacity duration-500">
-               <Grid className="w-16 h-16 text-brandViolet" />
+        <motion.div variants={stagger} className="grid gap-4">
+          <motion.div variants={fadeInY} className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card">
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-2xl bg-brandRose/10 text-brandRose dark:bg-brandCyan/12 dark:text-brandCyan flex items-center justify-center">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold tracking-tight text-foreground">
+                  Sharing your number gives permanent access to everyone.
+                </h2>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {problemPoints.map((point) => (
+                    <div
+                      key={point}
+                      className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-3 text-sm font-medium capitalize text-foreground/80 dark:border-white/[0.06]"
+                    >
+                      {point}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="relative z-10 space-y-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-brandViolet/10 text-brandViolet">
+          </motion.div>
+
+          <motion.div variants={fadeInY} className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card">
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-2xl bg-brandViolet/10 text-brandViolet flex items-center justify-center">
                 <Shield className="w-5 h-5" />
               </div>
-              <div>
-                <h3 className="text-lg font-bold tracking-tight text-foreground">Infinite Personas</h3>
-                <p className="text-sm text-muted mt-1 leading-relaxed max-w-[240px]">
-                  Work, dating, or friends. Route connections to the right profile automatically.
-                </p>
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold tracking-tight text-foreground">
+                  Dotly gives you control over who can contact you.
+                </h2>
+                <div className="space-y-2">
+                  {solutionPoints.map((point) => (
+                    <div key={point} className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-3 text-sm text-foreground/80 dark:border-white/[0.06]">
+                      {point}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </motion.div>
 
-          {/* Card 2: QR Share */}
-          <motion.div variants={fadeInY} className="relative overflow-hidden rounded-[1.5rem] dark:bg-surface1 bg-white border dark:border-white/[0.08] border-black/[0.05] p-5 shadow-card-light dark:shadow-card">
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-brandCyan/10 text-brandCyan">
+          <motion.div id="how-it-works" variants={fadeInY} className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card">
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-2xl bg-brandCyan/10 text-brandCyan flex items-center justify-center">
                 <QrCode className="w-5 h-5" />
               </div>
-              <div>
-                <h3 className="text-base font-bold tracking-tight text-foreground">Instant Scan</h3>
-                <p className="text-xs text-muted mt-1 leading-relaxed">
-                  Share your context instantly with one scan.
-                </p>
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold tracking-tight text-foreground">How it works</h2>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {steps.map((step, index) => (
+                    <div key={step} className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-4 dark:border-white/[0.06]">
+                      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+                        0{index + 1}
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-foreground">{step}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </motion.div>
-
-          {/* Card 3: Time Limits */}
-          <motion.div variants={fadeInY} className="relative overflow-hidden rounded-[1.5rem] dark:bg-surface1 bg-white border dark:border-white/[0.08] border-black/[0.05] p-5 shadow-card-light dark:shadow-card">
-             <div className="space-y-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-amber-500/10 text-amber-500">
-                <Clock className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold tracking-tight text-foreground">Ephemeral</h3>
-                <p className="text-xs text-muted mt-1 leading-relaxed">
-                  Grant access that self-destructs over time.
-                </p>
-              </div>
-            </div>
-          </motion.div>
-
         </motion.div>
 
-        {/* ── Premium CTA card ─────────────────────────── */}
-        <motion.div variants={fadeInY} className="relative overflow-hidden rounded-[2rem] dark:bg-surface1 dark:border-white/[0.08] bg-white border border-black/[0.05] p-8 shadow-lg dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.06)_inset]">
-          
+        <motion.div variants={stagger} className="grid gap-4 md:grid-cols-3">
+          <motion.div variants={fadeInY} className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card md:col-span-2">
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold tracking-tight text-foreground">
+                Be reachable on your terms
+              </h2>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {smartCardPoints.map((point) => (
+                  <div key={point} className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-4 text-sm text-foreground/80 dark:border-white/[0.06]">
+                    {point}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div variants={fadeInY} className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card">
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold tracking-tight text-foreground">
+                Verified identity before access
+              </h2>
+              <p className="text-sm leading-6 text-muted">
+                Trust is built in before the next step is shared.
+              </p>
+            </div>
+          </div>
+
+          <motion.div variants={fadeInY} className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card md:col-span-3">
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold tracking-tight text-foreground">
+                Built for real interactions
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {realWorldExamples.map((example) => (
+                  <span key={example} className="rounded-full border border-black/[0.06] bg-background/70 px-4 py-2 text-sm font-medium text-foreground/80 dark:border-white/[0.08]">
+                    {example}
+                  </span>
+                ))}
+              </div>
+              <p className="text-sm leading-6 text-muted">
+                Know who you met, when, and why.
+              </p>
+            </div>
+          </motion.div>
+        </motion.div>
+
+        <motion.div variants={fadeInY} className="relative overflow-hidden rounded-[2rem] border border-black/[0.05] bg-white p-8 shadow-lg dark:border-white/[0.08] dark:bg-surface1 dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.06)_inset]">
           <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-brandCyan/[0.08] blur-3xl dark:bg-brandCyan/[0.12]" />
           <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-brandRose/[0.08] blur-3xl dark:bg-brandRose/[0.12]" />
           <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
           <div className="relative text-center space-y-6">
             <div className="space-y-2">
-              <p className="font-mono text-[11px] font-black uppercase tracking-[0.15em] text-brandCyan">
-                Join the vanguard
-              </p>
               <h2 className="text-2xl font-black tracking-tight text-foreground">
-                Take back your data.
+                Start with your Dotly identity
               </h2>
-              <p className="text-sm leading-relaxed text-muted max-w-[280px] mx-auto">
-                No ads. No tracking algorithms. Just you and exactly who you choose to let in.
+              <p className="mx-auto max-w-[30ch] text-sm leading-relaxed text-muted">
+                {dotlyPositioning.supportingPoints.join(" ")}
               </p>
             </div>
 
             <div className="flex flex-col gap-3">
               <Link href="/signup" className="block w-full">
                 <PrimaryButton fullWidth size="lg">
-                  Start your setup
+                  {dotlyPositioning.cta.primary}
                 </PrimaryButton>
               </Link>
               <Link href="/login" className="block w-full">
                 <SecondaryButton fullWidth size="md">
-                  Sign in to dashboard
+                  Open your Dotly
                 </SecondaryButton>
               </Link>
             </div>
           </div>
-        </motion.div>
-
-        {/* ── Trust line ───────────────────────────────── */}
-        <motion.div variants={fadeInY} className="pb-8">
-          <p className="flex items-center justify-center gap-2 font-mono text-[10px] uppercase tracking-widest text-muted/50">
-            <Lock className="w-3 h-3" /> End-to-end encrypted design
-          </p>
         </motion.div>
 
       </motion.section>

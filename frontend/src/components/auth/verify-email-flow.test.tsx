@@ -43,14 +43,14 @@ describe("VerifyEmailFlow", () => {
       }),
     );
 
-    expect(screen.getByText(/verifying email/i)).toBeInTheDocument();
+    expect(screen.getByText(/verifying your email/i)).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText(/email verified/i)).toBeInTheDocument();
     });
 
     expect(
-      screen.getByRole("link", { name: /continue to app/i }),
+      screen.getByRole("link", { name: /open dotly/i }),
     ).toHaveAttribute("href", "/login?email=user%40dotly.one&verified=1");
   });
 

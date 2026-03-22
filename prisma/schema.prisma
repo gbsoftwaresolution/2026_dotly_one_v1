@@ -218,6 +218,10 @@ model Persona {
   profilePhotoUrl          String?
   accessMode               PersonaAccessMode
   verifiedOnly             Boolean               @default(false)
+  emailVerified            Boolean               @default(false)
+  phoneVerified            Boolean               @default(false)
+  businessVerified         Boolean               @default(false)
+  trustScore               Int?
   sharingMode              PersonaSharingMode    @default(CONTROLLED)
   smartCardConfig          Json?
   publicPhone              String?               @db.VarChar(32)
@@ -326,6 +330,7 @@ model ContactRelationship {
   state           ContactRelationshipState @default(APPROVED)
   sourceType      ContactRequestSourceType
   sourceId        String?                  @db.Uuid
+  connectionContext Json?
   accessStartAt   DateTime?
   accessEndAt     DateTime?
   lastInteractionAt DateTime?
@@ -368,6 +373,8 @@ model FollowUp {
 model ContactMemory {
   id             String              @id @default(uuid()) @db.Uuid
   relationshipId String              @db.Uuid
+  eventId        String?             @db.Uuid
+  contextLabel   String              @default("") @db.VarChar(160)
   sourceLabel    String?             @db.VarChar(120)
   metAt          DateTime
   note           String?             @db.Text

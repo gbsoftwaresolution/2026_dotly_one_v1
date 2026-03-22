@@ -22,7 +22,7 @@ describe("EventsService", () => {
       {
         assertUserIsVerified: async () => {
           throw new ForbiddenException(
-            "Verify your email before joining Dotly event networking. Check your inbox for the verification link, or resend it.",
+            "Verify your email or complete mobile OTP before joining Dotly event networking.",
           );
         },
       } as any,
@@ -37,7 +37,7 @@ describe("EventsService", () => {
         assert.ok(error instanceof ForbiddenException);
         assert.equal(
           error.message,
-          "Verify your email before joining Dotly event networking. Check your inbox for the verification link, or resend it.",
+          "Verify your email or complete mobile OTP before joining Dotly event networking.",
         );
         return true;
       },

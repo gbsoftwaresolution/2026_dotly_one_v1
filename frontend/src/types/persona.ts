@@ -4,6 +4,8 @@ export type PersonaAccessMode = "open" | "request" | "private";
 
 export type PersonaSharingMode = "controlled" | "smart_card";
 
+export type PersonaSharingConfigSource = "system_default" | "user_custom";
+
 export type PersonaSmartCardPrimaryAction =
   | "request_access"
   | "instant_connect"
@@ -13,13 +15,6 @@ export interface PersonaSmartCardActionState {
   requestAccessEnabled: boolean;
   instantConnectEnabled: boolean;
   contactMeEnabled: boolean;
-}
-
-export interface PersonaSmartCardActions {
-  call: boolean;
-  whatsapp: boolean;
-  email: boolean;
-  vcard: boolean;
 }
 
 export interface PersonaSmartCardActionLinks {
@@ -38,16 +33,25 @@ export interface PersonaSmartCardConfig {
   actionState?: PersonaSmartCardActionState | null;
 }
 
-export interface PublicProfilePublicActions {
-  phone: string | null;
-  whatsappNumber: string | null;
-  email: string | null;
+export interface PublicProfileSmartCard {
+  primaryAction: PersonaSmartCardPrimaryAction;
+  actionState: PersonaSmartCardActionState;
+  actionLinks: PersonaSmartCardActionLinks;
 }
 
-export interface PublicProfileSmartCard extends PersonaSmartCardConfig {
-  actionState: PersonaSmartCardActionState;
-  actions: PersonaSmartCardActions;
-  actionLinks: PersonaSmartCardActionLinks;
+export interface PublicPersonaTrust {
+  isVerified: boolean;
+  isStrongVerified: boolean;
+  isBusinessVerified: boolean;
+}
+
+export interface PersonaSharingCapabilities {
+  hasActiveProfileQr: boolean;
+  primaryActions: {
+    requestAccess: boolean;
+    instantConnect: boolean;
+    contactMe: boolean;
+  };
 }
 
 export interface PersonaSummary {
@@ -63,7 +67,9 @@ export interface PersonaSummary {
   accessMode: PersonaAccessMode;
   verifiedOnly: boolean;
   sharingMode: PersonaSharingMode;
+  sharingConfigSource?: PersonaSharingConfigSource | null;
   smartCardConfig: PersonaSmartCardConfig | null;
+  sharingCapabilities?: PersonaSharingCapabilities;
   publicPhone: string | null;
   publicWhatsappNumber: string | null;
   publicEmail: string | null;
@@ -102,18 +108,21 @@ export interface UpdatePersonaSharingInput {
 export interface PublicProfile {
   username: string;
   publicUrl: string;
-  name: string;
   fullName: string;
   jobTitle: string;
   companyName: string;
   tagline: string;
-  profilePhoto: string | null;
   profilePhotoUrl?: string | null;
   sharingMode: PersonaSharingMode;
   instantConnectUrl?: string | null;
   smartCard: PublicProfileSmartCard | null;
-  smartCardConfig: PersonaSmartCardConfig | null;
-  publicActions: PublicProfilePublicActions;
+  trust: PublicPersonaTrust;
+}
+
+export interface InstantConnectResult {
+  success: boolean;
+  relationshipId: string;
+  status: "connected";
 }
 
 export interface PublicProfileRequestTarget {

@@ -8,8 +8,10 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 
+import { PersonaAccessMode } from "../src/common/enums/persona-access-mode.enum";
 import { PersonaSharingMode } from "../src/common/enums/persona-sharing-mode.enum";
 import { PersonaSmartCardPrimaryAction } from "../src/common/enums/persona-smart-card-primary-action.enum";
+import { PersonaType } from "../src/common/enums/persona-type.enum";
 import {
   buildCallLink,
   buildPublicSmartCardActions,
@@ -148,6 +150,417 @@ describe("PersonasService sharing mode", () => {
     );
   });
 
+  it("applies safe system defaults when a persona is created", async () => {
+    let persistedConfig: any = null;
+
+    const service = new PersonasService({
+      persona: {
+        create: async () => ({
+          id: "persona-1",
+          type: "PERSONAL",
+          username: "alice",
+          publicUrl: "dotly.id/alice",
+          fullName: "Alice Demo",
+          jobTitle: "Founder",
+          companyName: "Dotly",
+          tagline: "Connect fast",
+          profilePhotoUrl: null,
+          accessMode: "REQUEST",
+          verifiedOnly: false,
+          sharingMode: "CONTROLLED",
+          smartCardConfig: null,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
+          createdAt: new Date("2026-03-22T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-22T10:00:00.000Z"),
+        }),
+        findUnique: async () => ({
+          id: "persona-1",
+          type: "PERSONAL",
+          username: "alice",
+          publicUrl: "dotly.id/alice",
+          fullName: "Alice Demo",
+          jobTitle: "Founder",
+          companyName: "Dotly",
+          tagline: "Connect fast",
+          profilePhotoUrl: null,
+          accessMode: "REQUEST",
+          verifiedOnly: false,
+          sharingMode: "CONTROLLED",
+          smartCardConfig: null,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
+          createdAt: new Date("2026-03-22T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-22T10:00:00.000Z"),
+        }),
+        update: async (args: any) => {
+          persistedConfig = args.data.smartCardConfig;
+
+          return {
+            id: "persona-1",
+            type: "PERSONAL",
+            username: "alice",
+            publicUrl: "dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "REQUEST",
+            verifiedOnly: false,
+            sharingMode: args.data.sharingMode,
+            smartCardConfig: args.data.smartCardConfig,
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+            createdAt: new Date("2026-03-22T10:00:00.000Z"),
+            updatedAt: new Date("2026-03-22T10:05:00.000Z"),
+          };
+        },
+      },
+      qRAccessToken: {
+        findFirst: async () => null,
+      },
+    } as any);
+
+    const result = await service.create("user-1", {
+      type: PersonaType.Personal,
+      username: "alice",
+      fullName: "Alice Demo",
+      jobTitle: "Founder",
+      companyName: "Dotly",
+      tagline: "Connect fast",
+      accessMode: PersonaAccessMode.Request,
+    });
+
+    assert.equal(result.sharingMode, "controlled");
+    assert.equal(result.sharingConfigSource, "system_default");
+    assert.deepEqual(result.smartCardConfig, {
+      primaryAction: "request_access",
+      allowCall: false,
+      allowWhatsapp: false,
+      allowEmail: false,
+      allowVcard: false,
+    });
+    assert.equal(persistedConfig._meta.source, "system_default");
+  });
+
+  it("upgrades defaults to smart_card when public info is meaningful", async () => {
+    const service = new PersonasService({
+      qRAccessToken: {
+        findFirst: async () => null,
+      },
+    } as any);
+
+    const defaults = await service.buildSmartDefaultsForPersona({
+      id: "persona-1",
+      type: "PROFESSIONAL",
+      accessMode: "REQUEST",
+      fullName: "Alice Demo",
+      publicPhone: null,
+      publicWhatsappNumber: null,
+      publicEmail: "alice@example.com",
+    } as any);
+
+    assert.equal(defaults.sharingMode, "SMART_CARD");
+    assert.deepEqual(defaults.smartCardConfig, {
+      primaryAction: "contact_me",
+      allowCall: false,
+      allowWhatsapp: false,
+      allowEmail: true,
+      allowVcard: true,
+    });
+  });
+
+  it("falls back closed for private personas without a valid smart card default", async () => {
+    const service = new PersonasService({
+      qRAccessToken: {
+        findFirst: async () => null,
+      },
+    } as any);
+
+    const defaults = await service.buildSmartDefaultsForPersona({
+      id: "persona-1",
+      type: "PERSONAL",
+      accessMode: "PRIVATE",
+      fullName: "Alice Demo",
+      publicPhone: null,
+      publicWhatsappNumber: null,
+      publicEmail: null,
+    } as any);
+
+    assert.equal(defaults.sharingMode, "CONTROLLED");
+    assert.equal(defaults.smartCardConfig, null);
+  });
+
+  it("does not recompute over user-custom sharing defaults unless forced", async () => {
+    let updateCalled = false;
+
+    const existingPersona = {
+      id: "persona-1",
+      type: "PROFESSIONAL",
+      username: "alice",
+      publicUrl: "dotly.id/alice",
+      fullName: "Alice Demo",
+      jobTitle: "Founder",
+      companyName: "Dotly",
+      tagline: "Connect fast",
+      profilePhotoUrl: null,
+      accessMode: "REQUEST",
+      verifiedOnly: false,
+      sharingMode: "SMART_CARD",
+      smartCardConfig: {
+        primaryAction: "contact_me",
+        allowCall: true,
+        allowWhatsapp: false,
+        allowEmail: false,
+        allowVcard: false,
+        _meta: {
+          source: "user_custom",
+        },
+      },
+      publicPhone: "+15551234567",
+      publicWhatsappNumber: null,
+      publicEmail: null,
+      createdAt: new Date("2026-03-22T10:00:00.000Z"),
+      updatedAt: new Date("2026-03-22T10:05:00.000Z"),
+    };
+
+    const service = new PersonasService({
+      persona: {
+        findFirst: async () => existingPersona,
+        update: async () => {
+          updateCalled = true;
+          return existingPersona;
+        },
+      },
+      qRAccessToken: {
+        findFirst: async () => ({ id: "profile-qr-1" }),
+      },
+    } as any);
+
+    const result = await service.recomputePersonaDefaults("user-1", "persona-1");
+
+    assert.equal(updateCalled, false);
+    assert.equal(result.sharingConfigSource, "user_custom");
+    assert.deepEqual(result.smartCardConfig, {
+      primaryAction: "contact_me",
+      allowCall: true,
+      allowWhatsapp: false,
+      allowEmail: false,
+      allowVcard: false,
+    });
+  });
+
+  it("recomputes system-managed sharing defaults when access mode changes", async () => {
+    const service = new PersonasService({
+      persona: {
+        findFirst: async () => ({
+          id: "persona-1",
+          type: "PROFESSIONAL",
+          username: "alice",
+          publicUrl: "dotly.id/alice",
+          fullName: "Alice Demo",
+          jobTitle: "Founder",
+          companyName: "Dotly",
+          tagline: "Connect fast",
+          profilePhotoUrl: null,
+          accessMode: "REQUEST",
+          verifiedOnly: false,
+          sharingMode: "SMART_CARD",
+          smartCardConfig: {
+            primaryAction: "request_access",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: true,
+            allowVcard: true,
+            _meta: {
+              source: "system_default",
+            },
+          },
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: "alice@example.com",
+          createdAt: new Date("2026-03-22T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-22T10:05:00.000Z"),
+        }),
+        update: async (args: any) => ({
+          id: "persona-1",
+          type: "PROFESSIONAL",
+          username: "alice",
+          publicUrl: "dotly.id/alice",
+          fullName: "Alice Demo",
+          jobTitle: "Founder",
+          companyName: "Dotly",
+          tagline: "Connect fast",
+          profilePhotoUrl: null,
+          accessMode: args.data.accessMode,
+          verifiedOnly: false,
+          sharingMode: args.data.sharingMode,
+          smartCardConfig: args.data.smartCardConfig,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: "alice@example.com",
+          createdAt: new Date("2026-03-22T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-22T10:10:00.000Z"),
+        }),
+      },
+      qRAccessToken: {
+        findFirst: async () => null,
+      },
+    } as any);
+
+    const result = await service.update("user-1", "persona-1", {
+      accessMode: PersonaAccessMode.Private,
+    });
+
+    assert.equal(result.accessMode, "private");
+    assert.equal(result.sharingMode, "controlled");
+    assert.equal(result.sharingConfigSource, "system_default");
+    assert.deepEqual(result.smartCardConfig, {
+      primaryAction: "contact_me",
+      allowCall: false,
+      allowWhatsapp: false,
+      allowEmail: true,
+      allowVcard: false,
+    });
+  });
+
+  it("rejects access mode changes that would invalidate user-custom smart card settings", async () => {
+    let updateCalled = false;
+
+    const service = new PersonasService({
+      persona: {
+        findFirst: async () => ({
+          id: "persona-1",
+          type: "PROFESSIONAL",
+          username: "alice",
+          publicUrl: "dotly.id/alice",
+          fullName: "Alice Demo",
+          jobTitle: "Founder",
+          companyName: "Dotly",
+          tagline: "Connect fast",
+          profilePhotoUrl: null,
+          accessMode: "REQUEST",
+          verifiedOnly: false,
+          sharingMode: "SMART_CARD",
+          smartCardConfig: {
+            primaryAction: "request_access",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: false,
+            _meta: {
+              source: "user_custom",
+            },
+          },
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
+          createdAt: new Date("2026-03-22T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-22T10:05:00.000Z"),
+        }),
+        update: async () => {
+          updateCalled = true;
+          return null;
+        },
+      },
+      qRAccessToken: {
+        findFirst: async () => null,
+      },
+    } as any);
+
+    await assert.rejects(
+      service.update("user-1", "persona-1", {
+        accessMode: PersonaAccessMode.Private,
+      }),
+      (error: unknown) => {
+        assert(error instanceof BadRequestException);
+        assert.equal(
+          error.message,
+          "smartCardConfig.primaryAction request_access is not supported for private personas",
+        );
+
+        return true;
+      },
+    );
+
+    assert.equal(updateCalled, false);
+  });
+
+  it("repairs legacy system-managed sharing when a persona is read", async () => {
+    let updateCalled = false;
+
+    const service = new PersonasService({
+      persona: {
+        findFirst: async () => ({
+          id: "persona-1",
+          type: "PROFESSIONAL",
+          username: "alice",
+          publicUrl: "dotly.id/alice",
+          fullName: "Alice Demo",
+          jobTitle: "Founder",
+          companyName: "Dotly",
+          tagline: "Connect fast",
+          profilePhotoUrl: null,
+          accessMode: "REQUEST",
+          verifiedOnly: false,
+          sharingMode: "SMART_CARD",
+          smartCardConfig: {
+            legacy: true,
+          },
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: "alice@example.com",
+          createdAt: new Date("2026-03-22T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-22T10:05:00.000Z"),
+        }),
+        update: async (args: any) => {
+          updateCalled = true;
+
+          return {
+            id: "persona-1",
+            type: "PROFESSIONAL",
+            username: "alice",
+            publicUrl: "dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "REQUEST",
+            verifiedOnly: false,
+            sharingMode: args.data.sharingMode,
+            smartCardConfig: args.data.smartCardConfig,
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: "alice@example.com",
+            createdAt: new Date("2026-03-22T10:00:00.000Z"),
+            updatedAt: new Date("2026-03-22T10:10:00.000Z"),
+          };
+        },
+      },
+      qRAccessToken: {
+        findFirst: async () => null,
+      },
+    } as any);
+
+    const result = await service.findOneById("user-1", "persona-1");
+
+    assert.equal(updateCalled, true);
+    assert.equal(result.sharingMode, "smart_card");
+    assert.equal(result.sharingConfigSource, "system_default");
+    assert.deepEqual(result.smartCardConfig, {
+      primaryAction: "contact_me",
+      allowCall: false,
+      allowWhatsapp: false,
+      allowEmail: true,
+      allowVcard: true,
+    });
+  });
+
   it("updates smart card config and defaults missing flags to false", async () => {
     const service = new PersonasService({
       persona: {
@@ -199,6 +612,7 @@ describe("PersonasService sharing mode", () => {
     });
 
     assert.equal(result.sharingMode, "smart_card");
+    assert.equal(result.sharingConfigSource, "user_custom");
     assert.deepEqual(result.smartCardConfig, {
       primaryAction: "instant_connect",
       allowCall: false,

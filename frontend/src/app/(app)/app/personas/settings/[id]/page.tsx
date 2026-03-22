@@ -64,7 +64,7 @@ export default async function PersonaSharingSettingsPage({
     <section className="space-y-4 pb-24">
       <PageHeader
         title="How people can access you"
-        description={`Set how ${persona.fullName} handles new interactions and what Smart Card actions are available.`}
+        description={`Decide how ${persona.fullName} is introduced first, and what people can do from the public card.`}
       />
 
       <Card className="overflow-visible">

@@ -37,7 +37,7 @@ function getConnectErrorCopy(error: ApiError): string {
     if (msg.includes("blocked"))
       return "This connection is blocked and cannot be completed.";
     if (msg.includes("verified"))
-      return "This Quick Connect is limited to verified users.";
+      return "Quick Connect requires a verified email or mobile OTP.";
     return "You are not allowed to use this Quick Connect.";
   }
   if (msg.includes("usage limit") || msg.includes("exhausted"))
@@ -45,7 +45,7 @@ function getConnectErrorCopy(error: ApiError): string {
   if (msg.includes("expired"))
     return "This Quick Connect QR has expired and can no longer be used.";
   if (msg.includes("already"))
-    return "You already have an active instant access connection with this person.";
+    return "You already have an active Quick Connect relationship with this person.";
   if (error.status === 404) return "This QR code no longer exists.";
   return error.message || "Something went wrong. Please try again.";
 }
@@ -79,7 +79,7 @@ function getConnectErrorState(error: ApiError): FlowState {
         type: "error",
         title: "Verification required",
         message:
-          "Verify your email before using this Quick Connect. Check your inbox for the verification link, or resend it from your account banner.",
+          "Verify your email or complete mobile OTP before using Quick Connect.",
       };
     return {
       type: "error",
@@ -146,6 +146,16 @@ function avatarGradient(name: string): string {
   return `linear-gradient(135deg, hsl(${hue},60%,45%), hsl(${hue2},60%,55%))`;
 }
 
+function getFirstName(name: string): string {
+  const trimmed = name.trim();
+
+  if (!trimmed) {
+    return "them";
+  }
+
+  return trimmed.split(/\s+/)[0] || trimmed;
+}
+
 export function QuickConnectFlow({
   code,
   personas,
@@ -153,6 +163,7 @@ export function QuickConnectFlow({
   hostJobTitle,
   hostCompany,
 }: QuickConnectFlowProps) {
+  const hostFirstName = getFirstName(hostName);
   const [selectedPersonaId, setSelectedPersonaId] = useState<string>(
     personas[0]?.id ?? "",
   );
@@ -215,15 +226,14 @@ export function QuickConnectFlow({
               {target.jobTitle} at {target.companyName}
             </p>
             <p className="text-sm text-muted">
-              This access is temporary until you upgrade it to an approved
-              relationship.
+              This connection is temporary until you turn it into an approved relationship.
             </p>
           </div>
         </div>
 
         {/* Access window */}
         <div className="rounded-2xl border border-border bg-surface/60 p-4 space-y-3">
-          <p className="label-xs text-muted">Instant Access Window</p>
+          <p className="label-xs text-muted">Connection window</p>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="space-y-0.5">
               <p className="label-xs text-muted">Starts</p>
@@ -245,7 +255,7 @@ export function QuickConnectFlow({
           href={routes.app.contactDetail(result.relationshipId)}
           className="inline-flex w-full items-center justify-center rounded-2xl bg-brandRose py-5 px-5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brandRose/40 dark:bg-brandCyan dark:text-zinc-950 dark:focus:ring-brandCyan/40"
         >
-          View contact
+          View connection
         </a>
       </div>
     );
@@ -277,18 +287,50 @@ export function QuickConnectFlow({
 
   return (
     <div className="glass rounded-3xl border border-border bg-surface p-6 space-y-6">
-      {/* Who you're connecting with */}
-      <div className="space-y-1">
-        <p className="label-xs text-muted">Connecting with</p>
-        <p className="text-base font-semibold text-foreground">{hostName}</p>
-        <p className="text-sm text-muted">
-          {hostJobTitle} at {hostCompany}
-        </p>
+      <div className="space-y-4">
+        <div className="rounded-[28px] border border-border/70 bg-background/80 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.06)] dark:bg-surface/60 dark:shadow-none">
+          <div className="flex items-center gap-4 text-left">
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white"
+              style={{ background: avatarGradient(hostName) }}
+            >
+              {hostName.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 space-y-1">
+              <p className="label-xs text-brandRose dark:text-brandCyan">
+                Quick Connect
+              </p>
+              <h2 className="text-lg font-semibold text-foreground">
+                {hostName}
+              </h2>
+              <p className="text-sm text-muted">
+                {hostJobTitle} at {hostCompany}
+              </p>
+            </div>
+          </div>
+          <p className="mt-4 text-left text-sm leading-6 text-muted">
+            Start a temporary connection while this introduction is still fresh.
+          </p>
+        </div>
+
+        <div className="grid gap-3 text-left sm:grid-cols-2">
+          <div className="rounded-2xl border border-border bg-background/70 p-4">
+            <p className="label-xs text-muted">What happens next</p>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Both sides get a time-boxed connection window that you can turn into an approved relationship later.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border bg-background/70 p-4">
+            <p className="label-xs text-muted">Choose the right persona</p>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Pick the persona that best matches how you met {hostFirstName} so the context stays intact.
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Persona selector */}
       <div className="space-y-3">
-        <p className="label-xs text-muted">Connect as</p>
+        <p className="label-xs text-muted">Continue as</p>
         <div className="flex flex-col gap-2">
           {personas.map((persona) => {
             const isSelected = selectedPersonaId === persona.id;
@@ -342,13 +384,12 @@ export function QuickConnectFlow({
         </div>
       </div>
 
-      {/* Connect CTA */}
       <PrimaryButton
         onClick={() => void handleConnect()}
         disabled={isConnecting || !selectedPersonaId}
         className="w-full h-[60px] disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isConnecting ? "Connecting..." : "Start Temporary Access"}
+        {isConnecting ? "Connecting..." : "Start temporary access"}
       </PrimaryButton>
     </div>
   );

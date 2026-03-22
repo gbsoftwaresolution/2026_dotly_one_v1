@@ -11,7 +11,9 @@ import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { followUpsApi } from "@/lib/api/follow-ups-api";
 import { ApiError } from "@/lib/api/client";
+import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
+import { formatConnectionContext } from "@/lib/utils/format-contact-relationship";
 import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import { cn } from "@/lib/utils/cn";
 import type { FollowUp, FollowUpStatus } from "@/types/follow-up";
@@ -30,7 +32,7 @@ const FILTERS: Array<{
     label: "Pending",
     description: "Keep the next conversation cue visible without adding friction.",
     emptyTitle: "No follow-ups scheduled",
-    emptyDescription: "Add a reminder when you want a gentle prompt to reconnect.",
+    emptyDescription: dotlyPositioning.app.noFollowUps,
   },
   {
     key: "completed",
@@ -209,6 +211,16 @@ function getCompanyLine(followUp: FollowUp) {
   ]
     .filter(Boolean)
     .join(" at ");
+}
+
+function getConnectionContextLine(followUp: FollowUp) {
+  const { sourceType } = followUp.relationship;
+
+  if (!sourceType) {
+    return null;
+  }
+
+  return formatConnectionContext(sourceType, followUp.relationship.sourceLabel);
 }
 
 export function FollowUpsScreen() {
@@ -423,6 +435,7 @@ export function FollowUpsScreen() {
                   const isWorking = actionState?.id === followUp.id;
                   const title = getFollowUpTitle(followUp);
                   const companyLine = getCompanyLine(followUp);
+                  const connectionContextLine = getConnectionContextLine(followUp);
                   const urgencyBadges = getUrgencyBadges(followUp);
 
                   return (
@@ -448,6 +461,9 @@ export function FollowUpsScreen() {
                             </Link>
                             {companyLine ? (
                               <p className="text-sm text-muted">{companyLine}</p>
+                            ) : null}
+                            {connectionContextLine ? (
+                              <p className="text-xs text-muted/90">{connectionContextLine}</p>
                             ) : null}
                           </div>
                           <div className="self-start">{getStatusBadge(followUp.status)}</div>
@@ -513,6 +529,7 @@ export function FollowUpsScreen() {
             const isWorking = actionState?.id === followUp.id;
             const title = getFollowUpTitle(followUp);
             const companyLine = getCompanyLine(followUp);
+            const connectionContextLine = getConnectionContextLine(followUp);
             const resolutionLabel = getResolutionLabel(followUp);
             const urgencyBadges = getUrgencyBadges(followUp);
 
@@ -535,6 +552,9 @@ export function FollowUpsScreen() {
                       </Link>
                       {companyLine ? (
                         <p className="text-sm text-muted">{companyLine}</p>
+                      ) : null}
+                      {connectionContextLine ? (
+                        <p className="text-xs text-muted/90">{connectionContextLine}</p>
                       ) : null}
                     </div>
                     <div className="self-start">{getStatusBadge(followUp.status)}</div>

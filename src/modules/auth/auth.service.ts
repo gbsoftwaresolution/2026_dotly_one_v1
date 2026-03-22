@@ -21,6 +21,7 @@ import {
 } from "../../infrastructure/logging/security-audit.service";
 import { SmsService } from "../../infrastructure/sms/sms.service";
 import { AnalyticsService } from "../analytics/analytics.service";
+import { buildPersonaTrustState } from "../personas/persona-trust";
 import {
   AuthAbuseProtectionService,
   AuthActionContext,
@@ -522,6 +523,20 @@ export class AuthService {
             phoneNumber: true,
             pendingPhoneNumber: true,
             phoneVerifiedAt: true,
+          },
+        });
+
+        await tx.persona?.updateMany?.({
+          where: {
+            userId: token.userId,
+          },
+          data: {
+            emailVerified: true,
+            trustScore: buildPersonaTrustState({
+              emailVerified: true,
+              phoneVerified: Boolean(verifiedUser.phoneVerifiedAt),
+              businessVerified: false,
+            }).trustScore,
           },
         });
 
@@ -1470,7 +1485,7 @@ export class AuthService {
       }
 
       await this.prismaService.$transaction(async (tx: any) => {
-        await tx.user.update({
+        const updatedUser = await tx.user.update({
           where: {
             id: userId,
           },
@@ -1481,6 +1496,21 @@ export class AuthService {
           },
           select: {
             id: true,
+            isVerified: true,
+          },
+        });
+
+        await tx.persona?.updateMany?.({
+          where: {
+            userId,
+          },
+          data: {
+            phoneVerified: true,
+            trustScore: buildPersonaTrustState({
+              emailVerified: Boolean(updatedUser.isVerified),
+              phoneVerified: true,
+              businessVerified: false,
+            }).trustScore,
           },
         });
 

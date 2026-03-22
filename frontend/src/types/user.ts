@@ -1,7 +1,16 @@
 import type { MobileOtpEnrollmentPurpose } from "./auth";
 
+export type UserTrustRequirementKey =
+  | "send_contact_request"
+  | "create_profile_qr"
+  | "create_quick_connect_qr"
+  | "create_event"
+  | "join_event"
+  | "enable_event_discovery"
+  | "view_event_participants";
+
 export interface UserTrustRequirement {
-  key: string;
+  key: UserTrustRequirementKey;
   label: string;
   unlocked: boolean;
 }

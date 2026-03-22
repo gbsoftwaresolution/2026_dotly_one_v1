@@ -1,72 +1,97 @@
+"use client";
+
 import type { PropsWithChildren, ReactNode } from "react";
+
+import { usePathname } from "next/navigation";
 
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { NotificationBadge } from "@/components/notifications/notification-badge";
 import { SessionStatus } from "./session-status";
-import { ThemeSwitcher } from "./theme-switcher";
 
 interface AppShellProps extends PropsWithChildren {
-  title: string;
-  subtitle?: string;
   headerAction?: ReactNode;
+}
+
+function getSectionLabel(pathname: string): string {
+  if (pathname === "/app") {
+    return "Home";
+  }
+
+  if (pathname.startsWith("/app/personas")) {
+    return "Personas";
+  }
+
+  if (pathname.startsWith("/app/requests")) {
+    return "Requests";
+  }
+
+  if (pathname.startsWith("/app/settings")) {
+    return "Settings";
+  }
+
+  if (pathname.startsWith("/app/contacts")) {
+    return "Connections";
+  }
+
+  if (pathname.startsWith("/app/qr")) {
+    return "QR";
+  }
+
+  if (pathname.startsWith("/app/events")) {
+    return "Events";
+  }
+
+  if (pathname.startsWith("/app/notifications")) {
+    return "Notifications";
+  }
+
+  if (pathname.startsWith("/app/analytics")) {
+    return "Analytics";
+  }
+
+  return "Workspace";
 }
 
 export function AppShell({
   children,
-  title,
-  subtitle,
   headerAction,
 }: AppShellProps) {
+  const pathname = usePathname();
+  const sectionLabel = getSectionLabel(pathname);
+
   return (
     <div className="mx-auto flex min-h-screen-dvh max-w-app flex-col bg-transparent">
-      {/* ── Header ─────────────────────────────────────── */}
       <header
         className={[
           "sticky top-0 z-header",
-          // Glass blur
           "dark:bg-bgOnyx/75 bg-white/75 backdrop-blur-2xl",
-          // Bottom separator
           "border-b dark:border-white/[0.06] border-black/[0.06]",
         ].join(" ")}
       >
-        {/* Safe-area top inset for notched devices */}
         <div className="safe-pt" />
 
-        <div className="flex items-start justify-between gap-3 px-5 py-3.5">
-          <div className="space-y-0.5 min-w-0">
-            {/* Eyebrow row */}
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-[9px] font-black uppercase tracking-[0.18em] dark:text-zinc-600 text-slate-400">
+        <div className="flex items-center justify-between gap-3 px-5 py-3.5">
+          <div className="min-w-0 space-y-1">
+            <div className="flex items-center gap-2 text-xs font-medium text-muted">
+              <span className="rounded-full bg-foreground/6 px-2.5 py-1 text-foreground/80 dark:bg-white/6 dark:text-white/80">
                 Dotly
               </span>
-              <ThemeSwitcher />
-              <NotificationBadge />
+              <span>{sectionLabel}</span>
             </div>
-
-            {/* Page title */}
-            <h1 className="text-[22px] font-bold leading-tight tracking-tight text-foreground truncate">
-              {title}
-            </h1>
-
-            {subtitle ? (
-              <p className="text-xs text-muted leading-relaxed line-clamp-1">
-                {subtitle}
-              </p>
-            ) : null}
-
+            <p className="text-sm leading-5 text-muted">
+              Manage how you share, connect, and follow up.
+            </p>
             <SessionStatus />
           </div>
 
-          {headerAction ? (
-            <div className="shrink-0 flex items-center pt-1">
-              {headerAction}
-            </div>
-          ) : null}
+          <div className="flex shrink-0 items-center gap-2 pt-1">
+            <NotificationBadge />
+            {headerAction ?? null}
+          </div>
         </div>
       </header>
 
-      {/* ── Main content ───────────────────────────────── */}
       <main className="flex-1 px-5 py-5 pb-nav">
         <div className="space-y-4 animate-fade-up">
           <EmailVerificationBanner />
@@ -74,7 +99,6 @@ export function AppShell({
         </div>
       </main>
 
-      {/* ── Bottom Nav ─────────────────────────────────── */}
       <BottomNav />
     </div>
   );

@@ -17,4 +17,5 @@ export interface ContactRequestTargetPersona {
 export interface ContactRequestSenderUser {
   id: string;
   isVerified: boolean;
+  phoneVerifiedAt?: Date | null;
 }

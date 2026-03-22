@@ -11,7 +11,7 @@ import { routes } from "@/lib/constants/routes";
 import { headers } from "next/headers";
 
 export const metadata: Metadata = {
-  title: "Identity Card",
+  title: "Dotly Profile",
 };
 
 function getQrErrorCopy(error: ApiError) {
@@ -27,7 +27,7 @@ function getQrErrorCopy(error: ApiError) {
   if (loweredMessage.includes("usage limit")) {
     return {
       title: "QR exhausted",
-      description: "This Quick Connect QR has reached its usage limit.",
+      description: "This Quick Connect link has reached its usage limit.",
     };
   }
 
@@ -103,7 +103,7 @@ function LoginPrompt({
           Quick Connect
         </p>
         <h2 className="font-sans text-xl font-bold text-foreground">
-          Connect with {hostName}
+          Continue the introduction with {hostName}
         </h2>
         <p className="font-sans text-sm text-muted">
           {hostJobTitle} at {hostCompany}
@@ -112,8 +112,8 @@ function LoginPrompt({
 
       <p className="font-sans text-sm leading-6 text-muted">
         {invalidSession
-          ? "Your session has expired. Log in again to continue this instant connection."
-          : "Log in or create a Dotly account to start a temporary, permissioned connection from one of your personas."}
+          ? "Your session has expired. Log in again to continue this introduction from one of your personas."
+          : "Log in or create a Dotly account to continue this introduction from one of your personas."}
       </p>
 
       <div className="space-y-3">
@@ -121,7 +121,7 @@ function LoginPrompt({
           href={loginUrl}
           className="inline-flex w-full items-center justify-center rounded-2xl bg-brandRose py-5 px-5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 dark:bg-brandCyan dark:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-brandRose dark:focus:ring-brandCyan focus:ring-offset-2"
         >
-          Login for Instant Access
+          Login to continue
         </a>
         <a
           href={`${routes.public.signup}?next=${encodeURIComponent(`/q/${code}`)}`}
@@ -145,15 +145,14 @@ function NoPersonasPrompt() {
           Create a persona first
         </h2>
         <p className="font-sans text-sm leading-6 text-muted">
-          You need at least one persona to connect instantly. Create a persona
-          in your account to continue.
+          You need at least one persona before you can continue this introduction.
         </p>
       </div>
       <a
         href={routes.app.createPersona}
         className="inline-flex w-full items-center justify-center rounded-2xl bg-brandRose py-5 px-5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 dark:bg-brandCyan dark:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-brandRose dark:focus:ring-brandCyan focus:ring-offset-2"
       >
-        Create a Persona
+        Create a persona
       </a>
     </Card>
   );

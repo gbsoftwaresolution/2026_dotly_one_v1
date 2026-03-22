@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { ResetSessionOnLoad } from "@/components/auth/reset-session-on-load";
 import { AuthForm } from "@/components/forms/auth-form";
+import { AuthPageShell } from "@/components/layout/auth-page-shell";
+import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
 
 export default async function LoginPage({
@@ -30,37 +32,29 @@ export default async function LoginPage({
     : routes.public.verifyEmail;
 
   return (
-    <section className="space-y-5">
+    <AuthPageShell
+      title={dotlyPositioning.auth.loginTitle}
+      description={dotlyPositioning.auth.loginDescription}
+    >
       <ResetSessionOnLoad enabled={shouldResetSession} />
 
-      {/* Page intro */}
-      <div className="space-y-1 px-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Welcome back
-        </h1>
-        <p className="text-sm leading-6 text-muted">
-          Log in to manage your personas, sharing flows, and access controls.
-        </p>
-      </div>
-
-      {/* Banners */}
       {shouldResetSession ? (
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
-          <p className="font-mono text-sm text-amber-600 dark:text-amber-400">
+          <p className="text-sm leading-6 text-amber-700 dark:text-amber-300">
             Your session expired. Log in again to keep working in Dotly.
           </p>
         </div>
       ) : null}
       {verified ? (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
-          <p className="font-mono text-sm text-emerald-600 dark:text-emerald-400">
+          <p className="text-sm leading-6 text-emerald-700 dark:text-emerald-300">
             Email confirmed. Log in to continue.
           </p>
         </div>
       ) : null}
       {passwordResetComplete ? (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
-          <p className="font-mono text-sm text-emerald-600 dark:text-emerald-400">
+          <p className="text-sm leading-6 text-emerald-700 dark:text-emerald-300">
             Password reset complete. Log in with your new password.
           </p>
         </div>
@@ -68,7 +62,7 @@ export default async function LoginPage({
       {created ? (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
           {verificationDelivered ? (
-            <p className="font-mono text-sm text-emerald-600 dark:text-emerald-400">
+            <p className="text-sm leading-6 text-emerald-700 dark:text-emerald-300">
               Account created. Check your inbox, including spam, for your
               confirmation email. You can still log in now, but verified-only
               sharing stays limited until you confirm it. Need another link?{" "}
@@ -78,7 +72,7 @@ export default async function LoginPage({
               .
             </p>
           ) : (
-            <p className="font-mono text-sm text-amber-700 dark:text-amber-300">
+            <p className="text-sm leading-6 text-amber-700 dark:text-amber-300">
               Account created. Email confirmation is still required, but
               delivery is not configured in this environment. Use{" "}
               <Link href={resendHref} className="underline underline-offset-4">
@@ -90,7 +84,6 @@ export default async function LoginPage({
         </div>
       ) : null}
 
-      {/* Glass card form */}
       <div className="glass rounded-3xl border border-border/60 p-6 shadow-shell">
         <AuthForm
           mode="login"
@@ -98,6 +91,6 @@ export default async function LoginPage({
           initialEmail={initialEmail}
         />
       </div>
-    </section>
+    </AuthPageShell>
   );
 }

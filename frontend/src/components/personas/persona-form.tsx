@@ -1,16 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { PersonaSharingSummary } from "@/components/personas/persona-sharing-summary";
 import { PrimaryButton } from "@/components/shared/primary-button";
+import { SecondaryButton } from "@/components/shared/secondary-button";
 import { personaApi } from "@/lib/api";
 import { isApiError } from "@/lib/api/client";
+import { routes } from "@/lib/constants/routes";
 import {
   personaAccessModeOptions,
   personaTypeOptions,
 } from "@/lib/persona/labels";
-import type { CreatePersonaInput } from "@/types/persona";
+import type { CreatePersonaInput, PersonaSummary } from "@/types/persona";
 
 const initialFormState: CreatePersonaInput = {
   type: "professional",
@@ -26,6 +30,9 @@ export function PersonaForm() {
   const router = useRouter();
   const [formState, setFormState] =
     useState<CreatePersonaInput>(initialFormState);
+  const [createdPersona, setCreatedPersona] = useState<PersonaSummary | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -45,7 +52,7 @@ export function PersonaForm() {
     setIsSubmitting(true);
 
     try {
-      await personaApi.create({
+      const persona = await personaApi.create({
         ...formState,
         username: formState.username.trim().toLowerCase(),
         fullName: formState.fullName.trim(),
@@ -54,8 +61,8 @@ export function PersonaForm() {
         tagline: formState.tagline.trim(),
       });
 
-      router.replace("/app/personas");
       router.refresh();
+      setCreatedPersona(persona);
     } catch (submissionError) {
       if (isApiError(submissionError) && submissionError.status === 401) {
         router.replace("/login?next=/app/personas/create&reason=expired");
@@ -75,6 +82,49 @@ export function PersonaForm() {
 
   const inputCls =
     "min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20";
+
+  if (createdPersona) {
+    return (
+      <div className="space-y-5">
+        <section className="space-y-2 rounded-3xl border border-border bg-surface/45 p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+            Ready to share
+          </p>
+          <h2 className="text-xl font-semibold text-foreground">
+            Your persona is ready to share
+          </h2>
+          <p className="text-sm leading-6 text-muted">
+            We set up the sharing basics already, so you can start with a clear first impression and refine it later.
+          </p>
+        </section>
+
+        <PersonaSharingSummary
+          sharingMode={createdPersona.sharingMode}
+          primaryAction={createdPersona.smartCardConfig?.primaryAction}
+          publicPhone={createdPersona.publicPhone}
+          publicWhatsappNumber={createdPersona.publicWhatsappNumber}
+          publicEmail={createdPersona.publicEmail}
+          allowCall={createdPersona.smartCardConfig?.allowCall}
+          allowWhatsapp={createdPersona.smartCardConfig?.allowWhatsapp}
+          allowEmail={createdPersona.smartCardConfig?.allowEmail}
+          allowVcard={createdPersona.smartCardConfig?.allowVcard}
+          sharingConfigSource={createdPersona.sharingConfigSource ?? null}
+        />
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Link className="sm:flex-1" href={routes.app.personas}>
+            <PrimaryButton fullWidth>View personas</PrimaryButton>
+          </Link>
+          <Link
+            className="sm:flex-1"
+            href={routes.app.personaSettings(createdPersona.id)}
+          >
+            <SecondaryButton fullWidth>Edit sharing settings</SecondaryButton>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
@@ -105,7 +155,7 @@ export function PersonaForm() {
 
         <div className="space-y-1.5">
           <label className="label-xs" htmlFor="persona-access">
-            Access mode
+            Profile visibility
           </label>
           <select
             id="persona-access"
@@ -143,6 +193,9 @@ export function PersonaForm() {
           value={formState.username}
           onChange={(event) => updateField("username", event.target.value)}
         />
+        <p className="text-sm leading-6 text-muted">
+          This becomes your public Dotly link when the persona is shareable.
+        </p>
       </div>
 
       {/* Full name */}
@@ -166,7 +219,7 @@ export function PersonaForm() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <label className="label-xs" htmlFor="persona-jobtitle">
-            Job title
+            Role
           </label>
           <input
             id="persona-jobtitle"
@@ -200,7 +253,7 @@ export function PersonaForm() {
       {/* Tagline */}
       <div className="space-y-1.5">
         <label className="label-xs" htmlFor="persona-tagline">
-          Tagline
+          What should people remember?
         </label>
         <textarea
           id="persona-tagline"
@@ -213,6 +266,9 @@ export function PersonaForm() {
           value={formState.tagline}
           onChange={(event) => updateField("tagline", event.target.value)}
         />
+        <p className="text-sm leading-6 text-muted">
+          Keep it short enough that someone can recognize you later.
+        </p>
       </div>
 
       {error ? (

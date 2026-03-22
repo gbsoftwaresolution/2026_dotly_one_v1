@@ -1,10 +1,8 @@
 import type {
   PersonaSmartCardActionLinks,
   PersonaSmartCardActionState,
-  PersonaSmartCardConfig,
   PersonaSmartCardPrimaryAction,
   PublicProfileSmartCard,
-  PublicProfile,
 } from "@/types/persona";
 
 const supportedPrimaryActions = new Set<PersonaSmartCardPrimaryAction>([
@@ -24,11 +22,8 @@ interface ResolvePublicSmartCardPrimaryActionOptions {
   hasDirectActions?: boolean;
 }
 
-type PublicSmartCardActionProfile = Pick<
-  PublicProfile,
-  "publicActions"
-> & {
-  smartCard: PublicProfileSmartCard | PersonaSmartCardConfig | null;
+type PublicSmartCardActionProfile = {
+  smartCard: PublicProfileSmartCard | null;
 };
 
 type PublicSmartCardDirectAction = "call" | "whatsapp" | "email" | "vcard";
@@ -41,7 +36,7 @@ const directActionOrder: PublicSmartCardDirectAction[] = [
 ];
 
 function hasActionLinks(
-  config: PersonaSmartCardConfig | PublicProfileSmartCard,
+  config: PublicProfileSmartCard,
 ): config is PublicProfileSmartCard {
   return "actionLinks" in config;
 }
@@ -147,7 +142,7 @@ function getPrimaryActionAvailability(
 }
 
 export function getPublicSmartCardDirectActions(
-  config: PersonaSmartCardConfig | PublicProfileSmartCard | null | undefined,
+  config: PublicProfileSmartCard | null | undefined,
   _profile: PublicSmartCardActionProfile,
 ): PublicSmartCardDirectAction[] {
   const actionLinks = getPublicSmartCardActionLinks(config);
@@ -168,7 +163,7 @@ export function hasPublicSmartCardDirectActions(
 }
 
 export function getPublicSmartCardActionLinks(
-  smartCard: PublicProfileSmartCard | PersonaSmartCardConfig | null | undefined,
+  smartCard: PublicProfileSmartCard | null | undefined,
 ): PersonaSmartCardActionLinks | null {
   if (!smartCard || !hasActionLinks(smartCard)) {
     return null;

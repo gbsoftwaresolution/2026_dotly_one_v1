@@ -9,13 +9,5 @@ export default async function AuthenticatedLayout({
 }: PropsWithChildren) {
   await requireServerSession("/app");
 
-  return (
-    <AppShell
-      title="Workspace"
-      subtitle="Manage your Dotly account and personas."
-      headerAction={<LogoutButton />}
-    >
-      {children}
-    </AppShell>
-  );
+  return <AppShell headerAction={<LogoutButton />}>{children}</AppShell>;
 }

@@ -23,6 +23,23 @@ export function formatSourceLabel(
   }
 }
 
+export function formatConnectionContext(
+  sourceType: ContactRequestSourceType,
+  sourceLabel: string | null | undefined,
+): string {
+  const resolvedLabel = formatSourceLabel(sourceLabel, sourceType);
+
+  switch (sourceType) {
+    case "event":
+      return `Met at ${resolvedLabel}`;
+    case "qr":
+      return "Connected via QR";
+    case "profile":
+    default:
+      return "Connected via profile";
+  }
+}
+
 export function getRelationshipAgeDays(
   relationshipAgeDays: number | null | undefined,
   createdAt: string | null | undefined,

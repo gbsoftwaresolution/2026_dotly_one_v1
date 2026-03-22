@@ -17,6 +17,10 @@ interface PublicUserPageProps {
   username: string;
 }
 
+function buildLoginHref(username: string): string {
+  return `/login?next=${encodeURIComponent(`/u/${username}`)}`;
+}
+
 export async function PublicUserPage({ username }: PublicUserPageProps) {
   try {
     const requestHeaders = await headers();
@@ -67,26 +71,39 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
             hasDirectActions: hasPublicSmartCardDirectActions(profile),
           })
         : null;
+    const supportsInstantConnectRequestFallback =
+      profile.sharingMode === "smart_card" &&
+      profile.smartCard !== null &&
+      resolvedSmartCardPrimaryCta?.requestedAction === "instant_connect" &&
+      profile.smartCard.actionState.requestAccessEnabled;
     const showRequestAccessPanel =
       profile.sharingMode === "controlled" ||
       (resolvedSmartCardPrimaryCta?.action === "request_access" &&
-        !resolvedSmartCardPrimaryCta.isDisabled);
+        !resolvedSmartCardPrimaryCta.isDisabled) ||
+      supportsInstantConnectRequestFallback;
+    const loginHref = buildLoginHref(profile.username);
 
     return (
       <main
-        className={`mx-auto flex min-h-screen w-full items-center px-4 py-8 sm:px-6 ${
-          isSmartCard ? "max-w-md" : "max-w-xl"
+        className={`mx-auto flex min-h-screen w-full px-4 sm:px-6 ${
+          isSmartCard
+            ? "max-w-md items-start py-4 sm:items-center sm:py-8"
+            : "max-w-xl items-center py-8"
         }`}
       >
         <div className="w-full space-y-4">
           {isSmartCard ? (
-            <PublicSmartCard profile={profile} />
+            <PublicSmartCard
+              profile={profile}
+              isAuthenticated={isAuthenticated}
+              loginHref={loginHref}
+            />
           ) : (
             <PublicProfileCard profile={profile} />
           )}
 
           {showRequestAccessPanel ? (
-            <div id="request-access-panel">
+            <div id="request-access-panel" tabIndex={-1}>
               <RequestAccessPanel
                 profile={profile}
                 initialPersonas={personas}
@@ -113,11 +130,8 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
       <main className="mx-auto flex min-h-screen w-full max-w-xl items-center px-4 py-8 sm:px-6">
         <div className="w-full rounded-3xl border border-rose-500/30 bg-rose-500/10 p-6 text-center space-y-2">
           <h1 className="text-xl font-semibold text-rose-500 dark:text-rose-400">
-            Profile unavailable
+            Profile not available
           </h1>
-          <p className="text-sm leading-6 text-rose-500/90 dark:text-rose-400/80">
-            {message}
-          </p>
         </div>
       </main>
     );

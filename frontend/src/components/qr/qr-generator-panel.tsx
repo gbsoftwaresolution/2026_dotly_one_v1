@@ -7,6 +7,7 @@ import { QrCodeCard } from "@/components/qr/qr-code-card";
 import { QrModeToggle, type QrMode } from "@/components/qr/qr-mode-toggle";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
+import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
 import { isApiError } from "@/lib/api/client";
 import { qrApi } from "@/lib/api/qr-api";
 import { routes } from "@/lib/constants/routes";
@@ -15,21 +16,20 @@ import type {
   QrTokenSummary,
   QuickConnectQrSummary,
 } from "@/types/persona";
+import type { UserProfile } from "@/types/user";
 
 import { VerificationPrompt } from "../auth/verification-prompt";
 
 interface QrGeneratorPanelProps {
   personas: PersonaSummary[];
-  isVerified: boolean;
-  currentUserEmail: string;
+  user: UserProfile;
 }
 
 type GeneratedQr = QrTokenSummary | QuickConnectQrSummary;
 
 export function QrGeneratorPanel({
   personas,
-  isVerified,
-  currentUserEmail,
+  user,
 }: QrGeneratorPanelProps) {
   const router = useRouter();
   const [selectedPersonaId, setSelectedPersonaId] = useState(
@@ -108,14 +108,18 @@ export function QrGeneratorPanel({
 
   const verificationCopy =
     mode === "standard"
-      ? "Verify your email before creating shareable profile QR codes. Dotly keeps public identity sharing behind a verified account."
-      : "Verify your email before creating Quick Connect QR codes. Dotly only opens instant connection flows from verified accounts.";
+      ? "Profile QR sharing requires a verified email or mobile OTP so people only receive trusted public cards."
+      : "Quick Connect requires a verified email or mobile OTP so instant introductions stay trusted.";
+  const canGenerateQr =
+    mode === "standard"
+      ? hasUnlockedTrustRequirement(user, "create_profile_qr")
+      : hasUnlockedTrustRequirement(user, "create_quick_connect_qr");
 
   return (
     <div className="space-y-4 font-sans">
-      {!isVerified ? (
+      {!canGenerateQr ? (
         <VerificationPrompt
-          email={currentUserEmail}
+          email={user.email}
           title="QR sharing is waiting on verification"
           description={verificationCopy}
         />
@@ -147,11 +151,22 @@ export function QrGeneratorPanel({
           <QrModeToggle value={mode} onChange={setMode} />
         </div>
 
+        <div className="rounded-2xl border border-border bg-background/70 px-4 py-4">
+          <p className="text-sm font-semibold text-foreground">
+            {mode === "standard" ? "Profile QR" : "Quick Connect"}
+          </p>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            {mode === "standard"
+              ? "Share a public card with enough context for someone to remember who you are before they ask for access."
+              : "Use a time-boxed QR when you want a faster in-person handoff and both sides are ready to connect on the spot."}
+          </p>
+        </div>
+
         {mode === "quick_connect" ? (
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <label className="label-xs text-muted" htmlFor="qr-duration">
-                Duration hours
+                Duration
               </label>
               <input
                 id="qr-duration"
@@ -193,7 +208,7 @@ export function QrGeneratorPanel({
           <PrimaryButton
             type="button"
             className="w-full h-[60px]"
-            disabled={isSubmitting || !selectedPersonaId || !isVerified}
+            disabled={isSubmitting || !selectedPersonaId || !canGenerateQr}
             onClick={() => void handleGenerate()}
           >
             {isSubmitting ? "Generating..." : "Generate QR"}
@@ -205,7 +220,7 @@ export function QrGeneratorPanel({
             disabled={!generatedQr}
             onClick={() => void handleCopyLink()}
           >
-            Copy share link
+            Copy Dotly link
           </SecondaryButton>
         </div>
 
@@ -225,16 +240,15 @@ export function QrGeneratorPanel({
         <QrCodeCard
           persona={selectedPersona}
           qr={generatedQr}
-          modeLabel={mode === "standard" ? "Standard QR" : "Quick Connect QR"}
+          modeLabel={mode === "standard" ? "Profile QR" : "Quick Connect QR"}
         />
       ) : (
         <div className="rounded-3xl border border-dashed border-border/60 bg-surface/40 text-center p-10 space-y-2">
           <h2 className="text-lg font-semibold text-foreground">
-            Generate a shareable QR
+            Prepare your next introduction
           </h2>
           <p className="text-sm leading-6 text-muted max-w-sm mx-auto">
-            Choose a persona, pick a mode, and create a QR code to share your
-            safe public preview.
+            Choose a persona, pick the right sharing mode, and create a QR that matches the moment.
           </p>
         </div>
       )}

@@ -8,6 +8,7 @@ import { SecondaryButton } from "@/components/shared/secondary-button";
 import { personaApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { requireServerSession } from "@/lib/auth/protected-route";
+import { dotlyPositioning } from "@/lib/constants/positioning";
 
 export default async function PersonasPage() {
   const { accessToken } = await requireServerSession("/app/personas");
@@ -19,7 +20,7 @@ export default async function PersonasPage() {
       <section className="space-y-4">
         <PageHeader
           title="Personas"
-          description="Manage the identities you keep private or publish on Dotly."
+          description="Manage the Dotly identities you share in real life."
           action={
             <Link href="/app/personas/create">
               <SecondaryButton>Create persona</SecondaryButton>
@@ -38,7 +39,7 @@ export default async function PersonasPage() {
       <section className="space-y-4">
         <PageHeader
           title="Personas"
-          description="Manage the identities you keep private or publish on Dotly."
+          description="Manage the Dotly identities you share in real life."
         />
         <Card>
           <p className="text-sm leading-6 text-muted">

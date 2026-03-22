@@ -45,6 +45,8 @@ function createFollowUp(overrides: Record<string, unknown> = {}) {
     relationship: {
       relationshipId: "relationship-1",
       state: "approved",
+      sourceType: "event",
+      sourceLabel: "Tech Summit",
       targetPersona: {
         id: "persona-1",
         username: "alice",
@@ -173,6 +175,8 @@ describe("FollowUpsScreen", () => {
         relationship: {
           relationshipId: "relationship-overdue",
           state: "approved",
+          sourceType: "event",
+          sourceLabel: "Tech Summit",
           targetPersona: {
             id: "persona-overdue",
             username: "olivia",
@@ -195,6 +199,8 @@ describe("FollowUpsScreen", () => {
         relationship: {
           relationshipId: "relationship-due",
           state: "approved",
+          sourceType: "event",
+          sourceLabel: "Tech Summit",
           targetPersona: {
             id: "persona-due",
             username: "dylan",
@@ -217,6 +223,8 @@ describe("FollowUpsScreen", () => {
         relationship: {
           relationshipId: "relationship-soon",
           state: "approved",
+          sourceType: "event",
+          sourceLabel: "Tech Summit",
           targetPersona: {
             id: "persona-soon",
             username: "sasha",
@@ -239,6 +247,8 @@ describe("FollowUpsScreen", () => {
         relationship: {
           relationshipId: "relationship-later",
           state: "approved",
+          sourceType: "event",
+          sourceLabel: "Tech Summit",
           targetPersona: {
             id: "persona-later",
             username: "liam",
@@ -261,6 +271,7 @@ describe("FollowUpsScreen", () => {
     expect(screen.getByText("Dylan Due")).toBeInTheDocument();
     expect(screen.getByText("Sasha Soon")).toBeInTheDocument();
     expect(screen.getByText("Liam Later")).toBeInTheDocument();
+    expect(screen.getAllByText("Met at Tech Summit").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link").map((item) => item.textContent)).toEqual([
       "Olivia Overdue",
       "Dylan Due",
@@ -275,6 +286,8 @@ describe("FollowUpsScreen", () => {
         relationship: {
           relationshipId: "relationship-1",
           state: null,
+          sourceType: "event",
+          sourceLabel: "Tech Summit",
           targetPersona: null,
         },
       }),
@@ -283,6 +296,32 @@ describe("FollowUpsScreen", () => {
     render(React.createElement(FollowUpsScreen));
 
     expect(await screen.findByText("Contact unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Met at Tech Summit")).toBeInTheDocument();
     expect(screen.queryByText("Alice Demo")).not.toBeInTheDocument();
+  });
+
+  it("renders fallback connection context for qr relationships", async () => {
+    mocks.list.mockResolvedValue([
+      createFollowUp({
+        relationship: {
+          relationshipId: "relationship-1",
+          state: "approved",
+          sourceType: "qr",
+          sourceLabel: null,
+          targetPersona: {
+            id: "persona-1",
+            username: "alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            profilePhotoUrl: null,
+          },
+        },
+      }),
+    ]);
+
+    render(React.createElement(FollowUpsScreen));
+
+    expect(await screen.findByText("Connected via QR")).toBeInTheDocument();
   });
 });

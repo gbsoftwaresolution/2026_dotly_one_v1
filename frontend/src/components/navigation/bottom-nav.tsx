@@ -7,6 +7,22 @@ import { cn } from "@/lib/utils/cn";
 
 // SVG icons for each nav item — crisp, minimal, 24×24
 const NavIcons = {
+  home: (active: boolean) => (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className="h-[22px] w-[22px]"
+      aria-hidden
+    >
+      <path
+        d="M4 10.5L12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1v-9.5z"
+        stroke="currentColor"
+        strokeWidth={active ? "2" : "1.5"}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
   personas: (active: boolean) => (
     <svg
       viewBox="0 0 24 24"
@@ -30,48 +46,6 @@ const NavIcons = {
       />
     </svg>
   ),
-  qr: (active: boolean) => (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      className="h-[22px] w-[22px]"
-      aria-hidden
-    >
-      <rect
-        x="3"
-        y="3"
-        width="7"
-        height="7"
-        rx="1.5"
-        stroke="currentColor"
-        strokeWidth={active ? "2" : "1.5"}
-      />
-      <rect
-        x="14"
-        y="3"
-        width="7"
-        height="7"
-        rx="1.5"
-        stroke="currentColor"
-        strokeWidth={active ? "2" : "1.5"}
-      />
-      <rect
-        x="3"
-        y="14"
-        width="7"
-        height="7"
-        rx="1.5"
-        stroke="currentColor"
-        strokeWidth={active ? "2" : "1.5"}
-      />
-      <path
-        d="M14 14h2v2h-2zM18 14h3v2M17 18v3M14 18h2"
-        stroke="currentColor"
-        strokeWidth={active ? "2" : "1.5"}
-        strokeLinecap="round"
-      />
-    </svg>
-  ),
   requests: (active: boolean) => (
     <svg
       viewBox="0 0 24 24"
@@ -88,7 +62,7 @@ const NavIcons = {
       />
     </svg>
   ),
-  contacts: (active: boolean) => (
+  settings: (active: boolean) => (
     <svg
       viewBox="0 0 24 24"
       fill="none"
@@ -96,67 +70,18 @@ const NavIcons = {
       aria-hidden
     >
       <path
-        d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"
+        d="M10.325 4.317a1 1 0 011.35-.936l.8.345a1 1 0 00.91 0l.8-.345a1 1 0 011.35.936l.073.868a1 1 0 00.552.81l.753.42a1 1 0 01.286 1.49l-.527.694a1 1 0 000 .91l.527.694a1 1 0 01-.286 1.49l-.753.42a1 1 0 00-.552.81l-.073.868a1 1 0 01-1.35.936l-.8-.345a1 1 0 00-.91 0l-.8.345a1 1 0 01-1.35-.936l-.073-.868a1 1 0 00-.552-.81l-.753-.42a1 1 0 01-.286-1.49l.527-.694a1 1 0 000-.91l-.527-.694a1 1 0 01.286-1.49l.753-.42a1 1 0 00.552-.81l.073-.868z"
         stroke="currentColor"
         strokeWidth={active ? "2" : "1.5"}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-    </svg>
-  ),
-  events: (active: boolean) => (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      className="h-[22px] w-[22px]"
-      aria-hidden
-    >
-      <rect
-        x="3"
-        y="4"
-        width="18"
-        height="18"
-        rx="2.5"
+      <circle
+        cx="12"
+        cy="12"
+        r="2.75"
         stroke="currentColor"
         strokeWidth={active ? "2" : "1.5"}
-      />
-      <path
-        d="M8 2v4M16 2v4M3 10h18"
-        stroke="currentColor"
-        strokeWidth={active ? "2" : "1.5"}
-        strokeLinecap="round"
-      />
-    </svg>
-  ),
-  alerts: (active: boolean) => (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      className="h-[22px] w-[22px]"
-      aria-hidden
-    >
-      <path
-        d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
-        stroke="currentColor"
-        strokeWidth={active ? "2" : "1.5"}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  ),
-  analytics: (active: boolean) => (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      className="h-[22px] w-[22px]"
-      aria-hidden
-    >
-      <path
-        d="M3 20h18M8 20V10M12 20V4M16 20v-8M20 20v-6"
-        stroke="currentColor"
-        strokeWidth={active ? "2" : "1.5"}
-        strokeLinecap="round"
-        strokeLinejoin="round"
       />
     </svg>
   ),
@@ -165,13 +90,10 @@ const NavIcons = {
 type NavIconKey = keyof typeof NavIcons;
 
 const navItems: Array<{ href: string; label: string; icon: NavIconKey }> = [
+  { href: "/app", label: "Home", icon: "home" },
   { href: "/app/personas", label: "Personas", icon: "personas" },
-  { href: "/app/qr", label: "QR", icon: "qr" },
   { href: "/app/requests", label: "Requests", icon: "requests" },
-  { href: "/app/contacts", label: "Contacts", icon: "contacts" },
-  { href: "/app/events", label: "Events", icon: "events" },
-  { href: "/app/notifications", label: "Alerts", icon: "alerts" },
-  { href: "/app/analytics", label: "Analytics", icon: "analytics" },
+  { href: "/app/settings", label: "Settings", icon: "settings" },
 ];
 
 export function BottomNav() {

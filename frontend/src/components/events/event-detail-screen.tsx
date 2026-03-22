@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { eventApi } from "@/lib/api/event-api";
+import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
 import { routes } from "@/lib/constants/routes";
 import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import type {
@@ -14,6 +15,7 @@ import type {
   EventStatus,
   EventSummary,
 } from "@/types/event";
+import type { UserProfile } from "@/types/user";
 
 import { VerificationPrompt } from "../auth/verification-prompt";
 
@@ -22,8 +24,7 @@ import { ParticipantsList } from "./participants-list";
 
 interface EventDetailScreenProps {
   eventId: string;
-  isVerified: boolean;
-  currentUserEmail: string;
+  user: UserProfile;
 }
 
 function statusBadgeProps(status: EventStatus) {
@@ -104,9 +105,17 @@ function StealthShield() {
 // ---------------------------------------------------------------------------
 export function EventDetailScreen({
   eventId,
-  isVerified,
-  currentUserEmail,
+  user,
 }: EventDetailScreenProps) {
+    const canEnableDiscovery = hasUnlockedTrustRequirement(
+      user,
+      "enable_event_discovery",
+    );
+    const canViewParticipants = hasUnlockedTrustRequirement(
+      user,
+      "view_event_participants",
+    );
+
   const router = useRouter();
   const [event, setEvent] = useState<EventSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -180,14 +189,14 @@ export function EventDetailScreen({
 
   useEffect(() => {
     if (
-      isVerified &&
+      canViewParticipants &&
       event?.status === "live" &&
       event.myParticipation?.discoverable === true
     ) {
       loadParticipants();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event?.id, isVerified, loadParticipants]);
+  }, [canViewParticipants, event?.id, loadParticipants]);
 
   // Discovery toggle handler
   async function handleDiscoveryToggle(enable: boolean) {
@@ -302,15 +311,15 @@ export function EventDetailScreen({
             enabled={isDiscoverable}
             onToggle={handleDiscoveryToggle}
             isLoading={discoveryToggling}
-            disabled={!isVerified}
+            disabled={!canEnableDiscovery}
           />
-          {!isVerified ? (
+          {!canEnableDiscovery ? (
             <div className="mt-4">
               <VerificationPrompt
                 compact
-                email={currentUserEmail}
-                title="Verify your email before joining event discovery"
-                description="Participant visibility and discovery signals stay behind verified accounts to keep event networking trustworthy."
+                email={user.email}
+                title="Add a trust factor before enabling discovery"
+                description="Participant visibility and discovery signals stay behind accounts with a verified email or mobile OTP. Add either trust factor to enable event discovery."
               />
             </div>
           ) : null}
@@ -337,12 +346,12 @@ export function EventDetailScreen({
         <section className="flex flex-col gap-3">
           <h3 className="label-xs text-muted">People here</h3>
 
-          {!isVerified ? (
+          {!canViewParticipants ? (
             <VerificationPrompt
               compact
-              email={currentUserEmail}
-              title="Verify your email to view participants"
-              description="Dotly only reveals discoverable event participants to verified accounts."
+              email={user.email}
+              title="Add a trust factor to view participants"
+              description="Dotly only reveals discoverable event participants to accounts with a verified email or mobile OTP."
             />
           ) : !isDiscoverable ? (
             <StealthShield />

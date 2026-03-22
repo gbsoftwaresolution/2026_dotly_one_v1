@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { AuthPageShell } from "@/components/layout/auth-page-shell";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { authApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
@@ -79,14 +80,11 @@ export default function ResetPasswordPage() {
 
   if (viewState === "missing") {
     return (
-      <section className="mx-auto max-w-[440px] space-y-6 py-10">
+      <AuthPageShell
+        title="Invalid reset link"
+        description="This reset link is missing what it needs to continue. Request a new one and try again."
+      >
         <div className="glass rounded-[28px] border border-border bg-surface p-6 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Invalid reset link
-          </h1>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            This reset link is missing its token. Request a new one to continue.
-          </p>
           <Link
             href={routes.public.forgotPassword}
             className="mt-4 inline-flex text-sm font-semibold text-brandRose transition-colors hover:text-brandRose/80 dark:text-brandCyan dark:hover:text-brandCyan/80"
@@ -94,21 +92,20 @@ export default function ResetPasswordPage() {
             Request another reset link
           </Link>
         </div>
-      </section>
+      </AuthPageShell>
     );
   }
 
   if (viewState === "expired") {
     return (
-      <section className="mx-auto max-w-[440px] space-y-6 py-10">
+      <AuthPageShell
+        title="Reset link expired"
+        description={
+          error ??
+          "This reset link is no longer valid. Request a fresh one to keep going."
+        }
+      >
         <div className="glass rounded-[28px] border border-border bg-surface p-6 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Reset link expired
-          </h1>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            {error ??
-              "This reset link is no longer valid. Request a fresh one to keep going."}
-          </p>
           <Link
             href={routes.public.forgotPassword}
             className="mt-4 inline-flex text-sm font-semibold text-brandRose transition-colors hover:text-brandRose/80 dark:text-brandCyan dark:hover:text-brandCyan/80"
@@ -116,23 +113,15 @@ export default function ResetPasswordPage() {
             Request another reset link
           </Link>
         </div>
-      </section>
+      </AuthPageShell>
     );
   }
 
   return (
-    <section className="mx-auto max-w-[440px] space-y-6 py-10">
-      <div className="space-y-2 text-center">
-        <p className="label-xs text-muted">Secure Reset</p>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Choose a new password
-        </h1>
-        <p className="text-sm leading-6 text-muted">
-          This link is single-use and signs every device out when the reset
-          completes.
-        </p>
-      </div>
-
+    <AuthPageShell
+      title="Choose a new password"
+      description="This reset link is single-use and signs every device out when the reset completes."
+    >
       <form
         className="glass space-y-4 rounded-[28px] border border-border bg-surface p-6"
         onSubmit={handleSubmit}
@@ -189,6 +178,6 @@ export default function ResetPasswordPage() {
           </Link>
         </p>
       </form>
-    </section>
+    </AuthPageShell>
   );
 }

@@ -3,9 +3,11 @@ import {
   formatPrimaryAction,
   formatSharingMode,
 } from "@/lib/persona/labels";
+import { getPublicTrustPresentation } from "@/lib/persona/public-trust";
 import { getPublicSmartCardDirectActions } from "@/lib/persona/smart-card";
 
 import { Card } from "@/components/shared/card";
+import { dotlyPositioning } from "@/lib/constants/positioning";
 import type { PublicProfile } from "@/types/persona";
 
 interface PublicProfileCardProps {
@@ -15,6 +17,7 @@ interface PublicProfileCardProps {
 export function PublicProfileCard({ profile }: PublicProfileCardProps) {
   const avatarHue = ((profile.username?.charCodeAt(0) ?? 72) * 137) % 360;
   const isSmartCard = profile.sharingMode === "smart_card";
+  const trustPresentation = getPublicTrustPresentation(profile.trust);
   const enabledSmartCardActions = profile.smartCard
     ? getPublicSmartCardDirectActions(profile.smartCard, profile).map((action) => {
         switch (action) {
@@ -25,7 +28,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
           case "email":
             return "Email";
           case "vcard":
-            return "Save Contact";
+            return "Save Details";
         }
       })
     : [];
@@ -50,6 +53,16 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
                   .filter(Boolean)
                   .join(" at ")}
               </p>
+              {trustPresentation ? (
+                <div className="pt-2">
+                  <p className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white">
+                    {trustPresentation.shortLabel}
+                  </p>
+                  <p className="mt-2 max-w-[38ch] text-sm leading-6 text-white/72">
+                    {trustPresentation.detail}
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
           {profile.profilePhotoUrl ? (
@@ -91,12 +104,12 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
           <div className="space-y-3 rounded-3xl border border-cyan-200 bg-cyan-50/70 p-4 dark:border-brandCyan/25 dark:bg-brandCyan/10">
             <div className="space-y-1">
               <p className="label-xs text-cyan-700 dark:text-brandCyan">
-                Smart Card access
+                Profile access
               </p>
               <p className="text-sm leading-6 text-cyan-800 dark:text-white/80">
                 {profile.smartCard
-                  ? "This profile exposes a card-first action before full access is granted."
-                  : "This profile is in Smart Card Mode, but its card configuration is currently unavailable."}
+                  ? dotlyPositioning.publicProfile.smartCardHelper
+                  : "This profile uses controlled access, but its public configuration is currently unavailable."}
               </p>
             </div>
 
@@ -123,8 +136,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
           <div className="space-y-1 rounded-3xl border border-border bg-surface/60 p-4">
             <p className="label-xs text-muted">Controlled access</p>
             <p className="text-sm leading-6 text-muted">
-              This profile uses an approval-based flow before any direct
-              connection happens.
+              {dotlyPositioning.publicProfile.controlledHelper}
             </p>
           </div>
         )}

@@ -30,6 +30,19 @@ export class ProfilesController {
     response.send(vcard.content);
   }
 
+  @Get("personas/:username")
+  getPublicProfileByPersonaPath(
+    @Param("username") username: string,
+    @Req() request: Request,
+  ) {
+    return this.profilesService.getPublicProfile(username, {
+      idempotencyKey: buildAnalyticsRequestKey(
+        request,
+        `public-profile:${username.trim().toLowerCase()}`,
+      ),
+    });
+  }
+
   @Get(":username")
   getPublicProfile(
     @Param("username") username: string,

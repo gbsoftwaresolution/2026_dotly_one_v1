@@ -135,17 +135,21 @@ function getOtpFeedback(error: unknown): FeedbackState {
   };
 }
 
-function TrustStateBadge({ isVerified }: { isVerified: boolean }) {
+function TrustStateBadge({
+  isTrustQualified,
+}: {
+  isTrustQualified: boolean;
+}) {
   return (
     <span
       className={cn(
         "inline-flex items-center rounded-full border px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em]",
-        isVerified
+        isTrustQualified
           ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
           : "border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300",
       )}
     >
-      {isVerified ? "Trust ready" : "Trust building"}
+      {isTrustQualified ? "Trust factor active" : "Trust factor needed"}
     </span>
   );
 }
@@ -282,13 +286,16 @@ function RequirementStatusBadge({
 }
 
 function TrustOverviewCard({ user }: { user: UserProfile }) {
+  const hasActiveTrustFactor = user.security.trustBadge === "verified";
   const emailSignal = {
     status: user.isVerified ? "Verified" : "Pending",
     tone: user.isVerified ? ("success" as const) : ("warning" as const),
     description: user.isVerified
       ? "Email is currently accepted as an active trust factor for this account."
+      : hasActiveTrustFactor
+        ? "Another trust factor already unlocks current trust-sensitive actions. Verify this inbox too if you want email as an additional active factor."
       : user.security.mailDeliveryAvailable
-        ? "Verify this inbox to unlock trust-sensitive networking and sharing actions."
+        ? "Verify this inbox or complete mobile OTP to unlock trust-sensitive networking and sharing actions."
         : "Mail delivery is off in this environment, so the email trust step is visible but cannot deliver live messages yet.",
   };
   const mobileSignal = {
@@ -328,7 +335,7 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <TrustStateBadge isVerified={user.isVerified} />
+                <TrustStateBadge isTrustQualified={hasActiveTrustFactor} />
                 <VerificationStatusBadge isVerified={user.isVerified} />
                 {user.security.phoneVerificationStatus === "verified" ? (
                   <span className="inline-flex items-center rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
@@ -478,7 +485,9 @@ function VerificationManagementCard({
             <p className="text-sm leading-6 text-muted">
               {user.isVerified
                 ? "Dotly recognizes this inbox as an active trust factor for your account today."
-                : "Use the latest verification email from Dotly to unlock restricted trust-sensitive actions."}
+                : user.security.trustBadge === "verified"
+                  ? "Another verified trust factor already unlocks current trust-sensitive actions. Verify this inbox too if you want email as an additional signal."
+                  : "Use the latest verification email from Dotly or complete mobile OTP to unlock restricted trust-sensitive actions."}
             </p>
             <p className="font-mono text-xs text-muted">
               {user.security.maskedEmail}
@@ -534,9 +543,9 @@ function VerificationManagementCard({
             <div className="flex items-start gap-3">
               <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               <p className="text-sm leading-6 text-foreground/85">
-                Your email is already verified. Trust-sensitive networking, QR
-                sharing, and current event discovery controls are available for
-                this account.
+                Your email is already verified. This inbox is one active trust
+                factor on the account and can satisfy current trust-sensitive
+                networking checks.
               </p>
             </div>
           </div>

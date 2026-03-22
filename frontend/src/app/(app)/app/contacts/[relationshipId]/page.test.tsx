@@ -163,6 +163,8 @@ describe("ContactDetailPage", () => {
     expect(screen.getByText("1 day ago")).toBeInTheDocument();
     expect(screen.getByText("5")).toBeInTheDocument();
     expect(screen.getByText("14 days ago")).toBeInTheDocument();
+    expect(screen.getByText("Connection")).toBeInTheDocument();
+    expect(screen.getByText("Met at Launch Week")).toBeInTheDocument();
     expect(screen.getByText("Launch Week")).toBeInTheDocument();
   });
 
@@ -195,6 +197,7 @@ describe("ContactDetailPage", () => {
 
     expect(screen.getByText("1 day ago")).toBeInTheDocument();
     expect(screen.getByText("0")).toBeInTheDocument();
+    expect(screen.getByText("Connected via profile")).toBeInTheDocument();
     expect(screen.getByText("Profile")).toBeInTheDocument();
     expect(screen.getByText("120 days ago")).toBeInTheDocument();
     expect(screen.queryByText("No interactions yet")).not.toBeInTheDocument();

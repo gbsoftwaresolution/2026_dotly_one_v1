@@ -211,7 +211,7 @@ export function AnalyticsScreen() {
               <StatCard label="Requests" value={summary.totalRequests} />
               <StatCard label="Approved" value={summary.totalApproved} />
               <StatCard
-                label="Total Contacts"
+                label="Total Connections"
                 value={summary.totalContacts}
                 highlight={summary.totalContacts > 0}
               />

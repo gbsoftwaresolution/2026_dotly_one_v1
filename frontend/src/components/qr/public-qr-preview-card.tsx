@@ -27,7 +27,7 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-3">
             <StatusBadge
-              label={isQuickConnect ? "Quick Connect QR" : "Profile QR"}
+              label={isQuickConnect ? "Quick Connect" : "Profile access"}
               tone="neutral"
             />
             <div className="space-y-1">
@@ -51,6 +51,17 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
       </div>
 
       <div className="space-y-5 px-6 py-6">
+        <div className="space-y-1 rounded-3xl border border-border bg-surface/60 p-4">
+          <p className="label-xs text-muted">
+            {isQuickConnect ? "Shared context" : "Profile preview"}
+          </p>
+          <p className="text-sm leading-6 text-muted">
+            {isQuickConnect
+              ? "Review who you are meeting before you choose the right persona and continue the introduction."
+              : "This profile gives context before access."}
+          </p>
+        </div>
+
         <div className="space-y-2">
           <p className="label-xs text-muted">About</p>
           <p className="text-base leading-7 text-foreground">

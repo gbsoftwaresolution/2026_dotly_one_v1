@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { contactsApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
+import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
 import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import { cn } from "@/lib/utils/cn";
@@ -87,7 +88,7 @@ export function ContactsScreen() {
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search contacts..."
+          placeholder="Search connections..."
           className={cn(
             "w-full rounded-2xl border border-border bg-surface px-4 py-3 font-sans text-sm text-foreground placeholder:text-muted/50 transition-all focus:border-brandRose focus:outline-none focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20",
           )}
@@ -102,7 +103,7 @@ export function ContactsScreen() {
         </div>
       ) : loadError ? (
         <EmptyState
-          title="Contacts unavailable"
+          title="Connections unavailable"
           description={loadError}
           action={
             <button
@@ -116,11 +117,11 @@ export function ContactsScreen() {
         />
       ) : contacts.length === 0 ? (
         <EmptyState
-          title={search.trim() ? "No results" : "No contacts yet"}
+          title={search.trim() ? "No results" : "No connections yet"}
           description={
             search.trim()
-              ? `No contacts match "${search}".`
-              : "Approved and active temporary relationships will appear here once a permissioned connection is established."
+              ? `No connections match "${search}".`
+              : dotlyPositioning.app.noContacts
           }
         />
       ) : (

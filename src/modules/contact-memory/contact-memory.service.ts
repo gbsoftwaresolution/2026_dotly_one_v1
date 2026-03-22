@@ -7,6 +7,8 @@ export class ContactMemoryService {
     tx: Prisma.TransactionClient,
     data: {
       relationshipId: string;
+      eventId?: string | null;
+      contextLabel?: string | null;
       metAt: Date;
       sourceLabel?: string | null;
       note?: string | null;
@@ -15,6 +17,8 @@ export class ContactMemoryService {
     return tx.contactMemory.create({
       data: {
         relationshipId: data.relationshipId,
+        eventId: data.eventId ?? null,
+        contextLabel: data.contextLabel ?? data.sourceLabel ?? "",
         metAt: data.metAt,
         sourceLabel: data.sourceLabel ?? null,
         note: data.note ?? null,
@@ -30,6 +34,8 @@ export class ContactMemoryService {
     data: {
       memoryId?: string;
       relationshipId?: string;
+      eventId?: string | null;
+      contextLabel?: string | null;
       metAt: Date;
       sourceLabel?: string | null;
       note: string | null;
@@ -53,6 +59,8 @@ export class ContactMemoryService {
     await tx.contactMemory.create({
       data: {
         relationshipId: data.relationshipId!,
+        eventId: data.eventId ?? null,
+        contextLabel: data.contextLabel ?? data.sourceLabel ?? "",
         metAt: data.metAt,
         sourceLabel: data.sourceLabel ?? null,
         note: data.note,
@@ -62,5 +70,45 @@ export class ContactMemoryService {
     return {
       note: data.note,
     };
+  }
+
+  async upsertInteractionMemory(
+    tx: Prisma.TransactionClient,
+    data: {
+      relationshipId: string;
+      eventId?: string | null;
+      contextLabel?: string | null;
+      metAt: Date;
+      sourceLabel?: string | null;
+    },
+  ) {
+    const existingMemory = await tx.contactMemory.findFirst({
+      where: {
+        relationshipId: data.relationshipId,
+      },
+      orderBy: [{ metAt: "desc" }, { id: "desc" }],
+      select: {
+        id: true,
+      },
+    });
+
+    if (existingMemory) {
+      return tx.contactMemory.update({
+        where: {
+          id: existingMemory.id,
+        },
+        data: {
+          eventId: data.eventId ?? null,
+          contextLabel: data.contextLabel ?? data.sourceLabel ?? "",
+          metAt: data.metAt,
+          sourceLabel: data.sourceLabel ?? null,
+        },
+        select: {
+          id: true,
+        },
+      });
+    }
+
+    return this.createInitialMemory(tx, data);
   }
 }

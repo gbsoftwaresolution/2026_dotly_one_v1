@@ -90,27 +90,12 @@ describe("smart-card primary action helpers", () => {
   it("treats only non-null action links as renderable direct actions", () => {
     expect(
       hasPublicSmartCardDirectActions({
-        publicActions: {
-          phone: null,
-          whatsappNumber: null,
-          email: null,
-        },
         smartCard: {
           primaryAction: "contact_me",
-          allowCall: true,
-          allowWhatsapp: true,
-          allowEmail: true,
-          allowVcard: false,
           actionState: {
             requestAccessEnabled: true,
             instantConnectEnabled: false,
             contactMeEnabled: true,
-          },
-          actions: {
-            call: true,
-            whatsapp: true,
-            email: true,
-            vcard: false,
           },
           actionLinks: {
             call: null,
@@ -124,27 +109,12 @@ describe("smart-card primary action helpers", () => {
 
     expect(
       hasPublicSmartCardDirectActions({
-        publicActions: {
-          phone: null,
-          whatsappNumber: null,
-          email: null,
-        },
         smartCard: {
           primaryAction: "contact_me",
-          allowCall: false,
-          allowWhatsapp: false,
-          allowEmail: false,
-          allowVcard: true,
           actionState: {
             requestAccessEnabled: true,
             instantConnectEnabled: false,
             contactMeEnabled: true,
-          },
-          actions: {
-            call: false,
-            whatsapp: false,
-            email: false,
-            vcard: true,
           },
           actionLinks: {
             call: null,
@@ -158,27 +128,12 @@ describe("smart-card primary action helpers", () => {
 
     expect(
       hasPublicSmartCardDirectActions({
-        publicActions: {
-          phone: null,
-          whatsappNumber: null,
-          email: null,
-        },
         smartCard: {
           primaryAction: "contact_me",
-          allowCall: false,
-          allowWhatsapp: false,
-          allowEmail: false,
-          allowVcard: true,
           actionState: {
             requestAccessEnabled: true,
             instantConnectEnabled: false,
             contactMeEnabled: true,
-          },
-          actions: {
-            call: false,
-            whatsapp: false,
-            email: false,
-            vcard: true,
           },
           actionLinks: {
             call: null,
@@ -194,20 +149,10 @@ describe("smart-card primary action helpers", () => {
   it("fails closed for malformed call, whatsapp, and email links", () => {
     const smartCard = {
       primaryAction: "contact_me" as const,
-      allowCall: true,
-      allowWhatsapp: true,
-      allowEmail: true,
-      allowVcard: false,
       actionState: {
         requestAccessEnabled: true,
         instantConnectEnabled: false,
         contactMeEnabled: true,
-      },
-      actions: {
-        call: true,
-        whatsapp: true,
-        email: true,
-        vcard: false,
       },
       actionLinks: {
         call: "https://dotly.id/not-a-tel-link",
@@ -226,11 +171,6 @@ describe("smart-card primary action helpers", () => {
 
     expect(
       hasPublicSmartCardDirectActions({
-        publicActions: {
-          phone: null,
-          whatsappNumber: null,
-          email: null,
-        },
         smartCard,
       }),
     ).toBe(false);

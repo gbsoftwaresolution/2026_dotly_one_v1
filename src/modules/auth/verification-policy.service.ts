@@ -21,6 +21,11 @@ import {
 
 export type TrustFactor = "email_verified" | "mobile_otp_verified";
 
+export interface TrustFactorSourceUser {
+  isVerified: boolean;
+  phoneVerifiedAt?: Date | null;
+}
+
 export type VerificationRequirement =
   | "send_contact_request"
   | "create_profile_qr"
@@ -50,6 +55,29 @@ const TRUST_FACTOR_CATALOG: Record<TrustFactor, { source: string }> = {
   },
 };
 
+export function buildUserTrustFactors(
+  user: TrustFactorSourceUser,
+): Record<TrustFactor, boolean> {
+  return {
+    email_verified: user.isVerified,
+    mobile_otp_verified: Boolean(user.phoneVerifiedAt),
+  };
+}
+
+export function isTrustRequirementSatisfied(
+  requiredFactors: readonly TrustFactor[],
+  factors: Record<TrustFactor, boolean>,
+): boolean {
+  return requiredFactors.some((factor) => factors[factor]);
+}
+
+export function userHasActiveTrustFactor(user: TrustFactorSourceUser): boolean {
+  return isTrustRequirementSatisfied(
+    Object.keys(TRUST_FACTOR_CATALOG) as TrustFactor[],
+    buildUserTrustFactors(user),
+  );
+}
+
 const VERIFICATION_POLICY: Record<
   VerificationRequirement,
   TrustRequirementDefinition
@@ -58,43 +86,43 @@ const VERIFICATION_POLICY: Record<
     label: "Send contact requests",
     anyOf: ["email_verified", "mobile_otp_verified"],
     message:
-      "Verify your email before sending connection requests. Check your inbox for the verification link, or resend it.",
+      "Verify your email or complete mobile OTP before sending connection requests.",
   },
   create_profile_qr: {
     label: "Create profile QR codes",
     anyOf: ["email_verified", "mobile_otp_verified"],
     message:
-      "Verify your email before creating shareable profile QR codes. Check your inbox for the verification link, or resend it.",
+      "Verify your email or complete mobile OTP before creating shareable profile QR codes.",
   },
   create_quick_connect_qr: {
     label: "Create Quick Connect QR codes",
     anyOf: ["email_verified", "mobile_otp_verified"],
     message:
-      "Verify your email before creating Quick Connect QR codes. Check your inbox for the verification link, or resend it.",
+      "Verify your email or complete mobile OTP before creating Quick Connect QR codes.",
   },
   create_event: {
     label: "Create trust-based events",
     anyOf: ["email_verified", "mobile_otp_verified"],
     message:
-      "Verify your email before creating trust-based events. Check your inbox for the verification link, or resend it.",
+      "Verify your email or complete mobile OTP before creating trust-based events.",
   },
   join_event: {
     label: "Join event networking",
     anyOf: ["email_verified", "mobile_otp_verified"],
     message:
-      "Verify your email before joining Dotly event networking. Check your inbox for the verification link, or resend it.",
+      "Verify your email or complete mobile OTP before joining Dotly event networking.",
   },
   enable_event_discovery: {
     label: "Enable event discovery",
     anyOf: ["email_verified", "mobile_otp_verified"],
     message:
-      "Verify your email before enabling event discovery. Check your inbox for the verification link, or resend it.",
+      "Verify your email or complete mobile OTP before enabling event discovery.",
   },
   view_event_participants: {
     label: "View discoverable participants",
     anyOf: ["email_verified", "mobile_otp_verified"],
     message:
-      "Verify your email before viewing participants in Dotly event discovery. Check your inbox for the verification link, or resend it.",
+      "Verify your email or complete mobile OTP before viewing participants in Dotly event discovery.",
   },
 };
 
@@ -193,10 +221,7 @@ export class VerificationPolicyService {
 
     return {
       userId: user.id,
-      factors: {
-        email_verified: user.isVerified,
-        mobile_otp_verified: Boolean(user.phoneVerifiedAt),
-      },
+      factors: buildUserTrustFactors(user),
     };
   }
 
@@ -205,8 +230,9 @@ export class VerificationPolicyService {
     trustState: UserTrustState,
   ) {
     const definition = VERIFICATION_POLICY[requirement];
-    const satisfied = definition.anyOf.some(
-      (factor) => trustState.factors[factor],
+    const satisfied = isTrustRequirementSatisfied(
+      definition.anyOf,
+      trustState.factors,
     );
 
     return {

@@ -10,6 +10,8 @@ import { RevokeSessionDto } from "../auth/dto/revoke-session.dto";
 import { VerifyMobileOtpDto } from "../auth/dto/verify-mobile-otp.dto";
 import { AuthActionContext } from "../auth/auth-abuse-protection.service";
 import {
+  buildUserTrustFactors,
+  userHasActiveTrustFactor,
   TrustFactor,
   VerificationPolicyService,
   VerificationRequirement,
@@ -125,10 +127,8 @@ export class UsersService {
       this.verificationPolicyService.getRequirementCatalog();
     const trustFactorCatalog =
       this.verificationPolicyService.getAvailableTrustFactors();
-    const userFactors: Record<TrustFactor, boolean> = {
-      email_verified: user.isVerified,
-      mobile_otp_verified: Boolean(user.phoneVerifiedAt),
-    };
+    const userFactors: Record<TrustFactor, boolean> = buildUserTrustFactors(user);
+    const hasActiveTrustFactor = userHasActiveTrustFactor(user);
 
     const requirements = Object.entries(requirementCatalog).map(
       ([key, definition]) => ({
@@ -158,7 +158,7 @@ export class UsersService {
     return {
       ...user,
       security: {
-        trustBadge: user.isVerified ? "verified" : "attention",
+        trustBadge: hasActiveTrustFactor ? "verified" : "attention",
         maskedEmail: maskEmailAddress(user.email),
         maskedPhoneNumber: maskPhoneNumber(
           user.phoneNumber ??
@@ -191,9 +191,14 @@ export class UsersService {
           (this.mailService as any).isPasswordResetConfigured?.() ??
           this.mailService.isConfigured(),
         smsDeliveryAvailable: this.smsService.isConfigured(),
-        explanation: user.phoneVerifiedAt
-          ? "Email and mobile verification now work together as your active Dotly trust factors. Sensitive account actions can build on either signal."
-          : "Email verification is your first active trust factor. Add mobile OTP next to strengthen recovery and future step-up checks.",
+        explanation:
+          user.isVerified && user.phoneVerifiedAt
+            ? "Email verification and mobile OTP are both active trust factors on this account. Current trust-sensitive actions accept either signal."
+            : user.phoneVerifiedAt
+              ? "Mobile OTP is active and currently satisfies Dotly trust checks for this account. Add email verification if you want a second recovery path."
+              : user.isVerified
+                ? "Email verification is active and currently satisfies Dotly trust checks for this account. Add mobile OTP next to strengthen recovery and future step-up checks."
+                : "Add a verified email or mobile OTP to unlock current trust-sensitive actions. Email verification is available now, and mobile OTP can be added in settings.",
         unlockedActions: requirements
           .filter((requirement) => requirement.unlocked)
           .map((requirement) => requirement.label),

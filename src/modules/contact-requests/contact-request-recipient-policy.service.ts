@@ -9,6 +9,7 @@ import { PersonaAccessMode as PrismaPersonaAccessMode } from "@prisma/client";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { BlocksService } from "../blocks/blocks.service";
 import { PersonasService } from "../personas/personas.service";
+import { userHasActiveTrustFactor } from "../auth/verification-policy.service";
 
 import {
   ContactRequestActorPersona,
@@ -80,6 +81,7 @@ export class ContactRequestRecipientPolicyService {
       select: {
         id: true,
         isVerified: true,
+        phoneVerifiedAt: true,
       },
     });
 
@@ -87,7 +89,7 @@ export class ContactRequestRecipientPolicyService {
       throw new NotFoundException("User not found");
     }
 
-    if (targetPersona.verifiedOnly && !senderUser.isVerified) {
+    if (targetPersona.verifiedOnly && !userHasActiveTrustFactor(senderUser)) {
       throw new ForbiddenException("Verified profiles only");
     }
 

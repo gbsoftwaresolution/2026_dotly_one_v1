@@ -60,7 +60,7 @@ describe("VerificationDiagnosticsService", () => {
             label: "Create trust-based events",
             anyOf: ["email_verified", "mobile_otp_verified"],
             message:
-              "Verify your email before creating trust-based events. Check your inbox for the verification link, or resend it.",
+              "Verify your email or complete mobile OTP before creating trust-based events.",
           },
         }),
       } as any,

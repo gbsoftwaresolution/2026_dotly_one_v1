@@ -59,30 +59,24 @@ const profilesServiceMock = {
   getPublicProfile: async () => ({
     username: "alice",
     publicUrl: "https://dotly.id/alice",
-    name: "Alice Demo",
     fullName: "Alice Demo",
     jobTitle: "Founder",
     companyName: "Dotly",
     tagline: "Connect fast",
-    profilePhoto: null,
     profilePhotoUrl: null,
     sharingMode: "smart_card",
+    instantConnectUrl: null,
+    trust: {
+      isVerified: true,
+      isStrongVerified: false,
+      isBusinessVerified: false,
+    },
     smartCard: {
       primaryAction: "request_access",
-      allowCall: false,
-      allowWhatsapp: true,
-      allowEmail: false,
-      allowVcard: true,
       actionState: {
         requestAccessEnabled: true,
         instantConnectEnabled: false,
         contactMeEnabled: true,
-      },
-      actions: {
-        call: false,
-        whatsapp: true,
-        email: false,
-        vcard: true,
       },
       actionLinks: {
         call: null,
@@ -90,18 +84,6 @@ const profilesServiceMock = {
         email: null,
         vcard: "/v1/public/personas/alice/vcard",
       },
-    },
-    smartCardConfig: {
-      primaryAction: "request_access",
-      allowCall: false,
-      allowWhatsapp: true,
-      allowEmail: false,
-      allowVcard: true,
-    },
-    publicActions: {
-      phone: null,
-      whatsappNumber: "+15551234567",
-      email: null,
     },
   }),
   getPublicVcard: async () => ({
@@ -398,6 +380,38 @@ describe("HTTP Security E2E", () => {
     ]);
   });
 
+  it("rejects spoofed trust fields on persona sharing writes", async () => {
+    const token = await jwtService.signAsync({
+      sub: "user-84",
+      email: "user84@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(
+      `${baseUrl}/v1/personas/4b26dc1f-9238-46db-89c5-d9d2476f8c51/sharing`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sharingMode: "controlled",
+          emailVerified: true,
+          trustScore: 100,
+        }),
+      },
+    );
+    const payload = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.success, false);
+    assert.deepEqual(payload.message, [
+      "property emailVerified should not exist",
+      "property trustScore should not exist",
+    ]);
+  });
+
   it("rejects protected endpoints without authentication", async () => {
     const response = await fetch(`${baseUrl}/v1/personas`);
     const payload = await response.json();
@@ -460,7 +474,7 @@ describe("HTTP Security E2E", () => {
   });
 
   it("serves public profiles with only the allowed public fields", async () => {
-    const response = await fetch(`${baseUrl}/v1/public/alice`);
+    const response = await fetch(`${baseUrl}/v1/public/personas/alice`);
     const payload = await response.json();
 
     assert.equal(response.status, 200);
@@ -468,30 +482,24 @@ describe("HTTP Security E2E", () => {
     assert.deepEqual(payload.data, {
       username: "alice",
       publicUrl: "https://dotly.id/alice",
-      name: "Alice Demo",
       fullName: "Alice Demo",
       jobTitle: "Founder",
       companyName: "Dotly",
       tagline: "Connect fast",
-      profilePhoto: null,
       profilePhotoUrl: null,
       sharingMode: "smart_card",
+      instantConnectUrl: null,
+      trust: {
+        isVerified: true,
+        isStrongVerified: false,
+        isBusinessVerified: false,
+      },
       smartCard: {
         primaryAction: "request_access",
-        allowCall: false,
-        allowWhatsapp: true,
-        allowEmail: false,
-        allowVcard: true,
         actionState: {
           requestAccessEnabled: true,
           instantConnectEnabled: false,
           contactMeEnabled: true,
-        },
-        actions: {
-          call: false,
-          whatsapp: true,
-          email: false,
-          vcard: true,
         },
         actionLinks: {
           call: null,
@@ -500,22 +508,14 @@ describe("HTTP Security E2E", () => {
           vcard: "/v1/public/personas/alice/vcard",
         },
       },
-      smartCardConfig: {
-        primaryAction: "request_access",
-        allowCall: false,
-        allowWhatsapp: true,
-        allowEmail: false,
-        allowVcard: true,
-      },
-      publicActions: {
-        phone: null,
-        whatsappNumber: "+15551234567",
-        email: null,
-      },
     });
     assert.equal(payload.data.id, undefined);
     assert.equal(payload.data.accessMode, undefined);
     assert.equal(payload.data.verifiedOnly, undefined);
+    assert.equal(payload.data.emailVerified, undefined);
+    assert.equal(payload.data.phoneVerified, undefined);
+    assert.equal(payload.data.businessVerified, undefined);
+    assert.equal(payload.data.trustScore, undefined);
   });
 
   it("downloads public vcards without a JSON envelope", async () => {

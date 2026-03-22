@@ -1,20 +1,253 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
 import {
-  ContactRelationshipState as PrismaContactRelationshipState,
   ContactRequestSourceType as PrismaContactRequestSourceType,
+  EventStatus as PrismaEventStatus,
+  ContactRelationshipState as PrismaContactRelationshipState,
+  PersonaAccessMode as PrismaPersonaAccessMode,
+  PersonaSharingMode as PrismaPersonaSharingMode,
   Prisma,
+  QrStatus as PrismaQrStatus,
+  QrType as PrismaQrType,
 } from "@prisma/client";
 
+import { ContactRequestSourceType } from "../../common/enums/contact-request-source-type.enum";
+import { PersonaSmartCardPrimaryAction } from "../../common/enums/persona-smart-card-primary-action.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
+import { BlocksService } from "../blocks/blocks.service";
+import { ContactMemoryService } from "../contact-memory/contact-memory.service";
+import { toSafeSmartCardConfig } from "../personas/persona-sharing";
+import { userHasActiveTrustFactor } from "../auth/verification-policy.service";
+
+import { CreateInstantConnectDto } from "./dto/create-instant-connect.dto";
+import { CreatePublicInstantConnectDto } from "./dto/create-public-instant-connect.dto";
+
+const noopBlocksService: Pick<
+  BlocksService,
+  "assertNoInteractionBlockInTransaction"
+> = {
+  assertNoInteractionBlockInTransaction: async () => undefined,
+};
+
+const noopContactMemoryService: Pick<
+  ContactMemoryService,
+  "upsertInteractionMemory"
+> = {
+  upsertInteractionMemory: async () => ({ id: "" }),
+};
+
+const instantConnectTargetSelect = {
+  id: true,
+  userId: true,
+  accessMode: true,
+  sharingMode: true,
+  smartCardConfig: true,
+  verifiedOnly: true,
+} as const;
+
+type InstantConnectTarget = {
+  id: string;
+  userId: string;
+  accessMode: PrismaPersonaAccessMode;
+  sharingMode: PrismaPersonaSharingMode;
+  smartCardConfig: Prisma.JsonValue | null;
+  verifiedOnly: boolean;
+};
+
+type RelationshipContextType = "qr" | "profile" | "event";
+
+type RelationshipConnectionContext = {
+  type: RelationshipContextType;
+  eventId: string | null;
+  label: string | null;
+};
+
+type EventSummary = {
+  id: string;
+  name: string;
+};
 
 @Injectable()
 export class RelationshipsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly blocksService: Pick<
+      BlocksService,
+      "assertNoInteractionBlockInTransaction"
+    > = noopBlocksService,
+    private readonly contactMemoryService: Pick<
+      ContactMemoryService,
+      "upsertInteractionMemory"
+    > = noopContactMemoryService,
+  ) {}
+
+  async instantConnect(
+    userId: string,
+    createInstantConnectDto: CreateInstantConnectDto,
+  ) {
+    return this.prismaService.$transaction(async (tx) => {
+      const targetPersona = await tx.persona.findUnique({
+        where: {
+          id: createInstantConnectDto.targetPersonaId,
+        },
+        select: instantConnectTargetSelect,
+      });
+
+      return this.instantConnectInTransaction(
+        tx,
+        userId,
+        targetPersona,
+        createInstantConnectDto.source,
+        createInstantConnectDto.eventId,
+      );
+    });
+  }
+
+  async instantConnectByUsername(
+    userId: string,
+    username: string,
+    createInstantConnectDto: CreatePublicInstantConnectDto = {},
+  ) {
+    return this.prismaService.$transaction(async (tx) => {
+      const targetPersona = await tx.persona.findFirst({
+        where: {
+          username: username.trim().toLowerCase(),
+        },
+        select: instantConnectTargetSelect,
+      });
+
+      return this.instantConnectInTransaction(
+        tx,
+        userId,
+        targetPersona,
+        createInstantConnectDto.source,
+        createInstantConnectDto.eventId,
+      );
+    });
+  }
+
+  private async instantConnectInTransaction(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    targetPersona: InstantConnectTarget | null,
+    source: ContactRequestSourceType | undefined,
+    eventId?: string,
+  ) {
+    const actorPersona = await tx.persona.findFirst({
+      where: {
+        userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!actorPersona) {
+      throw new NotFoundException("Persona not found");
+    }
+
+      if (!targetPersona) {
+        throw new NotFoundException("Target persona not found");
+      }
+
+      if (targetPersona.userId === userId) {
+        throw new BadRequestException(
+          "You cannot connect to your own persona",
+        );
+      }
+
+      if (targetPersona.accessMode === PrismaPersonaAccessMode.PRIVATE) {
+        throw new ForbiddenException("Cannot connect to private profile");
+      }
+
+      await this.blocksService.assertNoInteractionBlockInTransaction(
+        tx,
+        userId,
+        targetPersona.userId,
+      );
+
+      const actorUser = await tx.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          isVerified: true,
+          phoneVerifiedAt: true,
+        },
+      });
+
+      if (!actorUser) {
+        throw new NotFoundException("User not found");
+      }
+
+      if (targetPersona.verifiedOnly && !userHasActiveTrustFactor(actorUser)) {
+        throw new ForbiddenException("Verified profiles only");
+      }
+
+      const smartCardConfig = toSafeSmartCardConfig(targetPersona.smartCardConfig);
+      const hasActiveProfileQr = await this.hasActiveProfileQr(tx, targetPersona.id);
+
+      if (
+        targetPersona.sharingMode !== PrismaPersonaSharingMode.SMART_CARD ||
+        smartCardConfig?.primaryAction !==
+          PersonaSmartCardPrimaryAction.InstantConnect ||
+        !hasActiveProfileQr
+      ) {
+        throw new ForbiddenException(
+          "Instant connect is not available for this persona",
+        );
+      }
+
+      const eventSummary = await this.getEventSummary(tx, eventId);
+      const sourceType = toPrismaSourceType(source);
+      const relationshipContext = this.buildRelationshipContext(
+        source,
+        eventSummary,
+      );
+      const connectedAt = new Date();
+      const relationship = await this.createOrPromoteApprovedRelationship(tx, {
+        ownerUserId: userId,
+        targetUserId: targetPersona.userId,
+        ownerPersonaId: actorPersona.id,
+        targetPersonaId: targetPersona.id,
+        sourceType,
+        connectionContext: relationshipContext,
+      });
+
+      await Promise.all([
+        this.contactMemoryService.upsertInteractionMemory(tx, {
+          relationshipId: relationship.id,
+          eventId: relationshipContext.eventId,
+          contextLabel:
+            relationshipContext.label ?? toMemoryContextLabel(source, eventSummary),
+          metAt: connectedAt,
+          sourceLabel: toInstantConnectSourceLabel(source),
+        }),
+        this.updateInteractionMetadata(tx, relationship.id, connectedAt),
+        relationship.reciprocalRelationshipId
+          ? this.updateInteractionMetadata(
+              tx,
+              relationship.reciprocalRelationshipId,
+              connectedAt,
+            )
+          : Promise.resolve(null),
+      ]);
+
+      return {
+        success: true,
+        relationshipId: relationship.id,
+        status: "connected" as const,
+      };
+  }
 
   async createApprovedRelationship(
     tx: Prisma.TransactionClient,
@@ -127,6 +360,41 @@ export class RelationshipsService {
         interactionCount: true,
       },
     });
+  }
+
+  private async createOrPromoteApprovedRelationship(
+    tx: Prisma.TransactionClient,
+    data: {
+      ownerUserId: string;
+      targetUserId: string;
+      ownerPersonaId: string;
+      targetPersonaId: string;
+      sourceType: PrismaContactRequestSourceType;
+      connectionContext: RelationshipConnectionContext;
+    },
+  ) {
+    const relationshipId = await this.upsertApprovedRelationship(tx, {
+      ownerUserId: data.ownerUserId,
+      targetUserId: data.targetUserId,
+      ownerPersonaId: data.ownerPersonaId,
+      targetPersonaId: data.targetPersonaId,
+      sourceType: data.sourceType,
+      connectionContext: data.connectionContext,
+    });
+
+    const reciprocalRelationshipId = await this.upsertApprovedRelationship(tx, {
+      ownerUserId: data.targetUserId,
+      targetUserId: data.ownerUserId,
+      ownerPersonaId: data.targetPersonaId,
+      targetPersonaId: data.ownerPersonaId,
+      sourceType: data.sourceType,
+      connectionContext: data.connectionContext,
+    });
+
+    return {
+      id: relationshipId,
+      reciprocalRelationshipId,
+    };
   }
 
   async createOrRefreshInstantAccessRelationship(
@@ -423,4 +691,308 @@ export class RelationshipsService {
 
     return relationship;
   }
+
+  private async upsertApprovedRelationship(
+    tx: Prisma.TransactionClient,
+    data: {
+      ownerUserId: string;
+      targetUserId: string;
+      ownerPersonaId: string;
+      targetPersonaId: string;
+      sourceType: PrismaContactRequestSourceType;
+      connectionContext: RelationshipConnectionContext;
+    },
+  ) {
+    const existingRelationship = await tx.contactRelationship.findUnique({
+      where: {
+        ownerUserId_targetUserId_ownerPersonaId_targetPersonaId: {
+          ownerUserId: data.ownerUserId,
+          targetUserId: data.targetUserId,
+          ownerPersonaId: data.ownerPersonaId,
+          targetPersonaId: data.targetPersonaId,
+        },
+      },
+      select: {
+        id: true,
+        state: true,
+        sourceType: true,
+        sourceId: true,
+        connectionContext: true,
+        accessStartAt: true,
+        accessEndAt: true,
+      },
+    });
+
+    if (!existingRelationship) {
+      try {
+        const createdRelationship = await tx.contactRelationship.create({
+          data: {
+            ownerUserId: data.ownerUserId,
+            targetUserId: data.targetUserId,
+            ownerPersonaId: data.ownerPersonaId,
+            targetPersonaId: data.targetPersonaId,
+            state: PrismaContactRelationshipState.APPROVED,
+            sourceType: data.sourceType,
+            sourceId: null,
+            connectionContext: this.attachEventContext(data.connectionContext),
+            accessStartAt: null,
+            accessEndAt: null,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        return createdRelationship.id;
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002"
+        ) {
+          const relationship = await tx.contactRelationship.findUnique({
+            where: {
+              ownerUserId_targetUserId_ownerPersonaId_targetPersonaId: {
+                ownerUserId: data.ownerUserId,
+                targetUserId: data.targetUserId,
+                ownerPersonaId: data.ownerPersonaId,
+                targetPersonaId: data.targetPersonaId,
+              },
+            },
+            select: {
+              id: true,
+            },
+          });
+
+          if (relationship) {
+            return relationship.id;
+          }
+        }
+
+        throw error;
+      }
+    }
+
+    if (
+      existingRelationship.state === PrismaContactRelationshipState.APPROVED &&
+      existingRelationship.sourceType === data.sourceType &&
+      existingRelationship.sourceId === null &&
+      !this.hasConnectionContextChanged(
+        existingRelationship.connectionContext,
+        data.connectionContext,
+      ) &&
+      existingRelationship.accessStartAt === null &&
+      existingRelationship.accessEndAt === null
+    ) {
+      return existingRelationship.id;
+    }
+
+    const updatedRelationship = await tx.contactRelationship.update({
+      where: {
+        id: existingRelationship.id,
+      },
+      data: {
+        state: PrismaContactRelationshipState.APPROVED,
+        sourceType: data.sourceType,
+        sourceId: null,
+        connectionContext: this.attachEventContext(data.connectionContext),
+        accessStartAt: null,
+        accessEndAt: null,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return updatedRelationship.id;
+  }
+
+  private async hasActiveProfileQr(
+    tx: Prisma.TransactionClient,
+    personaId: string,
+  ) {
+    const activeProfileQr = await tx.qRAccessToken.findFirst({
+      where: {
+        personaId,
+        type: PrismaQrType.profile,
+        status: PrismaQrStatus.active,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return activeProfileQr !== null;
+  }
+
+  private attachEventContext(
+    context: RelationshipConnectionContext,
+  ): Prisma.InputJsonValue {
+    return {
+      type: context.type,
+      eventId: context.eventId,
+      label: context.label,
+    } satisfies Prisma.InputJsonObject;
+  }
+
+  private async getEventSummary(
+    tx: Prisma.TransactionClient,
+    eventId?: string,
+  ): Promise<EventSummary | null> {
+    if (!eventId) {
+      return null;
+    }
+
+    const event = await tx.event.findUnique({
+      where: {
+        id: eventId,
+      },
+      select: {
+        id: true,
+        name: true,
+        startsAt: true,
+        endsAt: true,
+        status: true,
+      },
+    });
+
+    if (!event) {
+      return null;
+    }
+
+    const now = new Date();
+
+    if (
+      event.status === PrismaEventStatus.DRAFT ||
+      event.startsAt > now ||
+      event.endsAt <= now
+    ) {
+      return null;
+    }
+
+    return {
+      id: event.id,
+      name: event.name,
+    };
+  }
+
+  private buildRelationshipContext(
+    sourceType: ContactRequestSourceType | undefined,
+    eventSummary: EventSummary | null,
+  ): RelationshipConnectionContext {
+    if (eventSummary) {
+      return {
+        type: "event",
+        eventId: eventSummary.id,
+        label: eventSummary.name,
+      };
+    }
+
+    const contextType = toRelationshipContextType(sourceType);
+
+    return {
+      type: contextType,
+      eventId: null,
+      label: toSourceContextLabel(sourceType),
+    };
+  }
+
+  private hasConnectionContextChanged(
+    currentValue: Prisma.JsonValue | null,
+    nextValue: RelationshipConnectionContext,
+  ) {
+    const currentContext = readStoredConnectionContext(currentValue);
+
+    return (
+      currentContext?.type !== nextValue.type ||
+      currentContext?.eventId !== nextValue.eventId ||
+      (currentContext?.label ?? null) !== nextValue.label
+    );
+  }
+}
+
+function toPrismaSourceType(
+  sourceType: ContactRequestSourceType | undefined,
+): PrismaContactRequestSourceType {
+  switch (sourceType) {
+    case ContactRequestSourceType.Qr:
+      return PrismaContactRequestSourceType.QR;
+    case ContactRequestSourceType.Event:
+      return PrismaContactRequestSourceType.EVENT;
+    case ContactRequestSourceType.Profile:
+    case undefined:
+      return PrismaContactRequestSourceType.PROFILE;
+  }
+}
+
+function toInstantConnectSourceLabel(
+  sourceType: ContactRequestSourceType | undefined,
+) {
+  switch (sourceType) {
+    case ContactRequestSourceType.Qr:
+      return "Instant connect via QR";
+    case ContactRequestSourceType.Event:
+      return "Instant connect via Event";
+    case ContactRequestSourceType.Profile:
+      return "Instant connect via Profile";
+    case undefined:
+      return "Instant connect";
+  }
+}
+
+function toMemoryContextLabel(
+  sourceType: ContactRequestSourceType | undefined,
+  eventSummary: EventSummary | null,
+) {
+  return eventSummary?.name ?? toSourceContextLabel(sourceType);
+}
+
+function toSourceContextLabel(
+  sourceType: ContactRequestSourceType | undefined,
+): string {
+  switch (sourceType) {
+    case ContactRequestSourceType.Qr:
+      return "QR";
+    case ContactRequestSourceType.Event:
+      return "Event";
+    case ContactRequestSourceType.Profile:
+    case undefined:
+      return "Profile";
+  }
+}
+
+function toRelationshipContextType(
+  sourceType: ContactRequestSourceType | undefined,
+): RelationshipContextType {
+  switch (sourceType) {
+    case ContactRequestSourceType.Qr:
+      return "qr";
+    case ContactRequestSourceType.Event:
+      return "event";
+    case ContactRequestSourceType.Profile:
+    case undefined:
+      return "profile";
+  }
+}
+
+function readStoredConnectionContext(
+  value: Prisma.JsonValue | null,
+): RelationshipConnectionContext | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const type = candidate.type;
+  const eventId = candidate.eventId;
+  const label = candidate.label;
+
+  if (type !== "qr" && type !== "profile" && type !== "event") {
+    return null;
+  }
+
+  return {
+    type,
+    eventId: typeof eventId === "string" ? eventId : null,
+    label: typeof label === "string" ? label : null,
+  };
 }

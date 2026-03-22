@@ -9,6 +9,8 @@ import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { publicApi, requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
+import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
+import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
 import { formatPrimaryAction } from "@/lib/persona/labels";
 import {
@@ -121,22 +123,26 @@ export function RequestAccessPanel({
   const smartCardPrimaryAction = smartCardPrimaryCta?.action ?? null;
   const smartCardLoginDescription =
     smartCardPrimaryAction === null
-      ? "This Smart Card is missing its primary action right now. Log in to continue once the shared action is available."
-      : `This smart card starts with ${formatPrimaryAction(smartCardPrimaryAction)}. Log in to continue from one of your personas.`;
+      ? "This profile is missing its primary access action right now. Log in to continue once access is available."
+      : `${dotlyPositioning.publicProfile.smartCardHelper} Log in to continue from one of your personas.`;
   const smartCardPrimaryActionHeading =
     smartCardPrimaryAction === null
-      ? "This Smart Card is currently unavailable"
-      : `${formatPrimaryAction(smartCardPrimaryAction)} is the primary card action`;
+      ? "This card is currently unavailable"
+      : `${formatPrimaryAction(smartCardPrimaryAction)} leads this card`;
   const smartCardRequestDescription =
     smartCardPrimaryAction === null
-      ? `This Smart Card is missing its primary action. Send a permission request to ${profile.fullName}.`
-      : `${formatPrimaryAction(smartCardPrimaryAction)} is configured as the primary card action. Send a permission request to ${profile.fullName}.`;
+      ? `This profile is missing its primary access action. Send a permission request to ${profile.fullName}.`
+      : `${dotlyPositioning.publicProfile.smartCardHelper} Request access when you want a more intentional introduction to ${profile.fullName}.`;
   const isSmartCardMisconfigured =
     profile.sharingMode === "smart_card" && profile.smartCard === null;
   const supportsRequestAccess =
     profile.sharingMode === "controlled" ||
     (smartCardPrimaryCta?.action === "request_access" &&
       !smartCardPrimaryCta.isDisabled);
+  const canSendRequest = hasUnlockedTrustRequirement(
+    currentUser,
+    "send_contact_request",
+  );
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -177,14 +183,14 @@ export function RequestAccessPanel({
       <Card className="space-y-4 border-amber-300/50 bg-amber-50/80 dark:border-status-warning/25 dark:bg-status-warning/10">
         <div className="space-y-2">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-amber-700 dark:text-status-warning">
-            Smart Card unavailable
+            Profile access unavailable
           </p>
           <h2 className="font-sans text-lg font-semibold text-foreground">
-            This card is missing its action configuration
+            This profile is missing its access configuration
           </h2>
           <p className="text-sm leading-6 text-muted">
-            The owner has enabled Smart Card Mode, but the public card details
-            are incomplete right now. Try again later.
+            The owner has enabled profile access, but the public access details are
+            incomplete right now. Try again later.
           </p>
         </div>
       </Card>
@@ -197,22 +203,22 @@ export function RequestAccessPanel({
         <div className="space-y-2">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
             {profile.sharingMode === "smart_card"
-              ? "Smart Card action"
+              ? "Profile access"
               : "Request access"}
           </p>
           <h2 className="font-sans text-lg font-semibold text-foreground">
             {profile.sharingMode === "smart_card"
-              ? "Log in to continue"
+              ? "Log in to continue from this card"
               : "Log in to connect"}
           </h2>
           <p className="text-sm leading-6 text-muted">
             {profile.sharingMode === "smart_card"
               ? smartCardLoginDescription
-              : "Use one of your personas to request access in a permissioned, approval-based flow."}
+              : dotlyPositioning.publicProfile.controlledHelper}
           </p>
         </div>
         <Link href={loginHref} className="block">
-          <PrimaryButton className="w-full">Login to Connect</PrimaryButton>
+          <PrimaryButton className="w-full">Log in to continue</PrimaryButton>
         </Link>
       </Card>
     );
@@ -245,14 +251,13 @@ export function RequestAccessPanel({
       <Card className="space-y-4 border-cyan-200 bg-cyan-50/70 dark:border-brandCyan/25 dark:bg-brandCyan/10">
         <div className="space-y-2">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-cyan-700 dark:text-brandCyan">
-            Smart Card mode
+            Profile access
           </p>
           <h2 className="font-sans text-lg font-semibold text-foreground">
             {smartCardPrimaryActionHeading}
           </h2>
           <p className="text-sm leading-6 text-muted">
-            This public profile does not use the approval-based request flow.
-            Continue through the card entry point that was shared with you.
+            This profile leads with a direct access action instead of a request. Continue through the profile above.
           </p>
         </div>
       </Card>
@@ -272,12 +277,12 @@ export function RequestAccessPanel({
     );
   }
 
-  if (currentUser && !currentUser.isVerified) {
+  if (currentUser && !canSendRequest) {
     return (
       <VerificationPrompt
         email={currentUser.email}
-        title="Verify your email before sending requests"
-        description={`Dotly only sends connection requests from verified accounts. Verify ${currentUser.email} to request access to ${profile.fullName}.`}
+        title="Add a trust factor before sending requests"
+        description={`Dotly only sends connection requests from accounts with a verified email or mobile OTP. Add either trust factor before requesting access to ${profile.fullName}.`}
       />
     );
   }
@@ -301,18 +306,18 @@ export function RequestAccessPanel({
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-brandRose dark:text-brandCyan">
           {profile.sharingMode === "smart_card"
-            ? "Smart Card action"
+            ? "Profile access"
             : "Request access"}
         </p>
         <h2 className="font-sans text-lg font-semibold text-foreground">
           {profile.sharingMode === "smart_card"
-            ? "Request access from this Smart Card"
+            ? "Request access from this card"
             : "Reach out from one of your personas"}
         </h2>
         <p className="text-sm leading-6 text-muted">
           {profile.sharingMode === "smart_card"
             ? smartCardRequestDescription
-            : `Send a permission request to ${profile.fullName}. They can approve or reject it from their requests screen.`}
+            : dotlyPositioning.publicProfile.controlledHelper}
         </p>
       </div>
 
@@ -351,7 +356,7 @@ export function RequestAccessPanel({
             maxLength={280}
             rows={3}
             className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 font-sans text-sm text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
-            placeholder="Tell them why you'd like to connect (optional)"
+            placeholder="Add a note they will recognize later (optional)"
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             disabled={isSubmitting || Boolean(successMessage)}

@@ -11,6 +11,7 @@ import {
   getFriendlyAuthError,
   type AuthMode,
 } from "@/lib/auth/auth-error-messages";
+import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
 import { cn } from "@/lib/utils/cn";
 import { motion, AnimatePresence } from "framer-motion";
@@ -98,19 +99,13 @@ export function AuthForm({
     () =>
       mode === "login"
         ? {
-            title: "Welcome back",
-            description:
-              "Sign in to manage your personas, QR sharing, and access controls.",
             submitLabel: "Log in",
             alternateLabel: "Need an account?",
             alternateHref: routes.public.signup,
             alternateAction: "Sign up",
           }
         : {
-            title: "Create your account",
-            description:
-              "Create your Dotly account, confirm your email, and start sharing with the right level of access.",
-            submitLabel: "Create account",
+          submitLabel: dotlyPositioning.cta.primary,
             alternateLabel: "Already have an account?",
             alternateHref: routes.public.login,
             alternateAction: "Log in",
@@ -195,16 +190,7 @@ export function AuthForm({
       className="space-y-6 form-apple"
       onSubmit={handleSubmit}
     >
-      <div className="space-y-1.5 text-center">
-        <h2 className="text-[28px] font-bold tracking-tight text-foreground text-balance">
-          {content.title}
-        </h2>
-        <p className="text-[15px] leading-relaxed text-muted-foreground/90 text-balance">
-          {content.description}
-        </p>
-      </div>
-
-      <div className="relative pt-2 group">
+      <div className="relative group">
         <input
           id="email"
           required
@@ -363,40 +349,28 @@ export function AuthForm({
       </div>
 
       {mode === "signup" ? (
-        <motion.div
+        <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="space-y-6"
+          className="text-center text-[13px] leading-relaxed text-muted-foreground"
         >
-          <p className="text-center text-[13px] leading-relaxed text-muted-foreground">
-            By creating an account, you agree to Dotly&apos;s{" "}
-            <Link
-              href={routes.public.terms}
-              className="font-semibold text-brandRose hover:text-brandRose/80 underline-offset-4 hover:underline dark:text-brandCyan dark:hover:text-brandCyan/80 transition-colors"
-            >
-              Terms
-            </Link>{" "}
-            and acknowledge the{" "}
-            <Link
-              href={routes.public.privacy}
-              className="font-semibold text-brandRose hover:text-brandRose/80 underline-offset-4 hover:underline dark:text-brandCyan dark:hover:text-brandCyan/80 transition-colors"
-            >
-              Privacy Policy
-            </Link>
-            .
-          </p>
-
-          <div className="rounded-[1.25rem] border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] px-5 py-4 backdrop-blur-md">
-            <p className="font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-muted-foreground/80">
-              What happens next
-            </p>
-            <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
-              Create your account, confirm your email, log in, build your first
-              persona, and start sharing with the right access level.
-            </p>
-          </div>
-        </motion.div>
+          By creating an account, you agree to Dotly&apos;s{" "}
+          <Link
+            href={routes.public.terms}
+            className="font-semibold text-brandRose hover:text-brandRose/80 underline-offset-4 hover:underline dark:text-brandCyan dark:hover:text-brandCyan/80 transition-colors"
+          >
+            Terms
+          </Link>{" "}
+          and acknowledge the{" "}
+          <Link
+            href={routes.public.privacy}
+            className="font-semibold text-brandRose hover:text-brandRose/80 underline-offset-4 hover:underline dark:text-brandCyan dark:hover:text-brandCyan/80 transition-colors"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </motion.p>
       ) : null}
 
       <p className="text-center text-[14px] font-medium text-muted-foreground pt-4">

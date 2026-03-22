@@ -28,21 +28,18 @@ import { RequestAccessPanel } from "./request-access-panel";
 const profileFixture = {
   username: "target",
   publicUrl: "https://dotly.id/target",
-  name: "Target User",
   fullName: "Target User",
   jobTitle: "Founder",
   companyName: "Dotly",
   tagline: "Connect intentionally",
-  profilePhoto: null,
   profilePhotoUrl: null,
   sharingMode: "controlled" as const,
-  publicActions: {
-    phone: null,
-    whatsappNumber: null,
-    email: null,
-  },
   smartCard: null,
-  smartCardConfig: null,
+  trust: {
+    isVerified: false,
+    isStrongVerified: false,
+    isBusinessVerified: false,
+  },
 } as const;
 
 const personaFixture = {
@@ -82,7 +79,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByRole("link", { name: /login to connect/i }),
+      screen.getByRole("link", { name: /log in to continue/i }),
     ).toHaveAttribute("href", "/login?next=%2Fu%2Ftarget");
   });
 
@@ -93,7 +90,6 @@ describe("RequestAccessPanel", () => {
           ...profileFixture,
           sharingMode: "smart_card",
           smartCard: null,
-          smartCardConfig: null,
         },
         initialPersonas: [],
         isAuthenticated: false,
@@ -101,10 +97,10 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/this card is missing its action configuration/i),
+      screen.getByText(/this profile is missing its access configuration/i),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: /login to connect/i }),
+      screen.queryByRole("link", { name: /log in to continue/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -136,7 +132,13 @@ describe("RequestAccessPanel", () => {
               "Email verification is the first trust factor for your Dotly identity.",
             unlockedActions: ["Send contact requests"],
             restrictedActions: [],
-            requirements: [],
+            requirements: [
+              {
+                key: "send_contact_request",
+                label: "Send contact requests",
+                unlocked: true,
+              },
+            ],
             trustFactors: [],
           },
         },
@@ -175,38 +177,16 @@ describe("RequestAccessPanel", () => {
           sharingMode: "smart_card",
           smartCard: {
             primaryAction: "request_access",
-            allowCall: false,
-            allowWhatsapp: true,
-            allowEmail: false,
-            allowVcard: false,
             actionState: {
               requestAccessEnabled: true,
               instantConnectEnabled: false,
               contactMeEnabled: true,
-            },
-            actions: {
-              call: false,
-              whatsapp: true,
-              email: false,
-              vcard: false,
             },
             actionLinks: {
               call: null,
               whatsapp: "https://wa.me/15551234567",
               email: null,
               vcard: null,
-            },
-          },
-          smartCardConfig: {
-            primaryAction: "request_access",
-            allowCall: false,
-            allowWhatsapp: true,
-            allowEmail: false,
-            allowVcard: false,
-            actionState: {
-              requestAccessEnabled: true,
-              instantConnectEnabled: false,
-              contactMeEnabled: true,
             },
           },
         },
@@ -229,7 +209,13 @@ describe("RequestAccessPanel", () => {
               "Email verification is the first trust factor for your Dotly identity.",
             unlockedActions: ["Send contact requests"],
             restrictedActions: [],
-            requirements: [],
+            requirements: [
+              {
+                key: "send_contact_request",
+                label: "Send contact requests",
+                unlocked: true,
+              },
+            ],
             trustFactors: [],
           },
         },
@@ -237,7 +223,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/request access from this smart card/i),
+      screen.getByText(/request access from this card/i),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /request access/i }));
@@ -256,38 +242,16 @@ describe("RequestAccessPanel", () => {
           instantConnectUrl: "https://dotly.id/q/profile-qr-1",
           smartCard: {
             primaryAction: "instant_connect",
-            allowCall: false,
-            allowWhatsapp: true,
-            allowEmail: false,
-            allowVcard: true,
             actionState: {
               requestAccessEnabled: true,
               instantConnectEnabled: true,
               contactMeEnabled: true,
-            },
-            actions: {
-              call: false,
-              whatsapp: true,
-              email: false,
-              vcard: true,
             },
             actionLinks: {
               call: null,
               whatsapp: "https://wa.me/15551234567",
               email: null,
               vcard: "/v1/public/personas/target/vcard",
-            },
-          },
-          smartCardConfig: {
-            primaryAction: "instant_connect",
-            allowCall: false,
-            allowWhatsapp: true,
-            allowEmail: false,
-            allowVcard: true,
-            actionState: {
-              requestAccessEnabled: true,
-              instantConnectEnabled: true,
-              contactMeEnabled: true,
             },
           },
         },
@@ -297,7 +261,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/instant connect is the primary card action/i),
+      screen.getByText(/instant connect leads this card/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /request access/i }),
@@ -312,38 +276,16 @@ describe("RequestAccessPanel", () => {
           sharingMode: "smart_card",
           smartCard: {
             primaryAction: "contact_me",
-            allowCall: false,
-            allowWhatsapp: false,
-            allowEmail: false,
-            allowVcard: false,
             actionState: {
               requestAccessEnabled: true,
               instantConnectEnabled: false,
               contactMeEnabled: false,
-            },
-            actions: {
-              call: false,
-              whatsapp: false,
-              email: false,
-              vcard: false,
             },
             actionLinks: {
               call: null,
               whatsapp: null,
               email: null,
               vcard: null,
-            },
-          },
-          smartCardConfig: {
-            primaryAction: "contact_me",
-            allowCall: false,
-            allowWhatsapp: false,
-            allowEmail: false,
-            allowVcard: false,
-            actionState: {
-              requestAccessEnabled: true,
-              instantConnectEnabled: false,
-              contactMeEnabled: false,
             },
           },
         },
@@ -366,7 +308,13 @@ describe("RequestAccessPanel", () => {
               "Email verification is the first trust factor for your Dotly identity.",
             unlockedActions: ["Send contact requests"],
             restrictedActions: [],
-            requirements: [],
+            requirements: [
+              {
+                key: "send_contact_request",
+                label: "Send contact requests",
+                unlocked: true,
+              },
+            ],
             trustFactors: [],
           },
         },
@@ -374,7 +322,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/request access from this smart card/i),
+      screen.getByText(/request access from this card/i),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /request access/i })).toBeEnabled();
   });
@@ -386,7 +334,6 @@ describe("RequestAccessPanel", () => {
           ...profileFixture,
           sharingMode: "smart_card",
           smartCard: null,
-          smartCardConfig: null,
         },
         initialPersonas: [personaFixture],
         isAuthenticated: true,
@@ -394,14 +341,14 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/this card is missing its action configuration/i),
+      screen.getByText(/this profile is missing its access configuration/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /request access/i }),
     ).not.toBeInTheDocument();
   });
 
-  it("shows verification guidance instead of the request form for unverified users", () => {
+  it("shows trust-factor guidance instead of the request form when requests are still gated", () => {
     render(
       React.createElement(RequestAccessPanel, {
         profile: profileFixture,
@@ -432,7 +379,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/verify your email before sending requests/i),
+      screen.getByText(/add a trust factor before sending requests/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /request access/i }),

@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { PersonaSharingSummary } from "@/components/personas/persona-sharing-summary";
 import { PrimaryButton } from "@/components/shared/primary-button";
+import { SecondaryButton } from "@/components/shared/secondary-button";
 import { personaApi } from "@/lib/api";
 import { isApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
@@ -62,7 +64,7 @@ const smartCardToggleOptions: Array<{ key: ToggleKey; label: string }> = [
   { key: "allowCall", label: "Allow Call" },
   { key: "allowWhatsapp", label: "Allow WhatsApp" },
   { key: "allowEmail", label: "Allow Email" },
-  { key: "allowVcard", label: "Allow Save Contact" },
+  { key: "allowVcard", label: "Allow Save Details" },
 ];
 
 function createFormState(persona: PersonaSummary): FormState {
@@ -209,6 +211,77 @@ function buildSmartCardConfig(
   };
 }
 
+function getPrimaryActionAvailability(persona: PersonaSummary) {
+  return {
+    request_access:
+      persona.sharingCapabilities?.primaryActions.requestAccess ??
+      persona.accessMode !== "private",
+    instant_connect:
+      persona.sharingCapabilities?.primaryActions.instantConnect ?? false,
+    contact_me:
+      persona.sharingCapabilities?.primaryActions.contactMe ?? true,
+  } satisfies Record<PersonaSmartCardPrimaryAction, boolean>;
+}
+
+function isPrimaryActionSupported(
+  primaryAction: PrimaryActionValue,
+  availability: Record<PersonaSmartCardPrimaryAction, boolean>,
+): boolean {
+  return primaryAction === "" ? false : availability[primaryAction];
+}
+
+function getAvailablePrimaryActionOptions(persona: PersonaSummary) {
+  const availability = getPrimaryActionAvailability(persona);
+
+  return personaSmartCardPrimaryActionOptions.filter(
+    (option) => availability[option.value],
+  );
+}
+
+function getRecommendedPrimaryAction(
+  persona: PersonaSummary,
+  formState: Pick<
+    FormState,
+    | "allowCall"
+    | "allowWhatsapp"
+    | "allowEmail"
+    | "allowVcard"
+    | "publicPhone"
+    | "publicWhatsappNumber"
+    | "publicEmail"
+  >,
+): PrimaryActionValue {
+  const availability = getPrimaryActionAvailability(persona);
+
+  if (availability.instant_connect) {
+    return "instant_connect";
+  }
+
+  if (getEnabledDirectActionCount(formState) > 0) {
+    return "contact_me";
+  }
+
+  if (availability.request_access) {
+    return "request_access";
+  }
+
+  return "contact_me";
+}
+
+function getPrimaryActionHint(persona: PersonaSummary): string | null {
+  const availability = getPrimaryActionAvailability(persona);
+
+  if (!availability.request_access && !availability.instant_connect) {
+    return "This persona is private, so Smart Card mode can only offer direct contact actions.";
+  }
+
+  if (!availability.instant_connect) {
+    return "Instant Connect appears after you activate a profile QR code for this persona.";
+  }
+
+  return null;
+}
+
 export function PersonaSharingSettingsForm({
   persona,
 }: PersonaSharingSettingsFormProps) {
@@ -219,6 +292,31 @@ export function PersonaSharingSettingsForm({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [sharingConfigSource, setSharingConfigSource] = useState(
+    persona.sharingConfigSource ?? null,
+  );
+
+  useEffect(() => {
+    if (formState.sharingMode !== "smart_card") {
+      return;
+    }
+
+    const availability = getPrimaryActionAvailability(persona);
+
+    if (isPrimaryActionSupported(formState.primaryAction, availability)) {
+      return;
+    }
+
+    setFormState((current) => ({
+      ...current,
+      primaryAction: getRecommendedPrimaryAction(persona, current),
+    }));
+  }, [
+    formState.primaryAction,
+    formState.sharingMode,
+    persona,
+  ]);
 
   useEffect(() => {
     if (!successMessage) {
@@ -247,6 +345,15 @@ export function PersonaSharingSettingsForm({
     setFormState((current) => ({
       ...current,
       sharingMode: nextMode,
+      primaryAction:
+        nextMode === "smart_card"
+          ? isPrimaryActionSupported(
+              current.primaryAction,
+              getPrimaryActionAvailability(persona),
+            )
+            ? current.primaryAction
+            : getRecommendedPrimaryAction(persona, current)
+          : current.primaryAction,
     }));
   }
 
@@ -286,7 +393,9 @@ export function PersonaSharingSettingsForm({
       });
 
       setFormState(createFormState(updatedPersona));
+      setSharingConfigSource(updatedPersona.sharingConfigSource ?? null);
       setSuccessMessage("Sharing settings saved.");
+      setIsExpanded(false);
       router.refresh();
     } catch (submissionError) {
       if (isApiError(submissionError) && submissionError.status === 401) {
@@ -315,269 +424,305 @@ export function PersonaSharingSettingsForm({
   const isSmartCardInvalid =
     smartCardSelected && Object.keys(validationErrors).length > 0;
   const isSaveDisabled = isSubmitting || isSmartCardInvalid;
+  const primaryActionOptions = getAvailablePrimaryActionOptions(persona);
+  const primaryActionHint = getPrimaryActionHint(persona);
 
   const publicFieldHint = "Only shown if the matching action is enabled";
 
   return (
     <>
       <form className="space-y-6" onSubmit={handleSubmit}>
-        <fieldset className="space-y-3">
-          <legend className="sr-only">How people can access you</legend>
+        <div className="space-y-4">
+          <PersonaSharingSummary
+            sharingMode={formState.sharingMode}
+            primaryAction={formState.primaryAction}
+            publicPhone={formState.publicPhone}
+            publicWhatsappNumber={formState.publicWhatsappNumber}
+            publicEmail={formState.publicEmail}
+            allowCall={formState.allowCall}
+            allowWhatsapp={formState.allowWhatsapp}
+            allowEmail={formState.allowEmail}
+            allowVcard={formState.allowVcard}
+            sharingConfigSource={sharingConfigSource}
+          />
 
-          <div className="flex flex-col gap-3">
-            {personaSharingModeOptions.map((option) => {
-              const isSelected = formState.sharingMode === option.value;
-
-              return (
-                <label
-                  key={option.value}
-                  className={cn(
-                    "flex min-h-[4.75rem] cursor-pointer items-start gap-4 rounded-3xl border px-4 py-4 transition-all focus-within:ring-2 focus-within:ring-brandRose/20 dark:focus-within:ring-brandCyan/30",
-                    isSelected
-                      ? "border-brandRose/40 bg-brandRose/8 shadow-[0_12px_30px_rgba(255,51,102,0.08)] dark:border-brandCyan/50 dark:bg-brandCyan/10"
-                      : "border-border bg-background hover:border-border/80",
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="sharing-mode"
-                    className="mt-1 h-5 w-5 accent-brandRose dark:accent-brandCyan"
-                    checked={isSelected}
-                    onChange={() => setSharingMode(option.value)}
-                  />
-
-                  <span className="space-y-1">
-                    <span className="block text-base font-semibold text-foreground">
-                      {option.label}
-                    </span>
-                    <span className="block text-sm leading-6 text-muted">
-                      {option.description}
-                    </span>
-                  </span>
-                </label>
-              );
-            })}
+          <div className="flex justify-start">
+            <SecondaryButton
+              type="button"
+              size="sm"
+              onClick={() => setIsExpanded((current) => !current)}
+            >
+              {isExpanded ? "Hide settings" : "Customize"}
+            </SecondaryButton>
           </div>
-        </fieldset>
+        </div>
 
-        {smartCardSelected ? (
-          <section className="space-y-5 rounded-3xl border border-border bg-surface/40 p-4 sm:p-5">
-            <div className="space-y-1">
-              <h2 className="text-base font-semibold text-foreground">
-                Smart Card config
-              </h2>
-              <p className="text-sm leading-6 text-muted">
-                These settings control the public actions shown on this Smart Card. Only enabled actions appear, and you do not need to turn them all on.
-              </p>
-            </div>
+        {isExpanded ? (
+          <>
+            <fieldset className="space-y-3">
+              <legend className="sr-only">How people can access you</legend>
 
-            <div className="space-y-1.5">
-              <label className="label-xs text-muted" htmlFor="primary-action">
-                Primary Action
-              </label>
-              <select
-                id="primary-action"
-                className={inputCls}
-                value={formState.primaryAction}
-                onChange={(event) => {
-                  updateField(
-                    "primaryAction",
-                    event.target.value as PrimaryActionValue,
+              <div className="flex flex-col gap-3">
+                {personaSharingModeOptions.map((option) => {
+                  const isSelected = formState.sharingMode === option.value;
+
+                  return (
+                    <label
+                      key={option.value}
+                      className={cn(
+                        "flex min-h-[4.75rem] cursor-pointer items-start gap-4 rounded-3xl border px-4 py-4 transition-all focus-within:ring-2 focus-within:ring-brandRose/20 dark:focus-within:ring-brandCyan/30",
+                        isSelected
+                          ? "border-brandRose/40 bg-brandRose/8 shadow-[0_12px_30px_rgba(255,51,102,0.08)] dark:border-brandCyan/50 dark:bg-brandCyan/10"
+                          : "border-border bg-background hover:border-border/80",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="sharing-mode"
+                        className="mt-1 h-5 w-5 accent-brandRose dark:accent-brandCyan"
+                        checked={isSelected}
+                        onChange={() => setSharingMode(option.value)}
+                      />
+
+                      <span className="space-y-1">
+                        <span className="block text-base font-semibold text-foreground">
+                          {option.label}
+                        </span>
+                        <span className="block text-sm leading-6 text-muted">
+                          {option.description}
+                        </span>
+                      </span>
+                    </label>
                   );
-                }}
-                aria-invalid={validationErrors.primaryAction ? "true" : "false"}
-                aria-describedby={
-                  validationErrors.primaryAction
-                    ? "primary-action-error"
-                    : undefined
-                }
-              >
-                <option value="">Select primary action</option>
-                {personaSmartCardPrimaryActionOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              {validationErrors.primaryAction ? (
-                <p
-                  id="primary-action-error"
-                  className="text-sm text-rose-500 dark:text-rose-400"
-                >
-                  {validationErrors.primaryAction}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="space-y-3 rounded-2xl border border-border/80 bg-background/80 p-4">
-              <div className="space-y-1">
-                <h3 className="text-sm font-semibold text-foreground">
-                  Public contact values
-                </h3>
-                <p className="text-sm leading-6 text-muted">
-                  These values are public-facing on your Smart Card.
-                </p>
+                })}
               </div>
+            </fieldset>
 
-              <div className="space-y-1.5">
-                <label className="label-xs text-muted" htmlFor="public-phone">
-                  Public phone
-                </label>
-                <input
-                  id="public-phone"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  className={inputCls}
-                  value={formState.publicPhone}
-                  onChange={(event) => updateField("publicPhone", event.target.value)}
-                  placeholder="+1 555 123 4567"
-                  aria-invalid={validationErrors.publicPhone ? "true" : "false"}
-                  aria-describedby={validationErrors.publicPhone ? "public-phone-error" : "public-phone-hint"}
-                />
-                <p id="public-phone-hint" className="text-sm text-muted">
-                  {publicFieldHint}
-                </p>
-                {validationErrors.publicPhone ? (
-                  <p
-                    id="public-phone-error"
-                    className="text-sm text-rose-500 dark:text-rose-400"
-                  >
-                    {validationErrors.publicPhone}
+            {smartCardSelected ? (
+              <section className="space-y-5 rounded-3xl border border-border bg-surface/40 p-4 sm:p-5">
+                <div className="space-y-1">
+                  <h2 className="text-base font-semibold text-foreground">
+                    Smart Card config
+                  </h2>
+                  <p className="text-sm leading-6 text-muted">
+                    Decide what someone sees first on your Smart Card. Only enabled actions appear, and you do not need to turn them all on.
                   </p>
-                ) : null}
-              </div>
+                </div>
 
-              <div className="space-y-1.5">
-                <label
-                  className="label-xs text-muted"
-                  htmlFor="public-whatsapp-number"
-                >
-                  Public WhatsApp number
-                </label>
-                <input
-                  id="public-whatsapp-number"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  className={inputCls}
-                  value={formState.publicWhatsappNumber}
-                  onChange={(event) =>
-                    updateField("publicWhatsappNumber", event.target.value)
-                  }
-                  placeholder="+1 555 123 4567"
-                  aria-invalid={validationErrors.publicWhatsappNumber ? "true" : "false"}
-                  aria-describedby={
-                    validationErrors.publicWhatsappNumber
-                      ? "public-whatsapp-error"
-                      : "public-whatsapp-hint"
-                  }
-                />
-                <p id="public-whatsapp-hint" className="text-sm text-muted">
-                  {publicFieldHint}
-                </p>
-                {validationErrors.publicWhatsappNumber ? (
-                  <p
-                    id="public-whatsapp-error"
-                    className="text-sm text-rose-500 dark:text-rose-400"
+                <div className="space-y-1.5">
+                  <label className="label-xs text-muted" htmlFor="primary-action">
+                    Primary Action
+                  </label>
+                  <select
+                    id="primary-action"
+                    className={inputCls}
+                    value={formState.primaryAction}
+                    onChange={(event) => {
+                      updateField(
+                        "primaryAction",
+                        event.target.value as PrimaryActionValue,
+                      );
+                    }}
+                    aria-invalid={validationErrors.primaryAction ? "true" : "false"}
+                    aria-describedby={
+                      validationErrors.primaryAction
+                        ? "primary-action-error"
+                        : undefined
+                    }
                   >
-                    {validationErrors.publicWhatsappNumber}
-                  </p>
-                ) : null}
-              </div>
+                    {primaryActionOptions.length > 1 ? (
+                      <option value="">Select primary action</option>
+                    ) : null}
+                    {primaryActionOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  {primaryActionHint ? (
+                    <p className="text-sm text-muted">{primaryActionHint}</p>
+                  ) : null}
+                  {validationErrors.primaryAction ? (
+                    <p
+                      id="primary-action-error"
+                      className="text-sm text-rose-500 dark:text-rose-400"
+                    >
+                      {validationErrors.primaryAction}
+                    </p>
+                  ) : null}
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="label-xs text-muted" htmlFor="public-email">
-                  Public email
-                </label>
-                <input
-                  id="public-email"
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  className={inputCls}
-                  value={formState.publicEmail}
-                  onChange={(event) => updateField("publicEmail", event.target.value)}
-                  placeholder="you@example.com"
-                  aria-invalid={validationErrors.publicEmail ? "true" : "false"}
-                  aria-describedby={validationErrors.publicEmail ? "public-email-error" : "public-email-hint"}
-                />
-                <p id="public-email-hint" className="text-sm text-muted">
-                  {publicFieldHint}
-                </p>
-                {validationErrors.publicEmail ? (
-                  <p
-                    id="public-email-error"
-                    className="text-sm text-rose-500 dark:text-rose-400"
-                  >
-                    {validationErrors.publicEmail}
-                  </p>
-                ) : null}
-              </div>
-            </div>
+                <div className="space-y-3 rounded-2xl border border-border/80 bg-background/80 p-4">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Public contact values
+                    </h3>
+                    <p className="text-sm leading-6 text-muted">
+                      These values appear on the card when the matching actions are enabled.
+                    </p>
+                  </div>
 
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <p className="label-xs text-muted">Direct actions</p>
-                <p className="text-sm leading-6 text-muted">
-                  Turn on only the public actions you want people to use.
-                </p>
-              </div>
-
-              <div className="grid gap-3">
-                {smartCardToggleOptions.map((option) => (
-                  <label
-                    key={option.key}
-                    className="flex min-h-16 cursor-pointer items-center justify-between gap-4 rounded-2xl border border-border bg-background px-4 py-3"
-                  >
-                    <span className="text-sm font-medium text-foreground">
-                      {option.label}
-                    </span>
+                  <div className="space-y-1.5">
+                    <label className="label-xs text-muted" htmlFor="public-phone">
+                      Public phone
+                    </label>
                     <input
-                      type="checkbox"
-                      className="h-5 w-5 accent-brandRose dark:accent-brandCyan"
-                      checked={formState[option.key]}
+                      id="public-phone"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      className={inputCls}
+                      value={formState.publicPhone}
+                      onChange={(event) => updateField("publicPhone", event.target.value)}
+                      placeholder="+1 555 123 4567"
+                      aria-invalid={validationErrors.publicPhone ? "true" : "false"}
+                      aria-describedby={validationErrors.publicPhone ? "public-phone-error" : "public-phone-hint"}
+                    />
+                    <p id="public-phone-hint" className="text-sm text-muted">
+                      {publicFieldHint}
+                    </p>
+                    {validationErrors.publicPhone ? (
+                      <p
+                        id="public-phone-error"
+                        className="text-sm text-rose-500 dark:text-rose-400"
+                      >
+                        {validationErrors.publicPhone}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label
+                      className="label-xs text-muted"
+                      htmlFor="public-whatsapp-number"
+                    >
+                      Public WhatsApp number
+                    </label>
+                    <input
+                      id="public-whatsapp-number"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      className={inputCls}
+                      value={formState.publicWhatsappNumber}
                       onChange={(event) =>
-                        updateField(option.key, event.target.checked)
+                        updateField("publicWhatsappNumber", event.target.value)
+                      }
+                      placeholder="+1 555 123 4567"
+                      aria-invalid={validationErrors.publicWhatsappNumber ? "true" : "false"}
+                      aria-describedby={
+                        validationErrors.publicWhatsappNumber
+                          ? "public-whatsapp-error"
+                          : "public-whatsapp-hint"
                       }
                     />
-                  </label>
-                ))}
-              </div>
+                    <p id="public-whatsapp-hint" className="text-sm text-muted">
+                      {publicFieldHint}
+                    </p>
+                    {validationErrors.publicWhatsappNumber ? (
+                      <p
+                        id="public-whatsapp-error"
+                        className="text-sm text-rose-500 dark:text-rose-400"
+                      >
+                        {validationErrors.publicWhatsappNumber}
+                      </p>
+                    ) : null}
+                  </div>
 
-              {validationErrors.directActions ? (
-                <p className="text-sm text-rose-500 dark:text-rose-400">
-                  {validationErrors.directActions}
+                  <div className="space-y-1.5">
+                    <label className="label-xs text-muted" htmlFor="public-email">
+                      Public email
+                    </label>
+                    <input
+                      id="public-email"
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      className={inputCls}
+                      value={formState.publicEmail}
+                      onChange={(event) => updateField("publicEmail", event.target.value)}
+                      placeholder="you@example.com"
+                      aria-invalid={validationErrors.publicEmail ? "true" : "false"}
+                      aria-describedby={validationErrors.publicEmail ? "public-email-error" : "public-email-hint"}
+                    />
+                    <p id="public-email-hint" className="text-sm text-muted">
+                      {publicFieldHint}
+                    </p>
+                    {validationErrors.publicEmail ? (
+                      <p
+                        id="public-email-error"
+                        className="text-sm text-rose-500 dark:text-rose-400"
+                      >
+                        {validationErrors.publicEmail}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <p className="label-xs text-muted">Direct actions</p>
+                    <p className="text-sm leading-6 text-muted">
+                      Turn on only the actions you want people to use immediately.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3">
+                    {smartCardToggleOptions.map((option) => (
+                      <label
+                        key={option.key}
+                        className="flex min-h-16 cursor-pointer items-center justify-between gap-4 rounded-2xl border border-border bg-background px-4 py-3"
+                      >
+                        <span className="text-sm font-medium text-foreground">
+                          {option.label}
+                        </span>
+                        <input
+                          type="checkbox"
+                          className="h-5 w-5 accent-brandRose dark:accent-brandCyan"
+                          checked={formState[option.key]}
+                          onChange={(event) =>
+                            updateField(option.key, event.target.checked)
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
+
+                  {validationErrors.directActions ? (
+                    <p className="text-sm text-rose-500 dark:text-rose-400">
+                      {validationErrors.directActions}
+                    </p>
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
+
+            {error ? (
+              <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
+                <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
+                  {error}
+                </p>
+              </div>
+            ) : null}
+
+            <div className="sticky bottom-0 z-10 -mx-5 border-t border-border/70 bg-background/95 px-5 pb-[calc(env(safe-area-inset-bottom,0px)+0.25rem)] pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+              {smartCardSelected ? (
+                <p className="mb-3 text-sm text-muted">
+                  Keep this focused. The best Smart Cards lead with one obvious next step.
                 </p>
               ) : null}
+
+              <PrimaryButton
+                type="submit"
+                fullWidth
+                isLoading={isSubmitting}
+                disabled={isSaveDisabled}
+              >
+                Save settings
+              </PrimaryButton>
             </div>
-          </section>
+          </>
         ) : null}
-
-        {error ? (
-          <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
-            <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
-              {error}
-            </p>
-          </div>
-        ) : null}
-
-        <div className="sticky bottom-0 z-10 -mx-5 border-t border-border/70 bg-background/95 px-5 pb-[calc(env(safe-area-inset-bottom,0px)+0.25rem)] pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-          {smartCardSelected ? (
-            <p className="mb-3 text-sm text-muted">
-              Only enabled actions appear on the Smart Card.
-            </p>
-          ) : null}
-
-          <PrimaryButton
-            type="submit"
-            fullWidth
-            isLoading={isSubmitting}
-            disabled={isSaveDisabled}
-          >
-            Save settings
-          </PrimaryButton>
-        </div>
       </form>
 
       {successMessage ? (

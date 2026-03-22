@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  formatConnectionContext,
   formatRelationshipAge,
   formatSourceLabel,
   getRecentActivityLabel,
@@ -20,6 +21,17 @@ describe("format-contact-relationship", () => {
   it("prefers the stored source label when present", () => {
     expect(formatSourceLabel("Coffee chat", "profile")).toBe("Coffee chat");
     expect(formatSourceLabel(null, "qr")).toBe("QR");
+  });
+
+  it("formats contextual connection copy from the source type", () => {
+    expect(formatConnectionContext("event", "Tech Summit")).toBe(
+      "Met at Tech Summit",
+    );
+    expect(formatConnectionContext("event", null)).toBe("Met at Event");
+    expect(formatConnectionContext("qr", null)).toBe("Connected via QR");
+    expect(formatConnectionContext("profile", null)).toBe(
+      "Connected via profile",
+    );
   });
 
   it("resolves relationship age from metadata or createdAt", () => {

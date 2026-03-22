@@ -7,10 +7,12 @@ import {
 } from "@nestjs/common";
 import {
   ContactRelationshipState as PrismaContactRelationshipState,
+  ContactRequestSourceType as PrismaContactRequestSourceType,
   FollowUpStatus as PrismaFollowUpStatus,
   Prisma,
 } from "@prisma/client";
 
+import { ContactRequestSourceType } from "../../common/enums/contact-request-source-type.enum";
 import { FollowUpStatus } from "../../common/enums/follow-up-status.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { RelationshipsService } from "../relationships/relationships.service";
@@ -46,7 +48,17 @@ const followUpSelect = {
       id: true,
       ownerUserId: true,
       state: true,
+      sourceType: true,
+      connectionContext: true,
       accessEndAt: true,
+      memories: {
+        orderBy: [{ metAt: "desc" }, { id: "desc" }],
+        take: 1,
+        select: {
+          contextLabel: true,
+          sourceLabel: true,
+        },
+      },
       targetPersona: {
         select: followUpTargetPersonaSelect,
       },
@@ -484,6 +496,10 @@ export class FollowUpsService {
       relationship: {
         relationshipId: relationship?.id ?? followUp.relationshipId,
         state: relationship ? toApiRelationshipState(relationship.state) : null,
+        sourceType: relationship
+          ? toApiContactRequestSourceType(relationship.sourceType)
+          : undefined,
+        sourceLabel: relationship ? buildRelationshipSourceLabel(relationship) : undefined,
         targetPersona: relationship
           ? {
               id: relationship.targetPersona.id,
@@ -530,6 +546,77 @@ export class FollowUpsService {
 
     return remindAtMs >= nowMs && remindAtMs <= nowMs + UPCOMING_SOON_WINDOW_MS;
   }
+}
+
+function toApiContactRequestSourceType(
+  sourceType: PrismaContactRequestSourceType,
+): ContactRequestSourceType {
+  switch (sourceType) {
+    case PrismaContactRequestSourceType.PROFILE:
+      return ContactRequestSourceType.Profile;
+    case PrismaContactRequestSourceType.QR:
+      return ContactRequestSourceType.Qr;
+    case PrismaContactRequestSourceType.EVENT:
+      return ContactRequestSourceType.Event;
+  }
+
+  throw new Error("Unsupported contact request source type");
+}
+
+function buildRelationshipSourceLabel(
+  relationship: NonNullable<FollowUpRecord["relationship"]>,
+): string {
+  const memory = relationship.memories[0];
+  const storedContext = parseConnectionContext(relationship.connectionContext);
+
+  return (
+    normalizeContextLabel(memory?.contextLabel) ??
+    normalizeContextLabel(storedContext?.label) ??
+    memory?.sourceLabel ??
+    toSourceLabel(relationship.sourceType)
+  );
+}
+
+function toSourceLabel(sourceType: PrismaContactRequestSourceType): string {
+  switch (sourceType) {
+    case PrismaContactRequestSourceType.PROFILE:
+      return "Profile";
+    case PrismaContactRequestSourceType.QR:
+      return "QR";
+    case PrismaContactRequestSourceType.EVENT:
+      return "Event";
+  }
+
+  throw new Error("Unsupported contact request source type");
+}
+
+function normalizeContextLabel(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue.length > 0 ? trimmedValue : null;
+}
+
+function parseConnectionContext(
+  value: Prisma.JsonValue | null | undefined,
+): { type: "profile" | "qr" | "event"; label: string | null } | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const type = candidate.type;
+
+  if (type !== "profile" && type !== "qr" && type !== "event") {
+    return null;
+  }
+
+  return {
+    type,
+    label: normalizeContextLabel(candidate.label),
+  };
 }
 
 function compareFollowUps(a: FollowUpRecord, b: FollowUpRecord) {

@@ -12,7 +12,7 @@ export default async function EventsPage() {
         title="Events"
         description="Events you have joined. Discover people while you are there."
       />
-      <EventsScreen isVerified={user.isVerified} currentUserEmail={user.email} />
+      <EventsScreen user={user} />
     </section>
   );
 }

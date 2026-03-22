@@ -40,7 +40,7 @@ describe("VerificationPolicyService", () => {
         assert.ok(error instanceof ForbiddenException);
         assert.equal(
           error.message,
-          "Verify your email before joining Dotly event networking. Check your inbox for the verification link, or resend it.",
+          "Verify your email or complete mobile OTP before joining Dotly event networking.",
         );
         return true;
       },
@@ -96,5 +96,29 @@ describe("VerificationPolicyService", () => {
       "mobile_otp_verified",
     ]);
     assert.deepEqual(result.missingFactors, ["mobile_otp_verified"]);
+  });
+
+  it("treats mobile OTP as a valid trust factor for current requirements", async () => {
+    const service = new VerificationPolicyService(
+      {
+        user: {
+          findUnique: async () => ({
+            id: "user-1",
+            isVerified: false,
+            phoneVerifiedAt: new Date("2026-03-23T10:00:00.000Z"),
+          }),
+        },
+      } as any,
+      undefined as any,
+      undefined as any,
+    );
+
+    const result = await service.getRequirementStatus(
+      "user-1",
+      "send_contact_request",
+    );
+
+    assert.equal(result.satisfied, true);
+    assert.deepEqual(result.missingFactors, ["email_verified"]);
   });
 });

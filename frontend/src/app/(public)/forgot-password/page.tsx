@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { AuthPageShell } from "@/components/layout/auth-page-shell";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { authApi } from "@/lib/api";
 import { routes } from "@/lib/constants/routes";
@@ -51,18 +52,10 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <section className="mx-auto max-w-[440px] space-y-6 py-10">
-      <div className="space-y-2 text-center">
-        <p className="label-xs text-muted">Account Recovery</p>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Reset your password
-        </h1>
-        <p className="text-sm leading-6 text-muted">
-          Enter your email and Dotly will send a one-time reset link if the
-          account exists.
-        </p>
-      </div>
-
+    <AuthPageShell
+      title="Reset your password"
+      description="Enter your email address and Dotly will send a one-time reset link if the account exists."
+    >
       <form
         className="glass space-y-4 rounded-[28px] border border-border bg-surface p-6"
         onSubmit={handleSubmit}
@@ -118,6 +111,6 @@ export default function ForgotPasswordPage() {
           </Link>
         </p>
       </form>
-    </section>
+    </AuthPageShell>
   );
 }

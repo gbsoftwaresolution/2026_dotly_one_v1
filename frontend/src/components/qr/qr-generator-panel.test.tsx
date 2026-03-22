@@ -48,6 +48,38 @@ const personaFixture = {
   updatedAt: "2026-03-21T10:00:00.000Z",
 } as const;
 
+const userFixture = {
+  id: "user-1",
+  email: "user@dotly.one",
+  isVerified: false,
+  security: {
+    trustBadge: "attention" as const,
+    maskedEmail: "us**@dotly.one",
+    mailDeliveryAvailable: true,
+    passwordResetAvailable: true,
+    smsDeliveryAvailable: true,
+    maskedPhoneNumber: null,
+    phoneVerificationStatus: "not_enrolled" as const,
+    mobileOtpEnrollment: null,
+    explanation: "Add a verified email or mobile OTP to unlock trust-sensitive actions.",
+    unlockedActions: [],
+    restrictedActions: ["Create profile QR codes", "Create Quick Connect QR codes"],
+    requirements: [
+      {
+        key: "create_profile_qr" as const,
+        label: "Create profile QR codes",
+        unlocked: false,
+      },
+      {
+        key: "create_quick_connect_qr" as const,
+        label: "Create Quick Connect QR codes",
+        unlocked: false,
+      },
+    ],
+    trustFactors: [],
+  },
+};
+
 describe("QrGeneratorPanel", () => {
   beforeEach(() => {
     mocks.createProfileQr.mockReset();
@@ -71,14 +103,29 @@ describe("QrGeneratorPanel", () => {
     render(
       React.createElement(QrGeneratorPanel, {
         personas: [personaFixture],
-        isVerified: true,
-        currentUserEmail: "user@dotly.one",
+        user: {
+          ...userFixture,
+          isVerified: true,
+          security: {
+            ...userFixture.security,
+            trustBadge: "verified",
+            unlockedActions: [
+              "Create profile QR codes",
+              "Create Quick Connect QR codes",
+            ],
+            restrictedActions: [],
+            requirements: userFixture.security.requirements.map((requirement) => ({
+              ...requirement,
+              unlocked: true,
+            })),
+          },
+        },
       }),
     );
 
     await user.click(screen.getByRole("button", { name: /quick connect/i }));
-    await user.clear(screen.getByLabelText(/duration hours/i));
-    await user.type(screen.getByLabelText(/duration hours/i), "12");
+    await user.clear(screen.getByLabelText(/duration/i));
+    await user.type(screen.getByLabelText(/duration/i), "12");
     await user.clear(screen.getByLabelText(/max uses/i));
     await user.type(screen.getByLabelText(/max uses/i), "3");
     await user.click(screen.getByRole("button", { name: /generate qr/i }));
@@ -91,12 +138,11 @@ describe("QrGeneratorPanel", () => {
     });
   });
 
-  it("shows verification guidance and disables generation for unverified users", () => {
+  it("shows trust guidance and disables generation when QR requirements are locked", () => {
     render(
       React.createElement(QrGeneratorPanel, {
         personas: [personaFixture],
-        isVerified: false,
-        currentUserEmail: "user@dotly.one",
+        user: userFixture,
       }),
     );
 

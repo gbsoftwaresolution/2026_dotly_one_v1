@@ -7,11 +7,13 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { eventApi } from "@/lib/api/event-api";
+import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
 import { personaApi } from "@/lib/api/persona-api";
 import { routes } from "@/lib/constants/routes";
 import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import type { PersonaSummary } from "@/types/persona";
 import type { EventSummary } from "@/types/event";
+import type { UserProfile } from "@/types/user";
 
 import { VerificationPrompt } from "../auth/verification-prompt";
 
@@ -29,14 +31,12 @@ const inputCls =
 
 interface JoinPanelProps {
   onJoined: (event: EventSummary) => void;
-  isVerified: boolean;
-  currentUserEmail: string;
+  user: UserProfile;
 }
 
 function JoinPanel({
   onJoined,
-  isVerified,
-  currentUserEmail,
+  user,
 }: JoinPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [eventCode, setEventCode] = useState("");
@@ -105,12 +105,12 @@ function JoinPanel({
     }
   }
 
-  if (!isVerified) {
+  if (!hasUnlockedTrustRequirement(user, "join_event")) {
     return (
       <VerificationPrompt
-        email={currentUserEmail}
-        title="Verify your email before joining events"
-        description="Dotly event networking only opens for verified accounts. Verify your email to join an event and participate in discovery safely."
+        email={user.email}
+        title="Add a trust factor before joining events"
+        description="Dotly event networking only opens for accounts with a verified email or mobile OTP. Add either trust factor to join an event and participate in discovery safely."
       />
     );
   }
@@ -214,11 +214,9 @@ function JoinPanel({
 // ---------------------------------------------------------------------------
 
 export function EventsScreen({
-  isVerified,
-  currentUserEmail,
+  user,
 }: {
-  isVerified: boolean;
-  currentUserEmail: string;
+  user: UserProfile;
 }) {
   const router = useRouter();
   const [events, setEvents] = useState<EventSummary[]>([]);
@@ -280,8 +278,7 @@ export function EventsScreen({
     <div className="flex flex-col gap-3">
       <JoinPanel
         onJoined={handleJoined}
-        isVerified={isVerified}
-        currentUserEmail={currentUserEmail}
+        user={user}
       />
 
       {events.length === 0 ? (

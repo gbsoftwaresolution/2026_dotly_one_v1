@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuthState } from "@/hooks/use-auth-state";
+import { hasAnyUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
 
 import { VerificationPrompt } from "./verification-prompt";
 
@@ -11,7 +12,7 @@ export function EmailVerificationBanner() {
     session.isLoading ||
     !session.isAuthenticated ||
     !session.user ||
-    session.user.isVerified
+    hasAnyUnlockedTrustRequirement(session.user)
   ) {
     return null;
   }
@@ -20,8 +21,8 @@ export function EmailVerificationBanner() {
     <VerificationPrompt
       compact
       email={session.user.email}
-      title="Verify your email to unlock trust actions"
-      description="Dotly keeps login and onboarding open, but connection requests, shareable QR creation, and event discovery stay limited until your email is verified."
+      title="Add a trust factor to unlock trust actions"
+      description="Verify your identity to unlock trusted connection requests, QR sharing, and event discovery."
     />
   );
 }

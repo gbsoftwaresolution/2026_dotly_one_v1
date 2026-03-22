@@ -11,6 +11,7 @@ import {
   ContactRelationshipState as PrismaContactRelationshipState,
   ContactRequestSourceType as PrismaContactRequestSourceType,
   PersonaAccessMode as PrismaPersonaAccessMode,
+  PersonaSharingMode as PrismaPersonaSharingMode,
   QrStatus as PrismaQrStatus,
   QrType as PrismaQrType,
 } from "@prisma/client";
@@ -18,6 +19,7 @@ import {
 import { ContactsService } from "../src/modules/contacts/contacts.service";
 import { QrService } from "../src/modules/qr/qr.service";
 import { RelationshipsService } from "../src/modules/relationships/relationships.service";
+import { ContactRequestSourceType } from "../src/common/enums/contact-request-source-type.enum";
 
 const INSTANT_ACCESS_STATE = "INSTANT_ACCESS" as PrismaContactRelationshipState;
 const EXPIRED_STATE = "EXPIRED" as PrismaContactRelationshipState;
@@ -386,7 +388,7 @@ describe("QrService verification enforcement", () => {
       {
         assertUserIsVerified: async () => {
           throw new ForbiddenException(
-            "Verify your email before creating shareable profile QR codes. Check your inbox for the verification link, or resend it.",
+            "Verify your email or complete mobile OTP before creating shareable profile QR codes.",
           );
         },
       } as any,
@@ -398,7 +400,7 @@ describe("QrService verification enforcement", () => {
         assert.ok(error instanceof ForbiddenException);
         assert.equal(
           error.message,
-          "Verify your email before creating shareable profile QR codes. Check your inbox for the verification link, or resend it.",
+          "Verify your email or complete mobile OTP before creating shareable profile QR codes.",
         );
         return true;
       },
@@ -420,7 +422,7 @@ describe("QrService verification enforcement", () => {
       {
         assertUserIsVerified: async () => {
           throw new ForbiddenException(
-            "Verify your email before creating Quick Connect QR codes. Check your inbox for the verification link, or resend it.",
+            "Verify your email or complete mobile OTP before creating Quick Connect QR codes.",
           );
         },
       } as any,
@@ -435,15 +437,683 @@ describe("QrService verification enforcement", () => {
         assert.ok(error instanceof ForbiddenException);
         assert.equal(
           error.message,
-          "Verify your email before creating Quick Connect QR codes. Check your inbox for the verification link, or resend it.",
+          "Verify your email or complete mobile OTP before creating Quick Connect QR codes.",
         );
         return true;
       },
     );
   });
+
+  it("allows verified-only quick connect when mobile OTP is active", async () => {
+    let updateManyCalls = 0;
+
+    const service = new QrService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            user: {
+              findUnique: async () => ({
+                id: "scanner-user",
+                isVerified: false,
+                phoneVerifiedAt: new Date("2026-03-23T10:00:00.000Z"),
+              }),
+            },
+            qRAccessToken: {
+              findUnique: async () => ({
+                id: "qr-token-id",
+                type: PrismaQrType.quick_connect,
+                startsAt: null,
+                endsAt: null,
+                maxUses: null,
+                usedCount: 0,
+                status: PrismaQrStatus.active,
+                rules: {
+                  durationHours: 4,
+                },
+                persona: {
+                  id: "target-persona",
+                  userId: "target-user",
+                  username: "target",
+                  fullName: "Target User",
+                  jobTitle: "Founder",
+                  companyName: "Dotly",
+                  tagline: "Connect fast",
+                  profilePhotoUrl: null,
+                  verifiedOnly: true,
+                },
+              }),
+              updateMany: async () => {
+                updateManyCalls += 1;
+                return { count: 1 };
+              },
+            },
+            contactRelationship: {
+              findFirst: async () => null,
+              create: async () => ({
+                id: "relationship-1",
+                reciprocalRelationshipId: null,
+              }),
+            },
+          }),
+      } as any,
+      {} as any,
+      {
+        findOwnedPersonaIdentity: async () => ({ id: "from-persona" }),
+      } as any,
+      {
+        assertNoInteractionBlockInTransaction: async () => undefined,
+      } as any,
+      {
+        createOrRefreshInstantAccessRelationship: async () => ({
+          id: "relationship-1",
+          accessStartAt: new Date("2026-03-23T10:00:00.000Z"),
+          accessEndAt: new Date("2026-03-23T14:00:00.000Z"),
+        }),
+      } as any,
+      {
+        upsertInteractionMemory: async () => ({ id: "memory-1" }),
+        createInitialMemory: async () => ({ id: "memory-1" }),
+      } as any,
+    );
+
+    const result = await service.connectQuickConnectQr("scanner-user", "qr", {
+      fromPersonaId: "from-persona",
+    });
+
+    assert.equal(result.relationshipId, "relationship-1");
+    assert.equal(result.state, "instant_access");
+    assert.equal(result.targetPersona.id, "target-persona");
+    assert.equal(updateManyCalls, 1);
+  });
 });
 
 describe("RelationshipsService", () => {
+  it("creates an approved relationship immediately for eligible smart-card personas", async () => {
+    const updateManyPayloads: Array<Record<string, unknown>> = [];
+    const createdRelationships: Array<Record<string, unknown>> = [];
+    let memoryCreatePayload: Record<string, unknown> | null = null;
+    const now = Date.now();
+
+    const service = new RelationshipsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            persona: {
+              findFirst: async ({ where }: any) => {
+                if (where.userId) {
+                  return {
+                    id: "actor-persona",
+                  };
+                }
+
+                return null;
+              },
+              findUnique: async () => ({
+                id: "target-persona",
+                userId: "target-user",
+                accessMode: PrismaPersonaAccessMode.OPEN,
+                sharingMode: PrismaPersonaSharingMode.SMART_CARD,
+                smartCardConfig: {
+                  primaryAction: "instant_connect",
+                  allowCall: false,
+                  allowWhatsapp: false,
+                  allowEmail: false,
+                  allowVcard: false,
+                },
+                verifiedOnly: false,
+              }),
+            },
+            user: {
+              findUnique: async () => ({
+                id: "actor-user",
+                isVerified: true,
+              }),
+            },
+            qRAccessToken: {
+              findFirst: async () => ({
+                id: "active-profile-qr",
+              }),
+            },
+            event: {
+              findUnique: async () => ({
+                id: "event-1",
+                name: "Dotly Launch Week",
+                startsAt: new Date(now - 60 * 60 * 1000),
+                endsAt: new Date(now + 60 * 60 * 1000),
+                status: "LIVE",
+              }),
+            },
+            contactRelationship: {
+              findUnique: async ({ where }: any) => {
+                if (where.id === "relationship-id") {
+                  return {
+                    id: "relationship-id",
+                    lastInteractionAt: new Date("2026-03-23T10:00:00.000Z"),
+                    interactionCount: 1,
+                  };
+                }
+
+                if (where.id === "reciprocal-relationship-id") {
+                  return {
+                    id: "reciprocal-relationship-id",
+                    lastInteractionAt: new Date("2026-03-23T10:00:00.000Z"),
+                    interactionCount: 1,
+                  };
+                }
+
+                return null;
+              },
+              create: async ({ data }: any) => {
+                createdRelationships.push(data);
+
+                return {
+                  id:
+                    createdRelationships.length === 1
+                      ? "relationship-id"
+                      : "reciprocal-relationship-id",
+                };
+              },
+              updateMany: async (payload: Record<string, unknown>) => {
+                updateManyPayloads.push(payload);
+                return { count: 1 };
+              },
+              update: async () => ({
+                id: "relationship-id",
+              }),
+            },
+            contactMemory: {
+              findFirst: async () => null,
+              create: async ({ data }: any) => {
+                memoryCreatePayload = data;
+                return { id: "memory-id" };
+              },
+            },
+          }),
+      } as any,
+      {
+        assertNoInteractionBlockInTransaction: async () => undefined,
+      } as any,
+      {
+        upsertInteractionMemory: async (tx: any, payload: Record<string, unknown>) =>
+          tx.contactMemory.create({ data: payload }),
+      } as any,
+    );
+
+    const result = await service.instantConnect("actor-user", {
+      targetPersonaId: "target-persona",
+      eventId: "event-1",
+      source: ContactRequestSourceType.Event,
+    });
+
+    assert.deepEqual(result, {
+      success: true,
+      relationshipId: "relationship-id",
+      status: "connected",
+    });
+    assert.equal(createdRelationships.length, 2);
+    assert.equal(
+      (createdRelationships[0] as any)?.state,
+      PrismaContactRelationshipState.APPROVED,
+    );
+    assert.equal(
+      (createdRelationships[0] as any)?.sourceType,
+      PrismaContactRequestSourceType.EVENT,
+    );
+    assert.deepEqual((createdRelationships[0] as any)?.connectionContext, {
+      type: "event",
+      eventId: "event-1",
+      label: "Dotly Launch Week",
+    });
+    assert.equal((memoryCreatePayload as any)?.relationshipId, "relationship-id");
+    assert.equal((memoryCreatePayload as any)?.eventId, "event-1");
+    assert.equal(
+      (memoryCreatePayload as any)?.contextLabel,
+      "Dotly Launch Week",
+    );
+    assert.equal(
+      (memoryCreatePayload as any)?.sourceLabel,
+      "Instant connect via Event",
+    );
+    assert.equal(updateManyPayloads.length, 4);
+  });
+
+  it("falls back to source context when the supplied event is missing or inactive", async () => {
+    let createdRelationshipPayload: Record<string, unknown> | null = null;
+    let memoryCreatePayload: Record<string, unknown> | null = null;
+
+    const service = new RelationshipsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            persona: {
+              findFirst: async ({ where }: any) => {
+                if (where.userId) {
+                  return {
+                    id: "actor-persona",
+                  };
+                }
+
+                return null;
+              },
+              findUnique: async () => ({
+                id: "target-persona",
+                userId: "target-user",
+                accessMode: PrismaPersonaAccessMode.OPEN,
+                sharingMode: PrismaPersonaSharingMode.SMART_CARD,
+                smartCardConfig: {
+                  primaryAction: "instant_connect",
+                  allowCall: false,
+                  allowWhatsapp: false,
+                  allowEmail: false,
+                  allowVcard: false,
+                },
+                verifiedOnly: false,
+              }),
+            },
+            user: {
+              findUnique: async () => ({
+                id: "actor-user",
+                isVerified: true,
+              }),
+            },
+            qRAccessToken: {
+              findFirst: async () => ({
+                id: "active-profile-qr",
+              }),
+            },
+            event: {
+              findUnique: async () => null,
+            },
+            contactRelationship: {
+              findUnique: async ({ where }: any) => {
+                if (where.id) {
+                  return {
+                    id: where.id,
+                    lastInteractionAt: new Date("2026-03-23T10:00:00.000Z"),
+                    interactionCount: 1,
+                  };
+                }
+
+                return null;
+              },
+              create: async ({ data }: any) => {
+                createdRelationshipPayload = data;
+
+                return {
+                  id:
+                    data.ownerUserId === "actor-user"
+                      ? "relationship-id"
+                      : "reciprocal-relationship-id",
+                };
+              },
+              updateMany: async () => ({ count: 1 }),
+              update: async ({ where }: any) => ({
+                id: where.id,
+              }),
+            },
+            contactMemory: {
+              findFirst: async () => null,
+              create: async ({ data }: any) => {
+                memoryCreatePayload = data;
+                return { id: "memory-id" };
+              },
+            },
+          }),
+      } as any,
+      {
+        assertNoInteractionBlockInTransaction: async () => undefined,
+      } as any,
+      {
+        upsertInteractionMemory: async (tx: any, payload: Record<string, unknown>) =>
+          tx.contactMemory.create({ data: payload }),
+      } as any,
+    );
+
+    const result = await service.instantConnect("actor-user", {
+      targetPersonaId: "target-persona",
+      eventId: "missing-event",
+      source: ContactRequestSourceType.Profile,
+    });
+
+    assert.deepEqual(result, {
+      success: true,
+      relationshipId: "relationship-id",
+      status: "connected",
+    });
+    assert.deepEqual((createdRelationshipPayload as any)?.connectionContext, {
+      type: "profile",
+      eventId: null,
+      label: "Profile",
+    });
+    assert.equal((memoryCreatePayload as any)?.eventId, null);
+    assert.equal((memoryCreatePayload as any)?.contextLabel, "Profile");
+  });
+
+  it("returns the existing approved relationship for repeated taps", async () => {
+    let relationshipCreateCalled = false;
+    let memoryUpdatePayload: Record<string, unknown> | null = null;
+
+    const service = new RelationshipsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            persona: {
+              findFirst: async ({ where }: any) => {
+                if (where.userId) {
+                  return {
+                    id: "actor-persona",
+                  };
+                }
+
+                return null;
+              },
+              findUnique: async () => ({
+                id: "target-persona",
+                userId: "target-user",
+                accessMode: PrismaPersonaAccessMode.OPEN,
+                sharingMode: PrismaPersonaSharingMode.SMART_CARD,
+                smartCardConfig: {
+                  primaryAction: "instant_connect",
+                  allowCall: false,
+                  allowWhatsapp: false,
+                  allowEmail: false,
+                  allowVcard: false,
+                },
+                verifiedOnly: false,
+              }),
+            },
+            user: {
+              findUnique: async () => ({
+                id: "actor-user",
+                isVerified: true,
+              }),
+            },
+            qRAccessToken: {
+              findFirst: async () => ({
+                id: "active-profile-qr",
+              }),
+            },
+            contactRelationship: {
+              findUnique: async ({ where }: any) => {
+                if (where.id === "existing-relationship") {
+                  return {
+                    id: "existing-relationship",
+                    lastInteractionAt: new Date("2026-03-23T10:00:00.000Z"),
+                    interactionCount: 8,
+                  };
+                }
+
+                if (where.id === "reciprocal-relationship") {
+                  return {
+                    id: "reciprocal-relationship",
+                    lastInteractionAt: new Date("2026-03-23T10:00:00.000Z"),
+                    interactionCount: 4,
+                  };
+                }
+
+                const composite =
+                  where.ownerUserId_targetUserId_ownerPersonaId_targetPersonaId;
+
+                if (composite?.ownerUserId === "actor-user") {
+                  return {
+                    id: "existing-relationship",
+                    state: PrismaContactRelationshipState.APPROVED,
+                    sourceType: PrismaContactRequestSourceType.PROFILE,
+                    sourceId: null,
+                    accessStartAt: null,
+                    accessEndAt: null,
+                  };
+                }
+
+                return {
+                  id: "reciprocal-relationship",
+                  state: PrismaContactRelationshipState.APPROVED,
+                  sourceType: PrismaContactRequestSourceType.PROFILE,
+                  sourceId: null,
+                  accessStartAt: null,
+                  accessEndAt: null,
+                };
+              },
+              create: async () => {
+                relationshipCreateCalled = true;
+                return { id: "unexpected" };
+              },
+              updateMany: async () => ({ count: 1 }),
+              update: async () => ({ id: "existing-relationship" }),
+            },
+            contactMemory: {
+              findFirst: async () => ({
+                id: "memory-id",
+              }),
+              update: async ({ data }: any) => {
+                memoryUpdatePayload = data;
+                return { id: "memory-id" };
+              },
+            },
+          }),
+      } as any,
+      {
+        assertNoInteractionBlockInTransaction: async () => undefined,
+      } as any,
+      {
+        upsertInteractionMemory: async (tx: any, payload: Record<string, unknown>) => {
+          const existingMemory = await tx.contactMemory.findFirst({});
+          return tx.contactMemory.update({
+            where: { id: existingMemory.id },
+            data: payload,
+          });
+        },
+      } as any,
+    );
+
+    const result = await service.instantConnect("actor-user", {
+      targetPersonaId: "target-persona",
+    });
+
+    assert.deepEqual(result, {
+      success: true,
+      relationshipId: "existing-relationship",
+      status: "connected",
+    });
+    assert.equal(relationshipCreateCalled, false);
+    assert.equal((memoryUpdatePayload as any)?.sourceLabel, "Instant connect");
+  });
+
+  it("returns 404 when the target persona does not exist", async () => {
+    const service = new RelationshipsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            persona: {
+              findFirst: async () => ({
+                id: "actor-persona",
+              }),
+              findUnique: async () => null,
+            },
+          }),
+      } as any,
+    );
+
+    await assert.rejects(
+      service.instantConnect("actor-user", {
+        targetPersonaId: "missing-persona",
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof NotFoundException);
+        assert.equal(error.message, "Target persona not found");
+        return true;
+      },
+    );
+  });
+
+  it("resolves the target persona by username for public smart-card connects", async () => {
+    const service = new RelationshipsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            persona: {
+              findFirst: async ({ where }: any) => {
+                if (where.userId) {
+                  return {
+                    id: "actor-persona",
+                  };
+                }
+
+                return {
+                  id: "target-persona",
+                  userId: "target-user",
+                  accessMode: PrismaPersonaAccessMode.OPEN,
+                  sharingMode: PrismaPersonaSharingMode.SMART_CARD,
+                  smartCardConfig: {
+                    primaryAction: "instant_connect",
+                    allowCall: false,
+                    allowWhatsapp: false,
+                    allowEmail: false,
+                    allowVcard: false,
+                  },
+                  verifiedOnly: false,
+                };
+              },
+            },
+            user: {
+              findUnique: async () => ({
+                id: "actor-user",
+                isVerified: true,
+              }),
+            },
+            qRAccessToken: {
+              findFirst: async () => ({
+                id: "active-profile-qr",
+              }),
+            },
+            contactRelationship: {
+              findUnique: async ({ where }: any) => {
+                if (where.id) {
+                  return {
+                    id: where.id,
+                    lastInteractionAt: new Date("2026-03-23T10:00:00.000Z"),
+                    interactionCount: 1,
+                  };
+                }
+
+                return null;
+              },
+              create: async ({ data }: any) => ({
+                id:
+                  data.ownerUserId === "actor-user"
+                    ? "relationship-id"
+                    : "reciprocal-relationship-id",
+              }),
+              updateMany: async () => ({ count: 1 }),
+              update: async ({ where }: any) => ({
+                id: where.id,
+              }),
+            },
+            contactMemory: {
+              findFirst: async () => null,
+              create: async () => ({ id: "memory-id" }),
+            },
+          }),
+      } as any,
+      {
+        assertNoInteractionBlockInTransaction: async () => undefined,
+      } as any,
+      {
+        upsertInteractionMemory: async (tx: any, payload: Record<string, unknown>) =>
+          tx.contactMemory.create({ data: payload }),
+      } as any,
+    );
+
+    const result = await service.instantConnectByUsername(
+      "actor-user",
+      "target",
+      {
+        source: ContactRequestSourceType.Profile,
+      },
+    );
+
+    assert.deepEqual(result, {
+      success: true,
+      relationshipId: "relationship-id",
+      status: "connected",
+    });
+  });
+
+  it("returns 404 when the username-based target persona does not exist", async () => {
+    const service = new RelationshipsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            persona: {
+              findFirst: async ({ where }: any) => {
+                if (where.userId) {
+                  return {
+                    id: "actor-persona",
+                  };
+                }
+
+                return null;
+              },
+            },
+          }),
+      } as any,
+    );
+
+    await assert.rejects(
+      service.instantConnectByUsername("actor-user", "missing"),
+      (error: unknown) => {
+        assert.ok(error instanceof NotFoundException);
+        assert.equal(error.message, "Target persona not found");
+        return true;
+      },
+    );
+  });
+
+  it("returns 403 when the target user is blocked", async () => {
+    const service = new RelationshipsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            persona: {
+              findFirst: async () => ({
+                id: "actor-persona",
+              }),
+              findUnique: async () => ({
+                id: "target-persona",
+                userId: "target-user",
+                accessMode: PrismaPersonaAccessMode.OPEN,
+                sharingMode: PrismaPersonaSharingMode.SMART_CARD,
+                smartCardConfig: {
+                  primaryAction: "instant_connect",
+                  allowCall: false,
+                  allowWhatsapp: false,
+                  allowEmail: false,
+                  allowVcard: false,
+                },
+                verifiedOnly: false,
+              }),
+            },
+          }),
+      } as any,
+      {
+        assertNoInteractionBlockInTransaction: async () => {
+          throw new ForbiddenException("User has blocked you");
+        },
+      } as any,
+    );
+
+    await assert.rejects(
+      service.instantConnect("actor-user", {
+        targetPersonaId: "target-persona",
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(error.message, "User has blocked you");
+        return true;
+      },
+    );
+  });
+
   it("updates interaction metadata atomically", async () => {
     const updateManyPayloads: Array<Record<string, unknown>> = [];
     const interactionAt = new Date("2026-03-22T18:15:00.000Z");
@@ -637,6 +1307,11 @@ describe("ContactsService", () => {
                 interactionCount: 4,
                 createdAt: approvedCreatedAt,
                 sourceType: PrismaContactRequestSourceType.PROFILE,
+                connectionContext: {
+                  type: "profile",
+                  eventId: null,
+                  label: "Profile",
+                },
                 targetPersona: {
                   id: "persona-1",
                   username: "approved",
@@ -674,6 +1349,8 @@ describe("ContactsService", () => {
                 memories: [
                   {
                     id: "memory-id",
+                    eventId: null,
+                    contextLabel: "Quick Connect QR",
                     metAt: instantCreatedAt,
                     sourceLabel: "Quick Connect QR",
                     note: null,
@@ -705,7 +1382,15 @@ describe("ContactsService", () => {
     assert.equal(result[0].metadata.hasInteractions, true);
     assert.equal(result[0].metadata.isRecentlyActive, true);
     assert.equal(result[0].metadata.relationshipAgeDays, 4);
+    assert.deepEqual(result[0].context, {
+      type: "profile",
+      label: "Profile",
+    });
     assert.equal(result[1].memory.sourceLabel, "Quick Connect QR");
+    assert.deepEqual(result[1].context, {
+      type: "qr",
+      label: "Quick Connect QR",
+    });
     assert.equal(result[1].interactionCount, 0);
     assert.equal(result[1].metadata.lastInteractionAt, null);
     assert.equal(result[1].metadata.hasInteractions, false);
@@ -835,6 +1520,11 @@ describe("ContactsService", () => {
             interactionCount: 2,
             createdAt,
             sourceType: PrismaContactRequestSourceType.PROFILE,
+            connectionContext: {
+              type: "event",
+              eventId: "event-1",
+              label: "Dotly Launch Week",
+            },
             targetPersona: {
               id: "persona-id",
               username: "detail",
@@ -881,6 +1571,11 @@ describe("ContactsService", () => {
     assert.equal(result.metadata.hasInteractions, true);
     assert.equal(result.metadata.isRecentlyActive, true);
     assert.equal(result.metadata.relationshipAgeDays, 3);
+    assert.deepEqual(result.context, {
+      type: "event",
+      label: "Dotly Launch Week",
+      eventName: "Dotly Launch Week",
+    });
     assert.equal(result.followUpSummary.hasPendingFollowUp, true);
     assert.equal(result.followUpSummary.pendingFollowUpCount, 2);
     assert.equal(

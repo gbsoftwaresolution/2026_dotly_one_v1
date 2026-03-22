@@ -25,7 +25,10 @@ import { ContactMemoryService } from "../contact-memory/contact-memory.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { PersonasService } from "../personas/personas.service";
 import { RelationshipsService } from "../relationships/relationships.service";
-import { VerificationPolicyService } from "../auth/verification-policy.service";
+import {
+  userHasActiveTrustFactor,
+  VerificationPolicyService,
+} from "../auth/verification-policy.service";
 
 import { ConnectQuickConnectQrDto } from "./dto/connect-quick-connect-qr.dto";
 import { CreateQuickConnectQrDto } from "./dto/create-quick-connect-qr.dto";
@@ -255,6 +258,7 @@ export class QrService {
         select: {
           id: true,
           isVerified: true,
+          phoneVerifiedAt: true,
         },
       });
 
@@ -311,7 +315,10 @@ export class QrService {
         token.persona.userId,
       );
 
-      if (token.persona.verifiedOnly && !senderUser.isVerified) {
+      if (
+        token.persona.verifiedOnly &&
+        !userHasActiveTrustFactor(senderUser)
+      ) {
         throw new ForbiddenException("Verified profiles only");
       }
 

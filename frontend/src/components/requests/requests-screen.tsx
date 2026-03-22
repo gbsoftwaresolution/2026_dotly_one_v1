@@ -12,6 +12,7 @@ import { PrimaryButton } from "@/components/shared/primary-button";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
+import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
 import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import { cn } from "@/lib/utils/cn";
@@ -207,8 +208,8 @@ export function RequestsScreen() {
       ) : activeTab === "incoming" ? (
         incoming.length === 0 ? (
           <EmptyState
-            title="No Handshakes Pending"
-            description="When someone requests access to one of your public personas, it will appear here."
+            title="No requests yet"
+            description={dotlyPositioning.app.noRequests}
           />
         ) : (
           <div className="flex flex-col gap-3">
@@ -236,8 +237,8 @@ export function RequestsScreen() {
         )
       ) : visibleRequests.length === 0 ? (
         <EmptyState
-          title="No Handshakes Pending"
-          description="Requests you send from your personas will appear here with their latest status."
+          title="No requests yet"
+          description={dotlyPositioning.app.noRequests}
           action={
             <Link href={routes.app.personas} className="block">
               <PrimaryButton className="w-full">
