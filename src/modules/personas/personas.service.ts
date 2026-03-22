@@ -5,8 +5,14 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { PersonaSharingMode as PrismaPersonaSharingMode, Prisma } from "@prisma/client";
+import {
+  Prisma,
+  QrStatus as PrismaQrStatus,
+  QrType as PrismaQrType,
+  PersonaSharingMode as PrismaPersonaSharingMode,
+} from "@prisma/client";
 
+import { PersonaSmartCardPrimaryAction } from "../../common/enums/persona-smart-card-primary-action.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 
 import { CreatePersonaDto } from "./dto/create-persona.dto";
@@ -20,8 +26,10 @@ import {
   toPrivatePersonaView,
 } from "./persona.presenter";
 import {
+  type PersonaSmartCardConfig,
   toPrismaSharingMode,
   validateSmartCardConfig,
+  validateSmartCardConfigCompatibility,
 } from "./persona-sharing";
 
 @Injectable()
@@ -209,14 +217,19 @@ export class PersonasService {
     const smartCardConfig =
       nextSharingMode === PrismaPersonaSharingMode.CONTROLLED
         ? null
-        : (() => {
+        : await (async () => {
             if (requestedConfig === null || requestedConfig === undefined) {
               throw new BadRequestException(
                 "smartCardConfig is required when sharingMode is smart_card",
               );
             }
 
-            return validateSmartCardConfig(requestedConfig);
+            const normalizedConfig = validateSmartCardConfig(requestedConfig);
+
+            return validateSmartCardConfigCompatibility(normalizedConfig, {
+              hasActiveProfileQr:
+                await this.hasActiveProfileQrEnabled(personaId, normalizedConfig),
+            });
           })();
 
     const persona = await this.prismaService.persona.update({
@@ -268,5 +281,30 @@ export class PersonasService {
 
   private async assertOwner(userId: string, personaId: string): Promise<void> {
     await this.findOwnedPersonaIdentity(userId, personaId);
+  }
+
+  private async hasActiveProfileQrEnabled(
+    personaId: string,
+    smartCardConfig: PersonaSmartCardConfig,
+  ): Promise<boolean> {
+    if (
+      smartCardConfig.primaryAction !==
+      PersonaSmartCardPrimaryAction.InstantConnect
+    ) {
+      return true;
+    }
+
+    const activeProfileQr = await this.prismaService.qRAccessToken.findFirst({
+      where: {
+        personaId,
+        type: PrismaQrType.profile,
+        status: PrismaQrStatus.active,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return activeProfileQr !== null;
   }
 }

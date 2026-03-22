@@ -11,6 +11,7 @@ import { publicApi, requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
 import { formatPrimaryAction } from "@/lib/persona/labels";
+import { resolvePublicSmartCardPrimaryAction } from "@/lib/persona/smart-card";
 import { cn } from "@/lib/utils/cn";
 import type {
   PersonaSummary,
@@ -106,7 +107,11 @@ export function RequestAccessPanel({
   );
   const smartCardPrimaryAction =
     profile.sharingMode === "smart_card"
-      ? profile.smartCard?.primaryAction ?? null
+      ? profile.smartCard
+        ? resolvePublicSmartCardPrimaryAction(profile.smartCard.primaryAction, {
+            instantConnectUrl: profile.instantConnectUrl,
+          })
+        : null
       : null;
   const isSmartCardMisconfigured =
     profile.sharingMode === "smart_card" && profile.smartCard === null;

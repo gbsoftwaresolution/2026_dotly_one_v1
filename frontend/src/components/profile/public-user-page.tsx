@@ -7,6 +7,7 @@ import { RequestAccessPanel } from "@/components/profile/request-access-panel";
 import { personaApi, publicApi, userApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { getServerAccessToken } from "@/lib/auth/server-session";
+import { resolvePublicSmartCardPrimaryAction } from "@/lib/persona/smart-card";
 import type { PersonaSummary } from "@/types";
 
 interface PublicUserPageProps {
@@ -55,9 +56,15 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
     }
 
     const isSmartCard = profile.sharingMode === "smart_card";
+    const normalizedSmartCardPrimaryAction =
+      profile.sharingMode === "smart_card" && profile.smartCard
+        ? resolvePublicSmartCardPrimaryAction(profile.smartCard.primaryAction, {
+            instantConnectUrl: profile.instantConnectUrl,
+          })
+        : null;
     const showRequestAccessPanel =
       profile.sharingMode === "controlled" ||
-      profile.smartCard?.primaryAction === "request_access";
+      normalizedSmartCardPrimaryAction === "request_access";
 
     return (
       <main

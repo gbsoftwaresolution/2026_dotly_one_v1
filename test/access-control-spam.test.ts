@@ -433,7 +433,11 @@ describe("ContactRequestsService", () => {
 
   it("rejects profile requests when smart card mode disables request access", async () => {
     const service = new ContactRequestCreateService(
-      {} as any,
+      {
+        qRAccessToken: {
+          findFirst: async () => ({ id: "profile-qr-1" }),
+        },
+      } as any,
       {
         resolveEligibleParticipants: async () => ({
           fromPersona: { id: "from-persona", fullName: "Sender Persona" },
@@ -490,6 +494,77 @@ describe("ContactRequestsService", () => {
         return true;
       },
     );
+  });
+
+  it("allows profile requests when instant connect has no active profile QR", async () => {
+    let created = false;
+
+    const service = new ContactRequestCreateService(
+      {
+        qRAccessToken: {
+          findFirst: async () => null,
+        },
+      } as any,
+      {
+        resolveEligibleParticipants: async () => ({
+          fromPersona: { id: "from-persona", fullName: "Sender Persona" },
+          targetPersona: {
+            id: "target-persona",
+            userId: "target-user",
+            username: "target",
+            fullName: "Target User",
+            accessMode: PrismaPersonaAccessMode.OPEN,
+            sharingMode: "smart_card",
+            smartCardConfig: {
+              primaryAction: "instant_connect",
+              allowCall: true,
+            },
+            verifiedOnly: false,
+          },
+          senderUser: { id: "sender-user", isVerified: true },
+        }),
+      } as any,
+      {
+        assertCanCreateRequest: async () => undefined,
+      } as any,
+      {
+        assertSourceAccess: async () => undefined,
+      } as any,
+      {
+        reserveAndCreate: async () => {
+          created = true;
+
+          return {
+            id: "request-id",
+            status: PrismaContactRequestStatus.PENDING,
+            createdAt: new Date("2026-03-22T12:00:00.000Z"),
+            toPersona: {
+              id: "target-persona",
+              username: "target",
+              fullName: "Target User",
+            },
+          };
+        },
+      } as any,
+      {
+        createSafe: async () => undefined,
+      } as any,
+      {
+        trackRequestSent: async () => undefined,
+      } as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
+    );
+
+    const result = await service.create("sender-user", {
+      fromPersonaId: "from-persona",
+      toPersonaId: "target-persona",
+      sourceType: ContactRequestSourceType.Profile,
+    });
+
+    assert.equal(created, true);
+    assert.equal(result.id, "request-id");
   });
 
   it("blocks approval when a block exists before approval", async () => {

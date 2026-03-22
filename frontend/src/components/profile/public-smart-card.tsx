@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   ArrowRight,
@@ -16,6 +16,7 @@ import { Card } from "@/components/shared/card";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { formatPrimaryAction } from "@/lib/persona/labels";
+import { resolvePublicSmartCardPrimaryAction } from "@/lib/persona/smart-card";
 import { cn } from "@/lib/utils/cn";
 import type {
   PersonaSmartCardPrimaryAction,
@@ -94,11 +95,17 @@ function getPrimaryCtaCopy(primaryAction: PersonaSmartCardPrimaryAction): {
     case "request_access":
       return { label: "Request Access", icon: ArrowRight };
     case "instant_connect":
-      return { label: "Use Quick Connect", icon: QrCode };
+      return { label: "Connect Instantly", icon: QrCode };
     case "contact_me":
-      return { label: "Contact Me", icon: ArrowRight };
+      return { label: "Contact", icon: ArrowRight };
   }
 }
+
+type PrimaryCtaState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; message: string }
+  | { status: "error"; message: string };
 
 export function PublicSmartCard({
   profile,
@@ -106,7 +113,19 @@ export function PublicSmartCard({
 }: PublicSmartCardProps) {
   const config = profile.smartCard;
   const [isContactPanelOpen, setIsContactPanelOpen] = useState(false);
-  const [isQuickConnectHintOpen, setIsQuickConnectHintOpen] = useState(false);
+  const [primaryCtaState, setPrimaryCtaState] = useState<PrimaryCtaState>({
+    status: "idle",
+  });
+  const feedbackTimeoutRef = useRef<number | null>(null);
+  const contactPanelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimeoutRef.current !== null) {
+        window.clearTimeout(feedbackTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (!config) {
     return (
@@ -128,7 +147,13 @@ export function PublicSmartCard({
   }
 
   const hue = avatarHue(profile.username);
-  const primaryCta = getPrimaryCtaCopy(config.primaryAction);
+  const primaryAction = resolvePublicSmartCardPrimaryAction(
+    config.primaryAction,
+    {
+      instantConnectUrl: profile.instantConnectUrl,
+    },
+  );
+  const primaryCta = getPrimaryCtaCopy(primaryAction);
   const PrimaryIcon = primaryCta.icon;
   const smartActions: SmartAction[] = [];
 
@@ -169,9 +194,101 @@ export function PublicSmartCard({
   }
 
   const showContactPanel =
-    config.primaryAction === "contact_me"
+    primaryAction === "contact_me"
       ? isContactPanelOpen
       : smartActions.length > 0;
+
+  const isPrimaryActionDisabled =
+    primaryAction === "contact_me" && smartActions.length === 0;
+
+  function clearFeedbackTimeout() {
+    if (feedbackTimeoutRef.current !== null) {
+      window.clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = null;
+    }
+  }
+
+  function setSuccessState(message: string) {
+    clearFeedbackTimeout();
+    setPrimaryCtaState({ status: "success", message });
+    feedbackTimeoutRef.current = window.setTimeout(() => {
+      setPrimaryCtaState({ status: "idle" });
+      feedbackTimeoutRef.current = null;
+    }, 1800);
+  }
+
+  function setErrorState(message: string) {
+    clearFeedbackTimeout();
+    setPrimaryCtaState({ status: "error", message });
+  }
+
+  function handleRequestAccessAction() {
+    if (!requestAccessHref.startsWith("#")) {
+      setSuccessState("Opening request access.");
+      window.location.assign(requestAccessHref);
+      return;
+    }
+
+    const targetId = requestAccessHref.slice(1);
+    const target = targetId ? document.getElementById(targetId) : null;
+
+    if (!target) {
+      setErrorState("Request access is unavailable right now.");
+      return;
+    }
+
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    setSuccessState("Request access is ready below.");
+  }
+
+  function handleContactAction() {
+    if (smartActions.length === 0) {
+      setErrorState("No direct contact actions are available on this card yet.");
+      return;
+    }
+
+    setIsContactPanelOpen(true);
+    window.requestAnimationFrame(() => {
+      contactPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+    setSuccessState("Contact options are ready below.");
+  }
+
+  function handleInstantConnectAction() {
+    if (!profile.instantConnectUrl) {
+      handleRequestAccessAction();
+      return;
+    }
+
+    try {
+      window.location.assign(profile.instantConnectUrl);
+    } catch {
+      setErrorState("Instant Connect is unavailable right now.");
+    }
+  }
+
+  function handlePrimaryAction() {
+    if (isPrimaryActionDisabled) {
+      return;
+    }
+
+    setPrimaryCtaState({ status: "loading" });
+
+    switch (primaryAction) {
+      case "request_access":
+        handleRequestAccessAction();
+        return;
+      case "contact_me":
+        handleContactAction();
+        return;
+      case "instant_connect":
+        handleInstantConnectAction();
+        return;
+    }
+  }
 
   return (
     <Card className="overflow-hidden p-0 shadow-shell border-border/60">
@@ -234,69 +351,47 @@ export function PublicSmartCard({
                 Primary action
               </p>
               <p className="text-sm leading-6 text-white/72">
-                {formatPrimaryAction(config.primaryAction)} is the main entry
+                {formatPrimaryAction(primaryAction)} is the main entry
                 point for this profile.
               </p>
             </div>
 
             <div className="pt-4">
-              {config.primaryAction === "request_access" ? (
-                <a href={requestAccessHref} className="block">
-                  <PrimaryButton className="h-[68px] w-full gap-3 rounded-[24px] text-base">
-                    <PrimaryIcon className="h-5 w-5" />
-                    {primaryCta.label}
-                  </PrimaryButton>
-                </a>
-              ) : config.primaryAction === "contact_me" ? (
-                <PrimaryButton
-                  className="h-[68px] w-full gap-3 rounded-[24px] text-base"
-                  onClick={() => setIsContactPanelOpen((value) => !value)}
-                >
+              <PrimaryButton
+                className="h-[68px] w-full gap-3 rounded-[24px] text-base"
+                isLoading={primaryCtaState.status === "loading"}
+                isSuccess={primaryCtaState.status === "success"}
+                disabled={isPrimaryActionDisabled}
+                onClick={handlePrimaryAction}
+              >
+                {primaryCtaState.status === "loading" ? null : (
                   <PrimaryIcon className="h-5 w-5" />
-                  {primaryCta.label}
-                </PrimaryButton>
-              ) : (
-                <PrimaryButton
-                  className="h-[68px] w-full gap-3 rounded-[24px] text-base"
-                  onClick={() => setIsQuickConnectHintOpen((value) => !value)}
-                >
-                  <PrimaryIcon className="h-5 w-5" />
-                  {primaryCta.label}
-                </PrimaryButton>
-              )}
+                )}
+                {primaryCta.label}
+              </PrimaryButton>
+              {primaryCtaState.status === "error" ? (
+                <p role="alert" className="pt-3 text-sm leading-6 text-rose-200">
+                  {primaryCtaState.message}
+                </p>
+              ) : null}
+              {primaryCtaState.status === "success" ? (
+                <p aria-live="polite" className="pt-3 text-sm leading-6 text-white/72">
+                  {primaryCtaState.message}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>
       </div>
 
       <div className="space-y-4 px-6 py-6">
-        {config.primaryAction === "instant_connect" && isQuickConnectHintOpen ? (
-          <div className="rounded-[24px] border border-cyan-200 bg-cyan-50/80 p-4 dark:border-brandCyan/20 dark:bg-brandCyan/10">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 rounded-2xl bg-cyan-600/10 p-2 text-cyan-700 dark:bg-brandCyan/10 dark:text-brandCyan">
-                <QrCode className="h-5 w-5" />
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-foreground">
-                  Quick Connect runs through a shared QR
-                </p>
-                <p className="text-sm leading-6 text-muted">
-                  Use the Quick Connect QR that was shared with you to start the
-                  instant-connect flow. This profile page does not mint a new QR
-                  on its own.
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
         {showContactPanel ? (
-          <div className="space-y-3">
+          <div ref={contactPanelRef} className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-muted">
                 Direct actions
               </p>
-              {config.primaryAction === "contact_me" ? (
+              {primaryAction === "contact_me" ? (
                 <button
                   type="button"
                   onClick={() => setIsContactPanelOpen((value) => !value)}
@@ -383,7 +478,7 @@ export function PublicSmartCard({
           </div>
         ) : null}
 
-        {config.primaryAction === "contact_me" && smartActions.length === 0 ? (
+        {primaryAction === "contact_me" && smartActions.length === 0 ? (
           <div className="rounded-[24px] border border-border bg-surface/60 p-4">
             <p className="text-sm leading-6 text-muted">
               No direct contact actions are available on this card yet.
@@ -402,7 +497,7 @@ export function PublicSmartCard({
             </p>
           </div>
 
-          {config.primaryAction !== "request_access" && smartActions.length > 0 ? (
+          {primaryAction !== "request_access" && smartActions.length > 0 ? (
             <div className="pt-4">
               <SecondaryButton
                 className="w-full"

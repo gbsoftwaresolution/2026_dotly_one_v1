@@ -230,6 +230,7 @@ describe("ProfilesService analytics hook", () => {
         email: null,
       },
       links: [],
+      instantConnectUrl: null,
       smartCard: {
         primaryAction: "request_access",
         allowCall: false,
@@ -296,6 +297,7 @@ describe("ProfilesService analytics hook", () => {
       email: null,
     });
     assert.deepEqual(result.links, []);
+    assert.equal(result.instantConnectUrl, null);
 
     assert.deepEqual(result.smartCard, {
       primaryAction: "contact_me",
@@ -330,6 +332,9 @@ describe("ProfilesService analytics hook", () => {
             },
           }),
         },
+        qRAccessToken: {
+          findFirst: async () => ({ id: "profile-qr-1" }),
+        },
       } as any,
       {
         trackProfileView: async () => true,
@@ -337,6 +342,88 @@ describe("ProfilesService analytics hook", () => {
     );
 
     await assert.rejects(service.getRequestTarget("alice"), ForbiddenException);
+  });
+
+  it("degrades request targets to request access when instant connect has no active profile QR", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            fullName: "Alice Demo",
+            accessMode: "OPEN",
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "instant_connect",
+              allowCall: true,
+            },
+          }),
+        },
+        qRAccessToken: {
+          findFirst: async () => null,
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    const result = await service.getRequestTarget("alice");
+
+    assert.deepEqual(result, {
+      id: "persona-id",
+      username: "alice",
+      fullName: "Alice Demo",
+      accessMode: "open",
+    });
+  });
+
+  it("returns an instant connect url when a public profile QR is active", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "instant_connect",
+              allowCall: false,
+              allowWhatsapp: false,
+              allowEmail: false,
+              allowVcard: false,
+            },
+            user: {
+              email: "alice@dotly.one",
+              phoneNumber: null,
+            },
+          }),
+        },
+        qRAccessToken: {
+          findFirst: async () => ({ code: "profile-qr-1" }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+      {
+        get: (key: string, fallback?: string) =>
+          key === "qr.baseUrl" ? "https://dotly.id/q" : fallback,
+      } as any,
+    );
+
+    const result = await service.getPublicProfile("alice");
+
+    assert.equal(result.instantConnectUrl, "https://dotly.id/q/profile-qr-1");
   });
 
   it("does not block public profile loading when analytics is slow", async () => {

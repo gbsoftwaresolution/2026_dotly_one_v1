@@ -228,6 +228,7 @@ describe("RequestAccessPanel", () => {
         profile: {
           ...profileFixture,
           sharingMode: "smart_card",
+          instantConnectUrl: "https://dotly.id/q/profile-qr-1",
           smartCard: {
             primaryAction: "instant_connect",
             allowCall: false,

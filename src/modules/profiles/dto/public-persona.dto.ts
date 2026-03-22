@@ -8,6 +8,7 @@ import {
 } from "../../personas/persona-sharing";
 
 interface PublicPersonaSource {
+  id?: string;
   username: string;
   publicUrl: string;
   fullName: string;
@@ -86,6 +87,8 @@ export class PublicPersonaDto {
 
   links!: PublicPersonaLinkDto[];
 
+  instantConnectUrl!: string | null;
+
   smartCard!: PublicPersonaSmartCardDto | null;
 
   smartCardConfig!: PublicPersonaSmartCardDto | null;
@@ -104,7 +107,12 @@ export class PublicPersonaDto {
     return `https://dotly.id/${username}`;
   }
 
-  static fromRecord(persona: PublicPersonaSource): PublicPersonaDto {
+  static fromRecord(
+    persona: PublicPersonaSource,
+    options?: {
+      instantConnectUrl?: string | null;
+    },
+  ): PublicPersonaDto {
     const sharingMode = toApiSharingMode(persona.sharingMode);
     const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
     const publicUrl = PublicPersonaDto.toCanonicalPublicUrl(
@@ -145,6 +153,7 @@ export class PublicPersonaDto {
         email: canShareEmail ? email : null,
       },
       links: [],
+      instantConnectUrl: options?.instantConnectUrl ?? null,
       smartCard,
       smartCardConfig:
         safeSmartCardConfig === null

@@ -84,6 +84,7 @@ export interface PublicProfile {
   sharingMode: PersonaSharingMode;
   channels: PublicProfileChannels;
   links: ReadonlyArray<PublicProfileLink>;
+  instantConnectUrl?: string | null;
   smartCard: PersonaSmartCardConfig | null;
   smartCardConfig: PersonaSmartCardConfig | null;
 }

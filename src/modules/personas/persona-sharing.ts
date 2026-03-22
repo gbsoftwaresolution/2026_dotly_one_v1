@@ -81,6 +81,24 @@ export function validateSmartCardConfig(value: unknown): PersonaSmartCardConfig 
   };
 }
 
+export function validateSmartCardConfigCompatibility(
+  config: PersonaSmartCardConfig,
+  options: {
+    hasActiveProfileQr: boolean;
+  },
+): PersonaSmartCardConfig {
+  if (
+    config.primaryAction === PersonaSmartCardPrimaryAction.InstantConnect &&
+    !options.hasActiveProfileQr
+  ) {
+    throw new BadRequestException(
+      "smartCardConfig.primaryAction instant_connect requires an active profile QR",
+    );
+  }
+
+  return config;
+}
+
 export function toSafeSmartCardConfig(
   value: unknown,
 ): PersonaSmartCardConfig | null {
@@ -98,6 +116,9 @@ export function toSafeSmartCardConfig(
 export function supportsRequestAccessFlow(
   sharingMode: PrismaPersonaSharingMode,
   smartCardConfig: unknown,
+  options?: {
+    hasActiveProfileQr?: boolean;
+  },
 ): boolean {
   if (sharingMode === PrismaPersonaSharingMode.CONTROLLED) {
     return true;
@@ -105,8 +126,19 @@ export function supportsRequestAccessFlow(
 
   const safeSmartCardConfig = toSafeSmartCardConfig(smartCardConfig);
 
+  if (safeSmartCardConfig === null) {
+    return false;
+  }
+
+  if (
+    safeSmartCardConfig.primaryAction ===
+      PersonaSmartCardPrimaryAction.InstantConnect &&
+    options?.hasActiveProfileQr === false
+  ) {
+    return true;
+  }
+
   return (
-    safeSmartCardConfig?.primaryAction ===
-    PersonaSmartCardPrimaryAction.RequestAccess
+    safeSmartCardConfig.primaryAction === PersonaSmartCardPrimaryAction.RequestAccess
   );
 }

@@ -2,11 +2,14 @@ import { ConflictException, ForbiddenException, Injectable } from "@nestjs/commo
 import {
   PersonaSharingMode as PrismaPersonaSharingMode,
   ContactRequestStatus as PrismaContactRequestStatus,
+  QrStatus as PrismaQrStatus,
+  QrType as PrismaQrType,
   Prisma,
 } from "@prisma/client";
 
 import { ContactRequestSourceType } from "../../common/enums/contact-request-source-type.enum";
 import { NotificationType } from "../../common/enums/notification-type.enum";
+import { PersonaSmartCardPrimaryAction } from "../../common/enums/persona-smart-card-primary-action.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { AnalyticsService } from "../analytics/analytics.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -23,7 +26,10 @@ import { ContactRequestRetryPolicyService } from "./contact-request-retry-policy
 import { ContactRequestSourcePolicyService } from "./contact-request-source-policy.service";
 import { CreateContactRequestDto } from "./dto/create-contact-request.dto";
 import { RequestRateLimitService } from "./request-rate-limit.service";
-import { supportsRequestAccessFlow } from "../personas/persona-sharing";
+import {
+  supportsRequestAccessFlow,
+  toSafeSmartCardConfig,
+} from "../personas/persona-sharing";
 
 const noopVerificationPolicyService: Pick<
   VerificationPolicyService,
@@ -72,6 +78,12 @@ export class ContactRequestCreateService {
       !supportsRequestAccessFlow(
         targetSharingMode,
         targetPersona.smartCardConfig,
+        {
+          hasActiveProfileQr: await this.hasActiveProfileQr(
+            targetPersona.id,
+            targetPersona.smartCardConfig,
+          ),
+        },
       )
     ) {
       throw new ForbiddenException(
@@ -168,5 +180,31 @@ export class ContactRequestCreateService {
 
       throw error;
     }
+  }
+
+  private async hasActiveProfileQr(
+    personaId: string,
+    smartCardConfig: unknown,
+  ): Promise<boolean> {
+    const config = toSafeSmartCardConfig(smartCardConfig);
+
+    if (
+      config?.primaryAction !== PersonaSmartCardPrimaryAction.InstantConnect
+    ) {
+      return true;
+    }
+
+    const activeProfileQr = await this.prismaService.qRAccessToken.findFirst({
+      where: {
+        personaId,
+        type: PrismaQrType.profile,
+        status: PrismaQrStatus.active,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return activeProfileQr !== null;
   }
 }

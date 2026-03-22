@@ -38,6 +38,9 @@ describe("PersonasService sharing mode", () => {
           updatedAt: new Date("2026-03-22T10:05:00.000Z"),
         }),
       },
+      qRAccessToken: {
+        findFirst: async () => ({ id: "profile-qr-1" }),
+      },
     } as any);
 
     const result = await service.updateSharingMode("user-1", "persona-1", {
@@ -111,6 +114,43 @@ describe("PersonasService sharing mode", () => {
         sharingMode: PersonaSharingMode.SmartCard,
       }),
       BadRequestException,
+    );
+  });
+
+  it("rejects instant connect when no active profile QR exists", async () => {
+    const service = new PersonasService({
+      persona: {
+        findUnique: async () => ({
+          userId: "user-1",
+          sharingMode: "CONTROLLED",
+          smartCardConfig: null,
+        }),
+      },
+      qRAccessToken: {
+        findFirst: async () => null,
+      },
+    } as any);
+
+    await assert.rejects(
+      service.updateSharingMode("user-1", "persona-1", {
+        sharingMode: PersonaSharingMode.SmartCard,
+        smartCardConfig: {
+          primaryAction: PersonaSmartCardPrimaryAction.InstantConnect,
+          allowCall: false,
+          allowWhatsapp: false,
+          allowEmail: false,
+          allowVcard: false,
+        },
+      }),
+      (error: unknown) => {
+        assert(error instanceof BadRequestException);
+        assert.equal(
+          error.message,
+          "smartCardConfig.primaryAction instant_connect requires an active profile QR",
+        );
+
+        return true;
+      },
     );
   });
 

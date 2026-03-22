@@ -8,18 +8,32 @@ import { PublicSmartCard } from "./public-smart-card";
 
 const createObjectUrl = vi.fn(() => "blob:smart-card");
 const revokeObjectUrl = vi.fn();
+const scrollIntoView = vi.fn();
+const assignLocation = vi.fn();
 
 describe("PublicSmartCard", () => {
   beforeEach(() => {
     createObjectUrl.mockClear();
     revokeObjectUrl.mockClear();
+    scrollIntoView.mockClear();
+    assignLocation.mockClear();
     vi.stubGlobal("URL", {
       createObjectURL: createObjectUrl,
       revokeObjectURL: revokeObjectUrl,
     });
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: {
+        assign: assignLocation,
+      },
+    });
   });
 
-  it("renders a request access primary action and direct action links", () => {
+  it("renders a request access primary button and direct action links", () => {
     render(
       React.createElement(PublicSmartCard, {
         profile: {
@@ -56,9 +70,7 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    expect(
-      screen.getByRole("link", { name: /request access/i }),
-    ).toHaveAttribute("href", "#request-access-panel");
+    expect(screen.getByRole("button", { name: /request access/i })).toBeEnabled();
     expect(screen.getByRole("link", { name: /call/i })).toHaveAttribute(
       "href",
       "tel:+15551234567",
@@ -71,6 +83,58 @@ describe("PublicSmartCard", () => {
       "href",
       "mailto:jane@dotly.one",
     );
+  });
+
+  it("scrolls to the request panel when request access is pressed", async () => {
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(PublicSmartCard, {
+          profile: {
+            username: "jane",
+            publicUrl: "https://dotly.id/jane",
+            name: "Jane Doe",
+            fullName: "Jane Doe",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Trusted identity, zero clutter.",
+            profilePhoto: null,
+            profilePhotoUrl: null,
+            sharingMode: "smart_card",
+            channels: {
+              phoneNumber: null,
+              email: null,
+            },
+            links: [],
+            smartCard: {
+              primaryAction: "request_access",
+              allowCall: false,
+              allowWhatsapp: false,
+              allowEmail: false,
+              allowVcard: false,
+            },
+            smartCardConfig: {
+              primaryAction: "request_access",
+              allowCall: false,
+              allowWhatsapp: false,
+              allowEmail: false,
+              allowVcard: false,
+            },
+          },
+        }),
+        React.createElement("div", { id: "request-access-panel" }),
+      ),
+    );
+
+    await user.click(screen.getByRole("button", { name: /request access/i }));
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByText(/request access is ready below/i),
+    ).toBeInTheDocument();
   });
 
   it("reveals the action panel when contact me is the primary action", async () => {
@@ -116,9 +180,59 @@ describe("PublicSmartCard", () => {
       screen.queryByRole("link", { name: /call/i }),
     ).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /contact me/i }));
+    await user.click(screen.getByRole("button", { name: /^contact$/i }));
 
     expect(screen.getByRole("link", { name: /call/i })).toBeInTheDocument();
+    expect(
+      screen.getByText(/contact options are ready below/i),
+    ).toBeInTheDocument();
+  });
+
+  it("navigates into the QR flow when instant connect is the primary action", async () => {
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: {
+          username: "jane",
+          publicUrl: "https://dotly.id/jane",
+          name: "Jane Doe",
+          fullName: "Jane Doe",
+          jobTitle: "Founder",
+          companyName: "Dotly",
+          tagline: "Trusted identity, zero clutter.",
+          profilePhoto: null,
+          profilePhotoUrl: null,
+          sharingMode: "smart_card",
+          channels: {
+            phoneNumber: null,
+            email: null,
+          },
+          instantConnectUrl: "https://dotly.id/q/profile-qr-1",
+          links: [],
+          smartCard: {
+            primaryAction: "instant_connect",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: false,
+          },
+          smartCardConfig: {
+            primaryAction: "instant_connect",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: false,
+          },
+        },
+      }),
+    );
+
+    await user.click(screen.getByRole("button", { name: /connect instantly/i }));
+
+    expect(assignLocation).toHaveBeenCalledWith(
+      "https://dotly.id/q/profile-qr-1",
+    );
   });
 
   it("downloads a vcard when save contact is pressed", async () => {
@@ -164,6 +278,87 @@ describe("PublicSmartCard", () => {
 
     expect(createObjectUrl).toHaveBeenCalledTimes(1);
     expect(revokeObjectUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to request access when instant connect has no public QR target", () => {
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: {
+          username: "jane",
+          publicUrl: "https://dotly.id/jane",
+          name: "Jane Doe",
+          fullName: "Jane Doe",
+          jobTitle: "Founder",
+          companyName: "Dotly",
+          tagline: "Trusted identity, zero clutter.",
+          profilePhoto: null,
+          profilePhotoUrl: null,
+          sharingMode: "smart_card",
+          channels: {
+            phoneNumber: null,
+            email: null,
+          },
+          instantConnectUrl: null,
+          links: [],
+          smartCard: {
+            primaryAction: "instant_connect",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: false,
+          },
+          smartCardConfig: {
+            primaryAction: "instant_connect",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: false,
+          },
+        },
+      }),
+    );
+
+    expect(screen.getByRole("button", { name: /request access/i })).toBeInTheDocument();
+  });
+
+  it("disables contact when no direct actions are available", () => {
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: {
+          username: "jane",
+          publicUrl: "https://dotly.id/jane",
+          name: "Jane Doe",
+          fullName: "Jane Doe",
+          jobTitle: "Founder",
+          companyName: "Dotly",
+          tagline: "Trusted identity, zero clutter.",
+          profilePhoto: null,
+          profilePhotoUrl: null,
+          sharingMode: "smart_card",
+          channels: {
+            phoneNumber: null,
+            email: null,
+          },
+          links: [],
+          smartCard: {
+            primaryAction: "contact_me",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: false,
+          },
+          smartCardConfig: {
+            primaryAction: "contact_me",
+            allowCall: false,
+            allowWhatsapp: false,
+            allowEmail: false,
+            allowVcard: false,
+          },
+        },
+      }),
+    );
+
+    expect(screen.getByRole("button", { name: /^contact$/i })).toBeDisabled();
   });
 
   it("shows the empty configuration state", () => {

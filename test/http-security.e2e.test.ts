@@ -299,6 +299,37 @@ describe("HTTP Security E2E", () => {
     );
   });
 
+  it("rejects smart card mode without smart card config", async () => {
+    const callCountBefore = sharingUpdateCalls.length;
+    const token = await jwtService.signAsync({
+      sub: "user-84",
+      email: "user84@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(
+      `${baseUrl}/v1/personas/4b26dc1f-9238-46db-89c5-d9d2476f8c51/sharing`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sharingMode: "smart_card",
+        }),
+      },
+    );
+    const payload = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.success, false);
+    assert.deepEqual(payload.message, [
+      "smartCardConfig is required when sharingMode is smart_card",
+    ]);
+    assert.equal(sharingUpdateCalls.length, callCountBefore);
+  });
+
   it("rejects unknown smart card config fields", async () => {
     const token = await jwtService.signAsync({
       sub: "user-84",
