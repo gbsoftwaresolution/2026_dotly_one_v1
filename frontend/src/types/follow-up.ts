@@ -16,6 +16,7 @@ export interface FollowUpRelationship {
 }
 
 export interface FollowUpMetadata {
+  isTriggered?: boolean;
   isOverdue: boolean;
   isUpcomingSoon: boolean;
 }

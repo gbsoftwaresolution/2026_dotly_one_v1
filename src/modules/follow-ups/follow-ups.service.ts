@@ -35,6 +35,7 @@ const followUpSelect = {
   ownerUserId: true,
   relationshipId: true,
   remindAt: true,
+  triggeredAt: true,
   status: true,
   note: true,
   createdAt: true,
@@ -122,32 +123,175 @@ export class FollowUpsService {
       .map((followUp) => this.toFollowUpView(followUp, now));
   }
 
+  async listDueFollowUps(userId: string, limit?: number) {
+    await this.relationshipsService.expireOwnedExpiredRelationships(userId);
+
+    const now = new Date();
+    const followUps = await this.prismaService.followUp.findMany({
+      where: {
+        ownerUserId: userId,
+        status: PrismaFollowUpStatus.PENDING,
+        remindAt: {
+          lte: now,
+        },
+      },
+      ...(limit !== undefined
+        ? {
+            take: limit,
+          }
+        : {}),
+      select: followUpSelect,
+    });
+
+    return followUps
+      .sort(comparePendingFollowUps)
+      .map((followUp) => this.toFollowUpView(followUp, now));
+  }
+
   async getFollowUp(userId: string, id: string) {
     const followUp = await this.getOwnedFollowUp(this.prismaService, userId, id);
     return this.toFollowUpView(followUp);
   }
 
-  async getFollowUpSummaryForRelationship(userId: string, relationshipId: string) {
-    const aggregate = await this.prismaService.followUp.aggregate({
+  async markTriggeredIfDue(userId: string, id: string) {
+    const now = new Date();
+    const result = await this.prismaService.followUp.updateMany({
       where: {
+        id,
         ownerUserId: userId,
-        relationshipId,
         status: PrismaFollowUpStatus.PENDING,
+        triggeredAt: null,
+        remindAt: {
+          lte: now,
+        },
       },
-      _count: {
-        id: true,
-      },
-      _min: {
-        remindAt: true,
+      data: {
+        triggeredAt: now,
       },
     });
 
+    const followUp = await this.getOwnedFollowUp(this.prismaService, userId, id);
+
+    if (result.count === 0) {
+      return this.toFollowUpView(followUp, now);
+    }
+
+    return this.toFollowUpView(followUp, now);
+  }
+
+  async processDueFollowUps(options?: { userId?: string; limit?: number }) {
+    const now = new Date();
+
+    if (options?.limit !== undefined) {
+      const dueFollowUps = await this.prismaService.followUp.findMany({
+        where: {
+          ...(options.userId
+            ? {
+                ownerUserId: options.userId,
+              }
+            : {}),
+          status: PrismaFollowUpStatus.PENDING,
+          triggeredAt: null,
+          remindAt: {
+            lte: now,
+          },
+        },
+        orderBy: [{ remindAt: "asc" }, { createdAt: "asc" }, { id: "asc" }],
+        take: options.limit,
+        select: {
+          id: true,
+        },
+      });
+
+      if (dueFollowUps.length === 0) {
+        return {
+          processedCount: 0,
+        };
+      }
+
+      const result = await this.prismaService.followUp.updateMany({
+        where: {
+          id: {
+            in: dueFollowUps.map((followUp) => followUp.id),
+          },
+          status: PrismaFollowUpStatus.PENDING,
+          triggeredAt: null,
+          remindAt: {
+            lte: now,
+          },
+        },
+        data: {
+          triggeredAt: now,
+        },
+      });
+
+      return {
+        processedCount: result.count,
+      };
+    }
+
+    const result = await this.prismaService.followUp.updateMany({
+      where: {
+        ...(options?.userId
+          ? {
+              ownerUserId: options.userId,
+            }
+          : {}),
+        status: PrismaFollowUpStatus.PENDING,
+        triggeredAt: null,
+        remindAt: {
+          lte: now,
+        },
+      },
+      data: {
+        triggeredAt: now,
+      },
+    });
+
+    return {
+      processedCount: result.count,
+    };
+  }
+
+  async getFollowUpSummaryForRelationship(userId: string, relationshipId: string) {
+    const now = new Date();
+    const where = {
+      ownerUserId: userId,
+      relationshipId,
+      status: PrismaFollowUpStatus.PENDING,
+    } satisfies Prisma.FollowUpWhereInput;
+
+    const [aggregate, nextFollowUp] = await Promise.all([
+      this.prismaService.followUp.aggregate({
+        where,
+        _count: {
+          id: true,
+        },
+        _min: {
+          remindAt: true,
+        },
+      }),
+      this.prismaService.followUp.findFirst({
+        where,
+        orderBy: [{ remindAt: "asc" }, { createdAt: "asc" }, { id: "asc" }],
+        select: {
+          remindAt: true,
+          triggeredAt: true,
+          status: true,
+        },
+      }),
+    ]);
+
     const pendingFollowUpCount = aggregate._count.id;
+    const metadata = nextFollowUp
+      ? this.buildFollowUpMetadata(nextFollowUp, now)
+      : buildEmptyFollowUpMetadata();
 
     return {
       hasPendingFollowUp: pendingFollowUpCount > 0,
       nextFollowUpAt: aggregate._min.remindAt ?? null,
       pendingFollowUpCount,
+      ...metadata,
     };
   }
 
@@ -318,6 +462,7 @@ export class FollowUpsService {
       id: followUp.id,
       relationshipId: followUp.relationshipId,
       remindAt: followUp.remindAt,
+      triggeredAt: followUp.triggeredAt,
       status: toApiFollowUpStatus(followUp.status),
       note: followUp.note,
       createdAt: followUp.createdAt,
@@ -341,10 +486,14 @@ export class FollowUpsService {
     };
   }
 
-  private buildFollowUpMetadata(followUp: FollowUpRecord, now: Date) {
+  private buildFollowUpMetadata(
+    followUp: Pick<FollowUpRecord, "status" | "remindAt" | "triggeredAt">,
+    now: Date,
+  ) {
     return {
       isOverdue: this.isOverdue(followUp, now),
       isUpcomingSoon: this.isUpcomingSoon(followUp, now),
+      isTriggered: followUp.triggeredAt !== null,
     };
   }
 
@@ -419,8 +568,32 @@ function compareFollowUps(a: FollowUpRecord, b: FollowUpRecord) {
   return a.id.localeCompare(b.id);
 }
 
+function comparePendingFollowUps(a: FollowUpRecord, b: FollowUpRecord) {
+  const remindAtDelta = a.remindAt.getTime() - b.remindAt.getTime();
+
+  if (remindAtDelta !== 0) {
+    return remindAtDelta;
+  }
+
+  const createdAtDelta = a.createdAt.getTime() - b.createdAt.getTime();
+
+  if (createdAtDelta !== 0) {
+    return createdAtDelta;
+  }
+
+  return a.id.localeCompare(b.id);
+}
+
 function getResolvedFollowUpSortTime(followUp: FollowUpRecord) {
   return (followUp.completedAt ?? followUp.updatedAt).getTime();
+}
+
+function buildEmptyFollowUpMetadata() {
+  return {
+    isOverdue: false,
+    isUpcomingSoon: false,
+    isTriggered: false,
+  };
 }
 
 function toRemindAtDate(remindAt: string) {

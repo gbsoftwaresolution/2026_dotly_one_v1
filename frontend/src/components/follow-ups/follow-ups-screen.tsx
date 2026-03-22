@@ -16,6 +16,8 @@ import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import { cn } from "@/lib/utils/cn";
 import type { FollowUp, FollowUpStatus } from "@/types/follow-up";
 
+type PendingUrgencyBucket = "overdue" | "due" | "soon" | "later";
+
 const FILTERS: Array<{
   key: FollowUpStatus;
   label: string;
@@ -102,6 +104,89 @@ function sortFollowUps(items: FollowUp[]) {
   });
 }
 
+function getPendingUrgency(followUp: FollowUp): PendingUrgencyBucket {
+  const remindAt = new Date(followUp.remindAt).getTime();
+  const now = Date.now();
+  const hoursUntilReminder = (remindAt - now) / (1000 * 60 * 60);
+
+  if (followUp.metadata?.isOverdue) {
+    return "overdue";
+  }
+
+  if (followUp.metadata?.isTriggered) {
+    return "due";
+  }
+
+  if (followUp.metadata?.isUpcomingSoon) {
+    return "soon";
+  }
+
+  if (remindAt === now) {
+    return "due";
+  }
+
+  if (remindAt < now) {
+    return "overdue";
+  }
+
+  if (hoursUntilReminder <= 24) {
+    return "soon";
+  }
+
+  return "later";
+}
+
+function getUrgencyBadges(followUp: FollowUp) {
+  if (followUp.status !== "pending") {
+    return [];
+  }
+
+  const urgency = getPendingUrgency(followUp);
+
+  switch (urgency) {
+    case "overdue":
+      return [<StatusBadge key="overdue" label="Overdue" tone="error" dot />];
+    case "due":
+      return [<StatusBadge key="due" label="Due now" tone="warning" dot />];
+    case "soon":
+      return [<StatusBadge key="soon" label="Due soon" tone="info" dot />];
+    case "later":
+    default:
+      return [];
+  }
+}
+
+function getPendingSections(followUps: FollowUp[]) {
+  const pending = sortFollowUps(followUps).filter((followUp) => followUp.status === "pending");
+
+  return [
+    {
+      key: "overdue",
+      title: "Overdue",
+      description: "Start with the reminders that have slipped past their time.",
+      items: pending.filter((followUp) => getPendingUrgency(followUp) === "overdue"),
+    },
+    {
+      key: "due",
+      title: "Due now",
+      description: "Freshly surfaced reminders that are ready for a quick follow-up.",
+      items: pending.filter((followUp) => getPendingUrgency(followUp) === "due"),
+    },
+    {
+      key: "soon",
+      title: "Due soon",
+      description: "Upcoming reminders that are getting close.",
+      items: pending.filter((followUp) => getPendingUrgency(followUp) === "soon"),
+    },
+    {
+      key: "later",
+      title: "Later",
+      description: "Everything else scheduled for a future touchpoint.",
+      items: pending.filter((followUp) => getPendingUrgency(followUp) === "later"),
+    },
+  ].filter((section) => section.items.length > 0);
+}
+
 function getStatusBadge(status: FollowUpStatus) {
   switch (status) {
     case "pending":
@@ -147,6 +232,10 @@ export function FollowUpsScreen() {
     setLoadError(null);
 
     try {
+      if (status === "pending") {
+        await followUpsApi.processDue().catch(() => undefined);
+      }
+
       const result = await followUpsApi.list({ status });
 
       if (requestId !== requestIdRef.current) {
@@ -189,6 +278,7 @@ export function FollowUpsScreen() {
   }, [actionNotice]);
 
   const activeFilter = FILTERS.find((filter) => filter.key === selectedStatus) ?? FILTERS[0];
+  const pendingSections = selectedStatus === "pending" ? getPendingSections(followUps) : [];
 
   async function handleAction(id: string, type: "complete" | "cancel") {
     setActionState({ id, type });
@@ -312,6 +402,111 @@ export function FollowUpsScreen() {
           title={activeFilter.emptyTitle}
           description={activeFilter.emptyDescription}
         />
+      ) : selectedStatus === "pending" ? (
+        <div className="space-y-5">
+          {pendingSections.map((section) => (
+            <div key={section.key} className="space-y-3">
+              <div className="space-y-1 px-1">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="font-sans text-base font-semibold text-foreground">
+                    {section.title}
+                  </h3>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted">
+                    {section.items.length}
+                  </span>
+                </div>
+                <p className="text-sm text-muted">{section.description}</p>
+              </div>
+
+              <div className="space-y-3">
+                {section.items.map((followUp) => {
+                  const isWorking = actionState?.id === followUp.id;
+                  const title = getFollowUpTitle(followUp);
+                  const companyLine = getCompanyLine(followUp);
+                  const urgencyBadges = getUrgencyBadges(followUp);
+
+                  return (
+                    <div
+                      key={followUp.id}
+                      className={cn(
+                        "rounded-card border border-black/[0.06] bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_0_rgba(255,255,255,0.9)] dark:border-white/[0.06] dark:bg-surface1 dark:shadow-card sm:p-5",
+                        section.key === "overdue"
+                          ? "border-rose-200/80 dark:border-rose-900/60"
+                          : section.key === "due"
+                            ? "border-amber-200/80 dark:border-amber-900/60"
+                            : "",
+                      )}
+                    >
+                      <div className="space-y-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0 space-y-1">
+                            <Link
+                              href={routes.app.contactDetail(followUp.relationshipId)}
+                              className="block text-base font-semibold text-foreground transition-colors hover:text-brandRose dark:hover:text-brandCyan"
+                            >
+                              {title}
+                            </Link>
+                            {companyLine ? (
+                              <p className="text-sm text-muted">{companyLine}</p>
+                            ) : null}
+                          </div>
+                          <div className="self-start">{getStatusBadge(followUp.status)}</div>
+                        </div>
+
+                        {urgencyBadges.length > 0 ? (
+                          <div className="flex flex-wrap gap-2 sm:gap-2.5">{urgencyBadges}</div>
+                        ) : null}
+
+                        <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
+                          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+                            Remind at
+                          </p>
+                          <p className="mt-1 text-sm font-medium text-foreground">
+                            {formatReminder(followUp.remindAt)}
+                          </p>
+                        </div>
+
+                        {followUp.note ? (
+                          <div className="rounded-2xl border border-border bg-background/70 px-4 py-3">
+                            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+                              Note
+                            </p>
+                            <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-foreground/90">
+                              {followUp.note}
+                            </p>
+                          </div>
+                        ) : null}
+
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          <PrimaryButton
+                            type="button"
+                            fullWidth
+                            disabled={isWorking}
+                            onClick={() => void handleAction(followUp.id, "complete")}
+                          >
+                            {isWorking && actionState?.type === "complete"
+                              ? "Completing..."
+                              : "Complete"}
+                          </PrimaryButton>
+                          <SecondaryButton
+                            type="button"
+                            fullWidth
+                            disabled={isWorking}
+                            onClick={() => void handleAction(followUp.id, "cancel")}
+                          >
+                            {isWorking && actionState?.type === "cancel"
+                              ? "Cancelling..."
+                              : "Cancel"}
+                          </SecondaryButton>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="space-y-3">
           {followUps.map((followUp) => {
@@ -319,17 +514,18 @@ export function FollowUpsScreen() {
             const title = getFollowUpTitle(followUp);
             const companyLine = getCompanyLine(followUp);
             const resolutionLabel = getResolutionLabel(followUp);
+            const urgencyBadges = getUrgencyBadges(followUp);
 
             return (
               <div
                 key={followUp.id}
                 className={cn(
-                  "rounded-card border border-black/[0.06] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_0_rgba(255,255,255,0.9)] dark:border-white/[0.06] dark:bg-surface1 dark:shadow-card",
+                  "rounded-card border border-black/[0.06] bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_0_rgba(255,255,255,0.9)] dark:border-white/[0.06] dark:bg-surface1 dark:shadow-card sm:p-5",
                   followUp.status !== "pending" ? "opacity-90" : "",
                 )}
               >
                 <div className="space-y-4">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 space-y-1">
                       <Link
                         href={routes.app.contactDetail(followUp.relationshipId)}
@@ -341,17 +537,12 @@ export function FollowUpsScreen() {
                         <p className="text-sm text-muted">{companyLine}</p>
                       ) : null}
                     </div>
-                    {getStatusBadge(followUp.status)}
+                    <div className="self-start">{getStatusBadge(followUp.status)}</div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    {followUp.metadata.isOverdue ? (
-                      <StatusBadge label="Overdue" tone="error" dot />
-                    ) : null}
-                    {followUp.metadata.isUpcomingSoon ? (
-                      <StatusBadge label="Due soon" tone="info" dot />
-                    ) : null}
-                  </div>
+                  {urgencyBadges.length > 0 ? (
+                    <div className="flex flex-wrap gap-2 sm:gap-2.5">{urgencyBadges}</div>
+                  ) : null}
 
                   <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
                     <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
@@ -381,7 +572,7 @@ export function FollowUpsScreen() {
                   ) : null}
 
                   {followUp.status === "pending" ? (
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       <PrimaryButton
                         type="button"
                         fullWidth

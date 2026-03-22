@@ -44,6 +44,7 @@ function createFollowUp(overrides: Record<string, unknown> = {}) {
       },
     },
     metadata: {
+      isTriggered: false,
       isOverdue: false,
       isUpcomingSoon: false,
     },
@@ -155,7 +156,29 @@ describe("ContactFollowUpForm", () => {
     );
 
     expect(screen.getByText(/next reminder/i)).toBeInTheDocument();
+    expect(screen.getByText(/keep the next touchpoint in view/i)).toBeInTheDocument();
     expect(screen.getByText(/2 pending reminders/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /add reminder/i })).toBeInTheDocument();
+  });
+
+  it("surfaces overdue reminders without turning the contact view into a task list", () => {
+    render(
+      React.createElement(ContactFollowUpForm, {
+        relationshipId: "relationship-id",
+        contactName: "Alex Parker",
+        initialFollowUpSummary: {
+          hasPendingFollowUp: true,
+          nextFollowUpAt: "2026-03-21T14:00:00.000Z",
+          pendingFollowUpCount: 1,
+          isTriggered: false,
+          isOverdue: true,
+          isUpcomingSoon: false,
+        },
+      }),
+    );
+
+    expect(screen.getByText(/reminder overdue/i)).toBeInTheDocument();
+    expect(screen.getByText(/this reminder needs attention/i)).toBeInTheDocument();
+    expect(screen.getByText(/^overdue$/i)).toBeInTheDocument();
   });
 });

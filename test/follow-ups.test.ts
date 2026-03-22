@@ -23,6 +23,7 @@ function createFollowUpRecord(overrides: Record<string, unknown> = {}) {
     ownerUserId: "user-1",
     relationshipId: "relationship-1",
     remindAt: baseRemindAt,
+    triggeredAt: null,
     status: PrismaFollowUpStatus.PENDING,
     note: "Follow up on partnership discussion",
     createdAt: new Date("2099-04-01T09:00:00.000Z"),
@@ -236,6 +237,161 @@ describe("FollowUpsService", () => {
       result.map((followUp) => followUp.id),
       ["pending-sooner", "pending-later"],
     );
+  });
+
+  it("lists due follow-ups in remindAt order for the current user", async () => {
+    let findManyArgs: Record<string, unknown> | null = null;
+    const expireCalls: string[] = [];
+
+    const service = new FollowUpsService(
+      {
+        followUp: {
+          findMany: async (args: Record<string, unknown>) => {
+            findManyArgs = args;
+            return [
+              createFollowUpRecord({
+                id: "due-later",
+                remindAt: new Date("2026-03-22T09:00:00.000Z"),
+                triggeredAt: new Date("2026-03-22T09:05:00.000Z"),
+              }),
+              createFollowUpRecord({
+                id: "due-sooner",
+                remindAt: new Date("2026-03-22T08:00:00.000Z"),
+              }),
+            ];
+          },
+        },
+      } as any,
+      {
+        expireOwnedExpiredRelationships: async (userId: string) => {
+          expireCalls.push(userId);
+        },
+      } as any,
+    );
+
+    const result = await service.listDueFollowUps("user-1");
+
+    assert.deepEqual(expireCalls, ["user-1"]);
+    assert.equal((findManyArgs as any)?.where.ownerUserId, "user-1");
+    assert.equal((findManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
+    assert.ok((findManyArgs as any)?.where.remindAt.lte instanceof Date);
+    assert.deepEqual(
+      result.map((followUp) => followUp.id),
+      ["due-sooner", "due-later"],
+    );
+    assert.equal(result[0]?.metadata.isTriggered, false);
+    assert.equal(result[1]?.metadata.isTriggered, true);
+  });
+
+  it("marks a due pending follow-up as triggered exactly once", async () => {
+    let updateManyArgs: Record<string, unknown> | null = null;
+
+    const service = new FollowUpsService(
+      {
+        followUp: {
+          updateMany: async (args: Record<string, unknown>) => {
+            updateManyArgs = args;
+            return { count: 1 };
+          },
+          findFirst: async () =>
+            createFollowUpRecord({
+              triggeredAt: new Date("2026-03-22T10:00:00.000Z"),
+            }),
+        },
+      } as any,
+      {} as any,
+    );
+
+    const result = await service.markTriggeredIfDue("user-1", "follow-up-1");
+
+    assert.equal((updateManyArgs as any)?.where.id, "follow-up-1");
+    assert.equal((updateManyArgs as any)?.where.ownerUserId, "user-1");
+    assert.equal((updateManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
+    assert.equal((updateManyArgs as any)?.where.triggeredAt, null);
+    assert.ok((updateManyArgs as any)?.where.remindAt.lte instanceof Date);
+    assert.ok((updateManyArgs as any)?.data.triggeredAt instanceof Date);
+    assert.ok(result.triggeredAt instanceof Date);
+    assert.equal(result.metadata.isTriggered, true);
+  });
+
+  it("returns the current state when a follow-up is already triggered", async () => {
+    const triggeredAt = new Date("2026-03-22T10:00:00.000Z");
+
+    const service = new FollowUpsService(
+      {
+        followUp: {
+          updateMany: async () => ({ count: 0 }),
+          findFirst: async () =>
+            createFollowUpRecord({
+              triggeredAt,
+            }),
+        },
+      } as any,
+      {} as any,
+    );
+
+    const result = await service.markTriggeredIfDue("user-1", "follow-up-1");
+
+    assert.equal(result.triggeredAt?.toISOString(), triggeredAt.toISOString());
+    assert.equal(result.metadata.isTriggered, true);
+  });
+
+  it("processes only untriggered due follow-ups for the current user", async () => {
+    let updateManyArgs: Record<string, unknown> | null = null;
+
+    const service = new FollowUpsService(
+      {
+        followUp: {
+          updateMany: async (args: Record<string, unknown>) => {
+            updateManyArgs = args;
+            return { count: 2 };
+          },
+        },
+      } as any,
+      {} as any,
+    );
+
+    const result = await service.processDueFollowUps({
+      userId: "user-1",
+    });
+
+    assert.equal((updateManyArgs as any)?.where.ownerUserId, "user-1");
+    assert.equal((updateManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
+    assert.equal((updateManyArgs as any)?.where.triggeredAt, null);
+    assert.ok((updateManyArgs as any)?.where.remindAt.lte instanceof Date);
+    assert.ok((updateManyArgs as any)?.data.triggeredAt instanceof Date);
+    assert.deepEqual(result, {
+      processedCount: 2,
+    });
+  });
+
+  it("keeps the due cutoff in the limited processing update", async () => {
+    let updateManyArgs: Record<string, unknown> | null = null;
+
+    const service = new FollowUpsService(
+      {
+        followUp: {
+          findMany: async () => [{ id: "follow-up-1" }],
+          updateMany: async (args: Record<string, unknown>) => {
+            updateManyArgs = args;
+            return { count: 1 };
+          },
+        },
+      } as any,
+      {} as any,
+    );
+
+    const result = await service.processDueFollowUps({
+      userId: "user-1",
+      limit: 1,
+    });
+
+    assert.equal((updateManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
+    assert.equal((updateManyArgs as any)?.where.triggeredAt, null);
+    assert.ok((updateManyArgs as any)?.where.remindAt.lte instanceof Date);
+    assert.deepEqual(result, {
+      processedCount: 1,
+    });
   });
 
   it("returns an empty result for foreign relationship filters without leaking presence", async () => {
@@ -483,6 +639,7 @@ describe("FollowUpsService", () => {
     ]);
     assert.deepEqual(Object.keys(result.metadata).sort(), [
       "isOverdue",
+      "isTriggered",
       "isUpcomingSoon",
     ]);
   });
@@ -507,11 +664,14 @@ describe("FollowUpsService", () => {
     assert.equal(result.relationship.state, null);
     assert.equal(result.relationship.targetPersona, null);
     assert.equal(result.metadata.isOverdue, true);
+    assert.equal(result.metadata.isTriggered, false);
     assert.equal(result.metadata.isUpcomingSoon, false);
   });
 
   it("returns pending follow-up summary for a relationship", async () => {
     let aggregateArgs: Record<string, unknown> | null = null;
+    let findFirstArgs: Record<string, unknown> | null = null;
+    const triggeredAt = new Date("2099-04-09T10:05:00.000Z");
 
     const service = new FollowUpsService(
       {
@@ -526,6 +686,15 @@ describe("FollowUpsService", () => {
               _min: {
                 remindAt: new Date("2099-04-09T10:00:00.000Z"),
               },
+            };
+          },
+          findFirst: async (args: Record<string, unknown>) => {
+            findFirstArgs = args;
+
+            return {
+              remindAt: new Date("2099-04-09T10:00:00.000Z"),
+              triggeredAt,
+              status: PrismaFollowUpStatus.PENDING,
             };
           },
         },
@@ -543,11 +712,19 @@ describe("FollowUpsService", () => {
       relationshipId: "relationship-1",
       status: PrismaFollowUpStatus.PENDING,
     });
+    assert.deepEqual((findFirstArgs as any)?.where, {
+      ownerUserId: "user-1",
+      relationshipId: "relationship-1",
+      status: PrismaFollowUpStatus.PENDING,
+    });
     assert.equal(result.hasPendingFollowUp, true);
     assert.equal(result.pendingFollowUpCount, 2);
     assert.equal(
       result.nextFollowUpAt?.toISOString(),
       "2099-04-09T10:00:00.000Z",
     );
+    assert.equal(result.isTriggered, true);
+    assert.equal(result.isOverdue, false);
+    assert.equal(result.isUpcomingSoon, false);
   });
 });

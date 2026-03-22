@@ -41,6 +41,13 @@ export const followUpsApi = {
       credentials: "same-origin",
     }),
 
+  processDue: () =>
+    apiRequest<{ processedCount: number }>("/api/follow-ups/process-due", {
+      method: "POST",
+      baseUrl: "",
+      credentials: "same-origin",
+    }),
+
   get: (id: string) =>
     apiRequest<FollowUp>(`/api/follow-ups/${id}`, {
       baseUrl: "",

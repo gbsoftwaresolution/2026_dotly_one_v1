@@ -326,6 +326,9 @@ export class ContactsService {
       hasPendingFollowUp: boolean;
       nextFollowUpAt: Date | null;
       pendingFollowUpCount: number;
+      isTriggered: boolean;
+      isOverdue: boolean;
+      isUpcomingSoon: boolean;
     },
   ) {
     const memory = relationship.memories[0];
@@ -546,5 +549,8 @@ function buildEmptyFollowUpSummary() {
     hasPendingFollowUp: false,
     nextFollowUpAt: null,
     pendingFollowUpCount: 0,
+    isTriggered: false,
+    isOverdue: false,
+    isUpcomingSoon: false,
   };
 }

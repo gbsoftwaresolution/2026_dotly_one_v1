@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { followUpsApi } from "@/lib/api/follow-ups-api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
@@ -63,6 +64,46 @@ function formatReminder(value: string) {
   }).format(new Date(value));
 }
 
+function getFollowUpSummaryState(summary: ContactFollowUpSummary | null) {
+  if (!summary?.hasPendingFollowUp || !summary.nextFollowUpAt) {
+    return null;
+  }
+
+  if (summary.isOverdue) {
+    return {
+      eyebrow: "Reminder overdue",
+      title: "This reminder needs attention.",
+      tone: "error" as const,
+    };
+  }
+
+  if (summary.isTriggered) {
+    return {
+      eyebrow: "Reminder due",
+      title: "This reminder is ready when you are.",
+      tone: "warning" as const,
+    };
+  }
+
+  return {
+    eyebrow: "Next reminder",
+    title: "Keep the next touchpoint in view.",
+    tone: null,
+  };
+}
+
+function buildFollowUpSummaryFlags(remindAt: string, isTriggered: boolean) {
+  const remindAtMs = new Date(remindAt).getTime();
+  const nowMs = Date.now();
+
+  return {
+    isTriggered,
+    isOverdue: !isTriggered && remindAtMs < nowMs,
+    isUpcomingSoon:
+      !isTriggered && remindAtMs >= nowMs && remindAtMs <= nowMs + 24 * 60 * 60 * 1000,
+  };
+}
+
 function mergeFollowUpSummary(
   current: ContactFollowUpSummary | null,
   remindAt: string,
@@ -72,11 +113,17 @@ function mergeFollowUpSummary(
     new Date(current.nextFollowUpAt).getTime() <= new Date(remindAt).getTime()
       ? current.nextFollowUpAt
       : remindAt;
+  const preservesCurrentUrgency = current?.nextFollowUpAt === nextFollowUpAt;
+  const flags = buildFollowUpSummaryFlags(
+    nextFollowUpAt,
+    preservesCurrentUrgency ? (current?.isTriggered ?? false) : false,
+  );
 
   return {
     hasPendingFollowUp: true,
     nextFollowUpAt,
     pendingFollowUpCount: (current?.pendingFollowUpCount ?? 0) + 1,
+    ...flags,
   };
 }
 
@@ -110,6 +157,7 @@ export function ContactFollowUpForm({
   const charsLeft = MAX_NOTE_LENGTH - note.length;
   const hasPendingReminder =
     followUpSummary?.hasPendingFollowUp && followUpSummary.nextFollowUpAt;
+  const followUpSummaryState = getFollowUpSummaryState(followUpSummary);
 
   function resetForm() {
     const nextDefaults = getDefaultReminderValues();
@@ -181,14 +229,35 @@ export function ContactFollowUpForm({
   return (
     <div className="space-y-4">
       {hasPendingReminder ? (
-        <div className="rounded-2xl border border-border bg-surface/70 px-4 py-4">
-          <div className="flex items-start justify-between gap-3">
+        <div
+          className={cn(
+            "rounded-2xl border px-4 py-4 sm:px-5",
+            followUpSummaryState?.tone === "error"
+              ? "border-rose-200 bg-rose-50/80 dark:border-rose-900 dark:bg-rose-950/20"
+              : followUpSummaryState?.tone === "warning"
+                ? "border-amber-200 bg-amber-50/80 dark:border-amber-900 dark:bg-amber-950/20"
+                : "border-border bg-surface/70",
+          )}
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1">
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                Next reminder
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+                  {followUpSummaryState?.eyebrow ?? "Next reminder"}
+                </p>
+                {followUpSummaryState?.tone ? (
+                  <StatusBadge
+                    label={followUpSummaryState.tone === "error" ? "Overdue" : "Due"}
+                    tone={followUpSummaryState.tone}
+                    dot
+                  />
+                ) : null}
+              </div>
               <p className="text-sm font-medium text-foreground">
                 {formatReminder(followUpSummary.nextFollowUpAt!)}
+              </p>
+              <p className="text-xs text-muted">
+                {followUpSummaryState?.title ?? "Keep the next touchpoint in view."}
               </p>
               {followUpSummary.pendingFollowUpCount > 1 ? (
                 <p className="text-xs text-muted">
@@ -199,7 +268,7 @@ export function ContactFollowUpForm({
 
             <Link
               href={routes.app.followUps}
-              className="inline-flex min-h-12 items-center rounded-2xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:border-black/15 hover:bg-white dark:hover:border-white/15 dark:hover:bg-white/[0.08]"
+              className="inline-flex min-h-12 items-center justify-center self-start rounded-2xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:border-black/15 hover:bg-white dark:hover:border-white/15 dark:hover:bg-white/[0.08] sm:self-auto"
             >
               Manage reminders
             </Link>

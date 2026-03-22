@@ -349,6 +349,7 @@ model FollowUp {
   ownerUserId    String         @db.Uuid
   relationshipId String         @db.Uuid
   remindAt       DateTime
+  triggeredAt    DateTime?
   status         FollowUpStatus @default(PENDING)
   note           String?        @db.VarChar(1000)
   createdAt      DateTime       @default(now())
@@ -358,6 +359,7 @@ model FollowUp {
   relationship   ContactRelationship @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
 
   @@index([ownerUserId, status, remindAt])
+  @@index([ownerUserId, status, triggeredAt, remindAt])
   @@index([relationshipId, remindAt])
   @@index([ownerUserId, updatedAt])
 }

@@ -27,6 +27,8 @@ const TEST_SESSION_ID = "session-current";
 
 const createCalls: Array<{ userId: string; payload: unknown }> = [];
 const listCalls: Array<{ userId: string; query: unknown }> = [];
+const listDueCalls: Array<{ userId: string }> = [];
+const processDueCalls: Array<{ userId: string }> = [];
 const getCalls: Array<{ userId: string; id: string }> = [];
 const updateCalls: Array<{ userId: string; id: string; payload: unknown }> = [];
 const completeCalls: Array<{ userId: string; id: string }> = [];
@@ -37,6 +39,7 @@ function createMockFollowUp() {
     id: "follow-up-1",
     relationshipId: "relationship-1",
     remindAt: new Date("2099-04-10T10:00:00.000Z"),
+    triggeredAt: null,
     status: "pending",
     note: "Follow up on partnership discussion",
     createdAt: new Date("2099-04-01T09:00:00.000Z"),
@@ -57,6 +60,7 @@ function createMockFollowUp() {
     metadata: {
       isOverdue: false,
       isUpcomingSoon: true,
+      isTriggered: false,
     },
   };
 }
@@ -69,6 +73,16 @@ const followUpsServiceMock = {
   listFollowUps: async (userId: string, query: unknown) => {
     listCalls.push({ userId, query });
     return [];
+  },
+  listDueFollowUps: async (userId: string) => {
+    listDueCalls.push({ userId });
+    return [createMockFollowUp()];
+  },
+  processDueFollowUps: async ({ userId }: { userId: string }) => {
+    processDueCalls.push({ userId });
+    return {
+      processedCount: 1,
+    };
   },
   getFollowUp: async (userId: string, id: string) => {
     getCalls.push({ userId, id });
@@ -158,6 +172,8 @@ describe("Follow-ups HTTP E2E", () => {
   beforeEach(() => {
     createCalls.length = 0;
     listCalls.length = 0;
+    listDueCalls.length = 0;
+    processDueCalls.length = 0;
     getCalls.length = 0;
     updateCalls.length = 0;
     completeCalls.length = 0;
@@ -279,6 +295,51 @@ describe("Follow-ups HTTP E2E", () => {
         relationshipId: "4b26dc1f-9238-46db-89c5-d9d2476f8c51",
       },
     );
+  });
+
+  it("returns the authenticated user's due follow-ups", async () => {
+    const token = await jwtService.signAsync({
+      sub: "user-84",
+      email: "user84@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(`${baseUrl}/v1/follow-ups/due`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.success, true);
+    assert.deepEqual(listDueCalls.at(-1), {
+      userId: "user-84",
+    });
+    assert.equal(payload.data[0]?.metadata.isTriggered, false);
+  });
+
+  it("processes due follow-ups for the authenticated user", async () => {
+    const token = await jwtService.signAsync({
+      sub: "user-84",
+      email: "user84@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(`${baseUrl}/v1/follow-ups/process-due`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 201);
+    assert.equal(payload.success, true);
+    assert.deepEqual(processDueCalls.at(-1), {
+      userId: "user-84",
+    });
+    assert.equal(payload.data.processedCount, 1);
   });
 
   it("rejects invalid follow-up status query params before reaching the service", async () => {

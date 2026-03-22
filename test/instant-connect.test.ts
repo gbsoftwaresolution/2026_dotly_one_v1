@@ -862,6 +862,9 @@ describe("ContactsService", () => {
           hasPendingFollowUp: true,
           nextFollowUpAt,
           pendingFollowUpCount: 2,
+          isTriggered: true,
+          isOverdue: false,
+          isUpcomingSoon: false,
         }),
       } as any,
     );
@@ -884,6 +887,9 @@ describe("ContactsService", () => {
       result.followUpSummary.nextFollowUpAt?.toISOString(),
       nextFollowUpAt.toISOString(),
     );
+    assert.equal(result.followUpSummary.isTriggered, true);
+    assert.equal(result.followUpSummary.isOverdue, false);
+    assert.equal(result.followUpSummary.isUpcomingSoon, false);
   });
 
   it("returns null-safe detail metadata for sparse or future interaction values", async () => {
@@ -937,6 +943,9 @@ describe("ContactsService", () => {
       hasPendingFollowUp: false,
       nextFollowUpAt: null,
       pendingFollowUpCount: 0,
+      isTriggered: false,
+      isOverdue: false,
+      isUpcomingSoon: false,
     });
   });
 

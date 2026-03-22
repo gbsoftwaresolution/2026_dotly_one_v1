@@ -57,6 +57,8 @@ vi.mock("@/components/follow-ups/contact-follow-up-form", () => ({
     initialFollowUpSummary?: {
       hasPendingFollowUp: boolean;
       pendingFollowUpCount: number;
+      isTriggered?: boolean;
+      isOverdue?: boolean;
     };
   }) =>
     React.createElement(
@@ -64,7 +66,12 @@ vi.mock("@/components/follow-ups/contact-follow-up-form", () => ({
       { "data-testid": "follow-up-form" },
       `Remind ${contactName}`,
       initialFollowUpSummary?.hasPendingFollowUp
-        ? ` Pending ${initialFollowUpSummary.pendingFollowUpCount}`
+        ? ` Pending ${initialFollowUpSummary.pendingFollowUpCount}` +
+            (initialFollowUpSummary.isOverdue
+              ? " Overdue"
+              : initialFollowUpSummary.isTriggered
+                ? " Due"
+                : "")
         : "",
     ),
 }));
@@ -201,6 +208,9 @@ describe("ContactDetailPage", () => {
           hasPendingFollowUp: true,
           nextFollowUpAt: "2026-03-24T09:30:00.000Z",
           pendingFollowUpCount: 2,
+          isTriggered: true,
+          isOverdue: false,
+          isUpcomingSoon: false,
         },
       }),
     );
@@ -212,7 +222,7 @@ describe("ContactDetailPage", () => {
     render(element);
 
     expect(screen.getByTestId("follow-up-form")).toHaveTextContent(
-      "Pending 2",
+      "Pending 2 Due",
     );
   });
 });

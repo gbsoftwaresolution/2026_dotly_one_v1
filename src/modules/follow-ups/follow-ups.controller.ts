@@ -40,6 +40,18 @@ export class FollowUpsController {
     return this.followUpsService.listFollowUps(user.id, query);
   }
 
+  @Get("due")
+  findDue(@CurrentUser() user: AuthenticatedUser) {
+    return this.followUpsService.listDueFollowUps(user.id);
+  }
+
+  @Post("process-due")
+  processDue(@CurrentUser() user: AuthenticatedUser) {
+    return this.followUpsService.processDueFollowUps({
+      userId: user.id,
+    });
+  }
+
   @Get(":id")
   findOne(
     @CurrentUser() user: AuthenticatedUser,

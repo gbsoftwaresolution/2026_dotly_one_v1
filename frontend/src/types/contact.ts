@@ -38,6 +38,9 @@ export interface ContactFollowUpSummary {
   hasPendingFollowUp: boolean;
   nextFollowUpAt: string | null;
   pendingFollowUpCount: number;
+  isTriggered?: boolean;
+  isOverdue?: boolean;
+  isUpcomingSoon?: boolean;
 }
 
 export interface Contact {
