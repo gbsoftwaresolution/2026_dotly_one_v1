@@ -27,14 +27,14 @@ describe("format-contact-relationship", () => {
     expect(formatConnectionContext("event", "Tech Summit")).toBe(
       "Met at Tech Summit",
     );
-    expect(formatConnectionContext("event", null)).toBe("Met at Event");
+    expect(formatConnectionContext("event", null)).toBe("Met at an event");
     expect(formatConnectionContext("qr", null)).toBe("Connected via QR");
-    expect(formatConnectionContext("profile", null)).toBe(
-      "Connected via profile",
+    expect(formatConnectionContext("manual", null)).toBe(
+      "Connected manually",
     );
   });
 
-  it("resolves relationship age from metadata or createdAt", () => {
+  it("resolves relationship age from metadata or connectedAt", () => {
     expect(getRelationshipAgeDays(14, "2026-03-01T12:00:00.000Z")).toBe(14);
     expect(
       getRelationshipAgeDays(undefined, "2026-03-20T12:00:00.000Z"),

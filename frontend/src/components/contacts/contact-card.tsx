@@ -5,8 +5,8 @@ import { ExpiryBadge } from "@/components/shared/expiry-badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { routes } from "@/lib/constants/routes";
 import {
+  formatConnectionContext,
   formatRelationshipAge,
-  formatSourceLabel,
   getRecentActivityLabel,
 } from "@/lib/utils/format-contact-relationship";
 import type { Contact } from "@/types/contact";
@@ -44,13 +44,13 @@ interface ContactCardProps {
 export function ContactCard({ contact }: ContactCardProps) {
   const {
     targetPersona,
-    sourceType,
-    createdAt,
+    connectedAt,
+    connectionSource,
+    contextLabel,
     relationshipId,
     state,
     accessEndAt,
     lastInteractionAt,
-    memory,
     metadata,
   } = contact;
 
@@ -61,23 +61,23 @@ export function ContactCard({ contact }: ContactCardProps) {
       ? isNearExpiry(accessEndAt)
       : false;
 
-  const sourceLabel = formatSourceLabel(memory.sourceLabel, sourceType);
   const recentActivityLabel = getRecentActivityLabel(
     metadata.isRecentlyActive,
     metadata.lastInteractionAt ?? lastInteractionAt,
   );
   const relationshipAgeLabel = formatRelationshipAge(
     metadata.relationshipAgeDays,
-    createdAt,
+    connectedAt,
     "compact",
   );
   const titleLine = [targetPersona.jobTitle, targetPersona.companyName]
     .map((value) => value?.trim())
     .filter(Boolean)
     .join(" at ");
-  const sourceContext = sourceLabel
-    ? `Met via ${sourceLabel}`
-    : "Connection saved";
+  const sourceContext = formatConnectionContext(
+    connectionSource,
+    contextLabel,
+  );
 
   return (
     <Link
@@ -142,7 +142,7 @@ export function ContactCard({ contact }: ContactCardProps) {
             Connected {relationshipAgeLabel}
           </span>
           <span className="font-sans text-xs text-muted">
-            Since {formatDate(createdAt)}
+            Since {formatDate(connectedAt)}
           </span>
           {metadata.isRecentlyActive && !recentActivityLabel ? (
             <span className="font-sans text-xs text-muted">

@@ -9,6 +9,7 @@ import {
   ContactRequestSourceType as PrismaContactRequestSourceType,
   PersonaAccessMode as PrismaPersonaAccessMode,
   Prisma,
+  RelationshipConnectionSource as PrismaRelationshipConnectionSource,
 } from "@prisma/client";
 
 import { ContactRequestSourceType } from "../../common/enums/contact-request-source-type.enum";
@@ -58,6 +59,10 @@ const contactListRelationshipSelect = {
   lastInteractionAt: true,
   interactionCount: true,
   createdAt: true,
+  connectedAt: true,
+  metAt: true,
+  connectionSource: true,
+  contextLabel: true,
   sourceType: true,
   connectionContext: true,
   targetPersona: {
@@ -104,6 +109,13 @@ type RelationshipMetadata = {
   hasInteractions: boolean;
   isRecentlyActive: boolean;
   relationshipAgeDays: number;
+};
+
+type RelationshipTimeline = {
+  connectedAt: Date;
+  metAt: Date;
+  connectionSource: PrismaRelationshipConnectionSource;
+  contextLabel: string | null;
 };
 
 @Injectable()
@@ -334,13 +346,20 @@ export class ContactsService {
     now: Date,
   ) {
     const memory = relationship.memories[0];
+    const timeline = this.buildRelationshipTimeline(relationship);
     const metadata = this.buildRelationshipMetadata(relationship, now);
-    const sourceLabel = this.buildSourceLabel(relationship);
+    const sourceLabel = this.buildMemorySourceLabel(relationship);
 
     return {
       relationshipId: relationship.id,
       state: toApiRelationshipState(relationship.state),
       createdAt: relationship.createdAt,
+      connectedAt: timeline.connectedAt,
+      metAt: timeline.metAt,
+      connectionSource: toApiRelationshipConnectionSource(
+        timeline.connectionSource,
+      ),
+      contextLabel: timeline.contextLabel,
       accessEndAt: relationship.accessEndAt,
       lastInteractionAt: metadata.lastInteractionAt,
       interactionCount: metadata.interactionCount,
@@ -356,7 +375,7 @@ export class ContactsService {
         profilePhotoUrl: relationship.targetPersona.profilePhotoUrl,
       },
       memory: {
-        metAt: memory?.metAt ?? relationship.createdAt,
+        metAt: timeline.metAt,
         sourceLabel,
         note: memory?.note ?? null,
       },
@@ -377,8 +396,9 @@ export class ContactsService {
     },
   ) {
     const memory = relationship.memories[0];
+    const timeline = this.buildRelationshipTimeline(relationship);
     const metadata = this.buildRelationshipDetailMetadata(relationship, now);
-    const sourceLabel = this.buildSourceLabel(relationship);
+    const sourceLabel = this.buildMemorySourceLabel(relationship);
 
     return {
       relationshipId: relationship.id,
@@ -387,6 +407,12 @@ export class ContactsService {
       accessEndAt: relationship.accessEndAt,
       isExpired: relationship.state === PrismaContactRelationshipState.EXPIRED,
       createdAt: relationship.createdAt,
+      connectedAt: timeline.connectedAt,
+      metAt: timeline.metAt,
+      connectionSource: toApiRelationshipConnectionSource(
+        timeline.connectionSource,
+      ),
+      contextLabel: timeline.contextLabel,
       lastInteractionAt: metadata.lastInteractionAt,
       interactionCount: metadata.interactionCount,
       sourceType: toApiContactRequestSourceType(relationship.sourceType),
@@ -402,7 +428,7 @@ export class ContactsService {
         accessMode: toApiAccessMode(relationship.targetPersona.accessMode),
       },
       memory: {
-        metAt: memory?.metAt ?? relationship.createdAt,
+        metAt: timeline.metAt,
         sourceLabel,
         note: memory?.note ?? null,
       },
@@ -425,10 +451,15 @@ export class ContactsService {
   private buildRelationshipMetadata(
     relationship: Pick<
       ContactListRelationshipRecord,
-      "createdAt" | "lastInteractionAt" | "interactionCount"
+      "createdAt" | "connectedAt" | "lastInteractionAt" | "interactionCount"
     >,
     now: Date,
   ): RelationshipMetadata {
+    const connectedAt = this.getSafeConnectedAt(
+      relationship.connectedAt,
+      relationship.createdAt,
+      now,
+    );
     const lastInteractionAt = this.getSafeLastInteractionAt(
       relationship.lastInteractionAt,
       now,
@@ -443,21 +474,65 @@ export class ContactsService {
       interactionCount,
       hasInteractions,
       isRecentlyActive: this.isRecentlyActive(lastInteractionAt, now),
-      relationshipAgeDays: this.getRelationshipAgeDays(
-        relationship.createdAt,
-        now,
-      ),
+      relationshipAgeDays: this.getRelationshipAgeDays(connectedAt, now),
     };
   }
 
   private buildRelationshipDetailMetadata(
     relationship: Pick<
       ContactDetailRelationshipRecord,
-      "createdAt" | "lastInteractionAt" | "interactionCount"
+      "createdAt" | "connectedAt" | "lastInteractionAt" | "interactionCount"
     >,
     now: Date,
   ): RelationshipMetadata {
     return this.buildRelationshipMetadata(relationship, now);
+  }
+
+  private buildRelationshipTimeline(
+    relationship: {
+      createdAt: Date;
+      connectedAt?: Date | null;
+      metAt?: Date | null;
+      connectionSource?: PrismaRelationshipConnectionSource | null;
+      contextLabel?: string | null;
+      sourceType: PrismaContactRequestSourceType;
+      connectionContext: Prisma.JsonValue | null;
+      memories: Array<{
+        contextLabel: string;
+        metAt: Date;
+        sourceLabel: string | null;
+      }>;
+    },
+  ): RelationshipTimeline {
+    const memory = relationship.memories[0];
+    const storedContext = parseConnectionContext(
+      relationship.connectionContext,
+    );
+    const connectedAt = this.getTimelineDate(
+      relationship.connectedAt,
+      relationship.createdAt,
+      new Date(0),
+    );
+    const connectionSource =
+      relationship.connectionSource ??
+      toRelationshipConnectionSource(relationship.sourceType);
+
+    return {
+      connectedAt,
+      metAt: this.getTimelineDate(
+        relationship.metAt,
+        memory?.metAt,
+        connectedAt,
+      ),
+      connectionSource,
+      contextLabel:
+        normalizeContextLabel(relationship.contextLabel) ??
+        normalizeContextLabel(memory?.contextLabel) ??
+        normalizeStoredContextLabel(
+          storedContext?.label,
+          relationship.sourceType,
+        ),
+    };
   }
 
   private isRecentlyActive(lastInteractionAt: Date | null, now: Date): boolean {
@@ -471,23 +546,51 @@ export class ContactsService {
   }
 
   private getRelationshipAgeDays(
-    createdAt: Date | null | undefined,
+    connectedAt: Date | null | undefined,
     now: Date,
   ): number {
-    if (!(createdAt instanceof Date)) {
+    if (!(connectedAt instanceof Date)) {
       return 0;
     }
 
-    const createdAtMs = createdAt.getTime();
+    const connectedAtMs = connectedAt.getTime();
 
-    if (Number.isNaN(createdAtMs)) {
+    if (Number.isNaN(connectedAtMs) || connectedAtMs > now.getTime()) {
       return 0;
     }
 
     return Math.max(
       0,
-      Math.floor((now.getTime() - createdAtMs) / MILLISECONDS_PER_DAY),
+      Math.floor((now.getTime() - connectedAtMs) / MILLISECONDS_PER_DAY),
     );
+  }
+
+  private getSafeConnectedAt(
+    connectedAt: Date | null | undefined,
+    createdAt: Date | null | undefined,
+    now: Date,
+  ): Date {
+    const resolvedConnectedAt = this.getTimelineDate(connectedAt, createdAt);
+
+    return resolvedConnectedAt.getTime() > now.getTime()
+      ? this.getTimelineDate(createdAt, new Date(0))
+      : resolvedConnectedAt;
+  }
+
+  private getTimelineDate(...candidates: Array<Date | null | undefined>): Date {
+    for (const candidate of candidates) {
+      if (!(candidate instanceof Date)) {
+        continue;
+      }
+
+      const timestamp = candidate.getTime();
+
+      if (!Number.isNaN(timestamp)) {
+        return candidate;
+      }
+    }
+
+    return new Date(0);
   }
 
   private getSafeLastInteractionAt(
@@ -510,25 +613,18 @@ export class ContactsService {
     return lastInteractionAt;
   }
 
-  private buildSourceLabel(
+  private buildMemorySourceLabel(
     relationship: {
       sourceType: PrismaContactRequestSourceType;
-      connectionContext: Prisma.JsonValue | null;
       memories: Array<{
-        contextLabel: string;
         sourceLabel: string | null;
       }>;
     },
   ) {
     const memory = relationship.memories[0];
-    const storedContext = parseConnectionContext(
-      relationship.connectionContext,
-    );
 
     return (
-      normalizeContextLabel(memory?.contextLabel) ??
-      normalizeContextLabel(storedContext?.label) ??
-      memory?.sourceLabel ??
+      normalizeContextLabel(memory?.sourceLabel) ??
       toSourceLabel(relationship.sourceType) ??
       "Profile"
     );
@@ -563,6 +659,22 @@ function toApiContactRequestSourceType(
   }
 
   throw new Error("Unsupported contact request source type");
+}
+
+function toApiRelationshipConnectionSource(
+  connectionSource: PrismaRelationshipConnectionSource,
+): "qr" | "event" | "manual" | "unknown" {
+  switch (connectionSource) {
+    case PrismaRelationshipConnectionSource.QR:
+      return "qr";
+    case PrismaRelationshipConnectionSource.EVENT:
+      return "event";
+    case PrismaRelationshipConnectionSource.MANUAL:
+      return "manual";
+    case PrismaRelationshipConnectionSource.UNKNOWN:
+    default:
+      return "unknown";
+  }
 }
 
 function toApiRelationshipState(
@@ -608,6 +720,37 @@ function toSourceLabel(
   }
 
   throw new Error("Unsupported contact request source type");
+}
+
+function toRelationshipConnectionSource(
+  sourceType: PrismaContactRequestSourceType,
+): PrismaRelationshipConnectionSource {
+  switch (sourceType) {
+    case PrismaContactRequestSourceType.QR:
+      return PrismaRelationshipConnectionSource.QR;
+    case PrismaContactRequestSourceType.EVENT:
+      return PrismaRelationshipConnectionSource.EVENT;
+    case PrismaContactRequestSourceType.PROFILE:
+    default:
+      return PrismaRelationshipConnectionSource.MANUAL;
+  }
+}
+
+function normalizeStoredContextLabel(
+  value: unknown,
+  sourceType: PrismaContactRequestSourceType,
+): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalizedValue = normalizeContextLabel(value);
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  return normalizedValue === toSourceLabel(sourceType) ? null : normalizedValue;
 }
 
 function parseConnectionContext(value: Prisma.JsonValue | null | undefined): {

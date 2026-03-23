@@ -104,6 +104,10 @@ function createContactDetail(
     relationshipId: "relationship-id",
     state: "approved",
     createdAt: "2026-03-08T12:00:00.000Z",
+    connectedAt: "2026-03-08T12:00:00.000Z",
+    metAt: "2026-03-08T12:00:00.000Z",
+    connectionSource: "event",
+    contextLabel: "Launch Week",
     accessStartAt: null,
     accessEndAt: null,
     lastInteractionAt: "2026-03-21T12:00:00.000Z",
@@ -123,7 +127,7 @@ function createContactDetail(
     },
     memory: {
       metAt: "2026-03-08T12:00:00.000Z",
-      sourceLabel: "Launch Week",
+      sourceLabel: "Event",
       note: null,
     },
     followUpSummary: {
@@ -178,17 +182,19 @@ describe("ContactDetailPage", () => {
       "Remind Alex Parker",
     );
     expect(screen.getByText("Recently active")).toBeInTheDocument();
-    expect(screen.getByText("1 day ago")).toBeInTheDocument();
-    expect(screen.getByText("5")).toBeInTheDocument();
-    expect(screen.getByText("14 days ago")).toBeInTheDocument();
+    expect(screen.getByText("Last interaction 1 day ago")).toBeInTheDocument();
+    expect(screen.getByText("Connected on Mar 8")).toBeInTheDocument();
     expect(screen.getByText("Met at Launch Week")).toBeInTheDocument();
-    expect(screen.getByText("Launch Week")).toBeInTheDocument();
+    expect(screen.queryByText("Touchpoints")).not.toBeInTheDocument();
+    expect(screen.queryByText("Source")).not.toBeInTheDocument();
   });
 
   it("handles sparse interaction metadata without showing the empty state incorrectly", async () => {
     mocks.apiRequest.mockResolvedValue(
       createContactDetail({
         sourceType: "profile",
+        connectionSource: "manual",
+        contextLabel: null,
         lastInteractionAt: "2026-03-21T12:00:00.000Z",
         interactionCount: 0,
         memory: {
@@ -212,13 +218,65 @@ describe("ContactDetailPage", () => {
 
     render(element);
 
-    expect(screen.getByText("1 day ago")).toBeInTheDocument();
-    expect(screen.getByText("0")).toBeInTheDocument();
-    expect(screen.getByText("Connected via profile")).toBeInTheDocument();
-    expect(screen.getByText("Profile")).toBeInTheDocument();
-    expect(screen.getByText("120 days ago")).toBeInTheDocument();
-    expect(screen.queryByText("No interactions yet")).not.toBeInTheDocument();
+    expect(screen.getByText("Last interaction 1 day ago")).toBeInTheDocument();
+    expect(screen.getByText("Connected manually")).toBeInTheDocument();
+    expect(screen.getByText("Connected on Mar 8")).toBeInTheDocument();
     expect(screen.queryByText("Recently active")).not.toBeInTheDocument();
+  });
+
+  it("hides the last interaction line when no interaction timestamp is available", async () => {
+    mocks.apiRequest.mockResolvedValue(
+      createContactDetail({
+        sourceType: "event",
+        connectionSource: "event",
+        contextLabel: null,
+        memory: {
+          metAt: "2026-03-08T12:00:00.000Z",
+          sourceLabel: null,
+          note: null,
+        },
+        lastInteractionAt: null,
+        metadata: {
+          lastInteractionAt: null,
+          interactionCount: 0,
+          hasInteractions: false,
+          isRecentlyActive: false,
+          relationshipAgeDays: 14,
+        },
+      }),
+    );
+
+    const element = await ContactDetailPage({
+      params: Promise.resolve({ relationshipId: "relationship-id" }),
+    });
+
+    render(element);
+
+    expect(screen.getByText("Met at an event")).toBeInTheDocument();
+    expect(screen.getByText("Connected on Mar 8")).toBeInTheDocument();
+    expect(screen.queryByText(/Last interaction/i)).not.toBeInTheDocument();
+  });
+
+  it("falls back to a neutral connection label for unknown sources", async () => {
+    mocks.apiRequest.mockResolvedValue(
+      createContactDetail({
+        connectionSource: "unknown",
+        contextLabel: null,
+        memory: {
+          metAt: "2026-03-08T12:00:00.000Z",
+          sourceLabel: null,
+          note: null,
+        },
+      }),
+    );
+
+    const element = await ContactDetailPage({
+      params: Promise.resolve({ relationshipId: "relationship-id" }),
+    });
+
+    render(element);
+
+    expect(screen.getByText("Connected")).toBeInTheDocument();
   });
 
   it("passes follow-up summary context to the reminder block", async () => {

@@ -9,13 +9,10 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { ApiError, apiRequest } from "@/lib/api/client";
 import { requireServerSession } from "@/lib/auth/protected-route";
 import { routes } from "@/lib/constants/routes";
-import {
-  formatConnectionContext,
-  formatRelationshipAge,
-  formatSourceLabel,
-} from "@/lib/utils/format-contact-relationship";
-import { formatTimeAgo } from "@/lib/utils/format-time-ago";
+import { formatConnectionContext } from "@/lib/utils/format-contact-relationship";
 import type { ContactDetail } from "@/types/contact";
+
+const DAY = 1000 * 60 * 60 * 24;
 
 function formatTimestamp(value: string): string {
   return new Intl.DateTimeFormat("en", {
@@ -25,10 +22,75 @@ function formatTimestamp(value: string): string {
   }).format(new Date(value));
 }
 
-function isNearExpiry(accessEndAt: string): boolean {
-  const hoursUntilExpiry =
-    (new Date(accessEndAt).getTime() - Date.now()) / (1000 * 60 * 60);
-  return hoursUntilExpiry <= 24;
+function formatConnectionDate(value: string): string {
+  const date = new Date(value);
+  const includeYear = date.getFullYear() !== new Date().getFullYear();
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    ...(includeYear ? { year: "numeric" as const } : {}),
+  }).format(date);
+}
+
+function parseTimestamp(value: string | null | undefined): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const timestamp = new Date(value).getTime();
+
+  if (Number.isNaN(timestamp) || timestamp > Date.now()) {
+    return null;
+  }
+
+  return timestamp;
+}
+
+function startOfDay(timestamp: number): number {
+  const date = new Date(timestamp);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+function formatRelativeOrDate(value: string | null | undefined): string | null {
+  const timestamp = parseTimestamp(value);
+
+  if (timestamp === null) {
+    return null;
+  }
+
+  const dayDifference = Math.floor(
+    (startOfDay(Date.now()) - startOfDay(timestamp)) / DAY,
+  );
+
+  if (dayDifference <= 0) {
+    return "today";
+  }
+
+  if (dayDifference === 1) {
+    return "1 day ago";
+  }
+
+  if (dayDifference < 7) {
+    return `${dayDifference} days ago`;
+  }
+
+  return `on ${formatConnectionDate(value!)}`;
+}
+
+function formatConnectionLine(connectedAt: string | null | undefined): string {
+  const relativeLabel = formatRelativeOrDate(connectedAt);
+
+  return relativeLabel ? `Connected ${relativeLabel}` : "Connected";
+}
+
+function formatLastInteractionLine(
+  lastInteractionAt: string | null | undefined,
+): string | null {
+  const relativeLabel = formatRelativeOrDate(lastInteractionAt);
+
+  return relativeLabel ? `Last interaction ${relativeLabel}` : null;
 }
 
 function formatTitleLine(jobTitle: string, companyName: string): string | null {
@@ -59,29 +121,43 @@ function getStateBadge(state: ContactDetail["state"]) {
   }
 }
 
-function InfoRow({
-  label,
-  value,
-  detail,
+function ConnectionLine({ children }: { children: string }) {
+  return (
+    <p className="font-sans text-sm leading-6 text-foreground/85 sm:text-[15px]">
+      {children}
+    </p>
+  );
+}
+
+function ConnectionSection({
+  summary,
+  connectedLine,
+  lastInteractionLine,
 }: {
-  label: string;
-  value: string;
-  detail?: string | null;
+  summary: string;
+  connectedLine: string;
+  lastInteractionLine: string | null;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 px-4 py-3 sm:px-5">
-      <div className="min-w-0">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-          {label}
-        </p>
-        {detail ? (
-          <p className="pt-1 font-sans text-xs text-muted">{detail}</p>
-        ) : null}
+    <Card>
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <h2 className="font-sans text-lg font-semibold text-foreground">
+            Connection
+          </h2>
+        </div>
+
+        <div className="rounded-2xl border border-border/80 bg-surface/50 px-4 py-4">
+          <div className="space-y-2">
+            <ConnectionLine>{summary}</ConnectionLine>
+            <ConnectionLine>{connectedLine}</ConnectionLine>
+            {lastInteractionLine ? (
+              <ConnectionLine>{lastInteractionLine}</ConnectionLine>
+            ) : null}
+          </div>
+        </div>
       </div>
-      <p className="max-w-[60%] text-right font-sans text-sm font-medium text-foreground">
-        {value}
-      </p>
-    </div>
+    </Card>
   );
 }
 
@@ -141,42 +217,32 @@ export default async function ContactDetailPage({
 
   const {
     targetPersona,
+    connectedAt,
+    connectionSource,
+    contextLabel,
     memory,
-    sourceType,
-    createdAt,
     state,
-    accessStartAt,
     accessEndAt,
     lastInteractionAt,
-    interactionCount,
     isExpired,
     metadata,
   } = contact;
 
-  const nearExpiry =
-    !isExpired && accessEndAt ? isNearExpiry(accessEndAt) : false;
-  const sourceLabel = formatSourceLabel(memory.sourceLabel, sourceType);
-  const connectionContext = formatConnectionContext(
-    sourceType,
-    memory.sourceLabel,
-  );
   const resolvedLastInteractionAt =
     metadata.lastInteractionAt ?? lastInteractionAt;
-  const resolvedInteractionCount =
-    metadata.interactionCount ?? interactionCount;
-  const lastInteractionLabel = formatTimeAgo(resolvedLastInteractionAt);
-  const relationshipAgeLabel = formatRelationshipAge(
-    metadata.relationshipAgeDays,
-    createdAt,
+  const connectionSummary = formatConnectionContext(
+    connectionSource,
+    contextLabel,
+    contact.sourceType,
+  );
+  const connectedLine = formatConnectionLine(connectedAt);
+  const lastInteractionLine = formatLastInteractionLine(
+    resolvedLastInteractionAt,
   );
   const titleLine = formatTitleLine(
     targetPersona.jobTitle,
     targetPersona.companyName,
   );
-  const hasInteractions =
-    metadata.hasInteractions ||
-    resolvedInteractionCount > 0 ||
-    resolvedLastInteractionAt !== null;
 
   return (
     <section className="space-y-4">
@@ -254,69 +320,11 @@ export default async function ContactDetailPage({
         </div>
       </Card>
 
-      <Card>
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <h2 className="font-sans text-lg font-semibold text-foreground">
-              Connection
-            </h2>
-            <p className="font-sans text-sm text-muted">
-              A quick read on the context and cadence of this connection.
-            </p>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-border bg-surface/60">
-            <InfoRow
-              label="Last interaction"
-              value={lastInteractionLabel}
-              detail={
-                hasInteractions && resolvedLastInteractionAt
-                  ? formatTimestamp(resolvedLastInteractionAt)
-                  : null
-              }
-            />
-            <div className="border-t border-border" />
-            <InfoRow
-              label="Touchpoints"
-              value={String(resolvedInteractionCount)}
-              detail={hasInteractions ? null : "No touchpoints yet"}
-            />
-            <div className="border-t border-border" />
-            <InfoRow
-              label="Connected"
-              value={relationshipAgeLabel}
-              detail={`Since ${formatTimestamp(createdAt)}`}
-            />
-            <div className="border-t border-border" />
-            <InfoRow label="Connection" value={connectionContext} />
-            <div className="border-t border-border" />
-            <InfoRow label="Source" value={sourceLabel} />
-            {state === "instant_access" && accessEndAt ? (
-              <>
-                <div className="border-t border-border" />
-                <InfoRow
-                  label="Access ends"
-                  value={`${formatTimestamp(accessEndAt)}${nearExpiry ? " soon" : ""}`}
-                  detail={
-                    accessStartAt
-                      ? `Started ${formatTimestamp(accessStartAt)}`
-                      : null
-                  }
-                />
-              </>
-            ) : null}
-            {memory.metAt ? (
-              <>
-                <div className="border-t border-border" />
-                <InfoRow
-                  label="First met"
-                  value={formatTimestamp(memory.metAt)}
-                />
-              </>
-            ) : null}
-          </div>
-        </div>
-      </Card>
+      <ConnectionSection
+        summary={connectionSummary}
+        connectedLine={connectedLine}
+        lastInteractionLine={lastInteractionLine}
+      />
 
       <Card>
         <div className="space-y-4">

@@ -1,4 +1,5 @@
 import type { ContactRequestSourceType } from "@/types/request";
+import type { ContactConnectionSource } from "@/types/contact";
 
 import { formatDaysAgo, formatTimeAgoShort } from "./format-time-ago";
 
@@ -24,25 +25,30 @@ export function formatSourceLabel(
 }
 
 export function formatConnectionContext(
-  sourceType: ContactRequestSourceType,
-  sourceLabel: string | null | undefined,
+  connectionSource: ContactConnectionSource | null | undefined,
+  contextLabel: string | null | undefined,
+  sourceType?: ContactRequestSourceType,
 ): string {
-  const resolvedLabel = formatSourceLabel(sourceLabel, sourceType);
+  const trimmedLabel = contextLabel?.trim();
+  const resolvedConnectionSource =
+    connectionSource ?? toConnectionSource(sourceType);
 
-  switch (sourceType) {
+  switch (resolvedConnectionSource) {
     case "event":
-      return `Met at ${resolvedLabel}`;
+      return trimmedLabel ? `Met at ${trimmedLabel}` : "Met at an event";
     case "qr":
-      return "Connected via QR";
-    case "profile":
+      return trimmedLabel ? `Connected via ${trimmedLabel}` : "Connected via QR";
+    case "manual":
+      return trimmedLabel ? `Connected during ${trimmedLabel}` : "Connected manually";
+    case "unknown":
     default:
-      return "Connected via profile";
+      return trimmedLabel ?? "Connected";
   }
 }
 
 export function getRelationshipAgeDays(
   relationshipAgeDays: number | null | undefined,
-  createdAt: string | null | undefined,
+  connectedAt: string | null | undefined,
 ): number {
   if (
     typeof relationshipAgeDays === "number" &&
@@ -52,29 +58,29 @@ export function getRelationshipAgeDays(
     return Math.floor(relationshipAgeDays);
   }
 
-  if (!createdAt) {
+  if (!connectedAt) {
     return 0;
   }
 
-  const createdAtTimestamp = new Date(createdAt).getTime();
+  const connectedAtTimestamp = new Date(connectedAt).getTime();
 
-  if (Number.isNaN(createdAtTimestamp)) {
+  if (Number.isNaN(connectedAtTimestamp)) {
     return 0;
   }
 
   return Math.max(
     0,
-    Math.floor((Date.now() - createdAtTimestamp) / (1000 * 60 * 60 * 24)),
+    Math.floor((Date.now() - connectedAtTimestamp) / (1000 * 60 * 60 * 24)),
   );
 }
 
 export function formatRelationshipAge(
   relationshipAgeDays: number | null | undefined,
-  createdAt: string | null | undefined,
+  connectedAt: string | null | undefined,
   variant: "long" | "compact" = "long",
 ): string {
   return formatDaysAgo(
-    getRelationshipAgeDays(relationshipAgeDays, createdAt),
+    getRelationshipAgeDays(relationshipAgeDays, connectedAt),
     variant,
   );
 }
@@ -88,4 +94,19 @@ export function getRecentActivityLabel(
   }
 
   return formatTimeAgoShort(lastInteractionAt) ?? "Active recently";
+}
+
+function toConnectionSource(
+  sourceType: ContactRequestSourceType | null | undefined,
+): ContactConnectionSource {
+  switch (sourceType) {
+    case "qr":
+      return "qr";
+    case "event":
+      return "event";
+    case "profile":
+      return "manual";
+    default:
+      return "unknown";
+  }
 }

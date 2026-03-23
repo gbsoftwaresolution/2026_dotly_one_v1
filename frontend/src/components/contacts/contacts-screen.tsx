@@ -31,6 +31,7 @@ function filterContacts(contacts: Contact[], query: string) {
       contact.targetPersona.username,
       contact.targetPersona.jobTitle,
       contact.targetPersona.companyName,
+      contact.contextLabel,
       contact.memory.sourceLabel,
     ]
       .filter(Boolean)

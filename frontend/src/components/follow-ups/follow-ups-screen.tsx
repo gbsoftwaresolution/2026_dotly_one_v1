@@ -27,6 +27,8 @@ import type { FollowUp, FollowUpStatus } from "@/types/follow-up";
 
 type PendingUrgencyBucket = "overdue" | "due" | "soon" | "later";
 
+const FOLLOW_UP_EXIT_DURATION_MS = 160;
+
 const FILTERS: Array<{
   key: FollowUpStatus;
   label: string;
@@ -245,7 +247,11 @@ function getConnectionContextLine(followUp: FollowUp) {
     return null;
   }
 
-  return formatConnectionContext(sourceType, followUp.relationship.sourceLabel);
+  return formatConnectionContext(
+    undefined,
+    followUp.relationship.sourceLabel,
+    sourceType,
+  );
 }
 
 export function FollowUpsScreen() {
@@ -295,7 +301,9 @@ export function FollowUpsScreen() {
     let rollback: (() => void) | null = null;
 
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 180));
+      await new Promise((resolve) =>
+        window.setTimeout(resolve, FOLLOW_UP_EXIT_DURATION_MS),
+      );
       rollback = optimisticallyTransitionFollowUp(
         id,
         type === "complete" ? "completed" : "cancelled",
@@ -437,7 +445,7 @@ export function FollowUpsScreen() {
                     <div
                       key={followUp.id}
                       className={cn(
-                        "transition-[opacity,transform] duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+                        "transition-[opacity,transform] duration-[160ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
                         exitingIds[followUp.id]
                           ? "translate-y-2 opacity-0"
                           : "translate-y-0 opacity-100",
@@ -550,7 +558,7 @@ export function FollowUpsScreen() {
               <div
                 key={followUp.id}
                 className={cn(
-                  "transition-[opacity,transform] duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+                  "transition-[opacity,transform] duration-[160ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
                   exitingIds[followUp.id]
                     ? "translate-y-2 opacity-0"
                     : "translate-y-0 opacity-100",

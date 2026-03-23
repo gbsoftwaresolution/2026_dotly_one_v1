@@ -12,6 +12,10 @@ function createContact(overrides: Partial<Contact> = {}): Contact {
     relationshipId: "relationship-id",
     state: "approved",
     createdAt: "2026-03-08T12:00:00.000Z",
+    connectedAt: "2026-03-08T12:00:00.000Z",
+    metAt: "2026-03-08T12:00:00.000Z",
+    connectionSource: "qr",
+    contextLabel: null,
     accessEndAt: null,
     lastInteractionAt: "2026-03-21T12:00:00.000Z",
     interactionCount: 2,
@@ -59,7 +63,7 @@ describe("ContactCard", () => {
       "href",
       "/app/contacts/relationship-id",
     );
-    expect(screen.getByText("Met via QR")).toBeInTheDocument();
+    expect(screen.getByText("Connected via QR")).toBeInTheDocument();
     expect(screen.getByText("1d")).toBeInTheDocument();
     expect(screen.getByText("Connected 2w")).toBeInTheDocument();
     expect(screen.queryByText(/interactions:/i)).not.toBeInTheDocument();
@@ -70,7 +74,10 @@ describe("ContactCard", () => {
       React.createElement(ContactCard, {
         contact: createContact({
           createdAt: "2026-03-21T12:00:00.000Z",
+          connectedAt: "2026-02-20T12:00:00.000Z",
+          metAt: "2026-02-20T12:00:00.000Z",
           sourceType: "profile",
+          connectionSource: "manual",
           lastInteractionAt: null,
           metadata: {
             lastInteractionAt: null,
@@ -83,7 +90,7 @@ describe("ContactCard", () => {
       }),
     );
 
-    expect(screen.getByText("Met via Profile")).toBeInTheDocument();
+    expect(screen.getByText("Connected manually")).toBeInTheDocument();
     expect(screen.getByText("Connected 1mo")).toBeInTheDocument();
     expect(screen.queryByText("Recently active")).not.toBeInTheDocument();
   });

@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 import {
   ContactRelationshipState as PrismaContactRelationshipState,
+  RelationshipConnectionSource as PrismaRelationshipConnectionSource,
   ContactRequestSourceType as PrismaContactRequestSourceType,
   PersonaAccessMode as PrismaPersonaAccessMode,
   PersonaSharingMode as PrismaPersonaSharingMode,
@@ -825,6 +826,22 @@ describe("RelationshipsService", () => {
       eventId: "event-1",
       label: "Dotly Launch Week",
     });
+    assert.ok((createdRelationships[0] as any)?.connectedAt instanceof Date);
+    assert.equal(
+      (createdRelationships[0] as any)?.metAt?.toISOString(),
+      new Date(now - 60 * 60 * 1000).toISOString(),
+    );
+    assert.equal(
+      (createdRelationships[0] as any)?.connectionSource,
+      PrismaRelationshipConnectionSource.EVENT,
+    );
+    assert.equal(
+      (createdRelationships[0] as any)?.contextLabel,
+      "Dotly Launch Week",
+    );
+    assert.ok(
+      (createdRelationships[0] as any)?.lastInteractionAt instanceof Date,
+    );
     assert.equal(
       (memoryCreatePayload as any)?.relationshipId,
       "relationship-id",
@@ -1391,6 +1408,75 @@ describe("RelationshipsService", () => {
     assert.equal(result?.interactionCount, 3);
   });
 
+  it("updates only the last interaction timestamp without incrementing counters", async () => {
+    const updateManyPayloads: Array<Record<string, unknown>> = [];
+    const interactionAt = new Date("2026-03-24T08:30:00.000Z");
+
+    const service = new RelationshipsService({} as any);
+    const prisma = {
+      contactRelationship: {
+        updateMany: async (payload: Record<string, unknown>) => {
+          updateManyPayloads.push(payload);
+          return {
+            count: 1,
+          };
+        },
+        findUnique: async () => ({
+          id: "relationship-id",
+          lastInteractionAt: interactionAt,
+        }),
+      },
+    };
+
+    const result = await service.updateLastInteractionAt(
+      prisma as any,
+      "relationship-id",
+      interactionAt,
+    );
+
+    assert.equal(updateManyPayloads.length, 1);
+    assert.equal((updateManyPayloads[0] as any)?.where?.id, "relationship-id");
+    assert.equal(
+      (updateManyPayloads[0] as any)?.data?.lastInteractionAt?.toISOString(),
+      interactionAt.toISOString(),
+    );
+    assert.equal(result?.lastInteractionAt?.toISOString(), interactionAt.toISOString());
+  });
+
+  it("returns an owned relationship timeline with safe metAt fallback", async () => {
+    const connectedAt = new Date("2026-03-21T10:00:00.000Z");
+    const lastInteractionAt = new Date("2026-03-24T09:00:00.000Z");
+    const service = new RelationshipsService({
+      contactRelationship: {
+        findFirst: async () => ({
+          createdAt: new Date("2026-03-20T10:00:00.000Z"),
+          connectedAt,
+          metAt: null,
+          connectionSource: PrismaRelationshipConnectionSource.MANUAL,
+          contextLabel: null,
+          lastInteractionAt,
+        }),
+      },
+    } as any);
+
+    const result = await service.getRelationshipTimeline(
+      "owner-user",
+      "relationship-id",
+    );
+
+    assert.equal(result.connectedAt.toISOString(), connectedAt.toISOString());
+    assert.equal(result.metAt.toISOString(), connectedAt.toISOString());
+    assert.equal(
+      result.connectionSource,
+      PrismaRelationshipConnectionSource.MANUAL,
+    );
+    assert.equal(result.contextLabel, null);
+    assert.equal(
+      result.lastInteractionAt?.toISOString(),
+      lastInteractionAt.toISOString(),
+    );
+  });
+
   it("rejects instant connect when the supplied source persona is not owned by the actor", async () => {
     const service = new RelationshipsService(
       {
@@ -1652,6 +1738,10 @@ describe("ContactsService", () => {
                 lastInteractionAt: recentInteractionAt,
                 interactionCount: 4,
                 createdAt: approvedCreatedAt,
+                connectedAt: approvedCreatedAt,
+                metAt: approvedCreatedAt,
+                connectionSource: PrismaRelationshipConnectionSource.MANUAL,
+                contextLabel: null,
                 sourceType: PrismaContactRequestSourceType.PROFILE,
                 connectionContext: {
                   type: "profile",
@@ -1680,6 +1770,10 @@ describe("ContactsService", () => {
                 lastInteractionAt: null,
                 interactionCount: 0,
                 createdAt: instantCreatedAt,
+                connectedAt: instantCreatedAt,
+                metAt: instantCreatedAt,
+                connectionSource: PrismaRelationshipConnectionSource.QR,
+                contextLabel: "Quick Connect QR",
                 sourceType: PrismaContactRequestSourceType.QR,
                 targetPersona: {
                   id: "persona-2",
@@ -1732,7 +1826,11 @@ describe("ContactsService", () => {
     assert.equal(result[0].metadata.isRecentlyActive, true);
     assert.equal(result[0].metadata.relationshipAgeDays, 4);
     assert.equal(result[0].memory.sourceLabel, "Profile");
+    assert.equal(result[0].connectionSource, "manual");
+    assert.equal(result[0].contextLabel, null);
     assert.equal(result[1].memory.sourceLabel, "Quick Connect QR");
+    assert.equal(result[1].connectionSource, "qr");
+    assert.equal(result[1].contextLabel, "Quick Connect QR");
     assert.equal(result[1].interactionCount, 0);
     assert.equal(result[1].metadata.lastInteractionAt, null);
     assert.equal(result[1].metadata.hasInteractions, false);
@@ -1876,6 +1974,10 @@ describe("ContactsService", () => {
             lastInteractionAt,
             interactionCount: 2,
             createdAt,
+            connectedAt: createdAt,
+            metAt: createdAt,
+            connectionSource: PrismaRelationshipConnectionSource.EVENT,
+            contextLabel: "Dotly Launch Week",
             sourceType: PrismaContactRequestSourceType.PROFILE,
             connectionContext: {
               type: "event",
@@ -1931,7 +2033,9 @@ describe("ContactsService", () => {
     assert.equal(result.metadata.hasInteractions, true);
     assert.equal(result.metadata.isRecentlyActive, true);
     assert.equal(result.metadata.relationshipAgeDays, 3);
-    assert.equal(result.memory.sourceLabel, "Dotly Launch Week");
+    assert.equal(result.memory.sourceLabel, "Profile");
+    assert.equal(result.connectionSource, "event");
+    assert.equal(result.contextLabel, "Dotly Launch Week");
     assert.equal(result.followUpSummary.hasPendingFollowUp, true);
     assert.equal(result.followUpSummary.pendingFollowUpCount, 2);
     assert.equal(
@@ -1956,6 +2060,10 @@ describe("ContactsService", () => {
             lastInteractionAt: new Date(Date.now() + DAY_IN_MS),
             interactionCount: -3,
             createdAt: new Date(Date.now() + DAY_IN_MS),
+            connectedAt: new Date(Date.now() + DAY_IN_MS),
+            metAt: null,
+            connectionSource: PrismaRelationshipConnectionSource.MANUAL,
+            contextLabel: null,
             sourceType: PrismaContactRequestSourceType.PROFILE,
             targetPersona: {
               id: "persona-id",

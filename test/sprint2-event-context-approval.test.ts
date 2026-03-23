@@ -351,9 +351,12 @@ describe("Sprint 2 event approval context", () => {
       "relationship-context-fallback",
     );
 
-    assert.equal(list[0]?.memory.sourceLabel, "Memory Event Label");
-    assert.equal(list[1]?.memory.sourceLabel, "Connection Event Label");
-    assert.equal(detail.memory.sourceLabel, "Connection Event Label");
+    assert.equal(list[0]?.memory.sourceLabel, "Event");
+    assert.equal(list[0]?.contextLabel, "Memory Event Label");
+    assert.equal(list[1]?.memory.sourceLabel, "Event");
+    assert.equal(list[1]?.contextLabel, "Connection Event Label");
+    assert.equal(detail.memory.sourceLabel, "Event");
+    assert.equal(detail.contextLabel, "Connection Event Label");
   });
 
   it("follow-up relationship labels prefer memory context label, then connection context label", async () => {

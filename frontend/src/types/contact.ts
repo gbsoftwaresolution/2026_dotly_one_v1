@@ -5,6 +5,8 @@ export type ContactRelationshipState =
   | "instant_access"
   | "expired";
 
+export type ContactConnectionSource = "qr" | "event" | "manual" | "unknown";
+
 export interface ContactTargetPersona {
   id: string;
   username: string;
@@ -47,6 +49,10 @@ export interface Contact {
   relationshipId: string;
   state: ContactRelationshipState;
   createdAt: string;
+  connectedAt: string;
+  metAt: string;
+  connectionSource: ContactConnectionSource;
+  contextLabel: string | null;
   accessEndAt: string | null;
   lastInteractionAt: string | null;
   interactionCount: number;
@@ -60,6 +66,10 @@ export interface ContactDetail {
   relationshipId: string;
   state: ContactRelationshipState;
   createdAt: string;
+  connectedAt: string;
+  metAt: string;
+  connectionSource: ContactConnectionSource;
+  contextLabel: string | null;
   accessStartAt: string | null;
   accessEndAt: string | null;
   lastInteractionAt: string | null;
