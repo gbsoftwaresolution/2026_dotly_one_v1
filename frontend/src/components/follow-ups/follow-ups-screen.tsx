@@ -29,24 +29,27 @@ const FILTERS: Array<{
 }> = [
   {
     key: "pending",
-    label: "Pending",
-    description: "Keep the next conversation cue visible without adding friction.",
-    emptyTitle: "No follow-ups scheduled",
+    label: "Open",
+    description:
+      "Keep the next conversation cue visible without turning this into work.",
+    emptyTitle: "No follow-ups in view",
     emptyDescription: dotlyPositioning.app.noFollowUps,
   },
   {
     key: "completed",
-    label: "Completed",
-    description: "A quick record of reminders you already handled.",
-    emptyTitle: "No completed follow-ups yet",
-    emptyDescription: "Completed reminders will appear here once you close the loop.",
+    label: "Done",
+    description: "A light history of follow-ups you already handled.",
+    emptyTitle: "No finished follow-ups yet",
+    emptyDescription:
+      "Finished follow-ups will show up here once you close the loop.",
   },
   {
     key: "cancelled",
-    label: "Cancelled",
-    description: "Reminders you decided not to keep.",
-    emptyTitle: "No cancelled follow-ups",
-    emptyDescription: "Cancelled reminders will stay out of your way until you need the history.",
+    label: "Dismissed",
+    description: "Follow-ups you decided not to keep around.",
+    emptyTitle: "No dismissed follow-ups",
+    emptyDescription:
+      "Dismissed follow-ups stay out of the way until you need the history.",
   },
 ];
 
@@ -99,10 +102,14 @@ function sortFollowUps(items: FollowUp[]) {
     }
 
     if (leftPending && rightPending) {
-      return new Date(left.remindAt).getTime() - new Date(right.remindAt).getTime();
+      return (
+        new Date(left.remindAt).getTime() - new Date(right.remindAt).getTime()
+      );
     }
 
-    return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+    return (
+      new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
+    );
   });
 }
 
@@ -149,9 +156,9 @@ function getUrgencyBadges(followUp: FollowUp) {
     case "overdue":
       return [<StatusBadge key="overdue" label="Overdue" tone="error" dot />];
     case "due":
-      return [<StatusBadge key="due" label="Due now" tone="warning" dot />];
+      return [<StatusBadge key="due" label="Ready now" tone="warning" dot />];
     case "soon":
-      return [<StatusBadge key="soon" label="Due soon" tone="info" dot />];
+      return [<StatusBadge key="soon" label="Coming up" tone="info" dot />];
     case "later":
     default:
       return [];
@@ -159,32 +166,43 @@ function getUrgencyBadges(followUp: FollowUp) {
 }
 
 function getPendingSections(followUps: FollowUp[]) {
-  const pending = sortFollowUps(followUps).filter((followUp) => followUp.status === "pending");
+  const pending = sortFollowUps(followUps).filter(
+    (followUp) => followUp.status === "pending",
+  );
 
   return [
     {
       key: "overdue",
       title: "Overdue",
-      description: "Start with the reminders that have slipped past their time.",
-      items: pending.filter((followUp) => getPendingUrgency(followUp) === "overdue"),
+      description:
+        "Start with the conversations that have been waiting longest.",
+      items: pending.filter(
+        (followUp) => getPendingUrgency(followUp) === "overdue",
+      ),
     },
     {
       key: "due",
-      title: "Due now",
-      description: "Freshly surfaced reminders that are ready for a quick follow-up.",
-      items: pending.filter((followUp) => getPendingUrgency(followUp) === "due"),
+      title: "Ready now",
+      description: "These are ready for a quick follow-up right now.",
+      items: pending.filter(
+        (followUp) => getPendingUrgency(followUp) === "due",
+      ),
     },
     {
       key: "soon",
-      title: "Due soon",
-      description: "Upcoming reminders that are getting close.",
-      items: pending.filter((followUp) => getPendingUrgency(followUp) === "soon"),
+      title: "Coming up",
+      description: "These will be ready soon.",
+      items: pending.filter(
+        (followUp) => getPendingUrgency(followUp) === "soon",
+      ),
     },
     {
       key: "later",
       title: "Later",
-      description: "Everything else scheduled for a future touchpoint.",
-      items: pending.filter((followUp) => getPendingUrgency(followUp) === "later"),
+      description: "Everything else you want to come back to later.",
+      items: pending.filter(
+        (followUp) => getPendingUrgency(followUp) === "later",
+      ),
     },
   ].filter((section) => section.items.length > 0);
 }
@@ -192,11 +210,11 @@ function getPendingSections(followUps: FollowUp[]) {
 function getStatusBadge(status: FollowUpStatus) {
   switch (status) {
     case "pending":
-      return <StatusBadge label="Pending" tone="warning" dot />;
+      return <StatusBadge label="Open" tone="warning" dot />;
     case "completed":
-      return <StatusBadge label="Completed" tone="success" />;
+      return <StatusBadge label="Done" tone="success" />;
     case "cancelled":
-      return <StatusBadge label="Cancelled" tone="neutral" />;
+      return <StatusBadge label="Dismissed" tone="neutral" />;
   }
 }
 
@@ -227,7 +245,8 @@ export function FollowUpsScreen() {
   const router = useRouter();
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedStatus, setSelectedStatus] = useState<FollowUpStatus>("pending");
+  const [selectedStatus, setSelectedStatus] =
+    useState<FollowUpStatus>("pending");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
@@ -237,44 +256,47 @@ export function FollowUpsScreen() {
   } | null>(null);
   const requestIdRef = useRef(0);
 
-  const loadFollowUps = useCallback(async (status: FollowUpStatus) => {
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
-    setIsLoading(true);
-    setLoadError(null);
+  const loadFollowUps = useCallback(
+    async (status: FollowUpStatus) => {
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
+      setIsLoading(true);
+      setLoadError(null);
 
-    try {
-      if (status === "pending") {
-        await followUpsApi.processDue().catch(() => undefined);
-      }
+      try {
+        if (status === "pending") {
+          await followUpsApi.processDue().catch(() => undefined);
+        }
 
-      const result = await followUpsApi.list({ status });
+        const result = await followUpsApi.list({ status });
 
-      if (requestId !== requestIdRef.current) {
-        return;
-      }
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
 
-      setFollowUps(sortFollowUps(result));
-    } catch (error) {
-      if (isExpiredSessionError(error)) {
-        router.replace(
-          `/login?next=${encodeURIComponent(routes.app.followUps)}&reason=expired`,
+        setFollowUps(sortFollowUps(result));
+      } catch (error) {
+        if (isExpiredSessionError(error)) {
+          router.replace(
+            `/login?next=${encodeURIComponent(routes.app.followUps)}&reason=expired`,
+          );
+          router.refresh();
+          return;
+        }
+
+        setLoadError(
+          error instanceof ApiError
+            ? error.message
+            : "We could not load your follow-ups right now.",
         );
-        router.refresh();
-        return;
+      } finally {
+        if (requestId === requestIdRef.current) {
+          setIsLoading(false);
+        }
       }
-
-      setLoadError(
-        error instanceof ApiError
-          ? error.message
-          : "We could not load your follow-ups right now.",
-      );
-    } finally {
-      if (requestId === requestIdRef.current) {
-        setIsLoading(false);
-      }
-    }
-  }, [router]);
+    },
+    [router],
+  );
 
   useEffect(() => {
     void loadFollowUps(selectedStatus);
@@ -289,8 +311,10 @@ export function FollowUpsScreen() {
     return () => window.clearTimeout(timer);
   }, [actionNotice]);
 
-  const activeFilter = FILTERS.find((filter) => filter.key === selectedStatus) ?? FILTERS[0];
-  const pendingSections = selectedStatus === "pending" ? getPendingSections(followUps) : [];
+  const activeFilter =
+    FILTERS.find((filter) => filter.key === selectedStatus) ?? FILTERS[0];
+  const pendingSections =
+    selectedStatus === "pending" ? getPendingSections(followUps) : [];
 
   async function handleAction(id: string, type: "complete" | "cancel") {
     setActionState({ id, type });
@@ -304,7 +328,9 @@ export function FollowUpsScreen() {
           : await followUpsApi.cancel(id);
 
       setFollowUps((current) => {
-        const remaining = current.filter((followUp) => followUp.id !== updated.id);
+        const remaining = current.filter(
+          (followUp) => followUp.id !== updated.id,
+        );
 
         if (updated.status !== selectedStatus) {
           return remaining;
@@ -313,7 +339,7 @@ export function FollowUpsScreen() {
         return sortFollowUps([...remaining, updated]);
       });
       setActionNotice(
-        type === "complete" ? "Reminder completed." : "Reminder cancelled.",
+        type === "complete" ? "Follow-up marked done." : "Follow-up dismissed.",
       );
     } catch (error) {
       setActionError(
@@ -435,7 +461,8 @@ export function FollowUpsScreen() {
                   const isWorking = actionState?.id === followUp.id;
                   const title = getFollowUpTitle(followUp);
                   const companyLine = getCompanyLine(followUp);
-                  const connectionContextLine = getConnectionContextLine(followUp);
+                  const connectionContextLine =
+                    getConnectionContextLine(followUp);
                   const urgencyBadges = getUrgencyBadges(followUp);
 
                   return (
@@ -454,28 +481,38 @@ export function FollowUpsScreen() {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0 space-y-1">
                             <Link
-                              href={routes.app.contactDetail(followUp.relationshipId)}
+                              href={routes.app.contactDetail(
+                                followUp.relationshipId,
+                              )}
                               className="block text-base font-semibold text-foreground transition-colors hover:text-brandRose dark:hover:text-brandCyan"
                             >
                               {title}
                             </Link>
                             {companyLine ? (
-                              <p className="text-sm text-muted">{companyLine}</p>
+                              <p className="text-sm text-muted">
+                                {companyLine}
+                              </p>
                             ) : null}
                             {connectionContextLine ? (
-                              <p className="text-xs text-muted/90">{connectionContextLine}</p>
+                              <p className="text-xs text-muted/90">
+                                {connectionContextLine}
+                              </p>
                             ) : null}
                           </div>
-                          <div className="self-start">{getStatusBadge(followUp.status)}</div>
+                          <div className="self-start">
+                            {getStatusBadge(followUp.status)}
+                          </div>
                         </div>
 
                         {urgencyBadges.length > 0 ? (
-                          <div className="flex flex-wrap gap-2 sm:gap-2.5">{urgencyBadges}</div>
+                          <div className="flex flex-wrap gap-2 sm:gap-2.5">
+                            {urgencyBadges}
+                          </div>
                         ) : null}
 
                         <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
                           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                            Remind at
+                            Revisit on
                           </p>
                           <p className="mt-1 text-sm font-medium text-foreground">
                             {formatReminder(followUp.remindAt)}
@@ -498,21 +535,25 @@ export function FollowUpsScreen() {
                             type="button"
                             fullWidth
                             disabled={isWorking}
-                            onClick={() => void handleAction(followUp.id, "complete")}
+                            onClick={() =>
+                              void handleAction(followUp.id, "complete")
+                            }
                           >
                             {isWorking && actionState?.type === "complete"
                               ? "Completing..."
-                              : "Complete"}
+                              : "Mark done"}
                           </PrimaryButton>
                           <SecondaryButton
                             type="button"
                             fullWidth
                             disabled={isWorking}
-                            onClick={() => void handleAction(followUp.id, "cancel")}
+                            onClick={() =>
+                              void handleAction(followUp.id, "cancel")
+                            }
                           >
                             {isWorking && actionState?.type === "cancel"
                               ? "Cancelling..."
-                              : "Cancel"}
+                              : "Dismiss"}
                           </SecondaryButton>
                         </div>
                       </div>
@@ -554,19 +595,27 @@ export function FollowUpsScreen() {
                         <p className="text-sm text-muted">{companyLine}</p>
                       ) : null}
                       {connectionContextLine ? (
-                        <p className="text-xs text-muted/90">{connectionContextLine}</p>
+                        <p className="text-xs text-muted/90">
+                          {connectionContextLine}
+                        </p>
                       ) : null}
                     </div>
-                    <div className="self-start">{getStatusBadge(followUp.status)}</div>
+                    <div className="self-start">
+                      {getStatusBadge(followUp.status)}
+                    </div>
                   </div>
 
                   {urgencyBadges.length > 0 ? (
-                    <div className="flex flex-wrap gap-2 sm:gap-2.5">{urgencyBadges}</div>
+                    <div className="flex flex-wrap gap-2 sm:gap-2.5">
+                      {urgencyBadges}
+                    </div>
                   ) : null}
 
                   <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
                     <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                      {followUp.status === "pending" ? "Remind at" : "Reminder"}
+                      {followUp.status === "pending"
+                        ? "Revisit on"
+                        : "Follow-up"}
                     </p>
                     <p className="mt-1 text-sm font-medium text-foreground">
                       {formatReminder(followUp.remindAt)}
@@ -574,8 +623,8 @@ export function FollowUpsScreen() {
                     {resolutionLabel ? (
                       <p className="mt-1 text-xs text-muted">
                         {followUp.status === "completed"
-                          ? `Completed ${resolutionLabel}`
-                          : `Cancelled ${resolutionLabel}`}
+                          ? `Finished ${resolutionLabel}`
+                          : `Dismissed ${resolutionLabel}`}
                       </p>
                     ) : null}
                   </div>
@@ -597,11 +646,13 @@ export function FollowUpsScreen() {
                         type="button"
                         fullWidth
                         disabled={isWorking}
-                        onClick={() => void handleAction(followUp.id, "complete")}
+                        onClick={() =>
+                          void handleAction(followUp.id, "complete")
+                        }
                       >
                         {isWorking && actionState?.type === "complete"
                           ? "Completing..."
-                          : "Complete"}
+                          : "Mark done"}
                       </PrimaryButton>
                       <SecondaryButton
                         type="button"
@@ -611,7 +662,7 @@ export function FollowUpsScreen() {
                       >
                         {isWorking && actionState?.type === "cancel"
                           ? "Cancelling..."
-                          : "Cancel"}
+                          : "Dismiss"}
                       </SecondaryButton>
                     </div>
                   ) : null}

@@ -21,8 +21,8 @@ export function EmailVerificationBanner() {
     <VerificationPrompt
       compact
       email={session.user.email}
-      title="Add a trust factor to unlock trust actions"
-      description="Verify your identity to unlock trusted connection requests, QR sharing, and event discovery."
+      title="Verify your account to unlock protected actions"
+      description="Verify your identity to unlock connection requests, QR sharing, and event discovery."
     />
   );
 }

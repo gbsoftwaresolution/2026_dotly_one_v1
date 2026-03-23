@@ -31,6 +31,22 @@ function isNearExpiry(accessEndAt: string): boolean {
   return hoursUntilExpiry <= 24;
 }
 
+function formatTitleLine(jobTitle: string, companyName: string): string | null {
+  const parts = [jobTitle, companyName]
+    .map((value) => value?.trim())
+    .filter(Boolean);
+
+  if (parts.length === 0) {
+    return null;
+  }
+
+  if (parts.length === 1) {
+    return parts[0] ?? null;
+  }
+
+  return `${parts[0]} at ${parts[1]}`;
+}
+
 function getStateBadge(state: ContactDetail["state"]) {
   switch (state) {
     case "instant_access":
@@ -140,13 +156,22 @@ export default async function ContactDetailPage({
   const nearExpiry =
     !isExpired && accessEndAt ? isNearExpiry(accessEndAt) : false;
   const sourceLabel = formatSourceLabel(memory.sourceLabel, sourceType);
-  const connectionContext = formatConnectionContext(sourceType, memory.sourceLabel);
-  const resolvedLastInteractionAt = metadata.lastInteractionAt ?? lastInteractionAt;
-  const resolvedInteractionCount = metadata.interactionCount ?? interactionCount;
+  const connectionContext = formatConnectionContext(
+    sourceType,
+    memory.sourceLabel,
+  );
+  const resolvedLastInteractionAt =
+    metadata.lastInteractionAt ?? lastInteractionAt;
+  const resolvedInteractionCount =
+    metadata.interactionCount ?? interactionCount;
   const lastInteractionLabel = formatTimeAgo(resolvedLastInteractionAt);
   const relationshipAgeLabel = formatRelationshipAge(
     metadata.relationshipAgeDays,
     createdAt,
+  );
+  const titleLine = formatTitleLine(
+    targetPersona.jobTitle,
+    targetPersona.companyName,
   );
   const hasInteractions =
     metadata.hasInteractions ||
@@ -157,7 +182,7 @@ export default async function ContactDetailPage({
     <section className="space-y-4">
       <PageHeader
         title={targetPersona.fullName}
-        description={`${targetPersona.jobTitle} at ${targetPersona.companyName}`}
+        description={titleLine ?? "Connection details and context"}
       />
 
       {state === "instant_access" && !isExpired && (
@@ -167,7 +192,7 @@ export default async function ContactDetailPage({
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brandRose dark:bg-brandCyan opacity-75"></span>
               <span className="relative inline-flex h-2 w-2 rounded-full bg-brandRose dark:bg-brandCyan"></span>
             </span>
-            Temporary Access
+            Live connection window
           </p>
           {accessEndAt && (
             <p className="font-mono text-[11px] text-brandRose/80 dark:text-brandCyan/80 font-medium">
@@ -179,12 +204,12 @@ export default async function ContactDetailPage({
       {isExpired && (
         <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/50 flex items-center justify-between">
           <p className="font-mono text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">
-            Access Revoked
+            Connection window closed
           </p>
         </div>
       )}
 
-      <Card className={`space-y-6 ${isExpired ? "opacity-50 grayscale" : ""}`}>
+      <Card className="space-y-6">
         <div className="flex items-start gap-4 pt-1 sm:gap-5">
           {targetPersona.profilePhotoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -207,9 +232,11 @@ export default async function ContactDetailPage({
               <p className="font-sans text-sm text-muted">
                 @{targetPersona.username}
               </p>
-              <p className="font-sans text-sm text-foreground/85">
-                {targetPersona.jobTitle} at {targetPersona.companyName}
-              </p>
+              {titleLine ? (
+                <p className="font-sans text-sm text-foreground/85">
+                  {titleLine}
+                </p>
+              ) : null}
               {targetPersona.tagline ? (
                 <p className="font-sans text-sm italic text-muted">
                   &ldquo;{targetPersona.tagline}&rdquo;
@@ -227,14 +254,14 @@ export default async function ContactDetailPage({
         </div>
       </Card>
 
-      <Card className={isExpired ? "opacity-50 grayscale" : ""}>
+      <Card>
         <div className="space-y-4">
           <div className="space-y-1">
             <h2 className="font-sans text-lg font-semibold text-foreground">
-              Relationship
+              Connection
             </h2>
             <p className="font-sans text-sm text-muted">
-              A compact view of how this connection has evolved.
+              A quick read on the context and cadence of this connection.
             </p>
           </div>
 
@@ -250,9 +277,9 @@ export default async function ContactDetailPage({
             />
             <div className="border-t border-border" />
             <InfoRow
-              label="Interactions"
+              label="Touchpoints"
               value={String(resolvedInteractionCount)}
-              detail={hasInteractions ? null : "No interactions yet"}
+              detail={hasInteractions ? null : "No touchpoints yet"}
             />
             <div className="border-t border-border" />
             <InfoRow
@@ -282,7 +309,7 @@ export default async function ContactDetailPage({
               <>
                 <div className="border-t border-border" />
                 <InfoRow
-                  label="First recorded"
+                  label="First met"
                   value={formatTimestamp(memory.metAt)}
                 />
               </>
@@ -295,10 +322,10 @@ export default async function ContactDetailPage({
         <div className="space-y-4">
           <div className="space-y-1">
             <h2 className="font-sans text-lg font-semibold text-foreground">
-              Follow up
+              Follow-up
             </h2>
             <p className="font-sans text-sm text-muted">
-              Set a simple reminder to reconnect without turning this into a task list.
+              Keep the next reconnection easy to pick back up.
             </p>
           </div>
 
@@ -311,7 +338,8 @@ export default async function ContactDetailPage({
 
           {isExpired ? (
             <p className="font-sans text-xs text-muted">
-              Reminders are unavailable because this relationship is no longer active.
+              Follow-ups are unavailable because this connection window has
+              closed.
             </p>
           ) : null}
         </div>

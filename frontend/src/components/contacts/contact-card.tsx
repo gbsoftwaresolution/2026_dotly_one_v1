@@ -71,6 +71,13 @@ export function ContactCard({ contact }: ContactCardProps) {
     createdAt,
     "compact",
   );
+  const titleLine = [targetPersona.jobTitle, targetPersona.companyName]
+    .map((value) => value?.trim())
+    .filter(Boolean)
+    .join(" at ");
+  const sourceContext = sourceLabel
+    ? `Met via ${sourceLabel}`
+    : "Connection saved";
 
   return (
     <Link
@@ -107,11 +114,13 @@ export function ContactCard({ contact }: ContactCardProps) {
             <h2 className="truncate font-sans text-base font-semibold text-foreground">
               {targetPersona.fullName}
             </h2>
-            <p className="truncate font-sans text-sm text-muted">
-              {targetPersona.jobTitle} at {targetPersona.companyName}
-            </p>
+            {titleLine ? (
+              <p className="truncate font-sans text-sm text-muted">
+                {titleLine}
+              </p>
+            ) : null}
             <p className="truncate font-sans text-xs text-muted/90">
-              Met via {sourceLabel}
+              {sourceContext}
             </p>
             {state === "instant_access" && accessEndAt && (
               <div className="pt-0.5">
@@ -136,7 +145,9 @@ export function ContactCard({ contact }: ContactCardProps) {
             Since {formatDate(createdAt)}
           </span>
           {metadata.isRecentlyActive && !recentActivityLabel ? (
-            <span className="font-sans text-xs text-muted">Recently active</span>
+            <span className="font-sans text-xs text-muted">
+              Recently active
+            </span>
           ) : null}
         </div>
       </Card>

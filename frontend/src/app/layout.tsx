@@ -99,8 +99,6 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1, // Prevent auto-zoom on input focus (iOS)
-  userScalable: false,
   viewportFit: "cover", // Enable safe area insets
 };
 

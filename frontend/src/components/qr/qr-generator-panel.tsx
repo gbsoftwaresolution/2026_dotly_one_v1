@@ -27,10 +27,7 @@ interface QrGeneratorPanelProps {
 
 type GeneratedQr = QrTokenSummary | QuickConnectQrSummary;
 
-export function QrGeneratorPanel({
-  personas,
-  user,
-}: QrGeneratorPanelProps) {
+export function QrGeneratorPanel({ personas, user }: QrGeneratorPanelProps) {
   const router = useRouter();
   const [selectedPersonaId, setSelectedPersonaId] = useState(
     personas[0]?.id ?? "",
@@ -108,8 +105,8 @@ export function QrGeneratorPanel({
 
   const verificationCopy =
     mode === "standard"
-      ? "Profile QR sharing requires a verified email or mobile OTP so people only receive trusted public cards."
-      : "Quick Connect requires a verified email or mobile OTP so instant introductions stay trusted.";
+      ? "Profile QR sharing requires a verified email or mobile verification so people only receive trusted public cards."
+      : "Quick Connect requires a verified email or mobile verification so instant introductions stay trusted.";
   const canGenerateQr =
     mode === "standard"
       ? hasUnlockedTrustRequirement(user, "create_profile_qr")
@@ -248,7 +245,8 @@ export function QrGeneratorPanel({
             Prepare your next introduction
           </h2>
           <p className="text-sm leading-6 text-muted max-w-sm mx-auto">
-            Choose a persona, pick the right sharing mode, and create a QR that matches the moment.
+            Choose a persona, pick the right sharing mode, and create a QR that
+            matches the moment.
           </p>
         </div>
       )}

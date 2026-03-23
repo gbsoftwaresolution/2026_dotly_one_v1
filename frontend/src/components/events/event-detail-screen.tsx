@@ -103,18 +103,15 @@ function StealthShield() {
 // ---------------------------------------------------------------------------
 // EventDetailScreen
 // ---------------------------------------------------------------------------
-export function EventDetailScreen({
-  eventId,
-  user,
-}: EventDetailScreenProps) {
-    const canEnableDiscovery = hasUnlockedTrustRequirement(
-      user,
-      "enable_event_discovery",
-    );
-    const canViewParticipants = hasUnlockedTrustRequirement(
-      user,
-      "view_event_participants",
-    );
+export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
+  const canEnableDiscovery = hasUnlockedTrustRequirement(
+    user,
+    "enable_event_discovery",
+  );
+  const canViewParticipants = hasUnlockedTrustRequirement(
+    user,
+    "view_event_participants",
+  );
 
   const router = useRouter();
   const [event, setEvent] = useState<EventSummary | null>(null);
@@ -318,8 +315,8 @@ export function EventDetailScreen({
               <VerificationPrompt
                 compact
                 email={user.email}
-                title="Add a trust factor before enabling discovery"
-                description="Participant visibility and discovery signals stay behind accounts with a verified email or mobile OTP. Add either trust factor to enable event discovery."
+                title="Verify your account before enabling discovery"
+                description="Participant visibility and discovery signals stay behind accounts with a verified email or mobile verification. Add either one to enable event discovery."
               />
             </div>
           ) : null}
@@ -350,8 +347,8 @@ export function EventDetailScreen({
             <VerificationPrompt
               compact
               email={user.email}
-              title="Add a trust factor to view participants"
-              description="Dotly only reveals discoverable event participants to accounts with a verified email or mobile OTP."
+              title="Verify your account to view participants"
+              description="Dotly only reveals discoverable event participants to accounts with a verified email or mobile verification."
             />
           ) : !isDiscoverable ? (
             <StealthShield />

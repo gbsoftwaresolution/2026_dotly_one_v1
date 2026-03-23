@@ -1,7 +1,4 @@
-import {
-  formatPrimaryAction,
-  formatSharingMode,
-} from "@/lib/persona/labels";
+import { formatPrimaryAction, formatSharingMode } from "@/lib/persona/labels";
 import { cn } from "@/lib/utils/cn";
 import type {
   PersonaSharingConfigSource,
@@ -34,11 +31,11 @@ function getPrimaryActionLabel(
   primaryAction?: PersonaSmartCardPrimaryAction | "" | null,
 ): string {
   if (sharingMode === "controlled") {
-    return "Approval required";
+    return "Approval first";
   }
 
   if (!primaryAction) {
-    return "Request Access";
+    return "Request intro";
   }
 
   return formatPrimaryAction(primaryAction);
@@ -54,7 +51,10 @@ function getAvailableActionsLabel({
   allowWhatsapp,
   allowEmail,
   allowVcard,
-}: Omit<PersonaSharingSummaryProps, "title" | "className" | "sharingConfigSource">): string {
+}: Omit<
+  PersonaSharingSummaryProps,
+  "title" | "className" | "sharingConfigSource"
+>): string {
   const availableActions: string[] = [];
 
   if (allowCall && trimToNull(publicPhone)) {
@@ -70,7 +70,7 @@ function getAvailableActionsLabel({
   }
 
   if (allowVcard) {
-    availableActions.push("Save Details");
+    availableActions.push("Save contact");
   }
 
   if (availableActions.length > 0) {
@@ -82,7 +82,7 @@ function getAvailableActionsLabel({
   }
 
   if (primaryAction === "request_access") {
-    return "Request Access";
+    return "Request intro";
   }
 
   return "Main action only";
@@ -98,7 +98,10 @@ function getSupportingText({
   allowWhatsapp,
   allowEmail,
   allowVcard,
-}: Omit<PersonaSharingSummaryProps, "title" | "className" | "sharingConfigSource">): string | null {
+}: Omit<
+  PersonaSharingSummaryProps,
+  "title" | "className" | "sharingConfigSource"
+>): string | null {
   const hasDirectActions =
     (allowCall && Boolean(trimToNull(publicPhone))) ||
     (allowWhatsapp && Boolean(trimToNull(publicWhatsappNumber))) ||
@@ -110,7 +113,7 @@ function getSupportingText({
   }
 
   if (!hasDirectActions && primaryAction === "request_access") {
-    return "People can request access from your Smart Card when they want a more intentional introduction.";
+    return "People can request an intro from your Smart Card when they want a more intentional introduction.";
   }
 
   return null;

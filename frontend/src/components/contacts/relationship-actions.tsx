@@ -90,15 +90,26 @@ export function RelationshipActions({
   const expiredViaAction = wasInstantAccess && state === "expired";
   const showUpgrade = state === "instant_access" && !isExpired;
   const showExpire = state === "instant_access" && !isExpired;
+  const showBlockAction = Boolean(targetPersonaId);
 
-  if (!upgradedViaAction && !expiredViaAction && !showUpgrade && !showExpire) {
-    // Nothing interactive to show for stable approved or server-side expired
+  if (
+    !showBlockAction &&
+    !upgradedViaAction &&
+    !expiredViaAction &&
+    !showUpgrade &&
+    !showExpire
+  ) {
     return null;
   }
 
   return (
     <div className="space-y-3">
-      <BlockUserButton personaId={targetPersonaId} displayName={displayName} />
+      {showBlockAction ? (
+        <BlockUserButton
+          personaId={targetPersonaId}
+          displayName={displayName}
+        />
+      ) : null}
 
       {/* Upgraded success confirmation */}
       {upgradedViaAction ? (

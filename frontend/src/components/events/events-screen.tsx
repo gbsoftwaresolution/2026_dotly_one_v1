@@ -34,10 +34,7 @@ interface JoinPanelProps {
   user: UserProfile;
 }
 
-function JoinPanel({
-  onJoined,
-  user,
-}: JoinPanelProps) {
+function JoinPanel({ onJoined, user }: JoinPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [eventCode, setEventCode] = useState("");
   const [personas, setPersonas] = useState<PersonaSummary[]>([]);
@@ -109,8 +106,8 @@ function JoinPanel({
     return (
       <VerificationPrompt
         email={user.email}
-        title="Add a trust factor before joining events"
-        description="Dotly event networking only opens for accounts with a verified email or mobile OTP. Add either trust factor to join an event and participate in discovery safely."
+        title="Verify your account before joining events"
+        description="Dotly event networking only opens for accounts with a verified email or mobile verification. Add either one to join an event and participate in discovery safely."
       />
     );
   }
@@ -213,11 +210,7 @@ function JoinPanel({
 // EventsScreen
 // ---------------------------------------------------------------------------
 
-export function EventsScreen({
-  user,
-}: {
-  user: UserProfile;
-}) {
+export function EventsScreen({ user }: { user: UserProfile }) {
   const router = useRouter();
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -276,10 +269,7 @@ export function EventsScreen({
 
   return (
     <div className="flex flex-col gap-3">
-      <JoinPanel
-        onJoined={handleJoined}
-        user={user}
-      />
+      <JoinPanel onJoined={handleJoined} user={user} />
 
       {events.length === 0 ? (
         <EmptyState

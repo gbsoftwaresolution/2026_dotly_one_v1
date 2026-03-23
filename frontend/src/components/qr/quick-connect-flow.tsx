@@ -37,7 +37,7 @@ function getConnectErrorCopy(error: ApiError): string {
     if (msg.includes("blocked"))
       return "This connection is blocked and cannot be completed.";
     if (msg.includes("verified"))
-      return "Quick Connect requires a verified email or mobile OTP.";
+      return "Quick Connect requires a verified email or mobile verification.";
     return "You are not allowed to use this Quick Connect.";
   }
   if (msg.includes("usage limit") || msg.includes("exhausted"))
@@ -79,7 +79,7 @@ function getConnectErrorState(error: ApiError): FlowState {
         type: "error",
         title: "Verification required",
         message:
-          "Verify your email or complete mobile OTP before using Quick Connect.",
+          "Verify your email or complete mobile verification before using Quick Connect.",
       };
     return {
       type: "error",
@@ -91,7 +91,7 @@ function getConnectErrorState(error: ApiError): FlowState {
   if (msg.includes("usage limit") || msg.includes("exhausted"))
     return {
       type: "error",
-      title: "QR Exhausted",
+      title: "QR exhausted",
       message:
         "This Quick Connect QR has reached its usage limit and can no longer be used.",
     };
@@ -99,7 +99,7 @@ function getConnectErrorState(error: ApiError): FlowState {
   if (msg.includes("not active yet"))
     return {
       type: "error",
-      title: "Cooldown Active",
+      title: "Cooldown active",
       message:
         "This Quick Connect QR is not active yet. Please try again later.",
     };
@@ -107,7 +107,7 @@ function getConnectErrorState(error: ApiError): FlowState {
   if (msg.includes("expired"))
     return {
       type: "error",
-      title: "QR Expired",
+      title: "QR expired",
       message: "This Quick Connect QR has expired and can no longer be used.",
     };
 
@@ -200,7 +200,6 @@ export function QuickConnectFlow({
 
     return (
       <div className="glass rounded-3xl border border-border bg-surface p-6 space-y-6">
-        {/* Success header */}
         <div className="flex flex-col items-center gap-3 pt-2 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-3xl border border-emerald-500/30 bg-emerald-500/10">
             <svg
@@ -220,18 +219,17 @@ export function QuickConnectFlow({
           <div className="space-y-1">
             <StatusBadge label="Connected" tone="success" />
             <h2 className="pt-1 text-xl font-bold text-foreground">
-              Temporary access started
+              Connected instantly
             </h2>
             <p className="text-sm text-muted">
               {target.jobTitle} at {target.companyName}
             </p>
             <p className="text-sm text-muted">
-              This connection is temporary until you turn it into an approved relationship.
+              This introduction is now saved with a live connection window.
             </p>
           </div>
         </div>
 
-        {/* Access window */}
         <div className="rounded-2xl border border-border bg-surface/60 p-4 space-y-3">
           <p className="label-xs text-muted">Connection window</p>
           <div className="grid grid-cols-2 gap-3 text-sm">
@@ -250,7 +248,6 @@ export function QuickConnectFlow({
           </div>
         </div>
 
-        {/* CTA */}
         <a
           href={routes.app.contactDetail(result.relationshipId)}
           className="inline-flex w-full items-center justify-center rounded-2xl bg-brandRose py-5 px-5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brandRose/40 dark:bg-brandCyan dark:text-zinc-950 dark:focus:ring-brandCyan/40"
@@ -309,24 +306,14 @@ export function QuickConnectFlow({
             </div>
           </div>
           <p className="mt-4 text-left text-sm leading-6 text-muted">
-            Start a temporary connection while this introduction is still fresh.
+            Connect now while this introduction is still fresh.
           </p>
         </div>
 
-        <div className="grid gap-3 text-left sm:grid-cols-2">
-          <div className="rounded-2xl border border-border bg-background/70 p-4">
-            <p className="label-xs text-muted">What happens next</p>
-            <p className="mt-2 text-sm leading-6 text-muted">
-              Both sides get a time-boxed connection window that you can turn into an approved relationship later.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-background/70 p-4">
-            <p className="label-xs text-muted">Choose the right persona</p>
-            <p className="mt-2 text-sm leading-6 text-muted">
-              Pick the persona that best matches how you met {hostFirstName} so the context stays intact.
-            </p>
-          </div>
-        </div>
+        <p className="text-left text-sm leading-6 text-muted">
+          Pick the persona that best matches how you met {hostFirstName}. Dotly
+          keeps that context with the connection.
+        </p>
       </div>
 
       <div className="space-y-3">
@@ -389,7 +376,7 @@ export function QuickConnectFlow({
         disabled={isConnecting || !selectedPersonaId}
         className="w-full h-[60px] disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isConnecting ? "Connecting..." : "Start temporary access"}
+        {isConnecting ? "Connecting..." : "Connect instantly"}
       </PrimaryButton>
     </div>
   );

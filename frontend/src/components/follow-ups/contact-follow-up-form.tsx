@@ -71,23 +71,23 @@ function getFollowUpSummaryState(summary: ContactFollowUpSummary | null) {
 
   if (summary.isOverdue) {
     return {
-      eyebrow: "Reminder overdue",
-      title: "This reminder needs attention.",
+      eyebrow: "Pick this back up",
+      title: "This conversation is waiting on you.",
       tone: "error" as const,
     };
   }
 
   if (summary.isTriggered) {
     return {
-      eyebrow: "Reminder due",
-      title: "This reminder is ready when you are.",
+      eyebrow: "Ready now",
+      title: "This is ready for a quick follow-up.",
       tone: "warning" as const,
     };
   }
 
   return {
-    eyebrow: "Next reminder",
-    title: "Keep the next touchpoint in view.",
+    eyebrow: "Next touchpoint",
+    title: "Keep the next conversation in view.",
     tone: null,
   };
 }
@@ -100,7 +100,9 @@ function buildFollowUpSummaryFlags(remindAt: string, isTriggered: boolean) {
     isTriggered,
     isOverdue: !isTriggered && remindAtMs < nowMs,
     isUpcomingSoon:
-      !isTriggered && remindAtMs >= nowMs && remindAtMs <= nowMs + 24 * 60 * 60 * 1000,
+      !isTriggered &&
+      remindAtMs >= nowMs &&
+      remindAtMs <= nowMs + 24 * 60 * 60 * 1000,
   };
 }
 
@@ -140,9 +142,8 @@ export function ContactFollowUpForm({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [followUpSummary, setFollowUpSummary] = useState<ContactFollowUpSummary | null>(
-    initialFollowUpSummary,
-  );
+  const [followUpSummary, setFollowUpSummary] =
+    useState<ContactFollowUpSummary | null>(initialFollowUpSummary);
 
   useEffect(() => {
     if (!successMessage) {
@@ -180,7 +181,7 @@ export function ContactFollowUpForm({
     }
 
     if (!date || !time) {
-      setError("Choose a date and time.");
+      setError("Choose when you want to revisit this.");
       return;
     }
 
@@ -192,12 +193,12 @@ export function ContactFollowUpForm({
     const remindAt = toIsoString(date, time);
 
     if (!remindAt) {
-      setError("Enter a valid reminder time.");
+      setError("Enter a valid follow-up time.");
       return;
     }
 
     if (new Date(remindAt).getTime() <= Date.now()) {
-      setError("Pick a time in the future.");
+      setError("Pick a future time for this follow-up.");
       return;
     }
 
@@ -213,8 +214,10 @@ export function ContactFollowUpForm({
 
       resetForm();
       setIsOpen(false);
-      setFollowUpSummary((current) => mergeFollowUpSummary(current, created.remindAt));
-      setSuccessMessage(`Reminder added for ${contactName}.`);
+      setFollowUpSummary((current) =>
+        mergeFollowUpSummary(current, created.remindAt),
+      );
+      setSuccessMessage(`Follow-up saved for ${contactName}.`);
     } catch (submissionError) {
       setError(
         submissionError instanceof ApiError
@@ -243,11 +246,15 @@ export function ContactFollowUpForm({
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                  {followUpSummaryState?.eyebrow ?? "Next reminder"}
+                  {followUpSummaryState?.eyebrow ?? "Next touchpoint"}
                 </p>
                 {followUpSummaryState?.tone ? (
                   <StatusBadge
-                    label={followUpSummaryState.tone === "error" ? "Overdue" : "Due"}
+                    label={
+                      followUpSummaryState.tone === "error"
+                        ? "Overdue"
+                        : "Ready"
+                    }
                     tone={followUpSummaryState.tone}
                     dot
                   />
@@ -257,11 +264,12 @@ export function ContactFollowUpForm({
                 {formatReminder(followUpSummary.nextFollowUpAt!)}
               </p>
               <p className="text-xs text-muted">
-                {followUpSummaryState?.title ?? "Keep the next touchpoint in view."}
+                {followUpSummaryState?.title ??
+                  "Keep the next touchpoint in view."}
               </p>
               {followUpSummary.pendingFollowUpCount > 1 ? (
                 <p className="text-xs text-muted">
-                  {followUpSummary.pendingFollowUpCount} pending reminders
+                  {followUpSummary.pendingFollowUpCount} follow-ups waiting
                 </p>
               ) : null}
             </div>
@@ -270,7 +278,7 @@ export function ContactFollowUpForm({
               href={routes.app.followUps}
               className="inline-flex min-h-12 items-center justify-center self-start rounded-2xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:border-black/15 hover:bg-white dark:hover:border-white/15 dark:hover:bg-white/[0.08] sm:self-auto"
             >
-              Manage reminders
+              View follow-ups
             </Link>
           </div>
         </div>
@@ -285,7 +293,7 @@ export function ContactFollowUpForm({
             href={routes.app.followUps}
             className="mt-1 inline-flex text-sm font-medium text-emerald-700 underline underline-offset-4 dark:text-emerald-300"
           >
-            View follow-ups
+            Open follow-ups
           </Link>
         </div>
       ) : null}
@@ -297,10 +305,13 @@ export function ContactFollowUpForm({
           onClick={handleOpen}
           disabled={disabled}
         >
-          {hasPendingReminder ? "Add reminder" : "Remind me"}
+          Add follow-up
         </SecondaryButton>
       ) : (
-        <form className="space-y-4" onSubmit={(event) => void handleSubmit(event)}>
+        <form
+          className="space-y-4"
+          onSubmit={(event) => void handleSubmit(event)}
+        >
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="space-y-2">
               <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
@@ -345,7 +356,7 @@ export function ContactFollowUpForm({
                 setError(null);
               }}
               rows={4}
-              placeholder="Optional context for the next touchpoint"
+              placeholder="Optional context for when you pick this back up"
               className={cn(
                 "w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted/60 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20",
                 isOverLimit ? "border-rose-300 dark:border-rose-800" : "",
@@ -392,7 +403,7 @@ export function ContactFollowUpForm({
               className="sm:w-auto"
               disabled={isSaving}
             >
-              {isSaving ? "Saving..." : "Save reminder"}
+              {isSaving ? "Saving..." : "Save follow-up"}
             </PrimaryButton>
           </div>
         </form>

@@ -11,7 +11,7 @@ export default async function FollowUpsPage() {
     <section className="space-y-4">
       <PageHeader
         title="Follow-ups"
-        description={dotlyPositioning.app.noFollowUps}
+        description="Keep the next conversation easy to pick back up."
       />
       <FollowUpsScreen />
     </section>

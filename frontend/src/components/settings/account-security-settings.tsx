@@ -122,7 +122,8 @@ function getOtpFeedback(error: unknown): FeedbackState {
   if (classifiedError.kind === "unauthorized") {
     return {
       tone: "warning",
-      message: "Your session expired. Sign in again to continue security changes.",
+      message:
+        "Your session expired. Sign in again to continue security changes.",
     };
   }
 
@@ -135,11 +136,7 @@ function getOtpFeedback(error: unknown): FeedbackState {
   };
 }
 
-function TrustStateBadge({
-  isTrustQualified,
-}: {
-  isTrustQualified: boolean;
-}) {
+function TrustStateBadge({ isTrustQualified }: { isTrustQualified: boolean }) {
   return (
     <span
       className={cn(
@@ -149,7 +146,7 @@ function TrustStateBadge({
           : "border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300",
       )}
     >
-      {isTrustQualified ? "Trust factor active" : "Trust factor needed"}
+      {isTrustQualified ? "Trust active" : "Verification needed"}
     </span>
   );
 }
@@ -160,7 +157,7 @@ function FactorStatusBadge({ status }: { status: UserTrustFactor["status"] }) {
       ? "Active"
       : status === "inactive"
         ? "Inactive"
-        : "Planned";
+        : "Coming soon";
 
   return (
     <span
@@ -266,11 +263,7 @@ function FeedbackBanner({ feedback }: { feedback: FeedbackState }) {
   );
 }
 
-function RequirementStatusBadge({
-  unlocked,
-}: {
-  unlocked: boolean;
-}) {
+function RequirementStatusBadge({ unlocked }: { unlocked: boolean }) {
   return (
     <span
       className={cn(
@@ -288,23 +281,23 @@ function RequirementStatusBadge({
 function TrustOverviewCard({ user }: { user: UserProfile }) {
   const hasActiveTrustFactor = user.security.trustBadge === "verified";
   const emailSignal = {
-    status: user.isVerified ? "Verified" : "Pending",
+    status: user.isVerified ? "Verified" : "Needs attention",
     tone: user.isVerified ? ("success" as const) : ("warning" as const),
     description: user.isVerified
-      ? "Email is currently accepted as an active trust factor for this account."
+      ? "Email is already active for trust and identity confirmation on this account."
       : hasActiveTrustFactor
-        ? "Another trust factor already unlocks current trust-sensitive actions. Verify this inbox too if you want email as an additional active factor."
-      : user.security.mailDeliveryAvailable
-        ? "Verify this inbox or complete mobile OTP to unlock trust-sensitive networking and sharing actions."
-        : "Mail delivery is off in this environment, so the email trust step is visible but cannot deliver live messages yet.",
+        ? "Another verified factor already unlocks trust on this account. Verify this inbox too if you want email as an added signal."
+        : user.security.mailDeliveryAvailable
+          ? "Verify this inbox or complete mobile verification to unlock the protected connection steps on this account."
+          : "Mail delivery is off in this environment, so email verification is visible here but cannot send live messages yet.",
   };
   const mobileSignal = {
     status:
       user.security.phoneVerificationStatus === "verified"
         ? "Verified"
         : user.security.phoneVerificationStatus === "pending"
-          ? "Pending"
-          : "Planned",
+          ? "Needs attention"
+          : "Coming soon",
     tone:
       user.security.phoneVerificationStatus === "verified"
         ? ("success" as const)
@@ -313,12 +306,12 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
           : ("info" as const),
     description:
       user.security.phoneVerificationStatus === "verified"
-        ? "Mobile OTP is active and ready to support recovery and future step-up checks."
+        ? "Mobile verification is active and ready to strengthen recovery and identity checks."
         : user.security.phoneVerificationStatus === "pending"
-          ? "A mobile number is waiting for code confirmation before it becomes an active trust factor."
+          ? "A mobile number is waiting for code confirmation before it becomes active."
           : user.security.smsDeliveryAvailable
-            ? "Mobile OTP is the next trust factor you can enroll for stronger recovery posture."
-            : "Mobile OTP is planned here, but SMS delivery is unavailable until the environment is configured.",
+            ? "Mobile verification is the next step you can add for stronger recovery."
+            : "Mobile verification is available in the product, but SMS delivery is unavailable in this environment.",
   };
   const unlockedRequirementCount = user.security.requirements.filter(
     (requirement) => requirement.unlocked,
@@ -326,8 +319,8 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
 
   return (
     <SectionCard
-      eyebrow="Trust Overview"
-      title="Security, verification, and account trust"
+      eyebrow="Identity Confidence"
+      title="Verification and account trust"
       className="md:col-span-2"
     >
       <div className="space-y-5">
@@ -339,7 +332,7 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
                 <VerificationStatusBadge isVerified={user.isVerified} />
                 {user.security.phoneVerificationStatus === "verified" ? (
                   <span className="inline-flex items-center rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
-                    Mobile OTP active
+                    Mobile active
                   </span>
                 ) : null}
               </div>
@@ -374,10 +367,10 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
                 </p>
                 <p className="mt-1 text-xs leading-5 text-muted">
                   {user.security.phoneVerificationStatus === "verified"
-                    ? "Your mobile OTP factor is active for trust and recovery readiness."
+                    ? "Your mobile verification factor is active for trust and recovery readiness."
                     : user.security.phoneVerificationStatus === "pending"
                       ? "A mobile number is pending confirmation. Enter the latest code to activate it."
-                      : "Add a phone number to activate the next trust factor for your account."}
+                      : "Add a phone number to activate the next verification factor for your account."}
                 </p>
               </div>
             </div>
@@ -391,32 +384,38 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
             tone={emailSignal.tone}
             description={emailSignal.description}
             detail={user.security.maskedEmail}
-            icon={<Mail className="h-4 w-4 text-brandRose dark:text-brandCyan" />}
+            icon={
+              <Mail className="h-4 w-4 text-brandRose dark:text-brandCyan" />
+            }
           />
           <TrustSignalCard
             title="Mobile OTP status"
             status={mobileSignal.status}
             tone={mobileSignal.tone}
             description={mobileSignal.description}
-            detail={user.security.maskedPhoneNumber ?? "No mobile number enrolled"}
+            detail={
+              user.security.maskedPhoneNumber ?? "No mobile number enrolled"
+            }
             icon={
               <Smartphone className="h-4 w-4 text-brandRose dark:text-brandCyan" />
             }
           />
           <TrustSignalCard
-            title="Trust-sensitive access"
+            title="Protected actions"
             status={
               user.security.restrictedActions.length === 0
                 ? "Unlocked"
                 : "Restricted"
             }
             tone={
-              user.security.restrictedActions.length === 0 ? "success" : "warning"
+              user.security.restrictedActions.length === 0
+                ? "success"
+                : "warning"
             }
             description={
               user.security.restrictedActions.length === 0
-                ? "All current trust-sensitive actions are available on this account."
-                : `${unlockedRequirementCount} trust requirements are already satisfied. Remaining actions still need a verified trust factor.`
+                ? "All protected actions are already available on this account."
+                : `${unlockedRequirementCount} requirements are already satisfied. A verified factor is still needed for the rest.`
             }
             detail={`${user.security.restrictedActions.length} action${user.security.restrictedActions.length === 1 ? "" : "s"} still gated`}
             icon={
@@ -425,7 +424,7 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
           />
           <div className="rounded-[22px] border border-border bg-white/60 p-4 dark:bg-white/[0.03]">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground/70">
-              Trust requirements
+              Verification requirements
             </p>
             <div className="mt-3 space-y-2">
               {user.security.requirements.map((requirement) => (
@@ -433,7 +432,9 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
                   key={requirement.key}
                   className="flex items-center justify-between gap-3 rounded-[18px] border border-black/5 px-3 py-2 dark:border-white/10"
                 >
-                  <p className="text-sm text-foreground/85">{requirement.label}</p>
+                  <p className="text-sm text-foreground/85">
+                    {requirement.label}
+                  </p>
                   <RequirementStatusBadge unlocked={requirement.unlocked} />
                 </div>
               ))}
@@ -443,15 +444,15 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
 
         <div className="grid gap-4 md:grid-cols-2">
           <ActionList
-            title="Unlocked now"
+            title="Available now"
             items={user.security.unlockedActions}
-            emptyState="Basic account access stays available, but current trust-sensitive networking actions remain restricted until one active trust factor is verified."
+            emptyState="Basic account access stays available, but protected connection steps stay locked until one active factor is verified."
             tone="success"
           />
           <ActionList
-            title="Verification required"
+            title="Needs verification"
             items={user.security.restrictedActions}
-            emptyState="All current trust-sensitive actions are available on this account."
+            emptyState="All protected actions are already available on this account."
             tone="warning"
           />
         </div>
@@ -472,7 +473,7 @@ function VerificationManagementCard({
   onResend: () => Promise<void>;
 }) {
   return (
-    <SectionCard eyebrow="Email Trust" title="Manage email verification">
+    <SectionCard eyebrow="Email Verification" title="Manage email verification">
       <div className="space-y-4">
         <div className="flex items-start gap-3 rounded-[22px] border border-border bg-white/60 p-4 dark:bg-white/[0.03]">
           <Mail className="mt-0.5 h-5 w-5 text-brandRose dark:text-brandCyan" />
@@ -480,14 +481,14 @@ function VerificationManagementCard({
             <p className="text-sm font-semibold text-foreground">
               {user.isVerified
                 ? "Verified email on file"
-                : "Verification pending"}
+                : "Email verification needed"}
             </p>
             <p className="text-sm leading-6 text-muted">
               {user.isVerified
-                ? "Dotly recognizes this inbox as an active trust factor for your account today."
+                ? "This inbox is already active for account verification today."
                 : user.security.trustBadge === "verified"
-                  ? "Another verified trust factor already unlocks current trust-sensitive actions. Verify this inbox too if you want email as an additional signal."
-                  : "Use the latest verification email from Dotly or complete mobile OTP to unlock restricted trust-sensitive actions."}
+                  ? "Another verified factor already unlocks trust on this account. Verify this inbox too if you want email as an added signal."
+                  : "Use the latest verification email from Dotly or complete mobile verification to unlock protected connection steps."}
             </p>
             <p className="font-mono text-xs text-muted">
               {user.security.maskedEmail}
@@ -543,9 +544,9 @@ function VerificationManagementCard({
             <div className="flex items-start gap-3">
               <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               <p className="text-sm leading-6 text-foreground/85">
-                Your email is already verified. This inbox is one active trust
-                factor on the account and can satisfy current trust-sensitive
-                networking checks.
+                Your email is already verified. This inbox is one active
+                verification factor on the account and already supports the
+                protected parts of your connection flow.
               </p>
             </div>
           </div>
@@ -695,11 +696,7 @@ function ChangePasswordCard() {
   );
 }
 
-function MobileOtpCard({
-  user,
-}: {
-  user: UserProfile;
-}) {
+function MobileOtpCard({ user }: { user: UserProfile }) {
   const initialOtpState = createOtpRequestState(
     user.security.mobileOtpEnrollment,
     user.security.smsDeliveryAvailable,
@@ -722,7 +719,8 @@ function MobileOtpCard({
   const [isVerifying, setIsVerifying] = useState(false);
 
   const resendAvailableLabel = formatMobileOtpTime(
-    otpState?.resendAvailableAt ?? user.security.mobileOtpEnrollment?.resendAvailableAt,
+    otpState?.resendAvailableAt ??
+      user.security.mobileOtpEnrollment?.resendAvailableAt,
   );
   const activeChallengeId =
     otpState?.challengeId ?? user.security.mobileOtpEnrollment?.challengeId;
@@ -736,7 +734,7 @@ function MobileOtpCard({
   let statusLabel = "Not enrolled";
   let statusTitle = "No mobile factor yet";
   let statusDescription =
-    "Add a mobile number and confirm the code to activate the next trust factor in Dotly.";
+    "Add a mobile number and confirm the code to activate the next verification factor in Dotly.";
 
   if (viewState === "code_sent") {
     statusLabel = "Code sent";
@@ -750,9 +748,9 @@ function MobileOtpCard({
       "Dotly is confirming the latest code against your active enrollment challenge.";
   } else if (viewState === "verified") {
     statusLabel = "Verified";
-    statusTitle = "Mobile OTP verified";
+    statusTitle = "Mobile verification active";
     statusDescription =
-      "Your mobile number is now part of your active trust model and can support future step-up flows.";
+      "Your mobile number is now active for account trust and stronger recovery.";
   } else if (viewState === "resend_blocked") {
     statusLabel = "Resend blocked";
     statusTitle = "Cooldown active";
@@ -803,7 +801,8 @@ function MobileOtpCard({
     if (!activeChallengeId) {
       setFeedback({
         tone: "warning",
-        message: "Request a fresh verification code before trying to verify it.",
+        message:
+          "Request a fresh verification code before trying to verify it.",
       });
       return;
     }
@@ -823,7 +822,7 @@ function MobileOtpCard({
       setViewState("verified");
       const nextFeedback = {
         tone: "success" as const,
-        message: `Mobile OTP is now active for ${result.phoneNumber}.`,
+        message: `Mobile verification is now active for ${result.phoneNumber}.`,
       };
       setFeedback(nextFeedback);
     } catch (error) {
@@ -842,7 +841,7 @@ function MobileOtpCard({
   }
 
   return (
-    <SectionCard eyebrow="Mobile OTP" title="Enroll your next trust factor">
+    <SectionCard eyebrow="Mobile Verification" title="Add mobile verification">
       <div className="space-y-4">
         <div className="flex items-start gap-3 rounded-[22px] border border-border bg-white/60 p-4 dark:bg-white/[0.03]">
           <Smartphone className="mt-0.5 h-5 w-5 text-brandRose dark:text-brandCyan" />
@@ -853,9 +852,7 @@ function MobileOtpCard({
             <p className="text-sm font-semibold text-foreground">
               {statusTitle}
             </p>
-            <p className="text-sm leading-6 text-muted">
-              {statusDescription}
-            </p>
+            <p className="text-sm leading-6 text-muted">{statusDescription}</p>
             <p className="font-mono text-xs text-muted">
               {displayedPhoneNumber}
             </p>
@@ -946,11 +943,12 @@ function MobileOtpCard({
               </p>
             ) : user.security.mobileOtpEnrollment ? (
               <p className="text-xs leading-5 text-muted">
-                Current destination: {user.security.mobileOtpEnrollment.maskedPhoneNumber}
+                Current destination:{" "}
+                {user.security.mobileOtpEnrollment.maskedPhoneNumber}
               </p>
             ) : null}
             <PrimaryButton type="submit" fullWidth isLoading={isVerifying}>
-              Verify mobile OTP
+              Verify mobile
             </PrimaryButton>
           </form>
         ) : null}
@@ -1182,8 +1180,8 @@ function TrustFactorsCard({ user }: { user: UserProfile }) {
 
   return (
     <SectionCard
-      eyebrow="Trust Factors"
-      title="Current and planned identity factors"
+      eyebrow="Verification Factors"
+      title="Current and upcoming identity factors"
     >
       <div className="space-y-3">
         {roadmapFactors.map((factor) => (
@@ -1319,9 +1317,9 @@ export function AccountSecuritySettings({ user }: { user: UserProfile }) {
           Dotly security center
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
-          Manage active trust factors, recover credentials, enroll a mobile
-          factor, and review every active device from one coherent security
-          surface.
+          Manage active verification factors, recover credentials, add mobile
+          verification, and review every active device from one coherent
+          security surface.
         </p>
       </div>
 

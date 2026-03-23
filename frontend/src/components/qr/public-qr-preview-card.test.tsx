@@ -11,11 +11,9 @@ describe("PublicQrPreviewCard", () => {
       React.createElement(PublicQrPreviewCard, {
         qr: {
           type: "profile",
-          url: "https://dotly.id/q/abc",
           code: "abc",
           persona: {
             username: "jane",
-            publicUrl: "https://dotly.id/jane",
             fullName: "Jane Doe",
             jobTitle: "Founder",
             companyName: "Dotly",
@@ -38,11 +36,9 @@ describe("PublicQrPreviewCard", () => {
       React.createElement(PublicQrPreviewCard, {
         qr: {
           type: "quick_connect",
-          url: "https://dotly.id/q/connect",
           code: "connect",
           persona: {
             username: "jane",
-            publicUrl: "https://dotly.id/jane",
             fullName: "Jane Doe",
             jobTitle: "Founder",
             companyName: "Dotly",
@@ -56,8 +52,12 @@ describe("PublicQrPreviewCard", () => {
     expect(screen.getByText(/^quick connect$/i)).toBeInTheDocument();
     expect(screen.getByText(/shared context/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/review who you are meeting before you choose the right persona/i),
+      screen.getByText(
+        /review who you are meeting before you choose the right persona/i,
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByText(/temporary, permissioned access/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/temporary, permissioned access/i),
+    ).toBeInTheDocument();
   });
 });

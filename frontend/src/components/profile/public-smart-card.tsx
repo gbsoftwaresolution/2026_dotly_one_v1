@@ -2,13 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import {
-  AtSign,
-  Check,
-  Download,
-  MessageCircle,
-  Phone,
-} from "lucide-react";
+import { AtSign, Check, Download, MessageCircle, Phone } from "lucide-react";
 
 import { Card } from "@/components/shared/card";
 import { PrimaryButton } from "@/components/shared/primary-button";
@@ -25,14 +19,17 @@ import {
 import { cn } from "@/lib/utils/cn";
 import type {
   PersonaSmartCardPrimaryAction,
+  PersonaSummary,
   PublicProfile,
 } from "@/types/persona";
 
 interface PublicSmartCardProps {
   profile: PublicProfile;
+  initialPersonas?: PersonaSummary[];
   requestAccessHref?: string;
   isAuthenticated?: boolean;
   loginHref?: string;
+  personaLoadError?: string | null;
 }
 
 interface SmartAction {
@@ -91,7 +88,8 @@ async function downloadVcard(href: string, username: string) {
 
   const objectUrl = URL.createObjectURL(file);
   const anchor = document.createElement("a");
-  const safeFilename = username.trim().replace(/[^a-z0-9_-]+/gi, "-") || "contact";
+  const safeFilename =
+    username.trim().replace(/[^a-z0-9_-]+/gi, "-") || "contact";
 
   anchor.href = objectUrl;
   anchor.download = `${safeFilename}.vcf`;
@@ -116,7 +114,7 @@ function getPrimaryCtaLabel(
     case "login":
       return "Log in to continue";
     case "request_access":
-      return "Request Access";
+      return "Request intro";
     case "instant_connect":
       return "Connect";
     case "contact_me":
@@ -130,11 +128,11 @@ function getCardActionSummary(
 ): string {
   switch (primaryAction) {
     case "request_access":
-      return `Request access when you want a more intentional introduction to ${fullName}.`;
+      return `${fullName} reviews your request before sharing the next step.`;
     case "instant_connect":
-      return "Choose how to connect.";
+      return "Connect now and save this introduction without leaving the card.";
     case "contact_me":
-      return "Choose how to connect.";
+      return "Open one of the direct actions below to reach out right away.";
   }
 }
 
@@ -192,29 +190,29 @@ function getBlockedConnectMessage(error: ApiError): string {
 }
 
 function getVerificationRequiredMessage(): string {
-  return "This smart card requires a verified email or mobile OTP.";
+  return "This smart card requires a verified email or mobile verification.";
 }
 
 function getRequestFallbackMessage(error: ApiError): string {
   const message = error.message.toLowerCase();
 
   if (message.includes("private") || message.includes("not accepting")) {
-    return "Quick Connect is unavailable for this profile. Request access below instead.";
+    return "Instant connect is not available here. Request access instead.";
   }
 
-  return "Quick Connect is unavailable for this profile. Request access below instead.";
+  return "Instant connect is not available here. Request access instead.";
 }
 
 function getInstantConnectErrorMessage(error: ApiError): string {
   if (error.status === 401) {
-    return "Your session expired. Log in to continue.";
+    return "Log in to connect.";
   }
 
   if (error.status === 429) {
     return "Please wait a moment and try again.";
   }
 
-  return "Instant Connect is unavailable right now.";
+  return "Couldn't connect right now. Try again.";
 }
 
 function SmartCardHeroShell({ children }: { children: React.ReactNode }) {
@@ -279,9 +277,11 @@ export function PublicSmartCardSkeleton() {
 
 export function PublicSmartCard({
   profile,
+  initialPersonas = [],
   requestAccessHref = "#request-access-panel",
   isAuthenticated = true,
   loginHref,
+  personaLoadError = null,
 }: PublicSmartCardProps) {
   const config = profile.smartCard;
   const [isContactPanelHighlighted, setIsContactPanelHighlighted] =
@@ -291,9 +291,14 @@ export function PublicSmartCard({
   });
   const [instantConnectUiState, setInstantConnectUiState] =
     useState<InstantConnectUiState>({ status: "idle" });
-  const [directActionState, setDirectActionState] = useState<DirectActionState>({
-    status: "idle",
-  });
+  const [selectedPersonaId, setSelectedPersonaId] = useState(
+    initialPersonas[0]?.id ?? "",
+  );
+  const [directActionState, setDirectActionState] = useState<DirectActionState>(
+    {
+      status: "idle",
+    },
+  );
   const [showLoginCta, setShowLoginCta] = useState(!isAuthenticated);
   const [isVcardDownloading, setIsVcardDownloading] = useState(false);
   const feedbackTimeoutRef = useRef<number | null>(null);
@@ -391,6 +396,11 @@ export function PublicSmartCard({
     config.actionState.requestAccessEnabled;
   const isConnected = instantConnectUiState.status === "connected";
   const isFallback = instantConnectUiState.status === "fallback";
+  const hasPersonaSelection = initialPersonas.length > 0;
+  const hasMultiplePersonas = initialPersonas.length > 1;
+  const selectedPersona = initialPersonas.find(
+    (persona) => persona.id === selectedPersonaId,
+  );
   const displayedPrimaryAction = isFallback ? "request_access" : primaryAction;
   const primaryCtaAction =
     showLoginCta && displayedPrimaryAction !== "contact_me"
@@ -405,8 +415,7 @@ export function PublicSmartCard({
     profile.fullName,
   );
   const contextSummary =
-    profile.tagline?.trim() ||
-    dotlyPositioning.shortExplainer;
+    profile.tagline?.trim() || dotlyPositioning.shortExplainer;
 
   const shouldShowDirectActions = smartActions.length > 0;
   const isPrimaryActionDisabled =
@@ -577,7 +586,9 @@ export function PublicSmartCard({
 
   function handleContactAction() {
     if (smartActions.length === 0) {
-      setErrorState("No direct contact actions are available on this card yet.");
+      setErrorState(
+        "No direct contact actions are available on this card yet.",
+      );
       return;
     }
 
@@ -592,17 +603,27 @@ export function PublicSmartCard({
       return;
     }
 
+    if (!selectedPersonaId) {
+      setErrorState(
+        personaLoadError ??
+          (isAuthenticated
+            ? "Choose one of your personas before connecting."
+            : "Log in to continue."),
+      );
+      return;
+    }
+
     const measurementId = startInstantConnectMeasurement();
 
     try {
-      const result = await relationshipApi.instantConnect(profile.username);
+      const result = await relationshipApi.instantConnect(profile.username, {
+        fromPersonaId: selectedPersonaId,
+      });
       finishInstantConnectMeasurement(measurementId, "connected");
       setInstantConnectUiState({
         status: "connected",
         message:
-          result.status === "connected"
-            ? "Connection saved"
-            : "Connected",
+          result.status === "connected" ? "Connected instantly" : "Connected",
       });
       resetPrimaryFeedback();
     } catch (error) {
@@ -610,7 +631,7 @@ export function PublicSmartCard({
         finishInstantConnectMeasurement(measurementId, "already_connected");
         setInstantConnectUiState({
           status: "connected",
-          message: "Connection already active",
+          message: "Already connected",
         });
         resetPrimaryFeedback();
         return;
@@ -631,7 +652,10 @@ export function PublicSmartCard({
         }
 
         if (isVerificationRequiredError(error)) {
-          finishInstantConnectMeasurement(measurementId, "verification_required");
+          finishInstantConnectMeasurement(
+            measurementId,
+            "verification_required",
+          );
           setErrorState(getVerificationRequiredMessage());
           return;
         }
@@ -652,7 +676,9 @@ export function PublicSmartCard({
         }
 
         finishInstantConnectMeasurement(measurementId, "forbidden");
-        setErrorState("This profile is not accepting instant connections right now.");
+        setErrorState(
+          "This profile is not accepting instant connections right now.",
+        );
         return;
       }
 
@@ -705,8 +731,8 @@ export function PublicSmartCard({
 
   return (
     <SmartCardHeroShell>
-      <div className="space-y-6 text-center sm:space-y-7">
-        <div className="space-y-4">
+      <div className="space-y-5 text-center sm:space-y-6">
+        <div className="space-y-3">
           {profile.profilePhotoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -717,7 +743,9 @@ export function PublicSmartCard({
           ) : (
             <div
               className="mx-auto flex h-24 w-24 items-center justify-center rounded-full text-[1.75rem] font-semibold text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)] ring-4 ring-white/80 sm:h-28 sm:w-28 sm:text-[2rem] dark:ring-white/10"
-              style={{ background: `linear-gradient(135deg, hsl(${hue}, 68%, 54%), hsl(${(hue + 28) % 360}, 72%, 48%))` }}
+              style={{
+                background: `linear-gradient(135deg, hsl(${hue}, 68%, 54%), hsl(${(hue + 28) % 360}, 72%, 48%))`,
+              }}
             >
               {profile.fullName.charAt(0).toUpperCase()}
             </div>
@@ -733,52 +761,24 @@ export function PublicSmartCard({
             <h1 className="text-[2rem] font-semibold leading-none tracking-tight text-foreground sm:text-[2.2rem]">
               {profile.fullName}
             </h1>
-            {trustPresentation ? (
-              <p
-                className="mx-auto max-w-[34ch] text-xs leading-5 text-foreground/58"
-                title={trustPresentation.detail}
-              >
-                {trustPresentation.detail}
-              </p>
-            ) : null}
-            <p className="mx-auto max-w-[28ch] text-sm leading-6 text-muted">
-              {dotlyPositioning.publicProfile.smartCardHelper}
+            <p className="mx-auto max-w-[30ch] text-sm leading-6 text-muted">
+              {cardActionSummary}
             </p>
             {(profile.jobTitle || profile.companyName) && (
               <p className="text-sm font-medium leading-5 text-foreground/72 sm:text-[15px]">
-                {[profile.jobTitle, profile.companyName].filter(Boolean).join(" · ")}
+                {[profile.jobTitle, profile.companyName]
+                  .filter(Boolean)
+                  .join(" · ")}
               </p>
             )}
             {profile.tagline ? (
               <p
-                className="mx-auto max-w-[28ch] truncate text-sm leading-6 text-muted"
+                className="mx-auto max-w-[30ch] text-sm leading-6 text-muted line-clamp-2"
                 title={profile.tagline}
               >
                 {profile.tagline}
               </p>
             ) : null}
-          </div>
-        </div>
-
-        <div className="grid gap-3 text-left sm:grid-cols-2">
-          <div className="rounded-[24px] border border-black/6 bg-white/82 px-4 py-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)] dark:border-white/8 dark:bg-white/[0.04] dark:shadow-none">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-              Before you connect
-            </p>
-            <p className="mt-2 text-sm font-semibold text-foreground">
-              Context first
-            </p>
-            <p className="mt-2 text-sm leading-6 text-muted">{contextSummary}</p>
-          </div>
-
-          <div className="rounded-[24px] border border-black/6 bg-white/82 px-4 py-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)] dark:border-white/8 dark:bg-white/[0.04] dark:shadow-none">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-              Best next step
-            </p>
-            <p className="mt-2 text-sm font-semibold text-foreground">
-              {getPrimaryCtaLabel(displayedPrimaryAction)}
-            </p>
-            <p className="mt-2 text-sm leading-6 text-muted">{cardActionSummary}</p>
           </div>
         </div>
 
@@ -797,6 +797,10 @@ export function PublicSmartCard({
             {primaryCtaLabel}
           </PrimaryButton>
 
+          {contextSummary && !profile.tagline ? (
+            <p className="text-sm leading-6 text-muted">{contextSummary}</p>
+          ) : null}
+
           {fallbackMessage ? (
             <p className="text-sm leading-6 text-muted">{fallbackMessage}</p>
           ) : null}
@@ -804,12 +808,18 @@ export function PublicSmartCard({
             <p className="text-sm leading-6 text-muted">{disabledMessage}</p>
           ) : null}
           {isFallback && primaryCtaState.status !== "success" ? (
-            <p role="alert" className="text-sm leading-6 text-rose-500 dark:text-rose-300">
+            <p
+              role="alert"
+              className="text-sm leading-6 text-rose-500 dark:text-rose-300"
+            >
               {instantConnectUiState.message}
             </p>
           ) : null}
           {primaryCtaState.status === "error" ? (
-            <p role="alert" className="text-sm leading-6 text-rose-500 dark:text-rose-300">
+            <p
+              role="alert"
+              className="text-sm leading-6 text-rose-500 dark:text-rose-300"
+            >
               {primaryCtaState.message}
             </p>
           ) : null}
@@ -823,18 +833,42 @@ export function PublicSmartCard({
               {primaryCtaState.message}
             </p>
           ) : null}
+
+          {isAuthenticated && hasMultiplePersonas ? (
+            <div className="space-y-2 text-left">
+              <label
+                htmlFor="instant-connect-from-persona"
+                className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
+              >
+                Connecting as
+              </label>
+              <select
+                id="instant-connect-from-persona"
+                value={selectedPersonaId}
+                onChange={(event) => setSelectedPersonaId(event.target.value)}
+                className="w-full rounded-[20px] border border-black/8 bg-white/82 px-4 py-3 text-sm text-foreground shadow-[0_12px_30px_rgba(15,23,42,0.05)] outline-none transition focus:border-brandRose/35 dark:border-white/10 dark:bg-white/[0.04] dark:focus:border-brandCyan/35 dark:shadow-none"
+              >
+                {initialPersonas.map((persona) => (
+                  <option key={persona.id} value={persona.id}>
+                    {persona.fullName} @{persona.username}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
+          {isAuthenticated &&
+          hasPersonaSelection &&
+          !hasMultiplePersonas &&
+          selectedPersona ? (
+            <p className="text-sm leading-6 text-muted">
+              Connecting as {selectedPersona.fullName}
+            </p>
+          ) : null}
         </div>
 
         {shouldShowDirectActions ? (
           <div className="space-y-3">
-            <div className="space-y-1 text-left">
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                Direct contact
-              </p>
-              <p className="text-sm leading-6 text-muted">
-                {dotlyPositioning.publicProfile.smartCardHelper}
-              </p>
-            </div>
             <div
               ref={contactPanelRef}
               tabIndex={-1}
@@ -911,7 +945,10 @@ export function PublicSmartCard({
             </div>
 
             {directActionState.status === "error" ? (
-              <p role="alert" className="text-sm leading-6 text-rose-500 dark:text-rose-300">
+              <p
+                role="alert"
+                className="text-sm leading-6 text-rose-500 dark:text-rose-300"
+              >
                 {directActionState.message}
               </p>
             ) : null}

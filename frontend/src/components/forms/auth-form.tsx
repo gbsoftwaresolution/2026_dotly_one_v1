@@ -105,7 +105,7 @@ export function AuthForm({
             alternateAction: "Sign up",
           }
         : {
-          submitLabel: dotlyPositioning.cta.primary,
+            submitLabel: dotlyPositioning.cta.primary,
             alternateLabel: "Already have an account?",
             alternateHref: routes.public.login,
             alternateAction: "Log in",
@@ -242,7 +242,7 @@ export function AuthForm({
                 ) : null}
               </div>
             ) : (
-              <p>Use the password associated with your Dotly account.</p>
+              <p>Use the password for your Dotly account.</p>
             )
           }
           onChange={(nextPassword) => {

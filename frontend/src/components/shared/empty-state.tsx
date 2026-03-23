@@ -10,9 +10,8 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center space-y-5 rounded-card border border-dashed border-white/[0.08] dark:border-white/[0.06] bg-white/[0.02] dark:bg-white/[0.02] px-6 py-14 text-center animate-fade-in">
-      {/* Circular icon container */}
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.06] dark:bg-white/[0.04] border border-white/[0.08] dark:border-white/[0.06]">
+    <div className="flex animate-fade-in flex-col items-center justify-center space-y-5 rounded-card border border-dashed border-black/[0.08] bg-white/70 px-6 py-14 text-center dark:border-white/[0.06] dark:bg-white/[0.02]">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full border border-black/[0.08] bg-black/[0.03] dark:border-white/[0.06] dark:bg-white/[0.04]">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
@@ -29,13 +28,11 @@ export function EmptyState({
         </svg>
       </div>
 
-      <div className="space-y-2 max-w-[240px]">
+      <div className="max-w-[260px] space-y-2">
         <h2 className="font-sans text-base font-semibold text-foreground">
           {title}
         </h2>
-        <p className="font-mono text-[11px] leading-relaxed text-muted">
-          {description}
-        </p>
+        <p className="text-sm leading-relaxed text-muted">{description}</p>
       </div>
 
       {action ? (

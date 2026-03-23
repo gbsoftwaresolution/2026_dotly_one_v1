@@ -1,41 +1,43 @@
 export const dotlyPositioning = {
-  headline: "Don't share your number. Share your Dotly.",
-  subheadline: "A smarter way to connect — with control, context, and trust.",
+  headline: "Share who you are. Not your number.",
+  subheadline:
+    "Dotly helps you connect in real life with control, context, and trust built in.",
   shortExplainer:
-    "Dotly replaces phone number sharing with a smarter, controlled way to connect.",
-  category: "Identity & Contact Layer for Real-World Connections",
+    "Share one Dotly, choose how people reach you, and keep the context behind every connection.",
+  category: "Real-world connection, on your terms",
   supportingPoints: [
     "Control who can reach you.",
     "Connect instantly in real life.",
     "Remember where and why you met.",
   ],
   seo: {
-    title: "Dotly — Don't share your number. Share your Dotly.",
+    title: "Dotly - Share who you are. Not your number.",
     description:
-      "Dotly is the identity and contact layer for real-world connections. Control who can reach you, connect instantly, and keep context for every relationship.",
+      "Dotly helps you connect in real life with control, context, and trust built in. Share one identity, choose how people reach you, and remember where you met.",
   },
   cta: {
-    primary: "Get your Dotly",
-    secondary: "See how it works",
+    primary: "Create your Dotly",
+    secondary: "How it works",
   },
   auth: {
-    signupTitle: "Get your Dotly",
+    signupTitle: "Create your Dotly",
     signupDescription:
-      "Create your identity for smarter real-world connections.",
+      "Set up your identity for real-world connection with control, context, and trust built in.",
     loginTitle: "Welcome back",
     loginDescription:
-      "Return to the identities and connections you control.",
+      "Return to your people, context, and connection controls.",
   },
   publicProfile: {
-    controlledHelper: "You control who can reach you.",
-    smartCardHelper: "Choose how to connect.",
+    controlledHelper:
+      "Request access when the next step should stay intentional.",
+    smartCardHelper: "Choose the next step that fits how you met.",
     verifiedLabel: "Verified identity",
   },
   app: {
-    noPersonas: "Create your first Dotly identity to start sharing intentionally.",
+    noPersonas:
+      "Create your first Dotly identity to start sharing intentionally.",
     noContacts: "Your active connections appear here.",
     noRequests: "New connection requests appear here.",
-    noFollowUps:
-      "Set reminders for people you want to reconnect with.",
+    noFollowUps: "Set reminders for people you want to reconnect with.",
   },
 } as const;

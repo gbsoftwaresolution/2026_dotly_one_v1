@@ -163,14 +163,14 @@ export function RequestAccessPanel({
       setRequestTarget(target);
 
       await requestApi.send({
-        toPersonaId: target.id,
+        toUsername: target.username,
         fromPersonaId: selectedPersonaId,
         reason: reason.trim() || undefined,
         sourceType: "profile",
         sourceId: null,
       });
 
-      setSuccessMessage(`Request Sent`);
+      setSuccessMessage("Request sent");
     } catch (submissionError) {
       setError(toFriendlyMessage(submissionError));
     } finally {
@@ -189,8 +189,8 @@ export function RequestAccessPanel({
             This profile is missing its access configuration
           </h2>
           <p className="text-sm leading-6 text-muted">
-            The owner has enabled profile access, but the public access details are
-            incomplete right now. Try again later.
+            The owner has enabled profile access, but the public access details
+            are incomplete right now. Try again later.
           </p>
         </div>
       </Card>
@@ -257,7 +257,8 @@ export function RequestAccessPanel({
             {smartCardPrimaryActionHeading}
           </h2>
           <p className="text-sm leading-6 text-muted">
-            This profile leads with a direct access action instead of a request. Continue through the profile above.
+            This profile leads with a direct access action instead of a request.
+            Continue through the profile above.
           </p>
         </div>
       </Card>
@@ -281,8 +282,8 @@ export function RequestAccessPanel({
     return (
       <VerificationPrompt
         email={currentUser.email}
-        title="Add a trust factor before sending requests"
-        description={`Dotly only sends connection requests from accounts with a verified email or mobile OTP. Add either trust factor before requesting access to ${profile.fullName}.`}
+        title="Verify your account before sending requests"
+        description={`Dotly only sends connection requests from accounts with a verified email or mobile verification. Add either one before requesting an intro to ${profile.fullName}.`}
       />
     );
   }
@@ -372,7 +373,7 @@ export function RequestAccessPanel({
         <div className="pt-2">
           {successMessage ? (
             <div className="flex h-[60px] w-full items-center justify-center rounded-2xl bg-brandRose/10 px-5 font-sans text-sm font-bold text-brandRose dark:bg-brandCyan/10 dark:text-brandCyan">
-              Request Sent
+              Request sent
             </div>
           ) : (
             <PrimaryButton
@@ -380,7 +381,7 @@ export function RequestAccessPanel({
               className="h-[60px] w-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Sending request..." : "Request Access"}
+              {isSubmitting ? "Sending request..." : "Request intro"}
             </PrimaryButton>
           )}
         </div>

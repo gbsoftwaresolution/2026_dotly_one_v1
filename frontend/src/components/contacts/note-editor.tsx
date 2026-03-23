@@ -29,11 +29,9 @@ export function NoteEditor({
     message: string;
   } | null>(null);
 
-  // Track last saved value to detect dirty state
   const savedValueRef = useRef(initialNote ?? "");
   const isDirty = value !== savedValueRef.current;
 
-  // Auto-dismiss success feedback after 3s
   useEffect(() => {
     if (feedback?.tone === "success") {
       const timer = setTimeout(() => setFeedback(null), 3000);
@@ -52,7 +50,7 @@ export function NoteEditor({
       const canonicalValue = result.note ?? "";
       setValue(canonicalValue);
       savedValueRef.current = canonicalValue;
-      setFeedback({ tone: "success", message: "Sync Success" });
+      setFeedback({ tone: "success", message: "Note saved" });
       router.refresh();
     } catch (error) {
       setFeedback({
@@ -77,7 +75,7 @@ export function NoteEditor({
           htmlFor="contact-note"
           className="font-mono text-[10px] font-semibold uppercase tracking-widest text-brandRose dark:text-brandCyan"
         >
-          Relationship note
+          Connection note
         </label>
         <textarea
           id="contact-note"
@@ -87,7 +85,7 @@ export function NoteEditor({
             setFeedback(null);
           }}
           disabled={disabled}
-          placeholder="Add relationship memory..."
+          placeholder="Add a memory or context note..."
           rows={5}
           maxLength={MAX_NOTE_LENGTH + 1} // allow typing past limit to show error
           className={cn(
@@ -120,8 +118,7 @@ export function NoteEditor({
       ) : disabled ? (
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
           <p className="font-sans text-sm text-amber-600 dark:text-amber-400">
-            Notes are locked because this instant access relationship has
-            expired.
+            Notes are locked because this connection window has closed.
           </p>
         </div>
       ) : null}

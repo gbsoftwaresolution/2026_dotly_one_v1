@@ -1,8 +1,5 @@
 import { StatusBadge } from "@/components/shared/status-badge";
-import {
-  formatPrimaryAction,
-  formatSharingMode,
-} from "@/lib/persona/labels";
+import { formatPrimaryAction, formatSharingMode } from "@/lib/persona/labels";
 import { getPublicTrustPresentation } from "@/lib/persona/public-trust";
 import { getPublicSmartCardDirectActions } from "@/lib/persona/smart-card";
 
@@ -19,18 +16,20 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
   const isSmartCard = profile.sharingMode === "smart_card";
   const trustPresentation = getPublicTrustPresentation(profile.trust);
   const enabledSmartCardActions = profile.smartCard
-    ? getPublicSmartCardDirectActions(profile.smartCard, profile).map((action) => {
-        switch (action) {
-          case "call":
-            return "Call";
-          case "whatsapp":
-            return "WhatsApp";
-          case "email":
-            return "Email";
-          case "vcard":
-            return "Save Details";
-        }
-      })
+    ? getPublicSmartCardDirectActions(profile.smartCard, profile).map(
+        (action) => {
+          switch (action) {
+            case "call":
+              return "Call";
+            case "whatsapp":
+              return "WhatsApp";
+            case "email":
+              return "Email";
+            case "vcard":
+              return "Save contact";
+          }
+        },
+      )
     : [];
 
   return (
@@ -126,7 +125,8 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
                   </div>
                 ) : (
                   <p className="text-sm leading-6 text-cyan-800 dark:text-white/80">
-                    No direct contact actions are currently enabled on this card.
+                    No direct contact actions are currently enabled on this
+                    card.
                   </p>
                 )}
               </div>

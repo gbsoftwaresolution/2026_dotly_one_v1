@@ -64,7 +64,7 @@ const smartCardToggleOptions: Array<{ key: ToggleKey; label: string }> = [
   { key: "allowCall", label: "Allow Call" },
   { key: "allowWhatsapp", label: "Allow WhatsApp" },
   { key: "allowEmail", label: "Allow Email" },
-  { key: "allowVcard", label: "Allow Save Details" },
+  { key: "allowVcard", label: "Allow Save Contact" },
 ];
 
 function createFormState(persona: PersonaSummary): FormState {
@@ -121,10 +121,7 @@ function getEnabledDirectActionCount(
     count += 1;
   }
 
-  if (
-    formState.allowWhatsapp &&
-    trimToNull(formState.publicWhatsappNumber)
-  ) {
+  if (formState.allowWhatsapp && trimToNull(formState.publicWhatsappNumber)) {
     count += 1;
   }
 
@@ -164,7 +161,7 @@ function getValidationErrors(formState: FormState): ValidationErrors {
   }
 
   if (!formState.primaryAction) {
-    errors.primaryAction = "Choose a primary action before saving Smart Card Mode.";
+    errors.primaryAction = "Choose a primary action before saving Smart Card.";
   }
 
   if (formState.allowCall && !publicPhone) {
@@ -185,7 +182,7 @@ function getValidationErrors(formState: FormState): ValidationErrors {
     getEnabledDirectActionCount(formState) === 0
   ) {
     errors.directActions =
-      "At least one action is required for Contact primary action";
+      "At least one direct action is required for Contact directly.";
   }
 
   return errors;
@@ -218,8 +215,7 @@ function getPrimaryActionAvailability(persona: PersonaSummary) {
       persona.accessMode !== "private",
     instant_connect:
       persona.sharingCapabilities?.primaryActions.instantConnect ?? false,
-    contact_me:
-      persona.sharingCapabilities?.primaryActions.contactMe ?? true,
+    contact_me: persona.sharingCapabilities?.primaryActions.contactMe ?? true,
   } satisfies Record<PersonaSmartCardPrimaryAction, boolean>;
 }
 
@@ -276,7 +272,7 @@ function getPrimaryActionHint(persona: PersonaSummary): string | null {
   }
 
   if (!availability.instant_connect) {
-    return "Instant Connect appears after you activate a profile QR code for this persona.";
+    return "Connect instantly appears after you activate a profile QR code for this persona.";
   }
 
   return null;
@@ -312,11 +308,7 @@ export function PersonaSharingSettingsForm({
       ...current,
       primaryAction: getRecommendedPrimaryAction(persona, current),
     }));
-  }, [
-    formState.primaryAction,
-    formState.sharingMode,
-    persona,
-  ]);
+  }, [formState.primaryAction, formState.sharingMode, persona]);
 
   useEffect(() => {
     if (!successMessage) {
@@ -505,12 +497,17 @@ export function PersonaSharingSettingsForm({
                     Smart Card config
                   </h2>
                   <p className="text-sm leading-6 text-muted">
-                    Decide what someone sees first on your Smart Card. Only enabled actions appear, and you do not need to turn them all on.
+                    Decide what someone sees first on your Smart Card. Only
+                    enabled actions appear, and you do not need to turn them all
+                    on.
                   </p>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="label-xs text-muted" htmlFor="primary-action">
+                  <label
+                    className="label-xs text-muted"
+                    htmlFor="primary-action"
+                  >
                     Primary Action
                   </label>
                   <select
@@ -523,7 +520,9 @@ export function PersonaSharingSettingsForm({
                         event.target.value as PrimaryActionValue,
                       );
                     }}
-                    aria-invalid={validationErrors.primaryAction ? "true" : "false"}
+                    aria-invalid={
+                      validationErrors.primaryAction ? "true" : "false"
+                    }
                     aria-describedby={
                       validationErrors.primaryAction
                         ? "primary-action-error"
@@ -558,12 +557,16 @@ export function PersonaSharingSettingsForm({
                       Public contact values
                     </h3>
                     <p className="text-sm leading-6 text-muted">
-                      These values appear on the card when the matching actions are enabled.
+                      These values appear on the card when the matching actions
+                      are enabled.
                     </p>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="label-xs text-muted" htmlFor="public-phone">
+                    <label
+                      className="label-xs text-muted"
+                      htmlFor="public-phone"
+                    >
                       Public phone
                     </label>
                     <input
@@ -573,10 +576,18 @@ export function PersonaSharingSettingsForm({
                       autoComplete="tel"
                       className={inputCls}
                       value={formState.publicPhone}
-                      onChange={(event) => updateField("publicPhone", event.target.value)}
+                      onChange={(event) =>
+                        updateField("publicPhone", event.target.value)
+                      }
                       placeholder="+1 555 123 4567"
-                      aria-invalid={validationErrors.publicPhone ? "true" : "false"}
-                      aria-describedby={validationErrors.publicPhone ? "public-phone-error" : "public-phone-hint"}
+                      aria-invalid={
+                        validationErrors.publicPhone ? "true" : "false"
+                      }
+                      aria-describedby={
+                        validationErrors.publicPhone
+                          ? "public-phone-error"
+                          : "public-phone-hint"
+                      }
                     />
                     <p id="public-phone-hint" className="text-sm text-muted">
                       {publicFieldHint}
@@ -609,7 +620,9 @@ export function PersonaSharingSettingsForm({
                         updateField("publicWhatsappNumber", event.target.value)
                       }
                       placeholder="+1 555 123 4567"
-                      aria-invalid={validationErrors.publicWhatsappNumber ? "true" : "false"}
+                      aria-invalid={
+                        validationErrors.publicWhatsappNumber ? "true" : "false"
+                      }
                       aria-describedby={
                         validationErrors.publicWhatsappNumber
                           ? "public-whatsapp-error"
@@ -630,7 +643,10 @@ export function PersonaSharingSettingsForm({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="label-xs text-muted" htmlFor="public-email">
+                    <label
+                      className="label-xs text-muted"
+                      htmlFor="public-email"
+                    >
                       Public email
                     </label>
                     <input
@@ -640,10 +656,18 @@ export function PersonaSharingSettingsForm({
                       autoComplete="email"
                       className={inputCls}
                       value={formState.publicEmail}
-                      onChange={(event) => updateField("publicEmail", event.target.value)}
+                      onChange={(event) =>
+                        updateField("publicEmail", event.target.value)
+                      }
                       placeholder="you@example.com"
-                      aria-invalid={validationErrors.publicEmail ? "true" : "false"}
-                      aria-describedby={validationErrors.publicEmail ? "public-email-error" : "public-email-hint"}
+                      aria-invalid={
+                        validationErrors.publicEmail ? "true" : "false"
+                      }
+                      aria-describedby={
+                        validationErrors.publicEmail
+                          ? "public-email-error"
+                          : "public-email-hint"
+                      }
                     />
                     <p id="public-email-hint" className="text-sm text-muted">
                       {publicFieldHint}
@@ -663,7 +687,8 @@ export function PersonaSharingSettingsForm({
                   <div className="space-y-1">
                     <p className="label-xs text-muted">Direct actions</p>
                     <p className="text-sm leading-6 text-muted">
-                      Turn on only the actions you want people to use immediately.
+                      Turn on only the actions you want people to use
+                      immediately.
                     </p>
                   </div>
 
@@ -708,7 +733,8 @@ export function PersonaSharingSettingsForm({
             <div className="sticky bottom-0 z-10 -mx-5 border-t border-border/70 bg-background/95 px-5 pb-[calc(env(safe-area-inset-bottom,0px)+0.25rem)] pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
               {smartCardSelected ? (
                 <p className="mb-3 text-sm text-muted">
-                  Keep this focused. The best Smart Cards lead with one obvious next step.
+                  Keep this focused. The best Smart Cards lead with one obvious
+                  next step.
                 </p>
               ) : null}
 

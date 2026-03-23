@@ -17,34 +17,44 @@ import { dotlyPositioning } from "@/lib/constants/positioning";
 
 const fadeInY = {
   hidden: { opacity: 0, y: 24, filter: "blur(4px)" },
-  visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.8 } }
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.8 },
+  },
 };
 
 const stagger = {
-  visible: { transition: { staggerChildren: 0.1 } }
+  visible: { transition: { staggerChildren: 0.1 } },
 };
 
-const problemPoints = ["no control", "no context", "no memory", "too much spam"];
+const problemPoints = [
+  "Everyone gets permanent access",
+  "The moment you met disappears",
+  "You lose control of the next step",
+  "Your number becomes the product",
+];
 
 const solutionPoints = [
-  "Approve or reject access.",
-  "Connect instantly when you want.",
-  "Keep context for every relationship.",
+  "Choose whether someone connects, requests access, or saves your details.",
+  "Keep trust and context attached to the relationship.",
+  "Share once without giving up control forever.",
 ];
 
 const steps = [
-  "Share Dotly",
-  "They request or connect",
-  "You stay in control",
+  "Share your Dotly",
+  "They connect the right way",
+  "You keep control after the moment",
 ];
 
 const smartCardPoints = [
-  "One-tap connect.",
-  "Keep the connection when it matters.",
-  "Share the next step only when you choose to.",
+  "A primary action that is clear before you tap.",
+  "Direct actions only when they are meant to be shared.",
+  "Fast enough to use in the moment you meet.",
 ];
 
-const realWorldExamples = ["Events", "Meetings", "Networking"];
+const realWorldExamples = ["Events", "Meetings", "Introductions"];
 
 export default function LandingPage() {
   return (
@@ -55,9 +65,9 @@ export default function LandingPage() {
         <div className="absolute top-[50%] right-[10%] w-[200px] h-[200px] rounded-full bg-brandRose/15 blur-[80px] mix-blend-screen" />
       </div>
 
-      <motion.section 
-        initial="hidden" 
-        animate="visible" 
+      <motion.section
+        initial="hidden"
+        animate="visible"
         variants={stagger}
         className="space-y-12 pb-8"
       >
@@ -73,8 +83,11 @@ export default function LandingPage() {
               {dotlyPositioning.subheadline}
             </p>
           </motion.div>
-          
-          <motion.div variants={fadeInY} className="flex flex-col gap-3 pt-1 sm:flex-row sm:justify-center">
+
+          <motion.div
+            variants={fadeInY}
+            className="flex flex-col gap-3 pt-1 sm:flex-row sm:justify-center"
+          >
             <Link href="/signup" className="group rounded-pill">
               <div className="relative flex items-center justify-center gap-2 rounded-pill bg-foreground px-6 py-3.5 text-sm font-bold text-background transition-all duration-300 hover:scale-[1.02] hover:shadow-glow active:scale-[0.98]">
                 <span>{dotlyPositioning.cta.primary}</span>
@@ -82,7 +95,9 @@ export default function LandingPage() {
               </div>
             </Link>
             <Link href="#how-it-works" className="block sm:min-w-[160px]">
-              <SecondaryButton fullWidth>{dotlyPositioning.cta.secondary}</SecondaryButton>
+              <SecondaryButton fullWidth>
+                {dotlyPositioning.cta.secondary}
+              </SecondaryButton>
             </Link>
           </motion.div>
 
@@ -96,7 +111,7 @@ export default function LandingPage() {
               </div>
               <div className="space-y-2">
                 <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                  Identity for real-world connection.
+                  Real-world connection without giving up control.
                 </h2>
                 <p className="text-sm leading-6 text-muted">
                   {dotlyPositioning.shortExplainer}
@@ -107,20 +122,23 @@ export default function LandingPage() {
         </div>
 
         <motion.div variants={stagger} className="grid gap-4">
-          <motion.div variants={fadeInY} className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card">
+          <motion.div
+            variants={fadeInY}
+            className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card"
+          >
             <div className="space-y-4">
               <div className="w-10 h-10 rounded-2xl bg-brandRose/10 text-brandRose dark:bg-brandCyan/12 dark:text-brandCyan flex items-center justify-center">
                 <Lock className="w-5 h-5" />
               </div>
               <div className="space-y-2">
                 <h2 className="text-xl font-bold tracking-tight text-foreground">
-                  Sharing your number gives permanent access to everyone.
+                  Sharing your number is a permanent decision.
                 </h2>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {problemPoints.map((point) => (
                     <div
                       key={point}
-                      className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-3 text-sm font-medium capitalize text-foreground/80 dark:border-white/[0.06]"
+                      className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-3 text-sm font-medium text-foreground/80 dark:border-white/[0.06]"
                     >
                       {point}
                     </div>
@@ -130,18 +148,24 @@ export default function LandingPage() {
             </div>
           </motion.div>
 
-          <motion.div variants={fadeInY} className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card">
+          <motion.div
+            variants={fadeInY}
+            className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card"
+          >
             <div className="space-y-4">
               <div className="w-10 h-10 rounded-2xl bg-brandViolet/10 text-brandViolet flex items-center justify-center">
                 <Shield className="w-5 h-5" />
               </div>
               <div className="space-y-2">
                 <h2 className="text-xl font-bold tracking-tight text-foreground">
-                  Dotly gives you control over who can contact you.
+                  Dotly keeps the next step in your control.
                 </h2>
                 <div className="space-y-2">
                   {solutionPoints.map((point) => (
-                    <div key={point} className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-3 text-sm text-foreground/80 dark:border-white/[0.06]">
+                    <div
+                      key={point}
+                      className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-3 text-sm text-foreground/80 dark:border-white/[0.06]"
+                    >
                       {point}
                     </div>
                   ))}
@@ -150,20 +174,31 @@ export default function LandingPage() {
             </div>
           </motion.div>
 
-          <motion.div id="how-it-works" variants={fadeInY} className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card">
+          <motion.div
+            id="how-it-works"
+            variants={fadeInY}
+            className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card"
+          >
             <div className="space-y-4">
               <div className="w-10 h-10 rounded-2xl bg-brandCyan/10 text-brandCyan flex items-center justify-center">
                 <QrCode className="w-5 h-5" />
               </div>
               <div className="space-y-2">
-                <h2 className="text-xl font-bold tracking-tight text-foreground">How it works</h2>
+                <h2 className="text-xl font-bold tracking-tight text-foreground">
+                  How Dotly works
+                </h2>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {steps.map((step, index) => (
-                    <div key={step} className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-4 dark:border-white/[0.06]">
+                    <div
+                      key={step}
+                      className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-4 dark:border-white/[0.06]"
+                    >
                       <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
                         0{index + 1}
                       </p>
-                      <p className="mt-2 text-sm font-semibold text-foreground">{step}</p>
+                      <p className="mt-2 text-sm font-semibold text-foreground">
+                        {step}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -173,14 +208,20 @@ export default function LandingPage() {
         </motion.div>
 
         <motion.div variants={stagger} className="grid gap-4 md:grid-cols-3">
-          <motion.div variants={fadeInY} className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card md:col-span-2">
+          <motion.div
+            variants={fadeInY}
+            className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card md:col-span-2"
+          >
             <div className="space-y-4">
               <h2 className="text-xl font-bold tracking-tight text-foreground">
-                Be reachable on your terms
+                A smarter card for the moment after you meet
               </h2>
               <div className="grid gap-3 sm:grid-cols-3">
                 {smartCardPoints.map((point) => (
-                  <div key={point} className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-4 text-sm text-foreground/80 dark:border-white/[0.06]">
+                  <div
+                    key={point}
+                    className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-4 text-sm text-foreground/80 dark:border-white/[0.06]"
+                  >
                     {point}
                   </div>
                 ))}
@@ -188,45 +229,66 @@ export default function LandingPage() {
             </div>
           </motion.div>
 
-          <motion.div variants={fadeInY} className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card">
+          <motion.div
+            variants={fadeInY}
+            className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card"
+          >
             <div className="space-y-4">
               <h2 className="text-xl font-bold tracking-tight text-foreground">
-                Verified identity before access
+                Trust shows up before access does
               </h2>
               <p className="text-sm leading-6 text-muted">
                 Trust is built in before the next step is shared.
               </p>
             </div>
-          </div>
+          </motion.div>
 
-          <motion.div variants={fadeInY} className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card md:col-span-3">
+          <motion.div
+            variants={fadeInY}
+            className="rounded-[1.75rem] border border-black/[0.05] bg-white p-6 shadow-card-light dark:border-white/[0.08] dark:bg-surface1 dark:shadow-card md:col-span-3"
+          >
             <div className="space-y-4">
               <h2 className="text-xl font-bold tracking-tight text-foreground">
-                Built for real interactions
+                Built for real-life introductions
               </h2>
               <div className="flex flex-wrap gap-2">
                 {realWorldExamples.map((example) => (
-                  <span key={example} className="rounded-full border border-black/[0.06] bg-background/70 px-4 py-2 text-sm font-medium text-foreground/80 dark:border-white/[0.08]">
+                  <span
+                    key={example}
+                    className="rounded-full border border-black/[0.06] bg-background/70 px-4 py-2 text-sm font-medium text-foreground/80 dark:border-white/[0.08]"
+                  >
                     {example}
                   </span>
                 ))}
               </div>
               <p className="text-sm leading-6 text-muted">
-                Know who you met, when, and why.
+                Keep the memory of where you met and why it mattered.
               </p>
             </div>
           </motion.div>
         </motion.div>
 
-        <motion.div variants={fadeInY} className="relative overflow-hidden rounded-[2rem] border border-black/[0.05] bg-white p-8 shadow-lg dark:border-white/[0.08] dark:bg-surface1 dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.06)_inset]">
-          <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-brandCyan/[0.08] blur-3xl dark:bg-brandCyan/[0.12]" />
-          <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-brandRose/[0.08] blur-3xl dark:bg-brandRose/[0.12]" />
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <motion.div
+          variants={fadeInY}
+          className="relative overflow-hidden rounded-[2rem] border border-black/[0.05] bg-white p-8 shadow-lg dark:border-white/[0.08] dark:bg-surface1 dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.06)_inset]"
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-brandCyan/[0.08] blur-3xl dark:bg-brandCyan/[0.12]"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-brandRose/[0.08] blur-3xl dark:bg-brandRose/[0.12]"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
+          />
 
           <div className="relative text-center space-y-6">
             <div className="space-y-2">
               <h2 className="text-2xl font-black tracking-tight text-foreground">
-                Start with your Dotly identity
+                Start with the identity you share in real life
               </h2>
               <p className="mx-auto max-w-[30ch] text-sm leading-relaxed text-muted">
                 {dotlyPositioning.supportingPoints.join(" ")}
@@ -241,13 +303,12 @@ export default function LandingPage() {
               </Link>
               <Link href="/login" className="block w-full">
                 <SecondaryButton fullWidth size="md">
-                  Open your Dotly
+                  Log in
                 </SecondaryButton>
               </Link>
             </div>
           </div>
         </motion.div>
-
       </motion.section>
     </div>
   );

@@ -103,7 +103,7 @@ export function ParticipantCard({
             disabled={isRequesting}
             className="w-full"
           >
-            {isRequesting ? "Requesting…" : "Request Access"}
+            {isRequesting ? "Requesting…" : "Request intro"}
           </SecondaryButton>
         </div>
       ) : null}

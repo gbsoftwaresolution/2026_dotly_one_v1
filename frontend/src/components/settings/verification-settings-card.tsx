@@ -23,7 +23,7 @@ export function VerificationSettingsCard() {
         <VerificationPrompt
           email={session.user.email}
           title="Verification status"
-          description="Your account can still sign in and finish setup, but current trust-sensitive networking features stay locked until you verify your email or complete mobile OTP."
+          description="Your account can still sign in and finish setup, but protected connection steps stay locked until you verify your email or complete mobile verification."
         />
       );
     }
@@ -38,9 +38,9 @@ export function VerificationSettingsCard() {
                 {session.user.email}
               </p>
               <p className="text-sm text-muted">
-                Trust-sensitive actions are already unlocked through another
-                verified trust factor. Email verification is still available
-                here as an additional signal.
+                Protected actions are already unlocked through another verified
+                factor. Email verification is still available here as an added
+                signal.
               </p>
             </div>
             <VerificationStatusBadge isVerified={false} />
@@ -60,7 +60,7 @@ export function VerificationSettingsCard() {
               {session.user.email}
             </p>
             <p className="text-sm text-muted">
-              Trust-sensitive actions are unlocked for this account.
+              Protected actions are unlocked for this account.
             </p>
           </div>
           <VerificationStatusBadge isVerified />
