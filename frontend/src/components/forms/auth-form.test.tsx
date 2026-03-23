@@ -28,10 +28,13 @@ vi.mock("@/lib/api", () => ({
 }));
 
 import { ApiError } from "@/lib/api/client";
+import { dotlyPositioning } from "@/lib/constants/positioning";
 
 import { AuthForm } from "./auth-form";
 
 describe("AuthForm", () => {
+  const signupButtonLabel = new RegExp(dotlyPositioning.cta.primary, "i");
+
   beforeEach(() => {
     mocks.signup.mockReset();
     mocks.login.mockReset();
@@ -59,7 +62,7 @@ describe("AuthForm", () => {
       screen.getByLabelText(/^confirm password$/i),
       "SecurePass321!",
     );
-    await user.click(screen.getByRole("button", { name: /create account/i }));
+    await user.click(screen.getByRole("button", { name: signupButtonLabel }));
 
     expect(
       screen.getByText(/passwords must match to continue/i),
@@ -85,7 +88,7 @@ describe("AuthForm", () => {
       screen.getByLabelText(/^confirm password$/i),
       "SecurePass123!",
     );
-    await user.click(screen.getByRole("button", { name: /create account/i }));
+    await user.click(screen.getByRole("button", { name: signupButtonLabel }));
 
     await waitFor(() => {
       expect(mocks.signup).toHaveBeenCalledWith({
@@ -120,7 +123,7 @@ describe("AuthForm", () => {
       screen.getByLabelText(/^confirm password$/i),
       "SecurePass123!",
     );
-    await user.click(screen.getByRole("button", { name: /create account/i }));
+    await user.click(screen.getByRole("button", { name: signupButtonLabel }));
 
     await waitFor(() => {
       expect(

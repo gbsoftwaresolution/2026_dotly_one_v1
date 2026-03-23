@@ -28,21 +28,23 @@ export class ContactRequestRecipientPolicyService {
   async resolveEligibleParticipants(
     userId: string,
     fromPersonaId: string,
-    toPersonaId: string,
+    target: {
+      toPersonaId?: string | null;
+      toUsername?: string | null;
+    },
   ): Promise<{
     fromPersona: ContactRequestActorPersona;
     targetPersona: ContactRequestTargetPersona;
     senderUser: ContactRequestSenderUser;
   }> {
+    const targetPersonaWhere = this.buildTargetPersonaWhere(target);
     const fromPersona = await this.personasService.findOwnedPersonaIdentity(
       userId,
       fromPersonaId,
     );
 
-    const targetPersona = await this.prismaService.persona.findUnique({
-      where: {
-        id: toPersonaId,
-      },
+    const targetPersona = await this.prismaService.persona.findFirst({
+      where: targetPersonaWhere,
       select: {
         id: true,
         userId: true,
@@ -98,5 +100,32 @@ export class ContactRequestRecipientPolicyService {
       targetPersona,
       senderUser,
     };
+  }
+
+  private buildTargetPersonaWhere(target: {
+    toPersonaId?: string | null;
+    toUsername?: string | null;
+  }) {
+    if (target.toPersonaId && target.toUsername) {
+      throw new BadRequestException(
+        "Provide only one target: toPersonaId or toUsername",
+      );
+    }
+
+    if (target.toPersonaId) {
+      return {
+        id: target.toPersonaId,
+      };
+    }
+
+    if (target.toUsername) {
+      return {
+        username: target.toUsername,
+      };
+    }
+
+    throw new BadRequestException(
+      "Provide either toPersonaId or toUsername when sending a contact request",
+    );
   }
 }

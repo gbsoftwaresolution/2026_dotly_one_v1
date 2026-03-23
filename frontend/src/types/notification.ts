@@ -1,3 +1,5 @@
+import type { ContactRequestSourceType } from "./request";
+
 export type NotificationType =
   | "request_received"
   | "request_approved"
@@ -6,15 +8,57 @@ export type NotificationType =
   | "event_request"
   | "system";
 
-export interface Notification {
+export interface RequestReceivedNotificationData {
+  requestId?: string;
+  fromPersonaId?: string;
+  sourceType?: ContactRequestSourceType;
+  sourceId?: string;
+}
+
+export interface RequestApprovedNotificationData {
+  requestId?: string;
+  toPersonaId?: string;
+  relationshipId?: string;
+}
+
+export interface OwnedInstantConnectNotificationData {
+  relationshipId?: string;
+  targetPersonaId?: string;
+}
+
+export interface ReceivedInstantConnectNotificationData {
+  sourcePersonaId?: string;
+}
+
+export type InstantConnectNotificationData =
+  | OwnedInstantConnectNotificationData
+  | ReceivedInstantConnectNotificationData;
+
+export interface EventJoinedNotificationData {
+  eventId?: string;
+  personaId?: string;
+}
+
+export type EventRequestNotificationData = RequestReceivedNotificationData;
+export type SystemNotificationData = Record<string, never>;
+
+interface BaseNotification<T extends NotificationType, D> {
   id: string;
-  type: NotificationType;
+  type: T;
   title: string;
   body: string;
   isRead: boolean;
   createdAt: string;
-  data: Record<string, unknown>;
+  data: D;
 }
+
+export type Notification =
+  | BaseNotification<"request_received", RequestReceivedNotificationData>
+  | BaseNotification<"request_approved", RequestApprovedNotificationData>
+  | BaseNotification<"instant_connect", InstantConnectNotificationData>
+  | BaseNotification<"event_joined", EventJoinedNotificationData>
+  | BaseNotification<"event_request", EventRequestNotificationData>
+  | BaseNotification<"system", SystemNotificationData>;
 
 export interface NotificationListResult {
   notifications: Notification[];

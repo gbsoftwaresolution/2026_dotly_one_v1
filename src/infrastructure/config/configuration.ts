@@ -21,6 +21,7 @@ export const configuration = () => ({
     nodeEnv: process.env.NODE_ENV ?? "development",
     port: Number.parseInt(process.env.PORT ?? "3000", 10),
     trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
+    healthEndpointToken: process.env.HEALTH_ENDPOINT_TOKEN ?? "",
     corsOrigins: (process.env.CORS_ORIGINS ?? "")
       .split(",")
       .map((origin) => origin.trim())
@@ -58,5 +59,15 @@ export const configuration = () => ({
   },
   qr: {
     baseUrl: process.env.QR_BASE_URL ?? "https://dotly.id/q",
+  },
+  followUps: {
+    processing: {
+      enabled: process.env.FOLLOW_UPS_PROCESSING_ENABLED !== "false",
+      cron: process.env.FOLLOW_UPS_PROCESSING_CRON ?? "* * * * *",
+      batchSize: Number.parseInt(
+        process.env.FOLLOW_UPS_PROCESSING_BATCH_SIZE ?? "100",
+        10,
+      ),
+    },
   },
 });

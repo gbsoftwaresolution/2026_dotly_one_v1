@@ -15,7 +15,7 @@ export type AppNavIconKey =
 export const appNavItems = [
   { href: routes.app.home, label: "Home", icon: "home" },
   { href: routes.app.personas, label: "Personas", icon: "personas" },
-  { href: routes.app.qr, label: "QR", icon: "qr" },
+  { href: routes.app.qr, label: "Share", icon: "qr" },
   { href: routes.app.requests, label: "Requests", icon: "requests" },
   { href: routes.app.contacts, label: "Connections", icon: "contacts" },
   { href: routes.app.followUps, label: "Follow-ups", icon: "followUps" },

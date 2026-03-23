@@ -10,13 +10,77 @@ import {
   ContactRequestSourceType as PrismaContactRequestSourceType,
   ContactRequestStatus as PrismaContactRequestStatus,
   PersonaAccessMode as PrismaPersonaAccessMode,
+  PersonaSharingMode as PrismaPersonaSharingMode,
 } from "@prisma/client";
 
 import { ContactRequestSourceType } from "../src/common/enums/contact-request-source-type.enum";
 import { BlocksService } from "../src/modules/blocks/blocks.service";
 import { ContactRequestCreateService } from "../src/modules/contact-requests/contact-request-create.service";
-import { ContactRequestsService } from "../src/modules/contact-requests/contact-requests.service";
+import { ContactRequestRecipientPolicyService } from "../src/modules/contact-requests/contact-request-recipient-policy.service";
+import { ContactRequestRespondService } from "../src/modules/contact-requests/contact-request-respond.service";
+import { ContactRequestRetryPolicyService } from "../src/modules/contact-requests/contact-request-retry-policy.service";
+import { ContactRequestSourcePolicyService } from "../src/modules/contact-requests/contact-request-source-policy.service";
+import { ContactRequestsService as ContactRequestsServiceBase } from "../src/modules/contact-requests/contact-requests.service";
 import { RequestRateLimitService } from "../src/modules/contact-requests/request-rate-limit.service";
+
+function buildContactRequestsService(
+  prismaService: any,
+  personasService: any,
+  blocksService: any,
+  relationshipsService: any,
+  contactMemoryService: any,
+  requestRateLimitService: any,
+  eventsService: any = { validateEventRequestAccess: async () => undefined },
+  notificationsService: any = { createSafe: async () => undefined },
+  analyticsService: any = {
+    trackRequestSent: async () => undefined,
+    trackRequestApproved: async () => undefined,
+    trackContactCreated: async () => undefined,
+  },
+  verificationPolicyService: any = {
+    assertUserIsVerified: async () => undefined,
+  },
+) {
+  if (
+    prismaService?.persona &&
+    typeof prismaService.persona.findFirst !== "function" &&
+    typeof prismaService.persona.findUnique === "function"
+  ) {
+    prismaService.persona.findFirst = prismaService.persona.findUnique;
+  }
+
+  const createService = new ContactRequestCreateService(
+    prismaService,
+    new ContactRequestRecipientPolicyService(
+      prismaService,
+      personasService,
+      blocksService,
+    ),
+    new ContactRequestRetryPolicyService(prismaService),
+    new ContactRequestSourcePolicyService(eventsService),
+    requestRateLimitService,
+    notificationsService,
+    analyticsService,
+    verificationPolicyService,
+  );
+  const respondService = new ContactRequestRespondService(
+    prismaService,
+    blocksService,
+    relationshipsService,
+    contactMemoryService,
+    notificationsService,
+    analyticsService,
+  );
+
+  return new ContactRequestsServiceBase(
+    prismaService,
+    createService as any,
+    respondService as any,
+  );
+}
+
+const ContactRequestsService: new (...args: any[]) => ContactRequestsServiceBase =
+  buildContactRequestsService as any;
 
 describe("ContactRequestsService", () => {
   it("blocks contact requests from unverified accounts when verification is required", async () => {
@@ -64,6 +128,8 @@ describe("ContactRequestsService", () => {
             username: "target",
             fullName: "Target User",
             accessMode: PrismaPersonaAccessMode.OPEN,
+            sharingMode: PrismaPersonaSharingMode.CONTROLLED,
+            smartCardConfig: null,
             verifiedOnly: false,
           }),
         },
@@ -109,6 +175,8 @@ describe("ContactRequestsService", () => {
             username: "target",
             fullName: "Target User",
             accessMode: PrismaPersonaAccessMode.REQUEST,
+            sharingMode: PrismaPersonaSharingMode.CONTROLLED,
+            smartCardConfig: null,
             verifiedOnly: false,
           }),
         },
@@ -172,6 +240,8 @@ describe("ContactRequestsService", () => {
             username: "target",
             fullName: "Target User",
             accessMode: PrismaPersonaAccessMode.OPEN,
+            sharingMode: PrismaPersonaSharingMode.CONTROLLED,
+            smartCardConfig: null,
             verifiedOnly: false,
           }),
         },
@@ -220,7 +290,7 @@ describe("ContactRequestsService", () => {
     );
   });
 
-  it("enforces duplicate prevention across multiple personas for the same sender and target users", async () => {
+  it("allows distinct persona pairs even when the same user pair has another pending request", async () => {
     const service = new ContactRequestsService(
       {
         persona: {
@@ -230,6 +300,8 @@ describe("ContactRequestsService", () => {
             username: "target",
             fullName: "Target User",
             accessMode: PrismaPersonaAccessMode.REQUEST,
+            sharingMode: PrismaPersonaSharingMode.CONTROLLED,
+            smartCardConfig: null,
             verifiedOnly: false,
           }),
         },
@@ -242,13 +314,23 @@ describe("ContactRequestsService", () => {
         contactRequest: {
           findFirst: async (args: any) => {
             if (args.where.status === PrismaContactRequestStatus.PENDING) {
-              assert.equal(args.where.fromUserId, "sender-user");
-              assert.equal(args.where.toUserId, "target-user");
-              return { id: "pending-request" };
+              assert.equal(args.where.fromPersonaId, "alternate-from-persona");
+              assert.equal(args.where.toPersonaId, "target-persona");
+              return null;
             }
 
             return null;
           },
+          create: async () => ({
+            id: "request-id",
+            status: PrismaContactRequestStatus.PENDING,
+            createdAt: new Date("2026-03-22T12:00:00.000Z"),
+            toPersona: {
+              id: "target-persona",
+              username: "target",
+              fullName: "Target User",
+            },
+          }),
         },
       } as any,
       {
@@ -262,28 +344,37 @@ describe("ContactRequestsService", () => {
       {} as any,
       {} as any,
       {
-        consume: async () => undefined,
+        reserveAndCreate: async (
+          _userId: string,
+          callback: (tx: any) => Promise<any>,
+        ) =>
+          callback({
+            contactRequest: {
+              create: async () => ({
+                id: "request-id",
+                status: PrismaContactRequestStatus.PENDING,
+                createdAt: new Date("2026-03-22T12:00:00.000Z"),
+                toPersona: {
+                  id: "target-persona",
+                  username: "target",
+                  fullName: "Target User",
+                },
+              }),
+            },
+          }),
       } as any,
     );
 
-    await assert.rejects(
-      service.create("sender-user", {
-        fromPersonaId: "alternate-from-persona",
-        toPersonaId: "target-persona",
-        sourceType: ContactRequestSourceType.Profile,
-      }),
-      (error: unknown) => {
-        assert.ok(error instanceof ConflictException);
-        assert.equal(
-          error.message,
-          "A pending contact request already exists for this persona",
-        );
-        return true;
-      },
-    );
+    const result = await service.create("sender-user", {
+      fromPersonaId: "alternate-from-persona",
+      toPersonaId: "target-persona",
+      sourceType: ContactRequestSourceType.Profile,
+    });
+
+    assert.equal(result.id, "request-id");
   });
 
-  it("enforces cooldown across multiple personas for the same sender and target users", async () => {
+  it("allows distinct persona pairs even when the same user pair has a recent rejection", async () => {
     const service = new ContactRequestsService(
       {
         persona: {
@@ -293,6 +384,8 @@ describe("ContactRequestsService", () => {
             username: "target",
             fullName: "Target User",
             accessMode: PrismaPersonaAccessMode.OPEN,
+            sharingMode: PrismaPersonaSharingMode.CONTROLLED,
+            smartCardConfig: null,
             verifiedOnly: false,
           }),
         },
@@ -308,10 +401,20 @@ describe("ContactRequestsService", () => {
               return null;
             }
 
-            assert.equal(args.where.fromUserId, "sender-user");
-            assert.equal(args.where.toUserId, "target-user");
-            return { id: "recent-rejection" };
+            assert.equal(args.where.fromPersonaId, "alternate-from-persona");
+            assert.equal(args.where.toPersonaId, "target-persona");
+            return null;
           },
+          create: async () => ({
+            id: "request-id",
+            status: PrismaContactRequestStatus.PENDING,
+            createdAt: new Date("2026-03-22T12:00:00.000Z"),
+            toPersona: {
+              id: "target-persona",
+              username: "target",
+              fullName: "Target User",
+            },
+          }),
         },
       } as any,
       {
@@ -325,22 +428,34 @@ describe("ContactRequestsService", () => {
       {} as any,
       {} as any,
       {
-        consume: async () => undefined,
+        reserveAndCreate: async (
+          _userId: string,
+          callback: (tx: any) => Promise<any>,
+        ) =>
+          callback({
+            contactRequest: {
+              create: async () => ({
+                id: "request-id",
+                status: PrismaContactRequestStatus.PENDING,
+                createdAt: new Date("2026-03-22T12:00:00.000Z"),
+                toPersona: {
+                  id: "target-persona",
+                  username: "target",
+                  fullName: "Target User",
+                },
+              }),
+            },
+          }),
       } as any,
     );
 
-    await assert.rejects(
-      service.create("sender-user", {
-        fromPersonaId: "alternate-from-persona",
-        toPersonaId: "target-persona",
-        sourceType: ContactRequestSourceType.Profile,
-      }),
-      (error: unknown) => {
-        assert.ok(error instanceof ForbiddenException);
-        assert.equal(error.message, "Cooldown active");
-        return true;
-      },
-    );
+    const result = await service.create("sender-user", {
+      fromPersonaId: "alternate-from-persona",
+      toPersonaId: "target-persona",
+      sourceType: ContactRequestSourceType.Profile,
+    });
+
+    assert.equal(result.id, "request-id");
   });
 
   it("rejects requests to verified-only personas from unverified users", async () => {
@@ -353,6 +468,8 @@ describe("ContactRequestsService", () => {
             username: "target",
             fullName: "Target User",
             accessMode: PrismaPersonaAccessMode.REQUEST,
+            sharingMode: PrismaPersonaSharingMode.CONTROLLED,
+            smartCardConfig: null,
             verifiedOnly: true,
           }),
         },
@@ -447,7 +564,7 @@ describe("ContactRequestsService", () => {
             username: "target",
             fullName: "Target User",
             accessMode: PrismaPersonaAccessMode.OPEN,
-            sharingMode: "smart_card",
+            sharingMode: PrismaPersonaSharingMode.SMART_CARD,
             smartCardConfig: {
               primaryAction: "instant_connect",
               allowCall: true,
@@ -461,7 +578,10 @@ describe("ContactRequestsService", () => {
         assertCanCreateRequest: async () => undefined,
       } as any,
       {
-        assertSourceAccess: async () => undefined,
+        assertSourceAccess: async () => ({
+          sourceType: ContactRequestSourceType.Profile,
+          sourceId: null,
+        }),
       } as any,
       {
         reserveAndCreate: async () => {
@@ -514,7 +634,7 @@ describe("ContactRequestsService", () => {
             username: "target",
             fullName: "Target User",
             accessMode: PrismaPersonaAccessMode.OPEN,
-            sharingMode: "smart_card",
+            sharingMode: PrismaPersonaSharingMode.SMART_CARD,
             smartCardConfig: {
               primaryAction: "instant_connect",
               allowCall: true,
@@ -528,7 +648,10 @@ describe("ContactRequestsService", () => {
         assertCanCreateRequest: async () => undefined,
       } as any,
       {
-        assertSourceAccess: async () => undefined,
+        assertSourceAccess: async () => ({
+          sourceType: ContactRequestSourceType.Profile,
+          sourceId: null,
+        }),
       } as any,
       {
         reserveAndCreate: async () => {

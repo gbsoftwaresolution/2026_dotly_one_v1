@@ -1,7 +1,6 @@
 import type {
   ConnectQuickConnectQrInput,
   ConnectQuickConnectQrResult,
-  QrTokenSummary,
   QuickConnectQrInput,
   QuickConnectQrSummary,
   ResolvedQr,
@@ -10,12 +9,6 @@ import type {
 import { apiRequest } from "./client";
 
 export const qrApi = {
-  createProfileQr: (personaId: string) =>
-    apiRequest<QrTokenSummary>(`/api/personas/${personaId}/qr/profile`, {
-      method: "POST",
-      baseUrl: "",
-      credentials: "same-origin",
-    }),
   createQuickConnectQr: (personaId: string, payload: QuickConnectQrInput) =>
     apiRequest<QuickConnectQrSummary>(
       `/api/personas/${personaId}/qr/quick-connect`,

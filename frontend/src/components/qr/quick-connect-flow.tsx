@@ -306,18 +306,21 @@ export function QuickConnectFlow({
             </div>
           </div>
           <p className="mt-4 text-left text-sm leading-6 text-muted">
-            Connect now while this introduction is still fresh.
+            Start a temporary connection while this introduction is still fresh.
           </p>
         </div>
 
-        <p className="text-left text-sm leading-6 text-muted">
-          Pick the persona that best matches how you met {hostFirstName}. Dotly
-          keeps that context with the connection.
-        </p>
+        <div className="space-y-1 rounded-2xl border border-border bg-surface/50 px-4 py-3">
+          <p className="label-xs text-muted">What happens next</p>
+          <p className="text-left text-sm leading-6 text-muted">
+            Choose the persona that matches how you met {hostFirstName}. We will
+            save that context with the connection.
+          </p>
+        </div>
       </div>
 
       <div className="space-y-3">
-        <p className="label-xs text-muted">Continue as</p>
+        <p className="label-xs text-muted">Choose your persona</p>
         <div className="flex flex-col gap-2">
           {personas.map((persona) => {
             const isSelected = selectedPersonaId === persona.id;
@@ -376,7 +379,7 @@ export function QuickConnectFlow({
         disabled={isConnecting || !selectedPersonaId}
         className="w-full h-[60px] disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isConnecting ? "Connecting..." : "Connect instantly"}
+        {isConnecting ? "Connecting..." : "Start temporary access"}
       </PrimaryButton>
     </div>
   );

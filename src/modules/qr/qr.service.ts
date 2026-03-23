@@ -23,6 +23,10 @@ import {
 import { BlocksService } from "../blocks/blocks.service";
 import { ContactMemoryService } from "../contact-memory/contact-memory.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import type {
+  CreateOwnedInstantConnectNotificationData,
+  CreateReceivedInstantConnectNotificationData,
+} from "../notifications/notification-payloads";
 import { PersonasService } from "../personas/personas.service";
 import { RelationshipsService } from "../relationships/relationships.service";
 import {
@@ -42,11 +46,13 @@ const noopNotificationsService: Pick<NotificationsService, "createSafe"> = {
   createSafe: async () => undefined,
 };
 
-const noopVerificationPolicyService: Pick<
+const failClosedVerificationPolicyService: Pick<
   VerificationPolicyService,
   "assertUserIsVerified"
 > = {
-  assertUserIsVerified: async () => undefined,
+  assertUserIsVerified: async () => {
+    throw new Error("Verification policy service is not configured");
+  },
 };
 
 @Injectable()
@@ -58,12 +64,9 @@ export class QrService {
     private readonly blocksService: BlocksService,
     private readonly relationshipsService: RelationshipsService,
     private readonly contactMemoryService: ContactMemoryService,
-    private readonly notificationsService: NotificationsService =
-      noopNotificationsService as NotificationsService,
-    private readonly analyticsService: AnalyticsService =
-      noopAnalyticsService as AnalyticsService,
-    private readonly verificationPolicyService: VerificationPolicyService =
-      noopVerificationPolicyService as VerificationPolicyService,
+    private readonly notificationsService: NotificationsService = noopNotificationsService as NotificationsService,
+    private readonly analyticsService: AnalyticsService = noopAnalyticsService as AnalyticsService,
+    private readonly verificationPolicyService: VerificationPolicyService = failClosedVerificationPolicyService as VerificationPolicyService,
   ) {}
 
   async createProfileQr(userId: string, personaId: string) {
@@ -228,6 +231,14 @@ export class QrService {
         await this.assertProfileQrPersonaIsPublic(tx, token.id);
       }
 
+      if (tracking?.scannerUserId) {
+        await this.blocksService.assertNoInteractionBlockInTransaction(
+          tx,
+          tracking.scannerUserId,
+          resolvedToken.persona.userId,
+        );
+      }
+
       void this.analyticsService.trackQrScan({
         personaId: resolvedToken.persona.id,
         scannerUserId: tracking?.scannerUserId ?? null,
@@ -244,6 +255,11 @@ export class QrService {
     code: string,
     connectQuickConnectQrDto: ConnectQuickConnectQrDto,
   ) {
+    await this.verificationPolicyService.assertUserIsVerified(
+      userId,
+      "instant_connect",
+    );
+
     const fromPersona = await this.personasService.findOwnedPersonaIdentity(
       userId,
       connectQuickConnectQrDto.fromPersonaId,
@@ -251,21 +267,6 @@ export class QrService {
 
     return this.prismaService.$transaction(async (tx) => {
       const now = new Date();
-      const senderUser = await tx.user.findUnique({
-        where: {
-          id: userId,
-        },
-        select: {
-          id: true,
-          isVerified: true,
-          phoneVerifiedAt: true,
-        },
-      });
-
-      if (!senderUser) {
-        throw new NotFoundException("User not found");
-      }
-
       const token = await tx.qRAccessToken.findUnique({
         where: {
           code,
@@ -315,12 +316,11 @@ export class QrService {
         token.persona.userId,
       );
 
-      if (
-        token.persona.verifiedOnly &&
-        !userHasActiveTrustFactor(senderUser)
-      ) {
-        throw new ForbiddenException("Verified profiles only");
-      }
+      await this.assertVerifiedOnlyQuickConnectAccess(
+        tx,
+        token.persona,
+        userId,
+      );
 
       const durationHours = this.getQuickConnectDurationHours(token.rules);
       const accessEndAt = new Date(
@@ -404,6 +404,12 @@ export class QrService {
         tx,
       );
 
+      const ownedNotificationData: CreateOwnedInstantConnectNotificationData = {
+        relationshipId: relationship.id,
+      };
+      const receivedNotificationData: CreateReceivedInstantConnectNotificationData =
+        {};
+
       await Promise.all([
         this.notificationsService.createSafe(
           {
@@ -411,10 +417,7 @@ export class QrService {
             type: NotificationType.InstantConnect,
             title: "Instant connect",
             body: `You connected instantly with ${token.persona.fullName}`,
-            data: {
-              relationshipId: relationship.id,
-              targetPersonaId: token.persona.id,
-            },
+            data: ownedNotificationData,
           },
           tx,
         ),
@@ -424,10 +427,7 @@ export class QrService {
             type: NotificationType.InstantConnect,
             title: "Instant connect",
             body: `${fromPersona.fullName ?? "Someone"} connected with your QR`,
-            data: {
-              relationshipId: relationship.id,
-              sourcePersonaId: fromPersona.id,
-            },
+            data: receivedNotificationData,
           },
           tx,
         ),
@@ -453,6 +453,37 @@ export class QrService {
         },
       };
     });
+  }
+
+  private async assertVerifiedOnlyQuickConnectAccess(
+    tx: Prisma.TransactionClient,
+    persona: {
+      verifiedOnly: boolean;
+    },
+    userId: string,
+  ) {
+    if (!persona.verifiedOnly) {
+      return;
+    }
+
+    const senderUser = await tx.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        isVerified: true,
+        phoneVerifiedAt: true,
+      },
+    });
+
+    if (!senderUser) {
+      throw new NotFoundException("User not found");
+    }
+
+    if (!userHasActiveTrustFactor(senderUser)) {
+      throw new ForbiddenException("Verified profiles only");
+    }
   }
 
   private async assertResolvableToken(

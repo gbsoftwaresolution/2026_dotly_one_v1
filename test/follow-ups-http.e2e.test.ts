@@ -16,6 +16,7 @@ import { JwtService } from "@nestjs/jwt";
 import { GlobalExceptionFilter } from "../src/common/filters/global-exception.filter";
 import { ResponseEnvelopeInterceptor } from "../src/common/interceptors/response-envelope.interceptor";
 import { JwtAuthGuard } from "../src/common/guards/jwt-auth.guard";
+import { PrismaService } from "../src/infrastructure/database/prisma.service";
 import { DeviceSessionService } from "../src/modules/auth/device-session.service";
 import { FollowUpsController } from "../src/modules/follow-ups/follow-ups.controller";
 import { FollowUpsService } from "../src/modules/follow-ups/follow-ups.service";
@@ -132,6 +133,16 @@ const deviceSessionServiceMock = {
   }),
 };
 
+const prismaServiceMock = {
+  user: {
+    findUnique: async (args: { where: { id: string } }) => ({
+      id: args.where.id,
+      email: "user@example.com",
+      isVerified: false,
+    }),
+  },
+};
+
 const jwtService = new JwtService({
   secret: JWT_SECRET,
   signOptions: {
@@ -160,6 +171,10 @@ const jwtService = new JwtService({
     {
       provide: DeviceSessionService,
       useValue: deviceSessionServiceMock,
+    },
+    {
+      provide: PrismaService,
+      useValue: prismaServiceMock,
     },
   ],
 })
@@ -287,14 +302,11 @@ describe("Follow-ups HTTP E2E", () => {
     assert.equal(response.status, 200);
     assert.equal(payload.success, true);
     assert.equal(listCalls.at(-1)?.userId, "user-84");
-    assert.deepEqual(
-      JSON.parse(JSON.stringify(listCalls.at(-1)?.query)),
-      {
-        upcoming: true,
-        status: "pending",
-        relationshipId: "4b26dc1f-9238-46db-89c5-d9d2476f8c51",
-      },
-    );
+    assert.deepEqual(JSON.parse(JSON.stringify(listCalls.at(-1)?.query)), {
+      upcoming: true,
+      status: "pending",
+      relationshipId: "4b26dc1f-9238-46db-89c5-d9d2476f8c51",
+    });
   });
 
   it("returns the authenticated user's due follow-ups", async () => {

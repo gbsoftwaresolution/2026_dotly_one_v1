@@ -50,6 +50,7 @@ import { VerificationPolicyService } from "./verification-policy.service";
   exports: [
     AuthMetricsService,
     AuthService,
+    DeviceSessionService,
     JwtAuthGuard,
     JwtModule,
     SecurityArtifactLifecycleService,

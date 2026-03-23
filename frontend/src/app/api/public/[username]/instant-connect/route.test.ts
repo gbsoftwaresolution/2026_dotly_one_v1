@@ -31,6 +31,7 @@ describe("POST /api/public/[username]/instant-connect", () => {
     const response = await POST(
       new Request("http://localhost/api/public/alice/instant-connect", {
         method: "POST",
+        body: JSON.stringify({ fromPersonaId: "persona-1" }),
       }),
       {
         params: Promise.resolve({ username: "alice" }),
@@ -57,6 +58,7 @@ describe("POST /api/public/[username]/instant-connect", () => {
     const response = await POST(
       new Request("http://localhost/api/public/alice/instant-connect", {
         method: "POST",
+        body: JSON.stringify({ fromPersonaId: "persona-1" }),
       }),
       {
         params: Promise.resolve({ username: "alice" }),
@@ -69,6 +71,7 @@ describe("POST /api/public/[username]/instant-connect", () => {
       {
         method: "POST",
         body: {
+          fromPersonaId: "persona-1",
           source: "profile",
         },
         token: "token",
@@ -88,6 +91,7 @@ describe("POST /api/public/[username]/instant-connect", () => {
     const response = await POST(
       new Request("http://localhost/api/public/alice/instant-connect", {
         method: "POST",
+        body: JSON.stringify({ fromPersonaId: "persona-1" }),
       }),
       {
         params: Promise.resolve({ username: "alice" }),
@@ -96,6 +100,26 @@ describe("POST /api/public/[username]/instant-connect", () => {
 
     expect(response.status).toBe(401);
     expect(mocks.clearAuthCookie).toHaveBeenCalledTimes(1);
+    expect(response.headers.get("server-timing")).toMatch(
+      /^public-instant-connect;dur=\d+(?:\.\d{2})?$/,
+    );
+  });
+
+  it("returns 400 when fromPersonaId is missing", async () => {
+    mocks.getServerAccessToken.mockResolvedValue("token");
+
+    const response = await POST(
+      new Request("http://localhost/api/public/alice/instant-connect", {
+        method: "POST",
+        body: JSON.stringify({}),
+      }),
+      {
+        params: Promise.resolve({ username: "alice" }),
+      },
+    );
+
+    expect(response.status).toBe(400);
+    expect(mocks.apiRequest).not.toHaveBeenCalled();
     expect(response.headers.get("server-timing")).toMatch(
       /^public-instant-connect;dur=\d+(?:\.\d{2})?$/,
     );

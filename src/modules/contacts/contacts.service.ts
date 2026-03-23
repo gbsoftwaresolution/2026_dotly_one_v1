@@ -223,6 +223,12 @@ export class ContactsService {
       await this.contactMemoryService.updateNote(tx, {
         memoryId: normalizedRelationship.memories[0]?.id,
         relationshipId: normalizedRelationship.id,
+        eventId:
+          normalizedRelationship.memories[0]?.eventId ??
+          extractContextEventId(normalizedRelationship.connectionContext),
+        contextLabel:
+          normalizedRelationship.memories[0]?.contextLabel ??
+          extractContextLabel(normalizedRelationship.connectionContext),
         metAt:
           normalizedRelationship.memories[0]?.metAt ??
           normalizedRelationship.accessStartAt ??
@@ -393,7 +399,9 @@ export class ContactsService {
       relationship.lastInteractionAt,
       now,
     );
-    const interactionCount = toSafeInteractionCount(relationship.interactionCount);
+    const interactionCount = toSafeInteractionCount(
+      relationship.interactionCount,
+    );
     const hasInteractions = interactionCount > 0 || lastInteractionAt !== null;
 
     return {
@@ -401,7 +409,10 @@ export class ContactsService {
       interactionCount,
       hasInteractions,
       isRecentlyActive: this.isRecentlyActive(lastInteractionAt, now),
-      relationshipAgeDays: this.getRelationshipAgeDays(relationship.createdAt, now),
+      relationshipAgeDays: this.getRelationshipAgeDays(
+        relationship.createdAt,
+        now,
+      ),
     };
   }
 
@@ -420,10 +431,15 @@ export class ContactsService {
       return false;
     }
 
-    return now.getTime() - lastInteractionAt.getTime() <= recentActivityWindowMs();
+    return (
+      now.getTime() - lastInteractionAt.getTime() <= recentActivityWindowMs()
+    );
   }
 
-  private getRelationshipAgeDays(createdAt: Date | null | undefined, now: Date): number {
+  private getRelationshipAgeDays(
+    createdAt: Date | null | undefined,
+    now: Date,
+  ): number {
     if (!(createdAt instanceof Date)) {
       return 0;
     }
@@ -434,7 +450,10 @@ export class ContactsService {
       return 0;
     }
 
-    return Math.max(0, Math.floor((now.getTime() - createdAtMs) / MILLISECONDS_PER_DAY));
+    return Math.max(
+      0,
+      Math.floor((now.getTime() - createdAtMs) / MILLISECONDS_PER_DAY),
+    );
   }
 
   private getSafeLastInteractionAt(
@@ -464,8 +483,11 @@ export class ContactsService {
     >,
   ) {
     const memory = relationship.memories[0];
-    const storedContext = parseConnectionContext(relationship.connectionContext);
-    const type = storedContext?.type ?? toRelationshipContextType(relationship.sourceType);
+    const storedContext = parseConnectionContext(
+      relationship.connectionContext,
+    );
+    const type =
+      storedContext?.type ?? toRelationshipContextType(relationship.sourceType);
     const label =
       normalizeContextLabel(memory?.contextLabel) ??
       normalizeContextLabel(storedContext?.label) ??
@@ -575,14 +597,11 @@ function toRelationshipContextType(
   throw new Error("Unsupported contact request source type");
 }
 
-function parseConnectionContext(
-  value: Prisma.JsonValue | null | undefined,
-):
-  | {
-      type: "profile" | "qr" | "event";
-      label: string | null;
-    }
-  | null {
+function parseConnectionContext(value: Prisma.JsonValue | null | undefined): {
+  type: "profile" | "qr" | "event";
+  label: string | null;
+  eventId?: string | null;
+} | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
   }
@@ -590,6 +609,7 @@ function parseConnectionContext(
   const candidate = value as Record<string, unknown>;
   const type = candidate.type;
   const label = candidate.label;
+  const eventId = candidate.eventId;
 
   if (type !== "profile" && type !== "qr" && type !== "event") {
     return null;
@@ -598,7 +618,16 @@ function parseConnectionContext(
   return {
     type,
     label: typeof label === "string" ? label : null,
+    eventId: typeof eventId === "string" ? eventId : null,
   };
+}
+
+function extractContextLabel(value: Prisma.JsonValue | null | undefined) {
+  return parseConnectionContext(value)?.label ?? null;
+}
+
+function extractContextEventId(value: Prisma.JsonValue | null | undefined) {
+  return parseConnectionContext(value)?.eventId ?? null;
 }
 
 function normalizeContextLabel(value: string | null | undefined) {

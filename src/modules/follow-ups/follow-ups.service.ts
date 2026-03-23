@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -105,35 +104,49 @@ export class FollowUpsService {
     await this.relationshipsService.expireOwnedExpiredRelationships(userId);
 
     const now = new Date();
+    const baseWhere = {
+      ownerUserId: userId,
+      ...buildActiveRelationshipFollowUpWhere(now, userId),
+      ...(query.relationshipId
+        ? {
+            relationshipId: query.relationshipId,
+          }
+        : {}),
+      ...(query.upcoming === true
+        ? {
+            status: PrismaFollowUpStatus.PENDING,
+            remindAt: {
+              gte: now,
+            },
+          }
+        : {}),
+    } satisfies Prisma.FollowUpWhereInput;
+
     const followUps = await this.prismaService.followUp.findMany({
       where: {
-        ownerUserId: userId,
-        ...buildActiveRelationshipFollowUpWhere(now, userId),
+        ...baseWhere,
         ...(query.status
           ? {
               status: toPrismaFollowUpStatus(query.status),
             }
           : {}),
-        ...(query.relationshipId
-          ? {
-              relationshipId: query.relationshipId,
-            }
-          : {}),
-        ...(query.upcoming === true
-          ? {
-              status: PrismaFollowUpStatus.PENDING,
-              remindAt: {
-                gte: now,
-              },
-            }
-          : {}),
       },
+      orderBy:
+        query.status === FollowUpStatus.Pending
+          ? [{ remindAt: "asc" }, { createdAt: "asc" }, { id: "asc" }]
+          : query.status
+            ? [{ updatedAt: "desc" }, { createdAt: "desc" }, { id: "asc" }]
+            : [
+                { status: "asc" },
+                { remindAt: "asc" },
+                { updatedAt: "desc" },
+                { createdAt: "asc" },
+                { id: "asc" },
+              ],
       select: followUpSelect,
     });
 
-    return followUps
-      .sort(compareFollowUps)
-      .map((followUp) => this.toFollowUpView(followUp, now));
+    return followUps.map((followUp) => this.toFollowUpView(followUp, now));
   }
 
   async listDueFollowUps(userId: string, limit?: number) {
@@ -154,16 +167,21 @@ export class FollowUpsService {
             take: limit,
           }
         : {}),
+      orderBy: [{ remindAt: "asc" }, { createdAt: "asc" }, { id: "asc" }],
       select: followUpSelect,
     });
 
-    return followUps
-      .sort(comparePendingFollowUps)
-      .map((followUp) => this.toFollowUpView(followUp, now));
+    return followUps.map((followUp) => this.toFollowUpView(followUp, now));
   }
 
   async getFollowUp(userId: string, id: string) {
-    const followUp = await this.getOwnedFollowUp(this.prismaService, userId, id);
+    await this.relationshipsService.expireOwnedExpiredRelationships?.(userId);
+
+    const followUp = await this.getOwnedActiveFollowUp(
+      this.prismaService,
+      userId,
+      id,
+    );
     return this.toFollowUpView(followUp);
   }
 
@@ -171,7 +189,7 @@ export class FollowUpsService {
     await this.relationshipsService.expireOwnedExpiredRelationships(userId);
 
     const now = new Date();
-    const result = await this.prismaService.followUp.updateMany({
+    await this.prismaService.followUp.updateMany({
       where: {
         id,
         ownerUserId: userId,
@@ -187,11 +205,11 @@ export class FollowUpsService {
       },
     });
 
-    const followUp = await this.getOwnedFollowUp(this.prismaService, userId, id);
-
-    if (result.count === 0) {
-      return this.toFollowUpView(followUp, now);
-    }
+    const followUp = await this.getOwnedFollowUp(
+      this.prismaService,
+      userId,
+      id,
+    );
 
     return this.toFollowUpView(followUp, now);
   }
@@ -275,7 +293,10 @@ export class FollowUpsService {
     };
   }
 
-  async getFollowUpSummaryForRelationship(userId: string, relationshipId: string) {
+  async getFollowUpSummaryForRelationship(
+    userId: string,
+    relationshipId: string,
+  ) {
     await this.relationshipsService.expireOwnedExpiredRelationships(userId);
 
     const now = new Date();
@@ -322,13 +343,14 @@ export class FollowUpsService {
 
   async updateFollowUp(userId: string, id: string, dto: UpdateFollowUpDto) {
     return this.prismaService.$transaction(async (tx) => {
-      const followUp = await this.getOwnedFollowUp(tx, userId, id);
+      const followUp = await this.getOwnedActiveFollowUp(tx, userId, id);
       this.assertPending(followUp, "Only pending follow-ups can be updated");
 
       const data: Prisma.FollowUpUpdateInput = {};
 
       if (dto.remindAt !== undefined) {
         data.remindAt = toRemindAtDate(dto.remindAt);
+        data.triggeredAt = null;
       }
 
       if (dto.note !== undefined) {
@@ -376,7 +398,7 @@ export class FollowUpsService {
     conflictMessage: string,
   ) {
     return this.prismaService.$transaction(async (tx) => {
-      const followUp = await this.getOwnedFollowUp(tx, userId, id);
+      const followUp = await this.getOwnedActiveFollowUp(tx, userId, id);
       this.assertPending(followUp, conflictMessage);
 
       const updatedFollowUp = await tx.followUp.update({
@@ -400,26 +422,65 @@ export class FollowUpsService {
     userId: string,
     relationshipId: string,
   ) {
-    const relationship = await prisma.contactRelationship.findUnique({
-      where: {
-        id: relationshipId,
-      },
-      select: {
-        id: true,
-        ownerUserId: true,
-        state: true,
-        accessEndAt: true,
-      },
-    });
+    const relationshipDelegate = prisma.contactRelationship as unknown as {
+      findFirst?: (args: {
+        where: { id: string; ownerUserId: string };
+        select: {
+          id: true;
+          state: true;
+          accessEndAt: true;
+        };
+      }) => Promise<{
+        id: string;
+        state: PrismaContactRelationshipState;
+        accessEndAt: Date | null;
+      } | null>;
+      findUnique?: (args: {
+        where: { id: string };
+        select: {
+          id: true;
+          ownerUserId: true;
+          state: true;
+          accessEndAt: true;
+        };
+      }) => Promise<{
+        id: string;
+        ownerUserId: string;
+        state: PrismaContactRelationshipState;
+        accessEndAt: Date | null;
+      } | null>;
+    };
 
-    if (!relationship) {
+    const relationship =
+      typeof relationshipDelegate.findFirst === "function"
+        ? await relationshipDelegate.findFirst({
+            where: {
+              id: relationshipId,
+              ownerUserId: userId,
+            },
+            select: {
+              id: true,
+              state: true,
+              accessEndAt: true,
+            },
+          })
+        : await relationshipDelegate.findUnique?.({
+            where: {
+              id: relationshipId,
+            },
+            select: {
+              id: true,
+              ownerUserId: true,
+              state: true,
+              accessEndAt: true,
+            },
+          });
+
+    if (
+      !relationship ||
+      ("ownerUserId" in relationship && relationship.ownerUserId !== userId)
+    ) {
       throw new NotFoundException("Relationship not found");
-    }
-
-    if (relationship.ownerUserId !== userId) {
-      throw new ForbiddenException(
-        "You are not allowed to create follow-ups for this relationship",
-      );
     }
 
     const normalizedRelationship =
@@ -428,7 +489,9 @@ export class FollowUpsService {
         relationship,
       );
 
-    if (normalizedRelationship.state === PrismaContactRelationshipState.EXPIRED) {
+    if (
+      normalizedRelationship.state === PrismaContactRelationshipState.EXPIRED
+    ) {
       throw new ConflictException("Relationship is no longer active");
     }
 
@@ -474,6 +537,39 @@ export class FollowUpsService {
     return followUp;
   }
 
+  private async getOwnedActiveFollowUp(
+    prisma: PrismaClientLike,
+    userId: string,
+    id: string,
+  ) {
+    const followUp = await this.getOwnedFollowUp(prisma, userId, id);
+
+    if (!followUp.relationship) {
+      return followUp;
+    }
+
+    const normalizedRelationship =
+      await this.relationshipsService.expireRelationshipIfNeeded?.(
+        prisma,
+        followUp.relationship,
+      );
+
+    if (!normalizedRelationship) {
+      return followUp;
+    }
+
+    if (
+      normalizedRelationship.state === PrismaContactRelationshipState.EXPIRED
+    ) {
+      throw new ConflictException("Relationship is no longer active");
+    }
+
+    return {
+      ...followUp,
+      relationship: normalizedRelationship,
+    };
+  }
+
   private assertPending(followUp: FollowUpRecord, message: string) {
     if (followUp.status !== PrismaFollowUpStatus.PENDING) {
       throw new ConflictException(message);
@@ -499,7 +595,9 @@ export class FollowUpsService {
         sourceType: relationship
           ? toApiContactRequestSourceType(relationship.sourceType)
           : undefined,
-        sourceLabel: relationship ? buildRelationshipSourceLabel(relationship) : undefined,
+        sourceLabel: relationship
+          ? buildRelationshipSourceLabel(relationship)
+          : undefined,
         targetPersona: relationship
           ? {
               id: relationship.targetPersona.id,
@@ -526,7 +624,10 @@ export class FollowUpsService {
     };
   }
 
-  private isOverdue(followUp: Pick<FollowUpRecord, "status" | "remindAt">, now: Date) {
+  private isOverdue(
+    followUp: Pick<FollowUpRecord, "status" | "remindAt">,
+    now: Date,
+  ) {
     return (
       followUp.status === PrismaFollowUpStatus.PENDING &&
       followUp.remindAt.getTime() < now.getTime()
@@ -619,75 +720,6 @@ function parseConnectionContext(
   };
 }
 
-function compareFollowUps(a: FollowUpRecord, b: FollowUpRecord) {
-  const aIsPending = a.status === PrismaFollowUpStatus.PENDING;
-  const bIsPending = b.status === PrismaFollowUpStatus.PENDING;
-
-  if (aIsPending && !bIsPending) {
-    return -1;
-  }
-
-  if (!aIsPending && bIsPending) {
-    return 1;
-  }
-
-  if (aIsPending && bIsPending) {
-    const remindAtDelta = a.remindAt.getTime() - b.remindAt.getTime();
-
-    if (remindAtDelta !== 0) {
-      return remindAtDelta;
-    }
-
-    const createdAtDelta = a.createdAt.getTime() - b.createdAt.getTime();
-
-    if (createdAtDelta !== 0) {
-      return createdAtDelta;
-    }
-
-    return a.id.localeCompare(b.id);
-  }
-
-  const resolvedAtDelta = getResolvedFollowUpSortTime(b) - getResolvedFollowUpSortTime(a);
-
-  if (resolvedAtDelta !== 0) {
-    return resolvedAtDelta;
-  }
-
-  const updatedAtDelta = b.updatedAt.getTime() - a.updatedAt.getTime();
-
-  if (updatedAtDelta !== 0) {
-    return updatedAtDelta;
-  }
-
-  const createdAtDelta = b.createdAt.getTime() - a.createdAt.getTime();
-
-  if (createdAtDelta !== 0) {
-    return createdAtDelta;
-  }
-
-  return a.id.localeCompare(b.id);
-}
-
-function comparePendingFollowUps(a: FollowUpRecord, b: FollowUpRecord) {
-  const remindAtDelta = a.remindAt.getTime() - b.remindAt.getTime();
-
-  if (remindAtDelta !== 0) {
-    return remindAtDelta;
-  }
-
-  const createdAtDelta = a.createdAt.getTime() - b.createdAt.getTime();
-
-  if (createdAtDelta !== 0) {
-    return createdAtDelta;
-  }
-
-  return a.id.localeCompare(b.id);
-}
-
-function getResolvedFollowUpSortTime(followUp: FollowUpRecord) {
-  return (followUp.completedAt ?? followUp.updatedAt).getTime();
-}
-
 function buildEmptyFollowUpMetadata() {
   return {
     isOverdue: false,
@@ -727,16 +759,9 @@ function buildActiveRelationshipFollowUpWhere(
           },
           {
             state: PrismaContactRelationshipState.INSTANT_ACCESS,
-            OR: [
-              {
-                accessEndAt: null,
-              },
-              {
-                accessEndAt: {
-                  gte: now,
-                },
-              },
-            ],
+            accessEndAt: {
+              gte: now,
+            },
           },
         ],
       },

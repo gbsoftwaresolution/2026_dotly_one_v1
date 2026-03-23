@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { PublicQrPreviewCard } from "./public-qr-preview-card";
 
 describe("PublicQrPreviewCard", () => {
-  it("uses profile access language for standard public QR previews", () => {
+  it("uses profile language for standard public QR previews", () => {
     render(
       React.createElement(PublicQrPreviewCard, {
         qr: {
@@ -24,10 +24,10 @@ describe("PublicQrPreviewCard", () => {
       }),
     );
 
-    expect(screen.getByText(/^profile access$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^profile$/i)).toBeInTheDocument();
     expect(screen.getByText(/profile preview/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/this profile gives context before access/i),
+      screen.getByText(/scanning this qr opens the public profile first/i),
     ).toBeInTheDocument();
   });
 
@@ -50,14 +50,12 @@ describe("PublicQrPreviewCard", () => {
     );
 
     expect(screen.getByText(/^quick connect$/i)).toBeInTheDocument();
-    expect(screen.getByText(/shared context/i)).toBeInTheDocument();
+    expect(screen.getByText(/^who shared this qr$/i)).toBeInTheDocument();
     expect(
       screen.getByText(
-        /review who you are meeting before you choose the right persona/i,
+        /confirm who shared this qr, then continue with the persona/i,
       ),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/temporary, permissioned access/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/temporary intro/i)).toBeInTheDocument();
   });
 });

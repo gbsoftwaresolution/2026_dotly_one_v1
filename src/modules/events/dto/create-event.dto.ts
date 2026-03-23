@@ -2,8 +2,10 @@ import { Transform } from "class-transformer";
 import {
   IsDateString,
   IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
 } from "class-validator";
 
@@ -12,6 +14,7 @@ import { EventStatus } from "../../../common/enums/event-status.enum";
 export class CreateEventDto {
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   @IsString()
+  @IsNotEmpty()
   @MaxLength(160)
   name!: string;
 
@@ -19,7 +22,9 @@ export class CreateEventDto {
     typeof value === "string" ? value.trim().toLowerCase() : value,
   )
   @IsString()
+  @IsNotEmpty()
   @MaxLength(160)
+  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   slug!: string;
 
   @IsOptional()
@@ -42,6 +47,7 @@ export class CreateEventDto {
 
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   @IsString()
+  @IsNotEmpty()
   @MaxLength(200)
   location!: string;
 

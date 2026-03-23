@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import {
   ContactRequestSourceType as PrismaContactRequestSourceType,
@@ -22,16 +23,22 @@ import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { BlocksService } from "../blocks/blocks.service";
 import { ContactMemoryService } from "../contact-memory/contact-memory.service";
 import { toSafeSmartCardConfig } from "../personas/persona-sharing";
-import { userHasActiveTrustFactor } from "../auth/verification-policy.service";
+import {
+  userHasActiveTrustFactor,
+  VerificationPolicyService,
+} from "../auth/verification-policy.service";
 
 import { CreateInstantConnectDto } from "./dto/create-instant-connect.dto";
 import { CreatePublicInstantConnectDto } from "./dto/create-public-instant-connect.dto";
+import { InstantConnectSourcePolicyService } from "./instant-connect-source-policy.service";
 
-const noopBlocksService: Pick<
+const failClosedBlocksService: Pick<
   BlocksService,
   "assertNoInteractionBlockInTransaction"
 > = {
-  assertNoInteractionBlockInTransaction: async () => undefined,
+  assertNoInteractionBlockInTransaction: async () => {
+    throw new Error("Blocks service is not configured");
+  },
 };
 
 const noopContactMemoryService: Pick<
@@ -39,6 +46,24 @@ const noopContactMemoryService: Pick<
   "upsertInteractionMemory"
 > = {
   upsertInteractionMemory: async () => ({ id: "" }),
+};
+
+const failClosedInstantConnectSourcePolicyService: Pick<
+  InstantConnectSourcePolicyService,
+  "assertSourceAccess"
+> = {
+  assertSourceAccess: async () => {
+    throw new Error("Instant connect source policy is not configured");
+  },
+};
+
+const failClosedVerificationPolicyService: Pick<
+  VerificationPolicyService,
+  "assertUserIsVerified"
+> = {
+  assertUserIsVerified: async () => {
+    throw new Error("Verification policy service is not configured");
+  },
 };
 
 const instantConnectTargetSelect = {
@@ -76,20 +101,29 @@ type EventSummary = {
 export class RelationshipsService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly blocksService: Pick<
-      BlocksService,
-      "assertNoInteractionBlockInTransaction"
-    > = noopBlocksService,
-    private readonly contactMemoryService: Pick<
-      ContactMemoryService,
-      "upsertInteractionMemory"
-    > = noopContactMemoryService,
+    @Optional()
+    private readonly blocksService: BlocksService =
+      failClosedBlocksService as BlocksService,
+    @Optional()
+    private readonly contactMemoryService: ContactMemoryService =
+      noopContactMemoryService as ContactMemoryService,
+    @Optional()
+    private readonly verificationPolicyService: VerificationPolicyService =
+      failClosedVerificationPolicyService as VerificationPolicyService,
+    @Optional()
+    private readonly instantConnectSourcePolicyService: InstantConnectSourcePolicyService =
+      failClosedInstantConnectSourcePolicyService as InstantConnectSourcePolicyService,
   ) {}
 
   async instantConnect(
     userId: string,
     createInstantConnectDto: CreateInstantConnectDto,
   ) {
+    await this.verificationPolicyService.assertUserIsVerified(
+      userId,
+      "instant_connect",
+    );
+
     return this.prismaService.$transaction(async (tx) => {
       const targetPersona = await tx.persona.findUnique({
         where: {
@@ -101,6 +135,7 @@ export class RelationshipsService {
       return this.instantConnectInTransaction(
         tx,
         userId,
+        createInstantConnectDto.fromPersonaId,
         targetPersona,
         createInstantConnectDto.source,
         createInstantConnectDto.eventId,
@@ -111,12 +146,20 @@ export class RelationshipsService {
   async instantConnectByUsername(
     userId: string,
     username: string,
-    createInstantConnectDto: CreatePublicInstantConnectDto = {},
+    createInstantConnectDto: CreatePublicInstantConnectDto,
   ) {
+    await this.verificationPolicyService.assertUserIsVerified(
+      userId,
+      "instant_connect",
+    );
+
     return this.prismaService.$transaction(async (tx) => {
       const targetPersona = await tx.persona.findFirst({
         where: {
           username: username.trim().toLowerCase(),
+          accessMode: {
+            not: PrismaPersonaAccessMode.PRIVATE,
+          },
         },
         select: instantConnectTargetSelect,
       });
@@ -124,6 +167,7 @@ export class RelationshipsService {
       return this.instantConnectInTransaction(
         tx,
         userId,
+        createInstantConnectDto.fromPersonaId,
         targetPersona,
         createInstantConnectDto.source,
         createInstantConnectDto.eventId,
@@ -134,16 +178,15 @@ export class RelationshipsService {
   private async instantConnectInTransaction(
     tx: Prisma.TransactionClient,
     userId: string,
+    fromPersonaId: string,
     targetPersona: InstantConnectTarget | null,
     source: ContactRequestSourceType | undefined,
     eventId?: string,
   ) {
     const actorPersona = await tx.persona.findFirst({
       where: {
+        id: fromPersonaId,
         userId,
-      },
-      orderBy: {
-        createdAt: "desc",
       },
       select: {
         id: true,
@@ -154,99 +197,121 @@ export class RelationshipsService {
       throw new NotFoundException("Persona not found");
     }
 
-      if (!targetPersona) {
-        throw new NotFoundException("Target persona not found");
-      }
+    if (!targetPersona) {
+      throw new NotFoundException("Target persona not found");
+    }
 
-      if (targetPersona.userId === userId) {
-        throw new BadRequestException(
-          "You cannot connect to your own persona",
-        );
-      }
+    if (targetPersona.userId === userId) {
+      throw new BadRequestException("You cannot connect to your own persona");
+    }
 
-      if (targetPersona.accessMode === PrismaPersonaAccessMode.PRIVATE) {
-        throw new ForbiddenException("Cannot connect to private profile");
-      }
+    if (targetPersona.accessMode === PrismaPersonaAccessMode.PRIVATE) {
+      throw new ForbiddenException("Cannot connect to private profile");
+    }
 
-      await this.blocksService.assertNoInteractionBlockInTransaction(
-        tx,
-        userId,
-        targetPersona.userId,
+    await this.blocksService.assertNoInteractionBlockInTransaction(
+      tx,
+      userId,
+      targetPersona.userId,
+    );
+
+    await this.instantConnectSourcePolicyService.assertSourceAccess(
+      userId,
+      actorPersona.id,
+      targetPersona.id,
+      source,
+      eventId,
+    );
+
+    const actorUser = await tx.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        isVerified: true,
+        phoneVerifiedAt: true,
+      },
+    });
+
+    if (!actorUser) {
+      throw new NotFoundException("User not found");
+    }
+
+    if (targetPersona.verifiedOnly && !userHasActiveTrustFactor(actorUser)) {
+      throw new ForbiddenException("Verified profiles only");
+    }
+
+    const smartCardConfig = toSafeSmartCardConfig(
+      targetPersona.smartCardConfig,
+    );
+    const hasActiveProfileQr = await this.hasActiveProfileQr(
+      tx,
+      targetPersona.id,
+    );
+
+    if (
+      targetPersona.sharingMode !== PrismaPersonaSharingMode.SMART_CARD ||
+      smartCardConfig?.primaryAction !==
+        PersonaSmartCardPrimaryAction.InstantConnect ||
+      !hasActiveProfileQr
+    ) {
+      throw new ForbiddenException(
+        "Instant connect is not available for this persona",
       );
+    }
 
-      const actorUser = await tx.user.findUnique({
-        where: {
-          id: userId,
-        },
-        select: {
-          id: true,
-          isVerified: true,
-          phoneVerifiedAt: true,
-        },
-      });
-
-      if (!actorUser) {
-        throw new NotFoundException("User not found");
-      }
-
-      if (targetPersona.verifiedOnly && !userHasActiveTrustFactor(actorUser)) {
-        throw new ForbiddenException("Verified profiles only");
-      }
-
-      const smartCardConfig = toSafeSmartCardConfig(targetPersona.smartCardConfig);
-      const hasActiveProfileQr = await this.hasActiveProfileQr(tx, targetPersona.id);
-
-      if (
-        targetPersona.sharingMode !== PrismaPersonaSharingMode.SMART_CARD ||
-        smartCardConfig?.primaryAction !==
-          PersonaSmartCardPrimaryAction.InstantConnect ||
-        !hasActiveProfileQr
-      ) {
-        throw new ForbiddenException(
-          "Instant connect is not available for this persona",
-        );
-      }
-
-      const eventSummary = await this.getEventSummary(tx, eventId);
-      const sourceType = toPrismaSourceType(source);
-      const relationshipContext = this.buildRelationshipContext(
-        source,
-        eventSummary,
-      );
-      const connectedAt = new Date();
-      const relationship = await this.createOrPromoteApprovedRelationship(tx, {
+    const eventSummary =
+      source === ContactRequestSourceType.Event
+        ? await this.getRequiredEventSummary(tx, eventId!)
+        : null;
+    const sourceType = toPrismaSourceType(source);
+    const relationshipContext = this.buildRelationshipContext(
+      source,
+      eventSummary,
+    );
+    const connectedAt = new Date();
+    const relationshipResult = await this.createOrPromoteApprovedRelationship(
+      tx,
+      {
         ownerUserId: userId,
         targetUserId: targetPersona.userId,
         ownerPersonaId: actorPersona.id,
         targetPersonaId: targetPersona.id,
         sourceType,
+        sourceId:
+          source === ContactRequestSourceType.Event ? (eventId ?? null) : null,
         connectionContext: relationshipContext,
-      });
+      },
+    );
 
+    if (relationshipResult.wasCreatedOrChanged) {
       await Promise.all([
         this.contactMemoryService.upsertInteractionMemory(tx, {
-          relationshipId: relationship.id,
+          relationshipId: relationshipResult.id,
           eventId: relationshipContext.eventId,
           contextLabel:
-            relationshipContext.label ?? toMemoryContextLabel(source, eventSummary),
+            relationshipContext.label ??
+            toMemoryContextLabel(source, eventSummary),
           metAt: connectedAt,
           sourceLabel: toInstantConnectSourceLabel(source),
         }),
-        this.updateInteractionMetadata(tx, relationship.id, connectedAt),
-        relationship.reciprocalRelationshipId
+        this.updateInteractionMetadata(tx, relationshipResult.id, connectedAt),
+        relationshipResult.reciprocalRelationshipId
           ? this.updateInteractionMetadata(
               tx,
-              relationship.reciprocalRelationshipId,
+              relationshipResult.reciprocalRelationshipId,
               connectedAt,
             )
           : Promise.resolve(null),
       ]);
+    }
 
-      return {
-        success: true,
-        relationshipId: relationship.id,
-        status: "connected" as const,
-      };
+    return {
+      success: true,
+      relationshipId: relationshipResult.id,
+      status: "connected" as const,
+    };
   }
 
   async createApprovedRelationship(
@@ -258,6 +323,7 @@ export class RelationshipsService {
       targetPersonaId: string;
       sourceType: PrismaContactRequestSourceType;
       sourceId?: string | null;
+      connectionContext?: RelationshipConnectionContext | null;
     },
   ) {
     try {
@@ -270,6 +336,13 @@ export class RelationshipsService {
           state: PrismaContactRelationshipState.APPROVED,
           sourceType: data.sourceType,
           sourceId: data.sourceId ?? null,
+          ...(data.connectionContext
+            ? {
+                connectionContext: this.attachEventContext(
+                  data.connectionContext,
+                ),
+              }
+            : {}),
         },
         select: {
           id: true,
@@ -285,6 +358,13 @@ export class RelationshipsService {
           state: PrismaContactRelationshipState.APPROVED,
           sourceType: data.sourceType,
           sourceId: data.sourceId ?? null,
+          ...(data.connectionContext
+            ? {
+                connectionContext: this.attachEventContext(
+                  data.connectionContext,
+                ),
+              }
+            : {}),
         },
         select: {
           id: true,
@@ -370,30 +450,39 @@ export class RelationshipsService {
       ownerPersonaId: string;
       targetPersonaId: string;
       sourceType: PrismaContactRequestSourceType;
+      sourceId?: string | null;
       connectionContext: RelationshipConnectionContext;
     },
   ) {
-    const relationshipId = await this.upsertApprovedRelationship(tx, {
+    const relationshipResult = await this.upsertApprovedRelationship(tx, {
       ownerUserId: data.ownerUserId,
       targetUserId: data.targetUserId,
       ownerPersonaId: data.ownerPersonaId,
       targetPersonaId: data.targetPersonaId,
       sourceType: data.sourceType,
+      sourceId: data.sourceId ?? null,
       connectionContext: data.connectionContext,
     });
 
-    const reciprocalRelationshipId = await this.upsertApprovedRelationship(tx, {
-      ownerUserId: data.targetUserId,
-      targetUserId: data.ownerUserId,
-      ownerPersonaId: data.targetPersonaId,
-      targetPersonaId: data.ownerPersonaId,
-      sourceType: data.sourceType,
-      connectionContext: data.connectionContext,
-    });
+    const reciprocalRelationshipResult = await this.upsertApprovedRelationship(
+      tx,
+      {
+        ownerUserId: data.targetUserId,
+        targetUserId: data.ownerUserId,
+        ownerPersonaId: data.targetPersonaId,
+        targetPersonaId: data.ownerPersonaId,
+        sourceType: data.sourceType,
+        sourceId: data.sourceId ?? null,
+        connectionContext: data.connectionContext,
+      },
+    );
 
     return {
-      id: relationshipId,
-      reciprocalRelationshipId,
+      id: relationshipResult.id,
+      reciprocalRelationshipId: reciprocalRelationshipResult.id,
+      wasCreatedOrChanged:
+        relationshipResult.wasCreatedOrChanged ||
+        reciprocalRelationshipResult.wasCreatedOrChanged,
     };
   }
 
@@ -667,26 +756,65 @@ export class RelationshipsService {
     userId: string,
     relationshipId: string,
   ) {
-    const relationship = await tx.contactRelationship.findUnique({
-      where: {
-        id: relationshipId,
-      },
-      select: {
-        id: true,
-        ownerUserId: true,
-        state: true,
-        accessEndAt: true,
-      },
-    });
+    const relationshipDelegate = tx.contactRelationship as unknown as {
+      findFirst?: (args: {
+        where: { id: string; ownerUserId: string };
+        select: {
+          id: true;
+          state: true;
+          accessEndAt: true;
+        };
+      }) => Promise<{
+        id: string;
+        state: PrismaContactRelationshipState;
+        accessEndAt: Date | null;
+      } | null>;
+      findUnique?: (args: {
+        where: { id: string };
+        select: {
+          id: true;
+          ownerUserId: true;
+          state: true;
+          accessEndAt: true;
+        };
+      }) => Promise<{
+        id: string;
+        ownerUserId: string;
+        state: PrismaContactRelationshipState;
+        accessEndAt: Date | null;
+      } | null>;
+    };
 
-    if (!relationship) {
+    const relationship =
+      typeof relationshipDelegate.findFirst === "function"
+        ? await relationshipDelegate.findFirst({
+            where: {
+              id: relationshipId,
+              ownerUserId: userId,
+            },
+            select: {
+              id: true,
+              state: true,
+              accessEndAt: true,
+            },
+          })
+        : await relationshipDelegate.findUnique?.({
+            where: {
+              id: relationshipId,
+            },
+            select: {
+              id: true,
+              ownerUserId: true,
+              state: true,
+              accessEndAt: true,
+            },
+          });
+
+    if (
+      !relationship ||
+      ("ownerUserId" in relationship && relationship.ownerUserId !== userId)
+    ) {
       throw new NotFoundException("Relationship not found");
-    }
-
-    if (relationship.ownerUserId !== userId) {
-      throw new ForbiddenException(
-        "You are not allowed to update this relationship",
-      );
     }
 
     return relationship;
@@ -700,6 +828,7 @@ export class RelationshipsService {
       ownerPersonaId: string;
       targetPersonaId: string;
       sourceType: PrismaContactRequestSourceType;
+      sourceId?: string | null;
       connectionContext: RelationshipConnectionContext;
     },
   ) {
@@ -733,7 +862,7 @@ export class RelationshipsService {
             targetPersonaId: data.targetPersonaId,
             state: PrismaContactRelationshipState.APPROVED,
             sourceType: data.sourceType,
-            sourceId: null,
+            sourceId: data.sourceId ?? null,
             connectionContext: this.attachEventContext(data.connectionContext),
             accessStartAt: null,
             accessEndAt: null,
@@ -743,7 +872,10 @@ export class RelationshipsService {
           },
         });
 
-        return createdRelationship.id;
+        return {
+          id: createdRelationship.id,
+          wasCreatedOrChanged: true,
+        };
       } catch (error) {
         if (
           error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -764,7 +896,10 @@ export class RelationshipsService {
           });
 
           if (relationship) {
-            return relationship.id;
+            return {
+              id: relationship.id,
+              wasCreatedOrChanged: false,
+            };
           }
         }
 
@@ -774,16 +909,13 @@ export class RelationshipsService {
 
     if (
       existingRelationship.state === PrismaContactRelationshipState.APPROVED &&
-      existingRelationship.sourceType === data.sourceType &&
-      existingRelationship.sourceId === null &&
-      !this.hasConnectionContextChanged(
-        existingRelationship.connectionContext,
-        data.connectionContext,
-      ) &&
       existingRelationship.accessStartAt === null &&
       existingRelationship.accessEndAt === null
     ) {
-      return existingRelationship.id;
+      return {
+        id: existingRelationship.id,
+        wasCreatedOrChanged: false,
+      };
     }
 
     const updatedRelationship = await tx.contactRelationship.update({
@@ -793,7 +925,7 @@ export class RelationshipsService {
       data: {
         state: PrismaContactRelationshipState.APPROVED,
         sourceType: data.sourceType,
-        sourceId: null,
+        sourceId: data.sourceId ?? null,
         connectionContext: this.attachEventContext(data.connectionContext),
         accessStartAt: null,
         accessEndAt: null,
@@ -803,7 +935,10 @@ export class RelationshipsService {
       },
     });
 
-    return updatedRelationship.id;
+    return {
+      id: updatedRelationship.id,
+      wasCreatedOrChanged: true,
+    };
   }
 
   private async hasActiveProfileQr(
@@ -873,6 +1008,19 @@ export class RelationshipsService {
       id: event.id,
       name: event.name,
     };
+  }
+
+  private async getRequiredEventSummary(
+    tx: Prisma.TransactionClient,
+    eventId: string,
+  ): Promise<EventSummary> {
+    const eventSummary = await this.getEventSummary(tx, eventId);
+
+    if (eventSummary === null) {
+      throw new BadRequestException("Event networking is not active");
+    }
+
+    return eventSummary;
   }
 
   private buildRelationshipContext(

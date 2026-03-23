@@ -16,7 +16,10 @@ const REQUIRED_VERIFICATION_MIGRATION_NAMES = [
   "20260321123805_phase10_verification_followups",
 ] as const;
 
-export interface VerificationRuntimeDiagnostics extends Record<string, unknown> {
+export interface VerificationRuntimeDiagnostics extends Record<
+  string,
+  unknown
+> {
   status: "ok" | "degraded";
   environment: string;
   mailConfigured: boolean;
@@ -45,6 +48,16 @@ export interface VerificationRuntimeDiagnostics extends Record<string, unknown> 
   };
 }
 
+export interface PublicVerificationDiagnostics extends Record<string, unknown> {
+  status: "ok" | "degraded";
+  environment: string;
+  mailConfigured: boolean;
+  passwordResetConfigured: boolean;
+  smsConfigured: boolean;
+  emailVerificationTableExists: boolean;
+  verificationDependenciesOperational: boolean;
+}
+
 @Injectable()
 export class VerificationDiagnosticsService {
   constructor(
@@ -63,9 +76,10 @@ export class VerificationDiagnosticsService {
         this.prismaService.getAppliedMigrationNames(),
         this.prismaService.tableExists("EmailVerificationToken"),
       ]);
-    const missingRequiredMigrations = REQUIRED_VERIFICATION_MIGRATION_NAMES.filter(
-      (migrationName) => !appliedMigrationNames.includes(migrationName),
-    );
+    const missingRequiredMigrations =
+      REQUIRED_VERIFICATION_MIGRATION_NAMES.filter(
+        (migrationName) => !appliedMigrationNames.includes(migrationName),
+      );
 
     let tokenMetrics = {
       activeTokens: 0,
@@ -110,7 +124,8 @@ export class VerificationDiagnosticsService {
       };
     }
 
-    const trustFactors = this.verificationPolicyService.getAvailableTrustFactors();
+    const trustFactors =
+      this.verificationPolicyService.getAvailableTrustFactors();
     const requirements = Object.entries(
       this.verificationPolicyService.getRequirementCatalog(),
     ).map(([requirement, definition]) => ({
@@ -132,10 +147,7 @@ export class VerificationDiagnosticsService {
         verificationDependenciesOperational && passwordResetConfigured
           ? "ok"
           : "degraded",
-      environment: this.configService.get<string>(
-        "app.nodeEnv",
-        "development",
-      ),
+      environment: this.configService.get<string>("app.nodeEnv", "development"),
       mailConfigured: mailConfigurationStatus.configured,
       passwordResetConfigured,
       smsConfigured: smsConfigurationStatus.configured,
@@ -147,6 +159,21 @@ export class VerificationDiagnosticsService {
       trustFactors,
       requirements,
       tokenMetrics,
+    };
+  }
+
+  async getPublicRuntimeDiagnostics(): Promise<PublicVerificationDiagnostics> {
+    const diagnostics = await this.getRuntimeDiagnostics();
+
+    return {
+      status: diagnostics.status,
+      environment: diagnostics.environment,
+      mailConfigured: diagnostics.mailConfigured,
+      passwordResetConfigured: diagnostics.passwordResetConfigured,
+      smsConfigured: diagnostics.smsConfigured,
+      emailVerificationTableExists: diagnostics.emailVerificationTableExists,
+      verificationDependenciesOperational:
+        diagnostics.verificationDependenciesOperational,
     };
   }
 }

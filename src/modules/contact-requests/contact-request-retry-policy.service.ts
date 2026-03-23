@@ -14,15 +14,15 @@ export class ContactRequestRetryPolicyService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async assertCanCreateRequest(
-    userId: string,
-    targetUserId: string,
+    fromPersonaId: string,
+    toPersonaId: string,
     now = new Date(),
   ): Promise<void> {
     const existingPendingRequest =
       await this.prismaService.contactRequest.findFirst({
         where: {
-          fromUserId: userId,
-          toUserId: targetUserId,
+          fromPersonaId,
+          toPersonaId,
           status: PrismaContactRequestStatus.PENDING,
         },
         select: {
@@ -39,8 +39,8 @@ export class ContactRequestRetryPolicyService {
     const latestRejectedRequest =
       await this.prismaService.contactRequest.findFirst({
         where: {
-          fromUserId: userId,
-          toUserId: targetUserId,
+          fromPersonaId,
+          toPersonaId,
           status: PrismaContactRequestStatus.REJECTED,
           respondedAt: {
             gte: new Date(now.getTime() - REQUEST_RETRY_COOLDOWN_IN_MS),

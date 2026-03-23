@@ -17,6 +17,7 @@ import { NotificationType } from "../../common/enums/notification-type.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { BlocksService } from "../blocks/blocks.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import type { CreateEventJoinedNotificationData } from "../notifications/notification-payloads";
 import { PersonasService } from "../personas/personas.service";
 import { VerificationPolicyService } from "../auth/verification-policy.service";
 
@@ -63,11 +64,13 @@ const noopNotificationsService: Pick<NotificationsService, "createSafe"> = {
   createSafe: async () => undefined,
 };
 
-const noopVerificationPolicyService: Pick<
+const failClosedVerificationPolicyService: Pick<
   VerificationPolicyService,
   "assertUserIsVerified"
 > = {
-  assertUserIsVerified: async () => undefined,
+  assertUserIsVerified: async () => {
+    throw new Error("Verification policy service is not configured");
+  },
 };
 
 @Injectable()
@@ -77,8 +80,7 @@ export class EventsService {
     private readonly personasService: PersonasService,
     private readonly blocksService: BlocksService,
     private readonly notificationsService: NotificationsService = noopNotificationsService as NotificationsService,
-    private readonly verificationPolicyService: VerificationPolicyService =
-      noopVerificationPolicyService as VerificationPolicyService,
+    private readonly verificationPolicyService: VerificationPolicyService = failClosedVerificationPolicyService as VerificationPolicyService,
   ) {}
 
   async create(userId: string, createEventDto: CreateEventDto) {
@@ -87,23 +89,32 @@ export class EventsService {
       "create_event",
     );
 
+    const name = normalizeRequiredEventField(createEventDto.name, "name");
+    const slug = normalizeRequiredEventField(
+      createEventDto.slug,
+      "slug",
+    ).toLowerCase();
+    const location = normalizeRequiredEventField(
+      createEventDto.location,
+      "location",
+    );
     const startsAt = new Date(createEventDto.startsAt);
     const endsAt = new Date(createEventDto.endsAt);
+    const status = createEventDto.status ?? EventStatus.Draft;
 
     this.assertValidEventWindow(startsAt, endsAt);
+    this.assertStatusMatchesEventWindow(status, startsAt, endsAt);
 
     try {
       const event = await this.prismaService.event.create({
         data: {
-          name: createEventDto.name.trim(),
-          slug: createEventDto.slug.trim().toLowerCase(),
+          name,
+          slug,
           description: createEventDto.description ?? null,
           startsAt,
           endsAt,
-          location: createEventDto.location.trim(),
-          status: toPrismaEventStatus(
-            createEventDto.status ?? EventStatus.Draft,
-          ),
+          location,
+          status: toPrismaEventStatus(status),
           createdByUserId: userId,
         },
         select: eventSelect,
@@ -213,21 +224,20 @@ export class EventsService {
           userId,
           personaId: persona.id,
           role: toPrismaEventParticipantRole(
-            joinEventDto.role ?? EventParticipantRole.Attendee,
+            resolveJoinRole(joinEventDto.role),
           ),
         },
         select: eventParticipantSelect,
       });
+
+      const notificationData: CreateEventJoinedNotificationData = {};
 
       await this.notificationsService.createSafe({
         userId,
         type: NotificationType.EventJoined,
         title: "Event joined",
         body: `You joined ${event.name}`,
-        data: {
-          eventId: event.id,
-          personaId: persona.id,
-        },
+        data: notificationData,
       });
 
       return this.findOne(userId, event.id);
@@ -392,6 +402,7 @@ export class EventsService {
               id: true,
               startsAt: true,
               endsAt: true,
+              status: true,
             },
           },
         },
@@ -472,8 +483,16 @@ export class EventsService {
     }
   }
 
-  private assertDiscoveryWindowOpen(event: { startsAt: Date; endsAt: Date }) {
+  private assertDiscoveryWindowOpen(event: {
+    startsAt: Date;
+    endsAt: Date;
+    status?: PrismaEventStatus;
+  }) {
     const now = new Date();
+
+    if (event.status !== undefined && event.status !== PrismaEventStatus.LIVE) {
+      throw new ForbiddenException("Event discovery is not active");
+    }
 
     if (event.startsAt > now || event.endsAt <= now) {
       throw new ForbiddenException("Event discovery is not active");
@@ -488,11 +507,45 @@ export class EventsService {
     const now = new Date();
 
     if (
-      event.status === PrismaEventStatus.DRAFT ||
+      event.status !== PrismaEventStatus.LIVE ||
       event.endsAt <= now ||
       event.startsAt > now
     ) {
       throw new ForbiddenException("Event join is not active");
+    }
+  }
+
+  private assertStatusMatchesEventWindow(
+    status: EventStatus,
+    startsAt: Date,
+    endsAt: Date,
+  ) {
+    const now = new Date();
+
+    if (status === EventStatus.Draft) {
+      return;
+    }
+
+    if (status === EventStatus.Published) {
+      if (startsAt <= now) {
+        throw new BadRequestException(
+          "Published events must start in the future",
+        );
+      }
+
+      return;
+    }
+
+    if (status === EventStatus.Live) {
+      if (startsAt > now || endsAt <= now) {
+        throw new BadRequestException("Live events must be active right now");
+      }
+
+      return;
+    }
+
+    if (endsAt > now) {
+      throw new BadRequestException("Ended events must have already finished");
     }
   }
   private toParticipantView(
@@ -527,6 +580,28 @@ export class EventsService {
   }
 }
 
+function normalizeRequiredEventField(
+  value: string,
+  fieldName: "name" | "slug" | "location",
+): string {
+  const normalizedValue = value.trim();
+
+  if (normalizedValue.length === 0) {
+    throw new BadRequestException(`Event ${fieldName} cannot be empty`);
+  }
+
+  if (
+    fieldName === "slug" &&
+    !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(normalizedValue)
+  ) {
+    throw new BadRequestException(
+      "Event slug must contain only lowercase letters, numbers, and single hyphens",
+    );
+  }
+
+  return normalizedValue;
+}
+
 function toPrismaEventStatus(status: EventStatus): PrismaEventStatus {
   switch (status) {
     case EventStatus.Draft:
@@ -555,6 +630,16 @@ function toPrismaEventParticipantRole(
   }
 
   throw new Error("Unsupported event participant role");
+}
+
+function resolveJoinRole(role?: EventParticipantRole): EventParticipantRole {
+  if (role === undefined || role === EventParticipantRole.Attendee) {
+    return EventParticipantRole.Attendee;
+  }
+
+  throw new BadRequestException(
+    "Only attendee role can be self-assigned when joining an event",
+  );
 }
 
 function toApiEventParticipantRole(

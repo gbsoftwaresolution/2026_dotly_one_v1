@@ -21,7 +21,6 @@ import {
 } from "../../infrastructure/logging/security-audit.service";
 import { SmsService } from "../../infrastructure/sms/sms.service";
 import { AnalyticsService } from "../analytics/analytics.service";
-import { buildPersonaTrustState } from "../personas/persona-trust";
 import {
   AuthAbuseProtectionService,
   AuthActionContext,
@@ -55,6 +54,7 @@ import { RevokeSessionDto } from "./dto/revoke-session.dto";
 import { SignupDto } from "./dto/signup.dto";
 import { VerifyEmailDto } from "./dto/verify-email.dto";
 import { VerifyMobileOtpDto } from "./dto/verify-mobile-otp.dto";
+import { buildStoredPersonaTrustState } from "../personas/persona-trust";
 
 const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 const EMAIL_VERIFICATION_RESEND_COOLDOWN_MS = 60 * 1000;
@@ -120,23 +120,24 @@ export class AuthService {
       logWithMeta: () => undefined,
     } as unknown as AppLoggerService,
     @Optional()
-    private readonly securityAuditService: Pick<SecurityAuditService, "log"> =
-      noopSecurityAuditService,
+    private readonly securityAuditService: Pick<
+      SecurityAuditService,
+      "log"
+    > = noopSecurityAuditService,
     @Optional()
     private readonly authMetricsService: AuthMetricsService = noopAuthMetricsService,
     @Optional()
-    private readonly authAbuseProtectionService: AuthAbuseProtectionService =
-      {
-        getLoginThrottle: async () => null,
-        recordLoginFailure: async () => null,
-        consumeSignupAttempt: async () => null,
-        consumePasswordResetRequest: async () => null,
-        consumePasswordResetCompletion: async () => null,
-        consumeVerificationResend: async () => null,
-        consumeVerificationCompletion: async () => null,
-        consumeMobileOtpRequest: async () => null,
-        consumeMobileOtpVerification: async () => null,
-      } as unknown as AuthAbuseProtectionService,
+    private readonly authAbuseProtectionService: AuthAbuseProtectionService = {
+      getLoginThrottle: async () => null,
+      recordLoginFailure: async () => null,
+      consumeSignupAttempt: async () => null,
+      consumePasswordResetRequest: async () => null,
+      consumePasswordResetCompletion: async () => null,
+      consumeVerificationResend: async () => null,
+      consumeVerificationCompletion: async () => null,
+      consumeMobileOtpRequest: async () => null,
+      consumeMobileOtpVerification: async () => null,
+    } as unknown as AuthAbuseProtectionService,
   ) {}
 
   private get prisma(): any {
@@ -147,10 +148,11 @@ export class AuthService {
     this.passwordPolicyService.validate(signupDto.password);
 
     const normalizedEmail = this.normalizeEmailAddress(signupDto.email);
-    const signupThrottle = await this.authAbuseProtectionService.consumeSignupAttempt(
-      normalizedEmail,
-      auditContext,
-    );
+    const signupThrottle =
+      await this.authAbuseProtectionService.consumeSignupAttempt(
+        normalizedEmail,
+        auditContext,
+      );
 
     if (signupThrottle) {
       this.authMetricsService.recordSignupThrottle(
@@ -276,10 +278,11 @@ export class AuthService {
   async login(loginDto: LoginDto, context?: SessionContext) {
     try {
       const normalizedEmail = this.normalizeEmailAddress(loginDto.email);
-      const loginThrottle = await this.authAbuseProtectionService.getLoginThrottle(
-        normalizedEmail,
-        context,
-      );
+      const loginThrottle =
+        await this.authAbuseProtectionService.getLoginThrottle(
+          normalizedEmail,
+          context,
+        );
 
       if (loginThrottle) {
         this.authMetricsService.recordLoginThrottle(
@@ -315,10 +318,11 @@ export class AuthService {
       });
 
       if (!user) {
-        const escalatedProtection = await this.authAbuseProtectionService.recordLoginFailure(
-          normalizedEmail,
-          context,
-        );
+        const escalatedProtection =
+          await this.authAbuseProtectionService.recordLoginFailure(
+            normalizedEmail,
+            context,
+          );
         this.authMetricsService.recordLoginFailure("unknown_email");
         this.logAuthAuditEvent("auth.login", "failure", {
           requestId: context?.requestId,
@@ -328,7 +332,8 @@ export class AuthService {
             ...(escalatedProtection
               ? {
                   escalatedProtectionReason: escalatedProtection.reason,
-                  challengeRecommended: escalatedProtection.challengeRecommended,
+                  challengeRecommended:
+                    escalatedProtection.challengeRecommended,
                 }
               : {}),
           },
@@ -342,10 +347,11 @@ export class AuthService {
       );
 
       if (!isPasswordValid) {
-        const escalatedProtection = await this.authAbuseProtectionService.recordLoginFailure(
-          normalizedEmail,
-          context,
-        );
+        const escalatedProtection =
+          await this.authAbuseProtectionService.recordLoginFailure(
+            normalizedEmail,
+            context,
+          );
         this.authMetricsService.recordLoginFailure("invalid_password");
         this.logAuthAuditEvent("auth.login", "failure", {
           actorUserId: user.id,
@@ -401,7 +407,10 @@ export class AuthService {
     }
   }
 
-  async verifyEmail(verifyEmailDto: VerifyEmailDto, auditContext?: AuditContext) {
+  async verifyEmail(
+    verifyEmailDto: VerifyEmailDto,
+    auditContext?: AuditContext,
+  ) {
     try {
       const verificationThrottle =
         await this.authAbuseProtectionService.consumeVerificationCompletion(
@@ -526,18 +535,9 @@ export class AuthService {
           },
         });
 
-        await tx.persona?.updateMany?.({
-          where: {
-            userId: token.userId,
-          },
-          data: {
-            emailVerified: true,
-            trustScore: buildPersonaTrustState({
-              emailVerified: true,
-              phoneVerified: Boolean(verifiedUser.phoneVerifiedAt),
-              businessVerified: false,
-            }).trustScore,
-          },
+        await this.syncPersonaTrustState(tx, token.userId, {
+          isVerified: true,
+          phoneVerifiedAt: verifiedUser.phoneVerifiedAt,
         });
 
         await tx.emailVerificationToken.update({
@@ -610,10 +610,11 @@ export class AuthService {
       const normalizedEmail = this.normalizeEmailAddress(
         resendVerificationEmailDto.email,
       );
-      const resendThrottle = await this.authAbuseProtectionService.consumeVerificationResend(
-        normalizedEmail,
-        auditContext,
-      );
+      const resendThrottle =
+        await this.authAbuseProtectionService.consumeVerificationResend(
+          normalizedEmail,
+          auditContext,
+        );
 
       if (resendThrottle) {
         this.authMetricsService.recordVerificationResend(
@@ -707,7 +708,10 @@ export class AuthService {
       };
     } catch (error) {
       if (!(error instanceof HttpException)) {
-        this.authMetricsService.recordVerificationResend("failed", "system_error");
+        this.authMetricsService.recordVerificationResend(
+          "failed",
+          "system_error",
+        );
       }
 
       throw error;
@@ -754,10 +758,11 @@ export class AuthService {
         };
       }
 
-      const resendThrottle = await this.authAbuseProtectionService.consumeVerificationResend(
-        user.email,
-        auditContext,
-      );
+      const resendThrottle =
+        await this.authAbuseProtectionService.consumeVerificationResend(
+          user.email,
+          auditContext,
+        );
 
       if (resendThrottle) {
         this.authMetricsService.recordVerificationResend(
@@ -818,7 +823,10 @@ export class AuthService {
       };
     } catch (error) {
       if (!(error instanceof HttpException)) {
-        this.authMetricsService.recordVerificationResend("failed", "system_error");
+        this.authMetricsService.recordVerificationResend(
+          "failed",
+          "system_error",
+        );
       }
 
       throw error;
@@ -927,7 +935,9 @@ export class AuthService {
     auditContext?: AuditContext,
   ) {
     try {
-      const normalizedEmail = this.normalizeEmailAddress(forgotPasswordDto.email);
+      const normalizedEmail = this.normalizeEmailAddress(
+        forgotPasswordDto.email,
+      );
 
       const passwordResetThrottle =
         await this.authAbuseProtectionService.consumePasswordResetRequest(
@@ -956,7 +966,10 @@ export class AuthService {
         );
       }
 
-      await this.assertAnonymousPasswordResetAllowed(normalizedEmail, auditContext);
+      await this.assertAnonymousPasswordResetAllowed(
+        normalizedEmail,
+        auditContext,
+      );
 
       const user = await this.prisma.user.findUnique({
         where: {
@@ -999,7 +1012,10 @@ export class AuthService {
         return PASSWORD_RESET_GENERIC_RESPONSE;
       }
 
-      const passwordReset = await this.issuePasswordResetToken(user.id, user.email);
+      const passwordReset = await this.issuePasswordResetToken(
+        user.id,
+        user.email,
+      );
 
       this.authMetricsService.recordPasswordResetRequest(
         "requested",
@@ -1020,7 +1036,10 @@ export class AuthService {
       return PASSWORD_RESET_GENERIC_RESPONSE;
     } catch (error) {
       if (!(error instanceof HttpException)) {
-        this.authMetricsService.recordPasswordResetRequest("failed", "system_error");
+        this.authMetricsService.recordPasswordResetRequest(
+          "failed",
+          "system_error",
+        );
       }
 
       throw error;
@@ -1153,7 +1172,10 @@ export class AuthService {
         );
       });
 
-      this.authMetricsService.recordPasswordResetCompletion("completed", "none");
+      this.authMetricsService.recordPasswordResetCompletion(
+        "completed",
+        "none",
+      );
 
       this.logAuthAuditEvent("auth.password_reset.complete", "success", {
         actorUserId: token.userId,
@@ -1408,12 +1430,15 @@ export class AuthService {
           targetId: challenge.id,
           reason: "attempt_limit_reached",
         });
-        throw authTooManyRequests(AUTH_ERROR_MESSAGES.mobileOtpAttemptRateLimit);
+        throw authTooManyRequests(
+          AUTH_ERROR_MESSAGES.mobileOtpAttemptRateLimit,
+        );
       }
 
       if (
         challenge.lastAttemptAt &&
-        now.getTime() - challenge.lastAttemptAt.getTime() < OTP_ATTEMPT_COOLDOWN_MS
+        now.getTime() - challenge.lastAttemptAt.getTime() <
+          OTP_ATTEMPT_COOLDOWN_MS
       ) {
         this.authMetricsService.recordOtpVerification(
           "throttled",
@@ -1485,34 +1510,40 @@ export class AuthService {
       }
 
       await this.prismaService.$transaction(async (tx: any) => {
-        const updatedUser = await tx.user.update({
-          where: {
-            id: userId,
-          },
-          data: {
-            phoneNumber: challenge.phoneNumber,
-            pendingPhoneNumber: null,
-            phoneVerifiedAt: now,
-          },
-          select: {
-            id: true,
-            isVerified: true,
-          },
-        });
+        let updatedUser;
 
-        await tx.persona?.updateMany?.({
-          where: {
-            userId,
-          },
-          data: {
-            phoneVerified: true,
-            trustScore: buildPersonaTrustState({
-              emailVerified: Boolean(updatedUser.isVerified),
-              phoneVerified: true,
-              businessVerified: false,
-            }).trustScore,
-          },
-        });
+        try {
+          updatedUser = await tx.user.update({
+            where: {
+              id: userId,
+            },
+            data: {
+              phoneNumber: challenge.phoneNumber,
+              pendingPhoneNumber: null,
+              phoneVerifiedAt: now,
+            },
+            select: {
+              id: true,
+              isVerified: true,
+              phoneVerifiedAt: true,
+            },
+          });
+        } catch (error) {
+          if (
+            (error instanceof Prisma.PrismaClientKnownRequestError ||
+              (typeof error === "object" &&
+                error !== null &&
+                "code" in error &&
+                error.code === "P2002")) &&
+            error.code === "P2002"
+          ) {
+            throw authConflict(AUTH_ERROR_MESSAGES.mobileNumberAlreadyVerified);
+          }
+
+          throw error;
+        }
+
+        await this.syncPersonaTrustState(tx, userId, updatedUser);
 
         await tx.mobileOtpChallenge.update({
           where: {
@@ -1592,9 +1623,8 @@ export class AuthService {
     auditContext?: AuditContext,
   ) {
     try {
-      const trackedCurrentSessionId = this.assertTrackedCurrentSessionId(
-        currentSessionId,
-      );
+      const trackedCurrentSessionId =
+        this.assertTrackedCurrentSessionId(currentSessionId);
       const requestedSessionId = this.normalizeOpaqueToken(dto.sessionId);
 
       if (requestedSessionId === trackedCurrentSessionId) {
@@ -1687,9 +1717,8 @@ export class AuthService {
     auditContext?: AuditContext,
   ) {
     try {
-      const trackedCurrentSessionId = this.assertTrackedCurrentSessionId(
-        currentSessionId,
-      );
+      const trackedCurrentSessionId =
+        this.assertTrackedCurrentSessionId(currentSessionId);
       const revokedCount = await this.deviceSessionService.revokeOtherSessions(
         userId,
         trackedCurrentSessionId,
@@ -1735,9 +1764,8 @@ export class AuthService {
     auditContext?: AuditContext,
   ) {
     try {
-      const trackedCurrentSessionId = this.assertTrackedCurrentSessionId(
-        currentSessionId,
-      );
+      const trackedCurrentSessionId =
+        this.assertTrackedCurrentSessionId(currentSessionId);
       await this.deviceSessionService.revokeSession(
         userId,
         trackedCurrentSessionId,
@@ -1878,52 +1906,54 @@ export class AuthService {
     const code = String(randomInt(100000, 1000000));
     const expiresAt = new Date(now.getTime() + OTP_TTL_MS);
     const resendAvailableAt = new Date(now.getTime() + OTP_RESEND_COOLDOWN_MS);
-    const createdChallenge = await this.prismaService.$transaction(async (tx: any) => {
-      await tx.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          pendingPhoneNumber: phoneNumber,
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      await tx.mobileOtpChallenge.updateMany({
-        where: {
-          userId,
-          purpose: MOBILE_OTP_ENROLLMENT_PURPOSE,
-          consumedAt: null,
-          supersededAt: null,
-          expiresAt: {
-            gt: now,
+    const createdChallenge = await this.prismaService.$transaction(
+      async (tx: any) => {
+        await tx.user.update({
+          where: {
+            id: userId,
           },
-        },
-        data: {
-          supersededAt: now,
-        },
-      });
+          data: {
+            pendingPhoneNumber: phoneNumber,
+          },
+          select: {
+            id: true,
+          },
+        });
 
-      return tx.mobileOtpChallenge.create({
-        data: {
-          userId,
-          phoneNumber,
-          purpose: MOBILE_OTP_ENROLLMENT_PURPOSE,
-          codeHash: this.hashVerificationToken(code),
-          expiresAt,
-          resendAvailableAt,
-        },
-        select: {
-          id: true,
-          purpose: true,
-        },
-      }) as Promise<{
-        id: string;
-        purpose: string;
-      }>;
-    });
+        await tx.mobileOtpChallenge.updateMany({
+          where: {
+            userId,
+            purpose: MOBILE_OTP_ENROLLMENT_PURPOSE,
+            consumedAt: null,
+            supersededAt: null,
+            expiresAt: {
+              gt: now,
+            },
+          },
+          data: {
+            supersededAt: now,
+          },
+        });
+
+        return tx.mobileOtpChallenge.create({
+          data: {
+            userId,
+            phoneNumber,
+            purpose: MOBILE_OTP_ENROLLMENT_PURPOSE,
+            codeHash: this.hashVerificationToken(code),
+            expiresAt,
+            resendAvailableAt,
+          },
+          select: {
+            id: true,
+            purpose: true,
+          },
+        }) as Promise<{
+          id: string;
+          purpose: string;
+        }>;
+      },
+    );
 
     const deliverySucceeded = await this.smsService.sendOtp({
       to: phoneNumber,
@@ -1996,9 +2026,7 @@ export class AuthService {
           recentIssueCount,
         },
       });
-      throw authTooManyRequests(
-        AUTH_ERROR_MESSAGES.verificationEmailRateLimit,
-      );
+      throw authTooManyRequests(AUTH_ERROR_MESSAGES.verificationEmailRateLimit);
     }
   }
 
@@ -2045,7 +2073,9 @@ export class AuthService {
     auditContext?: AuditContext,
   ) {
     const normalizedEmail = this.normalizeEmailAddress(email);
-    const keyHash = this.hashVerificationToken(`password-reset:${normalizedEmail}`);
+    const keyHash = this.hashVerificationToken(
+      `password-reset:${normalizedEmail}`,
+    );
     const cooldownKey = `auth:password-reset:cooldown:${keyHash}`;
     const windowKey = `auth:password-reset:window:${keyHash}`;
     const cooldownSeconds = Math.ceil(PASSWORD_RESET_COOLDOWN_MS / 1000);
@@ -2199,6 +2229,25 @@ export class AuthService {
 
   private normalizeEmailAddress(email: string): string {
     return email.trim().toLowerCase();
+  }
+
+  private async syncPersonaTrustState(
+    tx: any,
+    userId: string,
+    user: {
+      isVerified: boolean;
+      phoneVerifiedAt?: Date | null;
+      businessVerified?: boolean;
+    },
+  ): Promise<void> {
+    const trustState = buildStoredPersonaTrustState(user);
+
+    await tx.persona.updateMany({
+      where: {
+        userId,
+      },
+      data: trustState,
+    });
   }
 
   private normalizeOpaqueToken(value: string): string {

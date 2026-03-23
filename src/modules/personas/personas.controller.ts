@@ -38,6 +38,27 @@ export class PersonasController {
     return this.personasService.findAllByUser(user.id);
   }
 
+  @Get("me/share-fast")
+  findFastSharePayload(@CurrentUser() user: AuthenticatedUser) {
+    return this.personasService.getMyFastSharePayload(user.id);
+  }
+
+  @Get(":id/share-fast")
+  findPersonaFastSharePayload(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id", new ParseUUIDPipe()) id: string,
+  ) {
+    return this.personasService.getFastSharePayload(user.id, id);
+  }
+
+  @Get(":id/share")
+  findSharePayload(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id", new ParseUUIDPipe()) id: string,
+  ) {
+    return this.personasService.getPersonaShareMode(user.id, id);
+  }
+
   @Get(":id")
   findOne(
     @CurrentUser() user: AuthenticatedUser,

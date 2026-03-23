@@ -121,4 +121,36 @@ describe("VerificationPolicyService", () => {
     assert.equal(result.satisfied, true);
     assert.deepEqual(result.missingFactors, ["email_verified"]);
   });
+
+  it("applies the same trust-factor rule to instant connect", async () => {
+    const service = new VerificationPolicyService(
+      {
+        user: {
+          findUnique: async () => ({
+            id: "user-1",
+            isVerified: false,
+            phoneVerifiedAt: new Date("2026-03-23T10:00:00.000Z"),
+          }),
+        },
+      } as any,
+      undefined as any,
+      undefined as any,
+    );
+
+    const result = await service.getRequirementStatus(
+      "user-1",
+      "instant_connect",
+    );
+
+    assert.equal(result.satisfied, true);
+    assert.equal(
+      result.message,
+      "Verify your email or complete mobile OTP before using instant connect.",
+    );
+    assert.deepEqual(result.allowedFactors, [
+      "email_verified",
+      "mobile_otp_verified",
+    ]);
+    assert.deepEqual(result.missingFactors, ["email_verified"]);
+  });
 });

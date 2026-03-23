@@ -95,8 +95,10 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
           {isSmartCard ? (
             <PublicSmartCard
               profile={profile}
+              initialPersonas={personas}
               isAuthenticated={isAuthenticated}
               loginHref={loginHref}
+              personaLoadError={personaLoadError}
             />
           ) : (
             <PublicProfileCard profile={profile} />

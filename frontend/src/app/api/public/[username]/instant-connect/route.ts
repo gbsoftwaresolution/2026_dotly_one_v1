@@ -9,7 +9,7 @@ import {
 import type { InstantConnectResult } from "@/types/persona";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ username: string }> },
 ) {
   const startedAt = performance.now();
@@ -31,12 +31,37 @@ export async function POST(
 
   const { username } = await params;
 
+  let payload: { fromPersonaId?: string } | null = null;
+
+  try {
+    payload = (await request.json()) as { fromPersonaId?: string };
+  } catch {
+    payload = null;
+  }
+
+  const fromPersonaId = payload?.fromPersonaId?.trim();
+
+  if (!fromPersonaId) {
+    const response = NextResponse.json(
+      { message: "fromPersonaId is required." },
+      { status: 400 },
+    );
+
+    response.headers.set(
+      "server-timing",
+      `public-instant-connect;dur=${(performance.now() - startedAt).toFixed(2)}`,
+    );
+
+    return response;
+  }
+
   try {
     const result = await apiRequest<InstantConnectResult>(
       `/relationships/instant-connect/by-username/${encodeURIComponent(username)}`,
       {
         method: "POST",
         body: {
+          fromPersonaId,
           source: "profile",
         },
         token: accessToken,

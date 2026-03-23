@@ -240,6 +240,7 @@ model Persona {
   updatedAt                DateTime              @updatedAt
 
   @@index([userId])
+  @@unique([id, userId])
 }
 
 model QRAccessToken {
@@ -273,6 +274,7 @@ model Event {
   createdByUserId   String             @db.Uuid
   createdByUser     User               @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
   participants      EventParticipant[]
+  contactMemories   ContactMemory[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
@@ -290,7 +292,7 @@ model EventParticipant {
   joinedAt          DateTime             @default(now())
   event             Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  persona           Persona              @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  persona           Persona              @relation(fields: [personaId, userId], references: [id, userId], onDelete: Cascade)
 
   @@unique([eventId, userId])
   @@unique([eventId, personaId])
@@ -312,8 +314,8 @@ model ContactRequest {
   respondedAt   DateTime?
   fromUser      User                 @relation("ContactRequestFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
   toUser        User                 @relation("ContactRequestToUser", fields: [toUserId], references: [id], onDelete: Cascade)
-  fromPersona   Persona              @relation("ContactRequestFromPersona", fields: [fromPersonaId], references: [id], onDelete: Cascade)
-  toPersona     Persona              @relation("ContactRequestToPersona", fields: [toPersonaId], references: [id], onDelete: Cascade)
+  fromPersona   Persona              @relation("ContactRequestFromPersona", fields: [fromPersonaId, fromUserId], references: [id, userId], onDelete: Cascade)
+  toPersona     Persona              @relation("ContactRequestToPersona", fields: [toPersonaId, toUserId], references: [id, userId], onDelete: Cascade)
 
   @@index([fromUserId, createdAt])
   @@index([toUserId, status, createdAt])
@@ -339,8 +341,8 @@ model ContactRelationship {
   updatedAt       DateTime                 @updatedAt
   ownerUser       User                     @relation("ContactRelationshipOwnerUser", fields: [ownerUserId], references: [id], onDelete: Cascade)
   targetUser      User                     @relation("ContactRelationshipTargetUser", fields: [targetUserId], references: [id], onDelete: Cascade)
-  ownerPersona    Persona                  @relation("ContactRelationshipOwnerPersona", fields: [ownerPersonaId], references: [id], onDelete: Cascade)
-  targetPersona   Persona                  @relation("ContactRelationshipTargetPersona", fields: [targetPersonaId], references: [id], onDelete: Cascade)
+  ownerPersona    Persona                  @relation("ContactRelationshipOwnerPersona", fields: [ownerPersonaId, ownerUserId], references: [id, userId], onDelete: Cascade)
+  targetPersona   Persona                  @relation("ContactRelationshipTargetPersona", fields: [targetPersonaId, targetUserId], references: [id, userId], onDelete: Cascade)
   memories        ContactMemory[]
   followUps       FollowUp[]
 
@@ -379,8 +381,10 @@ model ContactMemory {
   metAt          DateTime
   note           String?             @db.Text
   relationship   ContactRelationship @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
+  event          Event?              @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   @@index([relationshipId])
+  @@index([eventId])
 }
 
 model Block {

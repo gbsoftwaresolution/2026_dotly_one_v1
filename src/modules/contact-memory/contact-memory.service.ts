@@ -86,18 +86,16 @@ export class ContactMemoryService {
       where: {
         relationshipId: data.relationshipId,
       },
-      orderBy: [{ metAt: "desc" }, { id: "desc" }],
+      orderBy: [{ metAt: "asc" }, { id: "asc" }],
       select: {
         id: true,
       },
     });
 
     if (existingMemory) {
-      return tx.contactMemory.update({
-        where: {
-          id: existingMemory.id,
-        },
+      const interactionMemory = await tx.contactMemory.create({
         data: {
+          relationshipId: data.relationshipId,
           eventId: data.eventId ?? null,
           contextLabel: data.contextLabel ?? data.sourceLabel ?? "",
           metAt: data.metAt,
@@ -107,6 +105,10 @@ export class ContactMemoryService {
           id: true,
         },
       });
+
+      return {
+        id: interactionMemory.id,
+      };
     }
 
     return this.createInitialMemory(tx, data);

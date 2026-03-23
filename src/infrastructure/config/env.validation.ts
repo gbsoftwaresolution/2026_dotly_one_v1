@@ -2,6 +2,7 @@ import * as Joi from "joi";
 
 const JWT_EXPIRY_PATTERN = /^(\d+)([smhd])$/;
 const TWILIO_ACCOUNT_SID_PATTERN = /^AC[a-zA-Z0-9]{32}$/;
+const EMAIL_ADDRESS_SCHEMA = Joi.string().email({ tlds: { allow: false } });
 
 const COMMON_PLACEHOLDER_SECRET_FRAGMENTS = [
   "replace-with",
@@ -28,6 +29,7 @@ export const envValidationSchema = Joi.object({
       Joi.string().valid("loopback", "linklocal", "uniquelocal"),
     )
     .default(false),
+  HEALTH_ENDPOINT_TOKEN: Joi.string().allow("").default(""),
   DATABASE_URL: Joi.string().min(1).required(),
   JWT_SECRET: Joi.string().min(1).required(),
   JWT_EXPIRES_IN: Joi.string().pattern(JWT_EXPIRY_PATTERN).default("7d"),
@@ -45,7 +47,17 @@ export const envValidationSchema = Joi.object({
   MAILGUN_API_KEY: Joi.string().allow("").default(""),
   MAILGUN_DOMAIN: Joi.string().allow("").default(""),
   MAIL_FROM_EMAIL: Joi.string()
-    .email({ tlds: { allow: false } })
+    .custom((value, helpers) => {
+      const normalized = String(value).trim();
+
+      if (normalized.length === 0) {
+        return "";
+      }
+
+      return isValidMailboxAddress(normalized)
+        ? normalized
+        : helpers.error("string.email");
+    }, "mailbox validation")
     .allow("")
     .default(""),
   FRONTEND_VERIFICATION_URL_BASE: Joi.string()
@@ -57,7 +69,10 @@ export const envValidationSchema = Joi.object({
     .allow("")
     .default(""),
   TWILIO_ACCOUNT_SID: Joi.alternatives()
-    .try(Joi.string().length(0), Joi.string().pattern(TWILIO_ACCOUNT_SID_PATTERN))
+    .try(
+      Joi.string().length(0),
+      Joi.string().pattern(TWILIO_ACCOUNT_SID_PATTERN),
+    )
     .default(""),
   TWILIO_AUTH_TOKEN: Joi.string().allow("").default(""),
   TWILIO_FROM_PHONE_NUMBER: Joi.string()
@@ -67,6 +82,18 @@ export const envValidationSchema = Joi.object({
   QR_BASE_URL: Joi.string()
     .uri({ scheme: [/https?/] })
     .default("https://dotly.id/q"),
+  FOLLOW_UPS_PROCESSING_ENABLED: Joi.boolean()
+    .truthy("true")
+    .truthy("1")
+    .falsy("false")
+    .falsy("0")
+    .default(true),
+  FOLLOW_UPS_PROCESSING_CRON: Joi.string().min(1).default("* * * * *"),
+  FOLLOW_UPS_PROCESSING_BATCH_SIZE: Joi.number()
+    .integer()
+    .min(1)
+    .max(1000)
+    .default(100),
 }).unknown(true);
 
 export function validateEnvironment(config: EnvRecord): EnvRecord {
@@ -91,11 +118,7 @@ export function validateEnvironment(config: EnvRecord): EnvRecord {
   );
   assertProviderConfiguration(
     value,
-    [
-      "TWILIO_ACCOUNT_SID",
-      "TWILIO_AUTH_TOKEN",
-      "TWILIO_FROM_PHONE_NUMBER",
-    ],
+    ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM_PHONE_NUMBER"],
     "SMS delivery requires the Twilio account SID, auth token, and sender phone number to be configured together.",
     errors,
   );
@@ -110,6 +133,11 @@ export function validateEnvironment(config: EnvRecord): EnvRecord {
     assertStrongSecret(
       value.JWT_SECRET,
       "JWT_SECRET must be at least 32 characters and use a non-placeholder high-entropy value in production.",
+      errors,
+    );
+    assertStrongSecret(
+      value.HEALTH_ENDPOINT_TOKEN,
+      "HEALTH_ENDPOINT_TOKEN must be at least 32 characters and use a non-placeholder high-entropy value in production.",
       errors,
     );
     assertTrustedOrigins(value.CORS_ORIGINS, errors);
@@ -230,7 +258,9 @@ function assertTrustedUrl(
   const normalized = String(value ?? "").trim();
 
   if (!normalized) {
-    errors.push(`${label} must be configured with a trusted HTTPS URL in production.`);
+    errors.push(
+      `${label} must be configured with a trusted HTTPS URL in production.`,
+    );
     return;
   }
 
@@ -248,12 +278,28 @@ function assertTrustedUrl(
   }
 
   if (isLocalOrPlaceholderHost(parsed.hostname)) {
-    errors.push(`${label} must not target localhost or a placeholder host in production.`);
+    errors.push(
+      `${label} must not target localhost or a placeholder host in production.`,
+    );
   }
 }
 
 function hasValue(value: unknown): boolean {
   return String(value ?? "").trim().length > 0;
+}
+
+function isValidMailboxAddress(value: string): boolean {
+  const trimmedValue = value.trim();
+  const mailboxMatch = trimmedValue.match(/^([^<>]+)\s*<([^<>]+)>$/);
+  const emailCandidate = mailboxMatch
+    ? mailboxMatch[2]?.trim() ?? ""
+    : trimmedValue;
+
+  if (mailboxMatch && mailboxMatch[1]?.trim().length === 0) {
+    return false;
+  }
+
+  return EMAIL_ADDRESS_SCHEMA.validate(emailCandidate).error === undefined;
 }
 
 function assertContainsPlaceholderSecret(value: string): boolean {

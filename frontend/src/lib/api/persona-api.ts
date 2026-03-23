@@ -1,5 +1,7 @@
 import type {
   CreatePersonaInput,
+  MyFastSharePayload,
+  PersonaFastSharePayload,
   PersonaSummary,
   UpdatePersonaInput,
   UpdatePersonaSharingInput,
@@ -18,6 +20,28 @@ export const personaApi = {
   get: (personaId: string, token?: string) =>
     apiRequest<PersonaSummary>(
       token ? `/personas/${personaId}` : `/api/personas/${personaId}`,
+      {
+        token,
+        baseUrl: token ? undefined : "",
+        credentials: token ? undefined : "same-origin",
+      },
+    ),
+
+  getFastShare: (personaId: string, token?: string) =>
+    apiRequest<PersonaFastSharePayload>(
+      token
+        ? `/personas/${personaId}/share-fast`
+        : `/api/personas/${personaId}/share-fast`,
+      {
+        token,
+        baseUrl: token ? undefined : "",
+        credentials: token ? undefined : "same-origin",
+      },
+    ),
+
+  getMyFastShare: (token?: string) =>
+    apiRequest<MyFastSharePayload>(
+      token ? "/personas/me/share-fast" : "/api/personas/me/share-fast",
       {
         token,
         baseUrl: token ? undefined : "",

@@ -1,7 +1,4 @@
-import {
-  PersonaAccessMode as PrismaPersonaAccessMode,
-  PersonaSharingMode as PrismaPersonaSharingMode,
-} from "@prisma/client";
+import { PersonaAccessMode as PrismaPersonaAccessMode } from "@prisma/client";
 
 import { PersonaSharingMode } from "../../../common/enums/persona-sharing-mode.enum";
 import {
@@ -10,6 +7,7 @@ import {
   type PersonaSmartCardActionState,
   type PersonaSmartCardActionLinks,
   type PersonaSmartCardConfig,
+  toPrismaSharingMode,
   toApiSharingMode,
 } from "../../personas/persona-sharing";
 import { buildPublicPersonaTrustSignals } from "../../personas/persona-trust";
@@ -17,6 +15,7 @@ import { canonicalizePublicUrl } from "../../personas/public-url";
 
 interface PublicPersonaSource {
   id?: string;
+  userId?: string;
   username: string;
   publicUrl: string;
   fullName: string;
@@ -25,10 +24,11 @@ interface PublicPersonaSource {
   tagline: string;
   profilePhotoUrl: string | null;
   accessMode: PrismaPersonaAccessMode;
-  sharingMode: PrismaPersonaSharingMode;
-  emailVerified?: boolean;
-  phoneVerified?: boolean;
-  businessVerified?: boolean;
+  sharingMode: string;
+  verifiedOnly?: boolean | null;
+  emailVerified?: boolean | null;
+  phoneVerified?: boolean | null;
+  businessVerified?: boolean | null;
   smartCardConfig: unknown;
   publicPhone: string | null;
   publicWhatsappNumber: string | null;
@@ -42,16 +42,15 @@ export class PublicPersonaTrustDto {
 
   isBusinessVerified!: boolean;
 
-  static fromVerification(
-    verification: Pick<
-      PublicPersonaSource,
-      "emailVerified" | "phoneVerified" | "businessVerified"
-    >,
-  ): PublicPersonaTrustDto {
+  static fromVerification(persona?: {
+    emailVerified?: boolean | null;
+    phoneVerified?: boolean | null;
+    businessVerified?: boolean | null;
+  }): PublicPersonaTrustDto {
     return buildPublicPersonaTrustSignals({
-      emailVerified: verification.emailVerified ?? false,
-      phoneVerified: verification.phoneVerified ?? false,
-      businessVerified: verification.businessVerified ?? false,
+      emailVerified: persona?.emailVerified ?? false,
+      phoneVerified: persona?.phoneVerified ?? false,
+      businessVerified: persona?.businessVerified ?? false,
     });
   }
 }
@@ -147,17 +146,25 @@ export class PublicPersonaDto {
       actionState?: PersonaSmartCardActionState | null;
     },
   ): PublicPersonaDto {
-    const sharingMode = toApiSharingMode(persona.sharingMode);
+    const prismaSharingMode = toPrismaSharingMode(
+      normalizeSharingMode(persona.sharingMode) === PersonaSharingMode.SmartCard
+        ? PersonaSharingMode.SmartCard
+        : PersonaSharingMode.Controlled,
+    );
+    const sharingMode = toApiSharingMode(prismaSharingMode);
     const publicSmartCardResponse = buildPublicSmartCardResponse({
       username: persona.username,
-      sharingMode: persona.sharingMode,
+      sharingMode: prismaSharingMode,
       smartCardConfig: persona.smartCardConfig,
       publicPhone: persona.publicPhone,
       publicWhatsappNumber: persona.publicWhatsappNumber,
       publicEmail: persona.publicEmail,
     });
     const safeSmartCardConfig = publicSmartCardResponse.smartCardConfig;
-    const publicUrl = canonicalizePublicUrl(persona.publicUrl, persona.username);
+    const publicUrl = canonicalizePublicUrl(
+      persona.publicUrl,
+      persona.username,
+    );
     const smartCard =
       sharingMode === PersonaSharingMode.Controlled ||
       safeSmartCardConfig === null ||
@@ -184,4 +191,10 @@ export class PublicPersonaDto {
       trust: PublicPersonaTrustDto.fromVerification(persona),
     } satisfies PublicPersonaDto;
   }
+}
+
+function normalizeSharingMode(value: string): PersonaSharingMode {
+  return value === "SMART_CARD" || value === PersonaSharingMode.SmartCard
+    ? PersonaSharingMode.SmartCard
+    : PersonaSharingMode.Controlled;
 }

@@ -82,6 +82,62 @@ describe("UsersService security profile", () => {
     ]);
   });
 
+  it("derives unlocked actions only from runtime verification-policy factors", async () => {
+    const service = new UsersService(
+      {
+        user: {
+          findUnique: async () => ({
+            id: "user-1",
+            email: "user@dotly.one",
+            isVerified: false,
+            phoneNumber: null,
+            pendingPhoneNumber: null,
+            phoneVerifiedAt: new Date("2026-03-23T10:00:00.000Z"),
+          }),
+        },
+        mobileOtpChallenge: {
+          findFirst: async () => null,
+        },
+      } as any,
+      {
+        isConfigured: () => false,
+        isEmailVerificationConfigured: () => false,
+      } as any,
+      {
+        isConfigured: () => false,
+      } as any,
+      {
+        getRequirementCatalog: () => ({
+          send_contact_request: {
+            label: "Send contact requests",
+            anyOf: ["email_verified", "mobile_otp_verified"],
+          },
+        }),
+        getAvailableTrustFactors: () => [
+          {
+            factor: "email_verified",
+            available: true,
+            source: "email",
+          },
+          {
+            factor: "mobile_otp_verified",
+            available: true,
+            source: "mobile_otp",
+          },
+        ],
+      } as any,
+      {} as any,
+    );
+
+    const result = await service.getCurrentUser("user-1");
+
+    assert.equal(result.security.trustBadge, "verified");
+    assert.deepEqual(result.security.unlockedActions, [
+      "Send contact requests",
+    ]);
+    assert.deepEqual(result.security.restrictedActions, []);
+  });
+
   it("delegates authenticated resend requests to AuthService", async () => {
     const calls: string[] = [];
     const service = new UsersService(

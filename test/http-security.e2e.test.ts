@@ -10,6 +10,7 @@ import { GlobalExceptionFilter } from "../src/common/filters/global-exception.fi
 import { ResponseEnvelopeInterceptor } from "../src/common/interceptors/response-envelope.interceptor";
 import { ContactRequestSourceType } from "../src/common/enums/contact-request-source-type.enum";
 import { JwtAuthGuard } from "../src/common/guards/jwt-auth.guard";
+import { PrismaService } from "../src/infrastructure/database/prisma.service";
 import { DeviceSessionService } from "../src/modules/auth/device-session.service";
 import { ContactRequestsController } from "../src/modules/contact-requests/contact-requests.controller";
 import { ContactRequestsService } from "../src/modules/contact-requests/contact-requests.service";
@@ -35,8 +36,27 @@ const sharingUpdateCalls: Array<{
   payload: unknown;
 }> = [];
 
+const publicProfileCalls: Array<unknown> = [];
+
 const personasServiceMock = {
   findAllByUser: async (userId: string) => [{ id: `persona-for-${userId}` }],
+  getPersonaShareMode: async (_userId: string, personaId: string) => ({
+    personaId,
+    username: "alice",
+    fullName: "Alice Demo",
+    sharingMode: "smart_card",
+    primaryAction: "instant_connect",
+    shareUrl: "https://dotly.one/u/alice",
+    qrValue: "https://dotly.one/u/alice",
+    preferredShareType: "instant_connect",
+    hasQuickConnect: true,
+    quickConnectUrl: "https://dotly.one/q/quick-share-1",
+    trust: {
+      isVerified: true,
+      isStrongVerified: false,
+      isBusinessVerified: false,
+    },
+  }),
   updateSharingMode: async (
     userId: string,
     personaId: string,
@@ -56,36 +76,40 @@ const personasServiceMock = {
 };
 
 const profilesServiceMock = {
-  getPublicProfile: async () => ({
-    username: "alice",
-    publicUrl: "https://dotly.id/alice",
-    fullName: "Alice Demo",
-    jobTitle: "Founder",
-    companyName: "Dotly",
-    tagline: "Connect fast",
-    profilePhotoUrl: null,
-    sharingMode: "smart_card",
-    instantConnectUrl: null,
-    trust: {
-      isVerified: true,
-      isStrongVerified: false,
-      isBusinessVerified: false,
-    },
-    smartCard: {
-      primaryAction: "request_access",
-      actionState: {
-        requestAccessEnabled: true,
-        instantConnectEnabled: false,
-        contactMeEnabled: true,
+  getPublicProfile: async (_username: string, options?: unknown) => {
+    publicProfileCalls.push(options ?? null);
+
+    return {
+      username: "alice",
+      publicUrl: "https://dotly.id/alice",
+      fullName: "Alice Demo",
+      jobTitle: "Founder",
+      companyName: "Dotly",
+      tagline: "Connect fast",
+      profilePhotoUrl: null,
+      sharingMode: "smart_card",
+      instantConnectUrl: null,
+      trust: {
+        isVerified: false,
+        isStrongVerified: false,
+        isBusinessVerified: false,
       },
-      actionLinks: {
-        call: null,
-        whatsapp: "https://wa.me/15551234567",
-        email: null,
-        vcard: "/v1/public/personas/alice/vcard",
+      smartCard: {
+        primaryAction: "request_access",
+        actionState: {
+          requestAccessEnabled: true,
+          instantConnectEnabled: false,
+          contactMeEnabled: true,
+        },
+        actionLinks: {
+          call: null,
+          whatsapp: "https://wa.me/15551234567",
+          email: null,
+          vcard: "/v1/public/personas/alice/vcard",
+        },
       },
-    },
-  }),
+    };
+  },
   getPublicVcard: async () => ({
     filename: "alice.vcf",
     content: [
@@ -101,19 +125,24 @@ const profilesServiceMock = {
   }),
 };
 
+const resolveQrCalls: Array<{ code: string; tracking: unknown }> = [];
 const qrServiceMock = {
-  resolveQr: async () => ({
-    type: "quick_connect",
-    code: "qr-code",
-    persona: {
-      username: "alice",
-      fullName: "Alice Demo",
-      jobTitle: "Founder",
-      companyName: "Dotly",
-      tagline: "Connect fast",
-      profilePhotoUrl: null,
-    },
-  }),
+  resolveQr: async (code: string, tracking: unknown) => {
+    resolveQrCalls.push({ code, tracking });
+
+    return {
+      type: "quick_connect",
+      code,
+      persona: {
+        username: "alice",
+        fullName: "Alice Demo",
+        jobTitle: "Founder",
+        companyName: "Dotly",
+        tagline: "Connect fast",
+        profilePhotoUrl: null,
+      },
+    };
+  },
 };
 
 const requestCalls: Array<{ userId: string; payload: unknown }> = [];
@@ -164,6 +193,16 @@ const deviceSessionServiceMock = {
       expiresAt: new Date("2026-03-28T09:00:00.000Z"),
     },
   }),
+};
+
+const prismaServiceMock = {
+  user: {
+    findUnique: async (args: { where: { id: string } }) => ({
+      id: args.where.id,
+      email: "user@example.com",
+      isVerified: false,
+    }),
+  },
 };
 
 const jwtService = new JwtService({
@@ -225,6 +264,10 @@ const jwtService = new JwtService({
     {
       provide: DeviceSessionService,
       useValue: deviceSessionServiceMock,
+    },
+    {
+      provide: PrismaService,
+      useValue: prismaServiceMock,
     },
   ],
 })
@@ -421,6 +464,48 @@ describe("HTTP Security E2E", () => {
     assert.equal(payload.message, "Authentication token is required");
   });
 
+  it("serves authenticated persona share payloads with only share-safe fields", async () => {
+    const token = await jwtService.signAsync({
+      sub: "user-84",
+      email: "user84@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(
+      `${baseUrl}/v1/personas/4b26dc1f-9238-46db-89c5-d9d2476f8c51/share`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.success, true);
+    assert.deepEqual(payload.data, {
+      personaId: "4b26dc1f-9238-46db-89c5-d9d2476f8c51",
+      username: "alice",
+      fullName: "Alice Demo",
+      sharingMode: "smart_card",
+      primaryAction: "instant_connect",
+      shareUrl: "https://dotly.one/u/alice",
+      qrValue: "https://dotly.one/u/alice",
+      preferredShareType: "instant_connect",
+      hasQuickConnect: true,
+      quickConnectUrl: "https://dotly.one/q/quick-share-1",
+      trust: {
+        isVerified: true,
+        isStrongVerified: false,
+        isBusinessVerified: false,
+      },
+    });
+    assert.equal(payload.data.accessMode, undefined);
+    assert.equal(payload.data.publicPhone, undefined);
+    assert.equal(payload.data.publicEmail, undefined);
+    assert.equal(payload.data.emailVerified, undefined);
+  });
+
   it("rejects tokens with the wrong audience", async () => {
     const token = await jwtService.signAsync(
       {
@@ -473,8 +558,27 @@ describe("HTTP Security E2E", () => {
     assert.equal(requestCalls.length, 0);
   });
 
-  it("serves public profiles with only the allowed public fields", async () => {
+  it("rejects unauthenticated public profile reads", async () => {
     const response = await fetch(`${baseUrl}/v1/public/personas/alice`);
+    const payload = await response.json();
+
+    assert.equal(response.status, 401);
+    assert.equal(payload.success, false);
+    assert.equal(payload.message, "Authentication token is required");
+  });
+
+  it("serves authenticated public profiles with only the allowed public fields", async () => {
+    publicProfileCalls.length = 0;
+    const token = await jwtService.signAsync({
+      sub: "viewer-user",
+      email: "viewer@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+    const response = await fetch(`${baseUrl}/v1/public/personas/alice`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     const payload = await response.json();
 
     assert.equal(response.status, 200);
@@ -490,7 +594,7 @@ describe("HTTP Security E2E", () => {
       sharingMode: "smart_card",
       instantConnectUrl: null,
       trust: {
-        isVerified: true,
+        isVerified: false,
         isStrongVerified: false,
         isBusinessVerified: false,
       },
@@ -516,10 +620,61 @@ describe("HTTP Security E2E", () => {
     assert.equal(payload.data.phoneVerified, undefined);
     assert.equal(payload.data.businessVerified, undefined);
     assert.equal(payload.data.trustScore, undefined);
+    assert.equal(
+      (publicProfileCalls.at(-1) as any)?.viewerUserId,
+      "viewer-user",
+    );
+    assert.equal(
+      typeof (publicProfileCalls.at(-1) as any)?.idempotencyKey,
+      "string",
+    );
   });
 
-  it("downloads public vcards without a JSON envelope", async () => {
+  it("passes the authenticated viewer identity to public profile reads", async () => {
+    publicProfileCalls.length = 0;
+    const token = await jwtService.signAsync({
+      sub: "viewer-user",
+      email: "viewer@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(`${baseUrl}/v1/public/personas/alice`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(
+      (publicProfileCalls.at(-1) as any)?.viewerUserId,
+      "viewer-user",
+    );
+    assert.equal(
+      typeof (publicProfileCalls.at(-1) as any)?.idempotencyKey,
+      "string",
+    );
+  });
+
+  it("rejects unauthenticated public vcard downloads", async () => {
     const response = await fetch(`${baseUrl}/v1/public/personas/alice/vcard`);
+    const payload = await response.json();
+
+    assert.equal(response.status, 401);
+    assert.equal(payload.success, false);
+    assert.equal(payload.message, "Authentication token is required");
+  });
+
+  it("downloads authenticated public vcards without a JSON envelope", async () => {
+    const token = await jwtService.signAsync({
+      sub: "viewer-user",
+      email: "viewer@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+    const response = await fetch(`${baseUrl}/v1/public/personas/alice/vcard`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     const payload = await response.text();
 
     assert.equal(response.status, 200);
@@ -536,8 +691,26 @@ describe("HTTP Security E2E", () => {
     assert.doesNotMatch(payload, /"success":true/);
   });
 
-  it("serves QR resolution without leaking internal QR metadata", async () => {
+  it("rejects unauthenticated QR resolution", async () => {
     const response = await fetch(`${baseUrl}/v1/qr/qr-code`);
+    const payload = await response.json();
+
+    assert.equal(response.status, 401);
+    assert.equal(payload.success, false);
+    assert.equal(payload.message, "Authentication token is required");
+  });
+
+  it("serves authenticated QR resolution without leaking internal QR metadata", async () => {
+    const token = await jwtService.signAsync({
+      sub: "viewer-user",
+      email: "viewer@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+    const response = await fetch(`${baseUrl}/v1/qr/qr-code`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     const payload = await response.json();
 
     assert.equal(response.status, 200);
@@ -565,20 +738,22 @@ describe("HTTP Security E2E", () => {
       sessionId: TEST_SESSION_ID,
     });
 
-    const response = await fetch(
-      `${baseUrl}/v1/notifications?limit=5&offset=0`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    const response = await fetch(`${baseUrl}/v1/qr/qr-code`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-    );
+    });
     const payload = await response.json();
 
     assert.equal(response.status, 200);
     assert.equal(payload.success, true);
-    assert.equal(notificationCalls.at(-1)?.userId, "user-42");
-    assert.equal((notificationCalls.at(-1)?.query as any)?.limit, 5);
-    assert.equal((notificationCalls.at(-1)?.query as any)?.offset, 0);
+    assert.equal(
+      (resolveQrCalls.at(-1) as any)?.tracking?.scannerUserId,
+      "user-42",
+    );
+    assert.equal(
+      typeof (resolveQrCalls.at(-1) as any)?.tracking?.idempotencyKey,
+      "string",
+    );
   });
 });

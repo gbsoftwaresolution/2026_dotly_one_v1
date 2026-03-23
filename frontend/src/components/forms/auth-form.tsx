@@ -13,6 +13,7 @@ import {
 } from "@/lib/auth/auth-error-messages";
 import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
+import { prefetchMyFastShare } from "@/lib/share-fast-store";
 import { cn } from "@/lib/utils/cn";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -172,7 +173,8 @@ export function AuthForm({
         return;
       }
 
-      await authApi.login({ email: normalizedEmail, password });
+  await authApi.login({ email: normalizedEmail, password });
+  void prefetchMyFastShare({ force: true }).catch(() => undefined);
       router.replace(sanitizeRedirectPath(redirectTo));
       router.refresh();
     } catch (submissionError) {

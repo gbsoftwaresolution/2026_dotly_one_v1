@@ -8,7 +8,8 @@ export type ContactRequestStatus =
   | "cancelled";
 
 export interface SendContactRequestInput {
-  toPersonaId: string;
+  toPersonaId?: string;
+  toUsername?: string;
   fromPersonaId: string;
   reason?: string;
   sourceType: ContactRequestSourceType;

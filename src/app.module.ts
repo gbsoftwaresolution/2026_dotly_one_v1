@@ -26,7 +26,6 @@ import { PersonasModule } from "./modules/personas/personas.module";
 import { ProfilesModule } from "./modules/profiles/profiles.module";
 import { QrModule } from "./modules/qr/qr.module";
 import { RelationshipsModule } from "./modules/relationships/relationships.module";
-import { TrustAbuseModule } from "./modules/trust-abuse/trust-abuse.module";
 import { UsersModule } from "./modules/users/users.module";
 
 @Module({
@@ -57,7 +56,6 @@ import { UsersModule } from "./modules/users/users.module";
     EventsModule,
     NotificationsModule,
     BlocksModule,
-    TrustAbuseModule,
     AnalyticsModule,
     HealthModule,
   ],

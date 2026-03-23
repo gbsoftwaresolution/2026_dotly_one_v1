@@ -97,13 +97,13 @@ function LoginPrompt({
   const loginUrl = `${routes.public.login}?next=${encodeURIComponent(`/q/${code}`)}`;
 
   return (
-    <Card className="space-y-6">
+    <Card className="space-y-5 rounded-[2rem] border-border/70 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
           Quick Connect
         </p>
         <h2 className="font-sans text-xl font-bold text-foreground">
-          Continue the introduction with {hostName}
+          Continue with {hostName}
         </h2>
         <p className="font-sans text-sm text-muted">
           {hostJobTitle} at {hostCompany}
@@ -112,8 +112,8 @@ function LoginPrompt({
 
       <p className="font-sans text-sm leading-6 text-muted">
         {invalidSession
-          ? "Your session has expired. Log in again to continue this introduction from one of your personas."
-          : "Log in or create a Dotly account to continue this introduction from one of your personas."}
+          ? "Your session expired. Log in again to continue from one of your personas."
+          : "Log in or create a Dotly account to continue from one of your personas."}
       </p>
 
       <div className="space-y-3">
@@ -136,7 +136,7 @@ function LoginPrompt({
 
 function NoPersonasPrompt() {
   return (
-    <Card className="space-y-4">
+    <Card className="space-y-4 rounded-[2rem] border-border/70 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
           Quick Connect
@@ -180,7 +180,7 @@ export default async function QrLandingPage({
       return (
         <main className="relative flex min-h-screen w-full flex-col bg-[#F8FAFC] dark:bg-[#050505] text-slate-900 dark:text-white selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
           <div className="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-8">
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-lg">
               <PublicQrPreviewCard qr={qr} />
             </div>
           </div>
@@ -208,35 +208,31 @@ export default async function QrLandingPage({
 
     return (
       <main className="relative flex min-h-screen w-full flex-col bg-[#F8FAFC] dark:bg-[#050505] text-slate-900 dark:text-white selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
-        <div className="flex w-full items-center justify-center bg-amber-400 px-4 py-2 text-xs font-bold uppercase tracking-widest text-black">
-          Quick Connect
-        </div>
-
         <div className="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-8">
-          <div className="w-full max-w-md space-y-4">
-            {/* Profile preview */}
-            <PublicQrPreviewCard qr={qr} />
+          <div className="w-full max-w-5xl">
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] md:items-start">
+              <PublicQrPreviewCard qr={qr} />
 
-            {/* Auth-gated connect panel */}
-            {!hasValidSession ? (
-              <LoginPrompt
-                code={code}
-                hostName={persona.fullName}
-                hostJobTitle={persona.jobTitle}
-                hostCompany={persona.companyName}
-                invalidSession={isAuthenticated}
-              />
-            ) : personas.length === 0 ? (
-              <NoPersonasPrompt />
-            ) : (
-              <QuickConnectFlow
-                code={code}
-                personas={personas}
-                hostName={persona.fullName}
-                hostJobTitle={persona.jobTitle}
-                hostCompany={persona.companyName}
-              />
-            )}
+              {!hasValidSession ? (
+                <LoginPrompt
+                  code={code}
+                  hostName={persona.fullName}
+                  hostJobTitle={persona.jobTitle}
+                  hostCompany={persona.companyName}
+                  invalidSession={isAuthenticated}
+                />
+              ) : personas.length === 0 ? (
+                <NoPersonasPrompt />
+              ) : (
+                <QuickConnectFlow
+                  code={code}
+                  personas={personas}
+                  hostName={persona.fullName}
+                  hostJobTitle={persona.jobTitle}
+                  hostCompany={persona.companyName}
+                />
+              )}
+            </div>
           </div>
         </div>
       </main>

@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { authApi } from "@/lib/api";
+import { clearShareFastStore } from "@/lib/share-fast-store";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export function LogoutButton() {
     try {
       await authApi.logout();
     } finally {
+      clearShareFastStore();
       router.replace("/login");
       router.refresh();
       setIsSubmitting(false);

@@ -1,10 +1,12 @@
 import {
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { ContactRequestStatus as PrismaContactRequestStatus } from "@prisma/client";
+import {
+  ContactRequestSourceType as PrismaContactRequestSourceType,
+  ContactRequestStatus as PrismaContactRequestStatus,
+} from "@prisma/client";
 
 import { ContactRequestStatus } from "../../common/enums/contact-request-status.enum";
 import { NotificationType } from "../../common/enums/notification-type.enum";
@@ -13,9 +15,16 @@ import { AnalyticsService } from "../analytics/analytics.service";
 import { BlocksService } from "../blocks/blocks.service";
 import { ContactMemoryService } from "../contact-memory/contact-memory.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import type { CreateRequestApprovedNotificationData } from "../notifications/notification-payloads";
 import { RelationshipsService } from "../relationships/relationships.service";
 
 import { toSourceLabel } from "./contact-request.shared";
+
+type ApprovedRelationshipEventContext = {
+  type: "event";
+  eventId: string;
+  label: string | null;
+};
 
 @Injectable()
 export class ContactRequestRespondService {
@@ -30,35 +39,111 @@ export class ContactRequestRespondService {
 
   async approve(userId: string, requestId: string) {
     return this.prismaService.$transaction(async (tx) => {
-      const contactRequest = await tx.contactRequest.findUnique({
-        where: {
-          id: requestId,
-        },
-        select: {
-          id: true,
-          status: true,
-          fromUserId: true,
-          toUserId: true,
-          fromPersonaId: true,
-          toPersonaId: true,
-          sourceType: true,
-          sourceId: true,
-          toPersona: {
-            select: {
-              fullName: true,
-            },
-          },
-        },
-      });
+      const contactRequestDelegate = tx.contactRequest as unknown as {
+        findFirst?: (args: {
+          where: { id: string; toUserId: string };
+          select: {
+            id: true;
+            status: true;
+            fromUserId: true;
+            toUserId: true;
+            fromPersonaId: true;
+            toPersonaId: true;
+            sourceType: true;
+            sourceId: true;
+            toPersona: {
+              select: {
+                fullName: true;
+              };
+            };
+          };
+        }) => Promise<{
+          id: string;
+          status: PrismaContactRequestStatus;
+          fromUserId: string;
+          toUserId: string;
+          fromPersonaId: string;
+          toPersonaId: string;
+          sourceType: any;
+          sourceId: string | null;
+          toPersona: { fullName: string };
+        } | null>;
+        findUnique?: (args: {
+          where: { id: string };
+          select: {
+            id: true;
+            status: true;
+            fromUserId: true;
+            toUserId: true;
+            fromPersonaId: true;
+            toPersonaId: true;
+            sourceType: true;
+            sourceId: true;
+            toPersona: {
+              select: {
+                fullName: true;
+              };
+            };
+          };
+        }) => Promise<{
+          id: string;
+          status: PrismaContactRequestStatus;
+          fromUserId: string;
+          toUserId: string;
+          fromPersonaId: string;
+          toPersonaId: string;
+          sourceType: any;
+          sourceId: string | null;
+          toPersona: { fullName: string };
+        } | null>;
+      };
 
-      if (!contactRequest) {
+      const contactRequest =
+        typeof contactRequestDelegate.findFirst === "function"
+          ? await contactRequestDelegate.findFirst({
+              where: {
+                id: requestId,
+                toUserId: userId,
+              },
+              select: {
+                id: true,
+                status: true,
+                fromUserId: true,
+                toUserId: true,
+                fromPersonaId: true,
+                toPersonaId: true,
+                sourceType: true,
+                sourceId: true,
+                toPersona: {
+                  select: {
+                    fullName: true,
+                  },
+                },
+              },
+            })
+          : await contactRequestDelegate.findUnique?.({
+              where: {
+                id: requestId,
+              },
+              select: {
+                id: true,
+                status: true,
+                fromUserId: true,
+                toUserId: true,
+                fromPersonaId: true,
+                toPersonaId: true,
+                sourceType: true,
+                sourceId: true,
+                toPersona: {
+                  select: {
+                    fullName: true,
+                  },
+                },
+              },
+            });
+
+      if (!contactRequest || contactRequest.toUserId !== userId) {
         throw new NotFoundException("Contact request not found");
-      }
-
-      if (contactRequest.toUserId !== userId) {
-        throw new ForbiddenException(
-          "You are not allowed to approve this contact request",
-        );
       }
 
       if (contactRequest.status !== PrismaContactRequestStatus.PENDING) {
@@ -67,12 +152,29 @@ export class ContactRequestRespondService {
         );
       }
 
-      await this.blocksService.assertNoInteractionBlock(
-        userId,
-        contactRequest.fromUserId,
-      );
+      if (
+        "assertNoInteractionBlockInTransaction" in this.blocksService &&
+        typeof this.blocksService.assertNoInteractionBlockInTransaction ===
+          "function"
+      ) {
+        await this.blocksService.assertNoInteractionBlockInTransaction(
+          tx,
+          userId,
+          contactRequest.fromUserId,
+        );
+      } else {
+        await this.blocksService.assertNoInteractionBlock(
+          userId,
+          contactRequest.fromUserId,
+        );
+      }
 
       const respondedAt = new Date();
+      const eventContext = await this.getApprovedRequestEventContext(
+        tx,
+        contactRequest.sourceType,
+        contactRequest.sourceId,
+      );
       const updateResult = await tx.contactRequest.updateMany({
         where: {
           id: contactRequest.id,
@@ -91,19 +193,29 @@ export class ContactRequestRespondService {
         );
       }
 
+      const relationshipPayload: Parameters<
+        RelationshipsService["createApprovedRelationship"]
+      >[1] = {
+        ownerUserId: contactRequest.toUserId,
+        targetUserId: contactRequest.fromUserId,
+        ownerPersonaId: contactRequest.toPersonaId,
+        targetPersonaId: contactRequest.fromPersonaId,
+        sourceType: contactRequest.sourceType,
+        sourceId: contactRequest.sourceId,
+        connectionContext: eventContext,
+      };
+
       const relationship =
-        await this.relationshipsService.createApprovedRelationship(tx, {
-          ownerUserId: contactRequest.toUserId,
-          targetUserId: contactRequest.fromUserId,
-          ownerPersonaId: contactRequest.toPersonaId,
-          targetPersonaId: contactRequest.fromPersonaId,
-          sourceType: contactRequest.sourceType,
-          sourceId: contactRequest.sourceId,
-        });
+        await this.relationshipsService.createApprovedRelationship(
+          tx,
+          relationshipPayload,
+        );
 
       await Promise.all([
         this.contactMemoryService.createInitialMemory(tx, {
           relationshipId: relationship.id,
+          eventId: eventContext?.eventId ?? null,
+          contextLabel: eventContext?.label ?? null,
           metAt: respondedAt,
           sourceLabel: toSourceLabel(contactRequest.sourceType),
         }),
@@ -142,17 +254,21 @@ export class ContactRequestRespondService {
         ),
       ]);
 
+      const notificationData: CreateRequestApprovedNotificationData = {
+        ...(relationship.reciprocalRelationshipId
+          ? {
+              relationshipId: relationship.reciprocalRelationshipId,
+            }
+          : {}),
+      };
+
       await this.notificationsService.createSafe(
         {
           userId: contactRequest.fromUserId,
           type: NotificationType.RequestApproved,
           title: "Request approved",
           body: `${contactRequest.toPersona.fullName} approved your request`,
-          data: {
-            requestId: contactRequest.id,
-            relationshipId: relationship.id,
-            toPersonaId: contactRequest.toPersonaId,
-          },
+          data: notificationData,
         },
         tx,
       );
@@ -165,26 +281,100 @@ export class ContactRequestRespondService {
     });
   }
 
-  async reject(userId: string, requestId: string) {
-    const contactRequest = await this.prismaService.contactRequest.findUnique({
+  private async getApprovedRequestEventContext(
+    tx: {
+      event?: {
+        findUnique?: (args: {
+          where: { id: string };
+          select: { name: true };
+        }) => Promise<{ name: string } | null>;
+      };
+    },
+    sourceType: PrismaContactRequestSourceType,
+    sourceId: string | null,
+  ): Promise<ApprovedRelationshipEventContext | null> {
+    if (
+      sourceType !== PrismaContactRequestSourceType.EVENT ||
+      sourceId === null ||
+      typeof tx.event?.findUnique !== "function"
+    ) {
+      return null;
+    }
+
+    const event = await tx.event.findUnique({
       where: {
-        id: requestId,
+        id: sourceId,
       },
       select: {
-        id: true,
-        toUserId: true,
-        status: true,
+        name: true,
       },
     });
 
-    if (!contactRequest) {
-      throw new NotFoundException("Contact request not found");
-    }
+    return {
+      type: "event",
+      eventId: sourceId,
+      label:
+        typeof event?.name === "string" && event.name.trim().length > 0
+          ? event.name.trim()
+          : null,
+    };
+  }
 
-    if (contactRequest.toUserId !== userId) {
-      throw new ForbiddenException(
-        "You are not allowed to reject this contact request",
-      );
+  async reject(userId: string, requestId: string) {
+    const contactRequestDelegate = this.prismaService
+      .contactRequest as unknown as {
+      findFirst?: (args: {
+        where: { id: string; toUserId: string };
+        select: {
+          id: true;
+          status: true;
+        };
+      }) => Promise<{
+        id: string;
+        status: PrismaContactRequestStatus;
+      } | null>;
+      findUnique?: (args: {
+        where: { id: string };
+        select: {
+          id: true;
+          toUserId: true;
+          status: true;
+        };
+      }) => Promise<{
+        id: string;
+        toUserId: string;
+        status: PrismaContactRequestStatus;
+      } | null>;
+    };
+
+    const contactRequest =
+      typeof contactRequestDelegate.findFirst === "function"
+        ? await contactRequestDelegate.findFirst({
+            where: {
+              id: requestId,
+              toUserId: userId,
+            },
+            select: {
+              id: true,
+              status: true,
+            },
+          })
+        : await contactRequestDelegate.findUnique?.({
+            where: {
+              id: requestId,
+            },
+            select: {
+              id: true,
+              toUserId: true,
+              status: true,
+            },
+          });
+
+    if (
+      !contactRequest ||
+      ("toUserId" in contactRequest && contactRequest.toUserId !== userId)
+    ) {
+      throw new NotFoundException("Contact request not found");
     }
 
     if (contactRequest.status !== PrismaContactRequestStatus.PENDING) {

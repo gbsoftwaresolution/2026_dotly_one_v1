@@ -3,13 +3,74 @@ import { describe, it } from "node:test";
 
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
 
-import { AnalyticsEventType as PrismaAnalyticsEventType } from "@prisma/client";
+import {
+  AnalyticsEventType as PrismaAnalyticsEventType,
+  PersonaSharingMode as PrismaPersonaSharingMode,
+} from "@prisma/client";
 
 import { AnalyticsService } from "../src/modules/analytics/analytics.service";
-import { ContactRequestsService } from "../src/modules/contact-requests/contact-requests.service";
 import { ContactRequestSourceType } from "../src/common/enums/contact-request-source-type.enum";
+import { ContactRequestCreateService } from "../src/modules/contact-requests/contact-request-create.service";
+import { ContactRequestRecipientPolicyService } from "../src/modules/contact-requests/contact-request-recipient-policy.service";
+import { ContactRequestRespondService } from "../src/modules/contact-requests/contact-request-respond.service";
+import { ContactRequestRetryPolicyService } from "../src/modules/contact-requests/contact-request-retry-policy.service";
+import { ContactRequestSourcePolicyService } from "../src/modules/contact-requests/contact-request-source-policy.service";
+import { ContactRequestsService } from "../src/modules/contact-requests/contact-requests.service";
 import { ProfilesService } from "../src/modules/profiles/profiles.service";
 import { QrService } from "../src/modules/qr/qr.service";
+
+function buildContactRequestsService(
+  prismaService: any,
+  personasService: any,
+  blocksService: any,
+  relationshipsService: any,
+  contactMemoryService: any,
+  requestRateLimitService: any,
+  eventsService: any = { validateEventRequestAccess: async () => undefined },
+  notificationsService: any = { createSafe: async () => undefined },
+  analyticsService: any = {
+    trackRequestSent: async () => undefined,
+    trackRequestApproved: async () => undefined,
+    trackContactCreated: async () => undefined,
+  },
+  verificationPolicyService: any = {
+    assertUserIsVerified: async () => undefined,
+  },
+) {
+  if (
+    prismaService?.persona &&
+    typeof prismaService.persona.findFirst !== "function" &&
+    typeof prismaService.persona.findUnique === "function"
+  ) {
+    prismaService.persona.findFirst = prismaService.persona.findUnique;
+  }
+
+  return new ContactRequestsService(
+    prismaService,
+    new ContactRequestCreateService(
+      prismaService,
+      new ContactRequestRecipientPolicyService(
+        prismaService,
+        personasService,
+        blocksService,
+      ),
+      new ContactRequestRetryPolicyService(prismaService),
+      new ContactRequestSourcePolicyService(eventsService),
+      requestRateLimitService,
+      notificationsService,
+      analyticsService,
+      verificationPolicyService,
+    ) as any,
+    new ContactRequestRespondService(
+      prismaService,
+      blocksService,
+      relationshipsService,
+      contactMemoryService,
+      notificationsService,
+      analyticsService,
+    ) as any,
+  );
+}
 
 describe("AnalyticsService", () => {
   it("avoids duplicate aggregate increments for repeated request approval events", async () => {
@@ -125,7 +186,11 @@ describe("AnalyticsService", () => {
           findMany: async () => [{ id: "persona-1" }, { id: "persona-2" }],
         },
         analyticsEvent: {
-          count: async ({ where }: { where: { eventType: PrismaAnalyticsEventType } }) => {
+          count: async ({
+            where,
+          }: {
+            where: { eventType: PrismaAnalyticsEventType };
+          }) => {
             switch (where.eventType) {
               case PrismaAnalyticsEventType.EMAIL_VERIFICATION_ISSUED:
                 return 3;
@@ -191,9 +256,6 @@ describe("ProfilesService analytics hook", () => {
             accessMode: "OPEN",
             verifiedOnly: false,
             sharingMode: "SMART_CARD",
-            emailVerified: true,
-            phoneVerified: false,
-            businessVerified: false,
             smartCardConfig: {
               primaryAction: "request_access",
               allowWhatsapp: true,
@@ -227,7 +289,7 @@ describe("ProfilesService analytics hook", () => {
       sharingMode: "smart_card",
       instantConnectUrl: null,
       trust: {
-        isVerified: true,
+        isVerified: false,
         isStrongVerified: false,
         isBusinessVerified: false,
       },
@@ -270,9 +332,6 @@ describe("ProfilesService analytics hook", () => {
             accessMode: "OPEN",
             verifiedOnly: false,
             sharingMode: "SMART_CARD",
-            emailVerified: true,
-            phoneVerified: true,
-            businessVerified: false,
             smartCardConfig: {
               primaryAction: "contact_me",
               allowCall: true,
@@ -290,14 +349,18 @@ describe("ProfilesService analytics hook", () => {
       {
         trackProfileView: async () => true,
       } as any,
+      undefined as any,
+      {
+        assertNoInteractionBlock: async () => undefined,
+      } as any,
     );
 
     const result = await service.getPublicProfile("alice");
 
     assert.equal(result.instantConnectUrl, null);
     assert.deepEqual(result.trust, {
-      isVerified: true,
-      isStrongVerified: true,
+      isVerified: false,
+      isStrongVerified: false,
       isBusinessVerified: false,
     });
 
@@ -349,6 +412,10 @@ describe("ProfilesService analytics hook", () => {
       {
         trackProfileView: async () => true,
       } as any,
+      undefined as any,
+      {
+        assertNoInteractionBlock: async () => undefined,
+      } as any,
     );
 
     const result = await service.getPublicProfile("alice");
@@ -392,6 +459,10 @@ describe("ProfilesService analytics hook", () => {
       } as any,
       {
         trackProfileView: async () => true,
+      } as any,
+      undefined as any,
+      {
+        assertNoInteractionBlock: async () => undefined,
       } as any,
     );
 
@@ -441,9 +512,108 @@ describe("ProfilesService analytics hook", () => {
       {
         trackProfileView: async () => true,
       } as any,
+      undefined as any,
+      {
+        assertNoInteractionBlock: async () => undefined,
+      } as any,
     );
 
-    await assert.rejects(service.getRequestTarget("alice"), ForbiddenException);
+    await assert.rejects(
+      service.getRequestTarget("viewer-user", "alice"),
+      ForbiddenException,
+    );
+  });
+
+  it("blocks authenticated viewers from loading public profiles when a block exists", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            userId: "target-user",
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            sharingMode: "CONTROLLED",
+            smartCardConfig: null,
+            emailVerified: false,
+            phoneVerified: false,
+            businessVerified: false,
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+      undefined as any,
+      {
+        assertNoInteractionBlock: async () => {
+          throw new ForbiddenException("User has blocked you");
+        },
+      } as any,
+    );
+
+    await assert.rejects(
+      service.getPublicProfile("alice", { viewerUserId: "viewer-user" }),
+      ForbiddenException,
+    );
+  });
+
+  it("blocks authenticated viewers from downloading public vcards when a block exists", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => ({
+            id: "persona-id",
+            userId: "target-user",
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: false,
+              allowWhatsapp: false,
+              allowEmail: false,
+              allowVcard: true,
+            },
+            emailVerified: false,
+            phoneVerified: false,
+            businessVerified: false,
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+      undefined as any,
+      {
+        assertNoInteractionBlock: async () => {
+          throw new ForbiddenException("User has blocked you");
+        },
+      } as any,
+    );
+
+    await assert.rejects(
+      service.getPublicVcard("alice", "viewer-user"),
+      ForbiddenException,
+    );
   });
 
   it("degrades request targets to request access when instant connect has no active profile QR", async () => {
@@ -469,12 +639,15 @@ describe("ProfilesService analytics hook", () => {
       {
         trackProfileView: async () => true,
       } as any,
+      undefined as any,
+      {
+        assertNoInteractionBlock: async () => undefined,
+      } as any,
     );
 
-    const result = await service.getRequestTarget("alice");
+    const result = await service.getRequestTarget("viewer-user", "alice");
 
     assert.deepEqual(result, {
-      id: "persona-id",
       username: "alice",
       fullName: "Alice Demo",
       accessMode: "open",
@@ -497,9 +670,6 @@ describe("ProfilesService analytics hook", () => {
             accessMode: "OPEN",
             verifiedOnly: false,
             sharingMode: "SMART_CARD",
-            emailVerified: false,
-            phoneVerified: false,
-            businessVerified: true,
             smartCardConfig: {
               primaryAction: "instant_connect",
               allowCall: false,
@@ -531,7 +701,7 @@ describe("ProfilesService analytics hook", () => {
     assert.deepEqual(result.trust, {
       isVerified: false,
       isStrongVerified: false,
-      isBusinessVerified: true,
+      isBusinessVerified: false,
     });
   });
 
@@ -896,7 +1066,10 @@ describe("ProfilesService analytics hook", () => {
 
     const result = await service.getPublicVcard("alice");
 
-    assert.match(result.content, /NOTE:This is a deliberately long public note/);
+    assert.match(
+      result.content,
+      /NOTE:This is a deliberately long public note/,
+    );
     assert.match(result.content, /\r\n /);
   });
 
@@ -1033,23 +1206,37 @@ describe("QrService analytics hook", () => {
       } as any,
       { get: () => "https://dotly.id/q" } as any,
       {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      {
+        assertNoInteractionBlockInTransaction: async () => undefined,
+      } as any,
+      {
+        expireRelationshipIfNeeded: async () => undefined,
+      } as any,
+      {
+        createInitialMemory: async () => undefined,
+      } as any,
+      {
+        createSafe: async () => undefined,
+      } as any,
       {
         trackQrScan: async (payload: unknown) => {
           tracked.push(payload);
           return true;
         },
       } as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
-    await service.resolveQr("qr-code", { idempotencyKey: "scan-key" });
+    await service.resolveQr("qr-code", {
+      scannerUserId: "viewer-user",
+      idempotencyKey: "scan-key",
+    });
 
     assert.deepEqual(tracked[0], {
       personaId: "persona-id",
-      scannerUserId: null,
+      scannerUserId: "viewer-user",
       qrTokenId: "qr-token-id",
       idempotencyKey: "scan-key",
     });
@@ -1094,14 +1281,26 @@ describe("QrService analytics hook", () => {
       } as any,
       { get: () => "https://dotly.id/q" } as any,
       {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      {
+        assertNoInteractionBlockInTransaction: async () => undefined,
+      } as any,
+      {
+        expireRelationshipIfNeeded: async () => undefined,
+      } as any,
+      {
+        createInitialMemory: async () => undefined,
+      } as any,
+      {
+        createSafe: async () => undefined,
+      } as any,
       { trackQrScan: async () => true } as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
     const result = await service.resolveQr("qr-code", {
+      scannerUserId: "viewer-user",
       idempotencyKey: "scan-key",
     });
 
@@ -1119,13 +1318,82 @@ describe("QrService analytics hook", () => {
     });
     assert.equal((result as any).quickConnect, undefined);
   });
+
+  it("blocks QR resolution when the scanner is blocked by the persona owner", async () => {
+    const service = new QrService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            qRAccessToken: {
+              findUnique: async (args: any) => {
+                if (args.where.code) {
+                  return {
+                    id: "qr-token-id",
+                    code: "qr-code",
+                    type: "quick_connect",
+                    startsAt: null,
+                    endsAt: null,
+                    maxUses: null,
+                    usedCount: 0,
+                    status: "active",
+                  };
+                }
+
+                return {
+                  code: "qr-code",
+                  type: "quick_connect",
+                  persona: {
+                    id: "persona-id",
+                    userId: "target-user",
+                    username: "alice",
+                    fullName: "Alice Demo",
+                    jobTitle: "Founder",
+                    companyName: "Dotly",
+                    tagline: "Connect fast",
+                    profilePhotoUrl: null,
+                  },
+                };
+              },
+            },
+          }),
+      } as any,
+      { get: () => "https://dotly.id/q" } as any,
+      {} as any,
+      {
+        assertNoInteractionBlockInTransaction: async () => {
+          throw new ForbiddenException("User has blocked you");
+        },
+      } as any,
+      {
+        expireRelationshipIfNeeded: async () => undefined,
+      } as any,
+      {
+        createInitialMemory: async () => undefined,
+      } as any,
+      {
+        createSafe: async () => undefined,
+      } as any,
+      { trackQrScan: async () => true } as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
+    );
+
+    await assert.rejects(
+      service.resolveQr("qr-code", {
+        scannerUserId: "viewer-user",
+        idempotencyKey: "scan-key",
+      }),
+      ForbiddenException,
+    );
+  });
 });
 
 describe("ContactRequestsService analytics hooks", () => {
   it("tracks request_sent during request creation", async () => {
     const tracked: Array<{ eventType: string; payload: unknown }> = [];
 
-    const service = new ContactRequestsService(
+    const service = buildContactRequestsService(
       {
         persona: {
           findUnique: async () => ({
@@ -1134,6 +1402,8 @@ describe("ContactRequestsService analytics hooks", () => {
             username: "target",
             fullName: "Target User",
             accessMode: "OPEN",
+            sharingMode: PrismaPersonaSharingMode.CONTROLLED,
+            smartCardConfig: null,
             verifiedOnly: false,
           }),
         },
@@ -1223,7 +1493,7 @@ describe("ContactRequestsService analytics hooks", () => {
   it("tracks approval and contact creation during request approval", async () => {
     const tracked: Array<{ eventType: string; payload: unknown }> = [];
 
-    const service = new ContactRequestsService(
+    const service = buildContactRequestsService(
       {
         $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
           callback({

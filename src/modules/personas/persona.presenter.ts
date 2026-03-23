@@ -25,6 +25,9 @@ export const privatePersonaSelect = {
   profilePhotoUrl: true,
   accessMode: true,
   verifiedOnly: true,
+  emailVerified: true,
+  phoneVerified: true,
+  businessVerified: true,
   sharingMode: true,
   smartCardConfig: true,
   publicPhone: true,
@@ -32,10 +35,11 @@ export const privatePersonaSelect = {
   publicEmail: true,
   createdAt: true,
   updatedAt: true,
-} satisfies Prisma.PersonaSelect;
+} as const;
 
 export const publicPersonaSelect = {
   id: true,
+  userId: true,
   username: true,
   publicUrl: true,
   fullName: true,
@@ -52,7 +56,7 @@ export const publicPersonaSelect = {
   publicPhone: true,
   publicWhatsappNumber: true,
   publicEmail: true,
-} satisfies Prisma.PersonaSelect;
+} as const;
 
 export type PrivatePersonaRecord = Prisma.PersonaGetPayload<{
   select: typeof privatePersonaSelect;
@@ -110,6 +114,10 @@ export function toPrivatePersonaView(
   persona: PrivatePersonaRecord,
   sharingCapabilities?: PrivatePersonaSharingCapabilities,
 ) {
+  const sharingConfigSource =
+    getSharingConfigSource(persona.smartCardConfig) ??
+    (persona.sharingMode === "CONTROLLED" ? "system_default" : null);
+
   return {
     id: persona.id,
     type: apiPersonaTypeMap[persona.type],
@@ -123,7 +131,7 @@ export function toPrivatePersonaView(
     accessMode: apiAccessModeMap[persona.accessMode],
     verifiedOnly: persona.verifiedOnly,
     sharingMode: toApiSharingMode(persona.sharingMode),
-    sharingConfigSource: getSharingConfigSource(persona.smartCardConfig),
+    sharingConfigSource,
     smartCardConfig: toSafeSmartCardConfig(persona.smartCardConfig),
     sharingCapabilities,
     publicPhone: persona.publicPhone,

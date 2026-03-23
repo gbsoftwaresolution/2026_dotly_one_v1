@@ -28,6 +28,7 @@ export interface TrustFactorSourceUser {
 
 export type VerificationRequirement =
   | "send_contact_request"
+  | "instant_connect"
   | "create_profile_qr"
   | "create_quick_connect_qr"
   | "create_event"
@@ -87,6 +88,12 @@ const VERIFICATION_POLICY: Record<
     anyOf: ["email_verified", "mobile_otp_verified"],
     message:
       "Verify your email or complete mobile OTP before sending connection requests.",
+  },
+  instant_connect: {
+    label: "Use instant connect",
+    anyOf: ["email_verified", "mobile_otp_verified"],
+    message:
+      "Verify your email or complete mobile OTP before using instant connect.",
   },
   create_profile_qr: {
     label: "Create profile QR codes",

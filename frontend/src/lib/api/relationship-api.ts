@@ -1,14 +1,18 @@
 import type { ApiResponse } from "@/types/api";
-import type { InstantConnectResult } from "@/types/persona";
+import type {
+  InstantConnectResult,
+  PublicInstantConnectInput,
+} from "@/types/persona";
 
 import { apiRequest } from "./client";
 
 export const relationshipApi = {
-  instantConnect: (username: string) =>
+  instantConnect: (username: string, payload: PublicInstantConnectInput) =>
     apiRequest<InstantConnectResult>(
       `/api/public/${encodeURIComponent(username)}/instant-connect`,
       {
         method: "POST",
+        body: payload,
         baseUrl: "",
         credentials: "same-origin",
       },

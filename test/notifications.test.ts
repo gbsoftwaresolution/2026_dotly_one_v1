@@ -2,11 +2,17 @@ import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
 import { NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { PersonaSharingMode as PrismaPersonaSharingMode } from "@prisma/client";
 import { of } from "rxjs";
 
 import { NotificationType } from "../src/common/enums/notification-type.enum";
 import { GlobalExceptionFilter } from "../src/common/filters/global-exception.filter";
 import { ResponseEnvelopeInterceptor } from "../src/common/interceptors/response-envelope.interceptor";
+import { ContactRequestCreateService } from "../src/modules/contact-requests/contact-request-create.service";
+import { ContactRequestRecipientPolicyService } from "../src/modules/contact-requests/contact-request-recipient-policy.service";
+import { ContactRequestRespondService } from "../src/modules/contact-requests/contact-request-respond.service";
+import { ContactRequestRetryPolicyService } from "../src/modules/contact-requests/contact-request-retry-policy.service";
+import { ContactRequestSourcePolicyService } from "../src/modules/contact-requests/contact-request-source-policy.service";
 import { ContactRequestsService } from "../src/modules/contact-requests/contact-requests.service";
 import { NotificationsController } from "../src/modules/notifications/notifications.controller";
 import { NotificationsService } from "../src/modules/notifications/notifications.service";
@@ -14,6 +20,59 @@ import { QrService } from "../src/modules/qr/qr.service";
 import { EventsService } from "../src/modules/events/events.service";
 import { ContactRequestSourceType } from "../src/common/enums/contact-request-source-type.enum";
 import { EventParticipantRole } from "../src/common/enums/event-participant-role.enum";
+
+function buildContactRequestsService(
+  prismaService: any,
+  personasService: any,
+  blocksService: any,
+  relationshipsService: any,
+  contactMemoryService: any,
+  requestRateLimitService: any,
+  eventsService: any = { validateEventRequestAccess: async () => undefined },
+  notificationsService: any = { createSafe: async () => undefined },
+  analyticsService: any = {
+    trackRequestSent: async () => undefined,
+    trackRequestApproved: async () => undefined,
+    trackContactCreated: async () => undefined,
+  },
+  verificationPolicyService: any = {
+    assertUserIsVerified: async () => undefined,
+  },
+) {
+  if (
+    prismaService?.persona &&
+    typeof prismaService.persona.findFirst !== "function" &&
+    typeof prismaService.persona.findUnique === "function"
+  ) {
+    prismaService.persona.findFirst = prismaService.persona.findUnique;
+  }
+
+  return new ContactRequestsService(
+    prismaService,
+    new ContactRequestCreateService(
+      prismaService,
+      new ContactRequestRecipientPolicyService(
+        prismaService,
+        personasService,
+        blocksService,
+      ),
+      new ContactRequestRetryPolicyService(prismaService),
+      new ContactRequestSourcePolicyService(eventsService),
+      requestRateLimitService,
+      notificationsService,
+      analyticsService,
+      verificationPolicyService,
+    ) as any,
+    new ContactRequestRespondService(
+      prismaService,
+      blocksService,
+      relationshipsService,
+      contactMemoryService,
+      notificationsService,
+      analyticsService,
+    ) as any,
+  );
+}
 
 describe("NotificationsController", () => {
   it("fetches notifications for the current user", async () => {
@@ -242,13 +301,226 @@ describe("NotificationsService", () => {
 
     assert.deepEqual(result, { updatedCount: 4 });
   });
+
+  it("filters foreign relationship ids from notification data", async () => {
+    const service = new NotificationsService(
+      {
+        notification: {
+          findMany: async () => [
+            {
+              id: "notification-1",
+              type: "REQUEST_APPROVED",
+              title: "Request approved",
+              body: "Receiver User approved your request",
+              isRead: false,
+              createdAt: new Date("2026-03-21T10:00:00.000Z"),
+              data: {
+                relationshipId: "foreign-relationship-id",
+                requestId: "request-id",
+              },
+            },
+            {
+              id: "notification-2",
+              type: "INSTANT_CONNECT",
+              title: "Instant connect",
+              body: "You connected instantly with Target User",
+              isRead: false,
+              createdAt: new Date("2026-03-21T11:00:00.000Z"),
+              data: {
+                relationshipId: "owned-relationship-id",
+                targetPersonaId: "target-persona",
+              },
+            },
+          ],
+          count: async () => 2,
+        },
+        contactRelationship: {
+          findMany: async () => [{ id: "owned-relationship-id" }],
+        },
+      } as any,
+      { warn: () => undefined } as any,
+    );
+
+    const result = await service.findAll("user-1");
+
+    assert.deepEqual(result.notifications[0]?.data, {});
+    assert.deepEqual(result.notifications[1]?.data, {
+      relationshipId: "owned-relationship-id",
+    });
+  });
+
+  it("filters foreign relationship ids when marking a notification as read", async () => {
+    const service = new NotificationsService(
+      {
+        notification: {
+          findFirst: async () => ({ id: "notification-1" }),
+          update: async () => ({
+            id: "notification-1",
+            type: "INSTANT_CONNECT",
+            title: "Instant connect",
+            body: "Someone connected with your QR",
+            isRead: true,
+            createdAt: new Date("2026-03-21T10:00:00.000Z"),
+            data: {
+              relationshipId: "foreign-relationship-id",
+              sourcePersonaId: "source-persona",
+            },
+          }),
+        },
+        contactRelationship: {
+          findMany: async () => [],
+        },
+      } as any,
+      { warn: () => undefined } as any,
+    );
+
+    const result = await service.markAsRead("user-1", "notification-1");
+
+    assert.deepEqual(result.data, {});
+  });
+
+  it("enforces allowed notification payload fields by type", async () => {
+    const service = new NotificationsService(
+      {
+        notification: {
+          findMany: async () => [
+            {
+              id: "notification-request-received",
+              type: "REQUEST_RECEIVED",
+              title: "New request",
+              body: "Alice Demo requested to connect",
+              isRead: false,
+              createdAt: new Date("2026-03-21T10:00:00.000Z"),
+              data: {
+                requestId: "request-id",
+                fromPersonaId: "from-persona",
+                sourceType: "profile",
+                sourceId: "source-id",
+                relationshipId: "foreign-relationship-id",
+                injected: "drop-me",
+              },
+            },
+            {
+              id: "notification-request-approved",
+              type: "REQUEST_APPROVED",
+              title: "Request approved",
+              body: "Receiver User approved your request",
+              isRead: false,
+              createdAt: new Date("2026-03-21T10:01:00.000Z"),
+              data: {
+                requestId: "request-approved-id",
+                toPersonaId: "to-persona",
+                relationshipId: "owned-relationship-id",
+                injected: "drop-me",
+              },
+            },
+            {
+              id: "notification-instant-connect-owned",
+              type: "INSTANT_CONNECT",
+              title: "Instant connect",
+              body: "You connected instantly with Target User",
+              isRead: false,
+              createdAt: new Date("2026-03-21T10:02:00.000Z"),
+              data: {
+                relationshipId: "owned-relationship-id",
+                targetPersonaId: "target-persona",
+                injected: "drop-me",
+              },
+            },
+            {
+              id: "notification-instant-connect-received",
+              type: "INSTANT_CONNECT",
+              title: "Instant connect",
+              body: "Alice Demo connected with your QR",
+              isRead: false,
+              createdAt: new Date("2026-03-21T10:03:00.000Z"),
+              data: {
+                sourcePersonaId: "source-persona",
+                relationshipId: "foreign-relationship-id",
+                injected: "drop-me",
+              },
+            },
+            {
+              id: "notification-event-joined",
+              type: "EVENT_JOINED",
+              title: "Event joined",
+              body: "You joined Dotly Summit",
+              isRead: false,
+              createdAt: new Date("2026-03-21T10:04:00.000Z"),
+              data: {
+                eventId: "event-id",
+                personaId: "persona-id",
+                requestId: "drop-me",
+                injected: "drop-me",
+              },
+            },
+            {
+              id: "notification-event-request",
+              type: "EVENT_REQUEST",
+              title: "Event request",
+              body: "Alice Demo wants to connect from an event",
+              isRead: false,
+              createdAt: new Date("2026-03-21T10:05:00.000Z"),
+              data: {
+                requestId: "event-request-id",
+                fromPersonaId: "event-from-persona",
+                sourceType: "event",
+                sourceId: "event-id",
+                targetPersonaId: "drop-me",
+                injected: "drop-me",
+              },
+            },
+            {
+              id: "notification-system",
+              type: "SYSTEM",
+              title: "System message",
+              body: "Hello",
+              isRead: false,
+              createdAt: new Date("2026-03-21T10:06:00.000Z"),
+              data: {
+                arbitrary: "drop-me",
+              },
+            },
+          ],
+          count: async () => 7,
+        },
+        contactRelationship: {
+          findMany: async () => [{ id: "owned-relationship-id" }],
+        },
+      } as any,
+      { warn: () => undefined } as any,
+    );
+
+    const result = await service.findAll("user-1");
+
+    assert.deepEqual(
+      result.notifications.map((notification) => notification.data),
+      [
+        {
+          sourceType: ContactRequestSourceType.Profile,
+        },
+        {
+          relationshipId: "owned-relationship-id",
+        },
+        {
+          relationshipId: "owned-relationship-id",
+        },
+        {},
+        {},
+        {
+          sourceType: ContactRequestSourceType.Event,
+        },
+        {},
+      ],
+    );
+  });
 });
 
 describe("Notification hooks", () => {
   it("creates a request_received notification for profile requests", async () => {
     const notifications: unknown[] = [];
 
-    const service = new ContactRequestsService(
+    const service = buildContactRequestsService(
       {
         persona: {
           findUnique: async () => ({
@@ -257,6 +529,8 @@ describe("Notification hooks", () => {
             username: "target",
             fullName: "Target User",
             accessMode: "OPEN",
+            sharingMode: PrismaPersonaSharingMode.CONTROLLED,
+            smartCardConfig: null,
             verifiedOnly: false,
           }),
         },
@@ -319,6 +593,14 @@ describe("Notification hooks", () => {
           notifications.push(payload);
         },
       } as any,
+      {
+        trackRequestSent: async () => undefined,
+        trackRequestApproved: async () => undefined,
+        trackContactCreated: async () => undefined,
+      } as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
     await service.create("sender-user", {
@@ -342,7 +624,7 @@ describe("Notification hooks", () => {
     const notifications: Array<{ payload: unknown; tx: unknown }> = [];
     const interactionUpdates: string[] = [];
 
-    const service = new ContactRequestsService(
+    const service = buildContactRequestsService(
       {
         $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
           callback({
@@ -373,7 +655,10 @@ describe("Notification hooks", () => {
           id: "relationship-id",
           reciprocalRelationshipId: "relationship-reciprocal-id",
         }),
-        updateInteractionMetadata: async (_tx: unknown, relationshipId: string) => {
+        updateInteractionMetadata: async (
+          _tx: unknown,
+          relationshipId: string,
+        ) => {
           interactionUpdates.push(relationshipId);
           return null;
         },
@@ -401,6 +686,9 @@ describe("Notification hooks", () => {
       (notifications[0]?.payload as any).body,
       "Receiver User approved your request",
     );
+    assert.deepEqual((notifications[0]?.payload as any).data, {
+      relationshipId: "relationship-reciprocal-id",
+    });
     assert.deepEqual(interactionUpdates, [
       "relationship-id",
       "relationship-reciprocal-id",
@@ -459,6 +747,9 @@ describe("Notification hooks", () => {
         createSafe: async (payload: unknown) => {
           notifications.push(payload);
         },
+      } as any,
+      {
+        assertUserIsVerified: async () => undefined,
       } as any,
     );
 
@@ -543,6 +834,10 @@ describe("Notification hooks", () => {
           notifications.push(payload);
         },
       } as any,
+      undefined,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
     await service.connectQuickConnectQr("scanner-user", "qr", {
@@ -558,5 +853,9 @@ describe("Notification hooks", () => {
       (notifications[1] as any).body,
       "Alice Demo connected with your QR",
     );
+    assert.deepEqual((notifications[0] as any).data, {
+      relationshipId: "relationship-id",
+    });
+    assert.deepEqual((notifications[1] as any).data, {});
   });
 });

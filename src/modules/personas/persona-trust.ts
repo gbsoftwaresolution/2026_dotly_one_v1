@@ -1,8 +1,7 @@
 export interface PersonaTrustFields {
   emailVerified: boolean;
   phoneVerified: boolean;
-  businessVerified: boolean;
-  trustScore?: number | null;
+  businessVerified?: boolean;
 }
 
 export interface PublicPersonaTrustSignals {
@@ -11,51 +10,43 @@ export interface PublicPersonaTrustSignals {
   isBusinessVerified: boolean;
 }
 
-const PERSONA_TRUST_WEIGHTS = {
-  emailVerified: 40,
-  phoneVerified: 40,
-  businessVerified: 20,
-} as const;
-
 export function buildPublicPersonaTrustSignals(
-  fields: Pick<
-    PersonaTrustFields,
-    "emailVerified" | "phoneVerified" | "businessVerified"
-  >,
+  fields: PersonaTrustFields,
 ): PublicPersonaTrustSignals {
+  const businessVerified = fields.businessVerified ?? false;
+
   return {
-    isVerified: fields.emailVerified || fields.phoneVerified,
+    isVerified:
+      fields.emailVerified || fields.phoneVerified || businessVerified,
     isStrongVerified: fields.emailVerified && fields.phoneVerified,
-    isBusinessVerified: fields.businessVerified,
+    isBusinessVerified: businessVerified,
   };
 }
 
-export function calculatePersonaTrustScore(
-  fields: Pick<
-    PersonaTrustFields,
-    "emailVerified" | "phoneVerified" | "businessVerified"
-  >,
-): number {
-  let score = 0;
-
-  if (fields.emailVerified) {
-    score += PERSONA_TRUST_WEIGHTS.emailVerified;
-  }
-
-  if (fields.phoneVerified) {
-    score += PERSONA_TRUST_WEIGHTS.phoneVerified;
-  }
-
-  if (fields.businessVerified) {
-    score += PERSONA_TRUST_WEIGHTS.businessVerified;
-  }
-
-  return Math.max(0, Math.min(100, score));
+export interface UserTrustSource {
+  isVerified: boolean;
+  phoneVerifiedAt?: Date | null;
+  businessVerified?: boolean;
 }
 
-export function buildPersonaTrustState(fields: PersonaTrustFields) {
+export interface StoredPersonaTrustState {
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  businessVerified: boolean;
+  trustScore: number;
+}
+
+export function buildStoredPersonaTrustState(
+  user: UserTrustSource,
+): StoredPersonaTrustState {
+  const emailVerified = user.isVerified;
+  const phoneVerified = Boolean(user.phoneVerifiedAt);
+  const businessVerified = Boolean(user.businessVerified);
+
   return {
-    publicTrust: buildPublicPersonaTrustSignals(fields),
-    trustScore: fields.trustScore ?? calculatePersonaTrustScore(fields),
+    emailVerified,
+    phoneVerified,
+    businessVerified,
+    trustScore: (emailVerified ? 40 : 0) + (phoneVerified ? 40 : 0),
   };
 }

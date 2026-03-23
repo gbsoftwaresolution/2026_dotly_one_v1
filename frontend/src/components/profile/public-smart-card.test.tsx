@@ -12,6 +12,55 @@ const scrollIntoView = vi.fn();
 const assignLocation = vi.fn();
 const fetchMock = vi.fn();
 
+function createPersonas() {
+  return [
+    {
+      id: "persona-1",
+      type: "personal" as const,
+      username: "jane-personal",
+      publicUrl: "https://dotly.id/jane-personal",
+      fullName: "Jane Personal",
+      jobTitle: "Founder",
+      companyName: "Dotly",
+      tagline: "Trusted identity, zero clutter.",
+      profilePhotoUrl: null,
+      accessMode: "open" as const,
+      verifiedOnly: false,
+      sharingMode: "controlled" as const,
+      sharingConfigSource: "system_default" as const,
+      smartCardConfig: null,
+      sharingCapabilities: undefined,
+      publicPhone: null,
+      publicWhatsappNumber: null,
+      publicEmail: null,
+      createdAt: "2026-03-23T00:00:00.000Z",
+      updatedAt: "2026-03-23T00:00:00.000Z",
+    },
+    {
+      id: "persona-2",
+      type: "professional" as const,
+      username: "jane-work",
+      publicUrl: "https://dotly.id/jane-work",
+      fullName: "Jane Work",
+      jobTitle: "Founder",
+      companyName: "Dotly",
+      tagline: "Trusted identity, zero clutter.",
+      profilePhotoUrl: null,
+      accessMode: "open" as const,
+      verifiedOnly: false,
+      sharingMode: "controlled" as const,
+      sharingConfigSource: "system_default" as const,
+      smartCardConfig: null,
+      sharingCapabilities: undefined,
+      publicPhone: null,
+      publicWhatsappNumber: null,
+      publicEmail: null,
+      createdAt: "2026-03-23T00:00:00.000Z",
+      updatedAt: "2026-03-23T00:00:00.000Z",
+    },
+  ];
+}
+
 function createProfile(overrides: Partial<React.ComponentProps<typeof PublicSmartCard>["profile"]> = {}) {
   const baseProfile = {
     username: "jane",
@@ -115,6 +164,7 @@ describe("PublicSmartCard", () => {
             },
           },
         }),
+        initialPersonas: createPersonas(),
       }),
     );
 
@@ -229,6 +279,7 @@ describe("PublicSmartCard", () => {
             },
           },
         }),
+        initialPersonas: createPersonas(),
       }),
     );
 
@@ -277,6 +328,7 @@ describe("PublicSmartCard", () => {
             },
           },
         }),
+        initialPersonas: createPersonas(),
       }),
     );
 
@@ -292,10 +344,97 @@ describe("PublicSmartCard", () => {
       expect.objectContaining({
         method: "POST",
         credentials: "same-origin",
+        body: JSON.stringify({
+          fromPersonaId: "persona-1",
+        }),
       }),
     );
     expect(screen.getByText(/connection saved/i)).toBeInTheDocument();
     expect(assignLocation).not.toHaveBeenCalled();
+  });
+
+  it("sends the selected persona when connecting", async () => {
+    const user = userEvent.setup();
+
+    fetchMock.mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue(
+        JSON.stringify({
+          success: true,
+          relationshipId: "relationship-1",
+          status: "connected",
+        }),
+      ),
+    });
+
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: createProfile({
+          instantConnectUrl: "https://dotly.id/q/profile-qr-1",
+          smartCard: {
+            primaryAction: "instant_connect",
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: true,
+              contactMeEnabled: false,
+            },
+            actionLinks: {
+              call: null,
+              whatsapp: null,
+              email: null,
+              vcard: null,
+            },
+          },
+        }),
+        initialPersonas: createPersonas(),
+      }),
+    );
+
+    await user.selectOptions(screen.getByLabelText(/connect as/i), "persona-2");
+    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/public/jane/instant-connect",
+      expect.objectContaining({
+        body: JSON.stringify({
+          fromPersonaId: "persona-2",
+        }),
+      }),
+    );
+  });
+
+  it("shows an error instead of connecting when no persona is available", async () => {
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: createProfile({
+          instantConnectUrl: "https://dotly.id/q/profile-qr-1",
+          smartCard: {
+            primaryAction: "instant_connect",
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: true,
+              contactMeEnabled: false,
+            },
+            actionLinks: {
+              call: null,
+              whatsapp: null,
+              email: null,
+              vcard: null,
+            },
+          },
+        }),
+        initialPersonas: [],
+      }),
+    );
+
+    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /choose one of your personas before connecting/i,
+    );
   });
 
   it("shows a login CTA when the viewer is signed out", async () => {
@@ -363,6 +502,7 @@ describe("PublicSmartCard", () => {
             },
           },
         }),
+        initialPersonas: createPersonas(),
       }),
     );
 
@@ -411,6 +551,7 @@ describe("PublicSmartCard", () => {
               },
             },
           }),
+          initialPersonas: createPersonas(),
         }),
         React.createElement("div", { id: "request-access-panel" }),
       ),
@@ -464,6 +605,7 @@ describe("PublicSmartCard", () => {
               },
             },
           }),
+          initialPersonas: createPersonas(),
         }),
         React.createElement("div", { id: "request-access-panel", tabIndex: -1 }),
       ),

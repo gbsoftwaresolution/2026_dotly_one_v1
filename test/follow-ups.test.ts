@@ -4,7 +4,6 @@ import { describe, it } from "node:test";
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   NotFoundException,
 } from "@nestjs/common";
 import {
@@ -59,6 +58,8 @@ function createFollowUpRecord(overrides: Record<string, unknown> = {}) {
 const noopRelationshipExpiryService = {
   expireOwnedExpiredRelationships: async () => undefined,
   expireExpiredRelationships: async () => undefined,
+  expireRelationshipIfNeeded: async (_tx: unknown, relationship: unknown) =>
+    relationship,
 };
 
 describe("FollowUpsService", () => {
@@ -86,8 +87,10 @@ describe("FollowUpsService", () => {
           }),
       } as any,
       {
-        expireRelationshipIfNeeded: async (_tx: unknown, relationship: unknown) =>
-          relationship,
+        expireRelationshipIfNeeded: async (
+          _tx: unknown,
+          relationship: unknown,
+        ) => relationship,
       } as any,
     );
 
@@ -108,7 +111,7 @@ describe("FollowUpsService", () => {
     assert.equal(result.relationship.targetPersona.username, "alice");
   });
 
-  it("rejects follow-up creation for a relationship owned by another user", async () => {
+  it("returns the same not found for a relationship owned by another user", async () => {
     const service = new FollowUpsService(
       {
         $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
@@ -124,8 +127,10 @@ describe("FollowUpsService", () => {
           }),
       } as any,
       {
-        expireRelationshipIfNeeded: async (_tx: unknown, relationship: unknown) =>
-          relationship,
+        expireRelationshipIfNeeded: async (
+          _tx: unknown,
+          relationship: unknown,
+        ) => relationship,
       } as any,
     );
 
@@ -135,11 +140,8 @@ describe("FollowUpsService", () => {
         remindAt: "2099-04-10T10:00:00.000Z",
       }),
       (error: unknown) => {
-        assert.ok(error instanceof ForbiddenException);
-        assert.equal(
-          error.message,
-          "You are not allowed to create follow-ups for this relationship",
-        );
+        assert.ok(error instanceof NotFoundException);
+        assert.equal(error.message, "Relationship not found");
         return true;
       },
     );
@@ -156,8 +158,10 @@ describe("FollowUpsService", () => {
           }),
       } as any,
       {
-        expireRelationshipIfNeeded: async (_tx: unknown, relationship: unknown) =>
-          relationship,
+        expireRelationshipIfNeeded: async (
+          _tx: unknown,
+          relationship: unknown,
+        ) => relationship,
       } as any,
     );
 
@@ -213,22 +217,27 @@ describe("FollowUpsService", () => {
   });
 
   it("lists only the current user's pending follow-ups in remindAt order for upcoming queries", async () => {
-    let findManyArgs: Record<string, unknown> | null = null;
+    const findManyArgs: Array<Record<string, unknown>> = [];
     const expireCalls: string[] = [];
 
     const service = new FollowUpsService(
       {
         followUp: {
           findMany: async (args: Record<string, unknown>) => {
-            findManyArgs = args;
+            findManyArgs.push(args);
+
+            if ((args.where as any)?.status?.in) {
+              return [];
+            }
+
             return [
-              createFollowUpRecord({
-                id: "pending-later",
-                remindAt: new Date("2099-04-12T10:00:00.000Z"),
-              }),
               createFollowUpRecord({
                 id: "pending-sooner",
                 remindAt: new Date("2099-04-09T10:00:00.000Z"),
+              }),
+              createFollowUpRecord({
+                id: "pending-later",
+                remindAt: new Date("2099-04-12T10:00:00.000Z"),
               }),
             ];
           },
@@ -246,13 +255,20 @@ describe("FollowUpsService", () => {
     });
 
     assert.deepEqual(expireCalls, ["user-1"]);
-    assert.equal((findManyArgs as any)?.where.ownerUserId, "user-1");
+    const pendingQuery = findManyArgs.find(
+      (args) => (args.where as any)?.status === PrismaFollowUpStatus.PENDING,
+    );
+    assert.ok(pendingQuery);
+    assert.equal((pendingQuery as any).where.ownerUserId, "user-1");
     assert.equal(
-      (findManyArgs as any)?.where.relationship.is.ownerUserId,
+      (pendingQuery as any).where.relationship.is.ownerUserId,
       "user-1",
     );
-    assert.equal((findManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
-    assert.ok((findManyArgs as any)?.where.remindAt.gte instanceof Date);
+    assert.equal(
+      (pendingQuery as any).where.status,
+      PrismaFollowUpStatus.PENDING,
+    );
+    assert.ok((pendingQuery as any).where.remindAt.gte instanceof Date);
     assert.deepEqual(
       result.map((followUp) => followUp.id),
       ["pending-sooner", "pending-later"],
@@ -270,13 +286,13 @@ describe("FollowUpsService", () => {
             findManyArgs = args;
             return [
               createFollowUpRecord({
+                id: "due-sooner",
+                remindAt: new Date("2026-03-22T08:00:00.000Z"),
+              }),
+              createFollowUpRecord({
                 id: "due-later",
                 remindAt: new Date("2026-03-22T09:00:00.000Z"),
                 triggeredAt: new Date("2026-03-22T09:05:00.000Z"),
-              }),
-              createFollowUpRecord({
-                id: "due-sooner",
-                remindAt: new Date("2026-03-22T08:00:00.000Z"),
               }),
             ];
           },
@@ -297,7 +313,10 @@ describe("FollowUpsService", () => {
       (findManyArgs as any)?.where.relationship.is.ownerUserId,
       "user-1",
     );
-    assert.equal((findManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
+    assert.equal(
+      (findManyArgs as any)?.where.status,
+      PrismaFollowUpStatus.PENDING,
+    );
     assert.ok((findManyArgs as any)?.where.remindAt.lte instanceof Date);
     assert.deepEqual(
       result.map((followUp) => followUp.id),
@@ -334,7 +353,10 @@ describe("FollowUpsService", () => {
       (updateManyArgs as any)?.where.relationship.is.ownerUserId,
       "user-1",
     );
-    assert.equal((updateManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
+    assert.equal(
+      (updateManyArgs as any)?.where.status,
+      PrismaFollowUpStatus.PENDING,
+    );
     assert.equal((updateManyArgs as any)?.where.triggeredAt, null);
     assert.ok((updateManyArgs as any)?.where.remindAt.lte instanceof Date);
     assert.ok((updateManyArgs as any)?.data.triggeredAt instanceof Date);
@@ -388,7 +410,10 @@ describe("FollowUpsService", () => {
       (updateManyArgs as any)?.where.relationship.is.ownerUserId,
       "user-1",
     );
-    assert.equal((updateManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
+    assert.equal(
+      (updateManyArgs as any)?.where.status,
+      PrismaFollowUpStatus.PENDING,
+    );
     assert.equal((updateManyArgs as any)?.where.triggeredAt, null);
     assert.ok((updateManyArgs as any)?.where.remindAt.lte instanceof Date);
     assert.ok((updateManyArgs as any)?.data.triggeredAt instanceof Date);
@@ -422,7 +447,10 @@ describe("FollowUpsService", () => {
       (updateManyArgs as any)?.where.relationship.is.ownerUserId,
       "user-1",
     );
-    assert.equal((updateManyArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
+    assert.equal(
+      (updateManyArgs as any)?.where.status,
+      PrismaFollowUpStatus.PENDING,
+    );
     assert.equal((updateManyArgs as any)?.where.triggeredAt, null);
     assert.ok((updateManyArgs as any)?.where.remindAt.lte instanceof Date);
     assert.deepEqual(result, {
@@ -477,7 +505,7 @@ describe("FollowUpsService", () => {
             },
           }),
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     await assert.rejects(
@@ -499,7 +527,7 @@ describe("FollowUpsService", () => {
           findFirst: async () => null,
         },
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     await assert.rejects(
@@ -507,6 +535,40 @@ describe("FollowUpsService", () => {
       (error: unknown) => {
         assert.ok(error instanceof NotFoundException);
         assert.equal(error.message, "Follow-up not found");
+        return true;
+      },
+    );
+  });
+
+  it("rejects direct follow-up reads when the relationship is no longer active", async () => {
+    const service = new FollowUpsService(
+      {
+        followUp: {
+          findUnique: async () =>
+            createFollowUpRecord({
+              relationship: {
+                ...createFollowUpRecord().relationship,
+                state: PrismaContactRelationshipState.INSTANT_ACCESS,
+                accessEndAt: new Date("2026-03-01T10:00:00.000Z"),
+              },
+            }),
+        },
+      } as any,
+      {
+        expireOwnedExpiredRelationships: async () => undefined,
+        expireRelationshipIfNeeded: async () => ({
+          ...createFollowUpRecord().relationship,
+          state: PrismaContactRelationshipState.EXPIRED,
+          accessEndAt: new Date("2026-03-01T10:00:00.000Z"),
+        }),
+      } as any,
+    );
+
+    await assert.rejects(
+      service.getFollowUp("user-1", "follow-up-1"),
+      (error: unknown) => {
+        assert.ok(error instanceof ConflictException);
+        assert.equal(error.message, "Relationship is no longer active");
         return true;
       },
     );
@@ -531,15 +593,54 @@ describe("FollowUpsService", () => {
             },
           }),
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     const result = await service.completeFollowUp("user-1", "follow-up-1");
 
-    assert.equal((updateArgs as any)?.data.status, PrismaFollowUpStatus.COMPLETED);
+    assert.equal(
+      (updateArgs as any)?.data.status,
+      PrismaFollowUpStatus.COMPLETED,
+    );
     assert.ok((updateArgs as any)?.data.completedAt instanceof Date);
     assert.equal(result.status, "completed");
     assert.ok(result.completedAt instanceof Date);
+  });
+
+  it("rejects follow-up completion when the relationship is no longer active", async () => {
+    const service = new FollowUpsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            followUp: {
+              findUnique: async () =>
+                createFollowUpRecord({
+                  relationship: {
+                    ...createFollowUpRecord().relationship,
+                    state: PrismaContactRelationshipState.INSTANT_ACCESS,
+                    accessEndAt: new Date("2026-03-01T10:00:00.000Z"),
+                  },
+                }),
+            },
+          }),
+      } as any,
+      {
+        expireRelationshipIfNeeded: async () => ({
+          ...createFollowUpRecord().relationship,
+          state: PrismaContactRelationshipState.EXPIRED,
+          accessEndAt: new Date("2026-03-01T10:00:00.000Z"),
+        }),
+      } as any,
+    );
+
+    await assert.rejects(
+      service.completeFollowUp("user-1", "follow-up-1"),
+      (error: unknown) => {
+        assert.ok(error instanceof ConflictException);
+        assert.equal(error.message, "Relationship is no longer active");
+        return true;
+      },
+    );
   });
 
   it("cancels a pending follow-up without recording completion time", async () => {
@@ -561,15 +662,54 @@ describe("FollowUpsService", () => {
             },
           }),
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     const result = await service.cancelFollowUp("user-1", "follow-up-1");
 
-    assert.equal((updateArgs as any)?.data.status, PrismaFollowUpStatus.CANCELLED);
+    assert.equal(
+      (updateArgs as any)?.data.status,
+      PrismaFollowUpStatus.CANCELLED,
+    );
     assert.equal((updateArgs as any)?.data.completedAt, null);
     assert.equal(result.status, "cancelled");
     assert.equal(result.completedAt, null);
+  });
+
+  it("rejects follow-up cancellation when the relationship is no longer active", async () => {
+    const service = new FollowUpsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            followUp: {
+              findUnique: async () =>
+                createFollowUpRecord({
+                  relationship: {
+                    ...createFollowUpRecord().relationship,
+                    state: PrismaContactRelationshipState.INSTANT_ACCESS,
+                    accessEndAt: new Date("2026-03-01T10:00:00.000Z"),
+                  },
+                }),
+            },
+          }),
+      } as any,
+      {
+        expireRelationshipIfNeeded: async () => ({
+          ...createFollowUpRecord().relationship,
+          state: PrismaContactRelationshipState.EXPIRED,
+          accessEndAt: new Date("2026-03-01T10:00:00.000Z"),
+        }),
+      } as any,
+    );
+
+    await assert.rejects(
+      service.cancelFollowUp("user-1", "follow-up-1"),
+      (error: unknown) => {
+        assert.ok(error instanceof ConflictException);
+        assert.equal(error.message, "Relationship is no longer active");
+        return true;
+      },
+    );
   });
 
   it("rejects repeated complete transitions", async () => {
@@ -586,7 +726,7 @@ describe("FollowUpsService", () => {
             },
           }),
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     await assert.rejects(
@@ -612,7 +752,7 @@ describe("FollowUpsService", () => {
             },
           }),
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     await assert.rejects(
@@ -635,7 +775,7 @@ describe("FollowUpsService", () => {
             },
           }),
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     await assert.rejects(
@@ -650,6 +790,41 @@ describe("FollowUpsService", () => {
     );
   });
 
+  it("clears triggeredAt when a pending follow-up is rescheduled", async () => {
+    let updateArgs: Record<string, unknown> | null = null;
+
+    const service = new FollowUpsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            followUp: {
+              findUnique: async () =>
+                createFollowUpRecord({
+                  triggeredAt: new Date("2099-04-09T10:05:00.000Z"),
+                }),
+              update: async (args: Record<string, unknown>) => {
+                updateArgs = args;
+                return createFollowUpRecord({
+                  remindAt: new Date("2099-04-11T10:00:00.000Z"),
+                  triggeredAt: null,
+                });
+              },
+            },
+          }),
+      } as any,
+      noopRelationshipExpiryService as any,
+    );
+
+    const result = await service.updateFollowUp("user-1", "follow-up-1", {
+      remindAt: "2099-04-11T10:00:00.000Z",
+    });
+
+    assert.ok((updateArgs as any)?.data.remindAt instanceof Date);
+    assert.equal((updateArgs as any)?.data.triggeredAt, null);
+    assert.equal(result.triggeredAt, null);
+    assert.equal(result.metadata.isTriggered, false);
+  });
+
   it("returns a sanitized relationship summary", async () => {
     const service = new FollowUpsService(
       {
@@ -657,7 +832,7 @@ describe("FollowUpsService", () => {
           findUnique: async () => createFollowUpRecord(),
         },
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     const result = await service.getFollowUp("user-1", "follow-up-1");
@@ -698,7 +873,7 @@ describe("FollowUpsService", () => {
             }),
         },
       } as any,
-      {} as any,
+      noopRelationshipExpiryService as any,
     );
 
     const result = await service.getFollowUp("user-1", "follow-up-1");
@@ -751,19 +926,31 @@ describe("FollowUpsService", () => {
     );
 
     assert.equal((aggregateArgs as any)?.where.ownerUserId, "user-1");
-    assert.equal((aggregateArgs as any)?.where.relationshipId, "relationship-1");
+    assert.equal(
+      (aggregateArgs as any)?.where.relationshipId,
+      "relationship-1",
+    );
     assert.equal(
       (aggregateArgs as any)?.where.relationship.is.ownerUserId,
       "user-1",
     );
-    assert.equal((aggregateArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
+    assert.equal(
+      (aggregateArgs as any)?.where.status,
+      PrismaFollowUpStatus.PENDING,
+    );
     assert.equal((findFirstArgs as any)?.where.ownerUserId, "user-1");
-    assert.equal((findFirstArgs as any)?.where.relationshipId, "relationship-1");
+    assert.equal(
+      (findFirstArgs as any)?.where.relationshipId,
+      "relationship-1",
+    );
     assert.equal(
       (findFirstArgs as any)?.where.relationship.is.ownerUserId,
       "user-1",
     );
-    assert.equal((findFirstArgs as any)?.where.status, PrismaFollowUpStatus.PENDING);
+    assert.equal(
+      (findFirstArgs as any)?.where.status,
+      PrismaFollowUpStatus.PENDING,
+    );
     assert.equal(result.hasPendingFollowUp, true);
     assert.equal(result.pendingFollowUpCount, 2);
     assert.equal(

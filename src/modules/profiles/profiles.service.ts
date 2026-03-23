@@ -14,6 +14,7 @@ import {
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { PersonaSmartCardPrimaryAction } from "../../common/enums/persona-smart-card-primary-action.enum";
 import { AnalyticsService } from "../analytics/analytics.service";
+import { BlocksService } from "../blocks/blocks.service";
 import {
   type PublicPersonaRecord,
   publicPersonaSelect,
@@ -21,6 +22,7 @@ import {
 import {
   buildSmartCardActionState,
   canExposeVcard,
+  getSharingConfigSource,
   getSafePublicContactValues,
   supportsRequestAccessFlow,
   toSafeSmartCardConfig,
@@ -50,6 +52,7 @@ interface PublicVcardResult {
 
 const authenticatedRequestTargetSelect = {
   id: true,
+  userId: true,
   username: true,
   fullName: true,
   accessMode: true,
@@ -57,17 +60,30 @@ const authenticatedRequestTargetSelect = {
   smartCardConfig: true,
 } as const;
 
-const noopConfigService: Pick<ConfigService, "get"> = {
-  get: <T>(propertyPath: string, defaultValue?: T) => defaultValue as T,
+const defaultingConfigService: Pick<ConfigService, "get"> = {
+  get: <T>(_propertyPath: string, defaultValue?: T) => {
+    if (defaultValue === undefined) {
+      throw new Error("Config service is not configured");
+    }
+
+    return defaultValue;
+  },
 };
+
+const failClosedBlocksService: Pick<BlocksService, "assertNoInteractionBlock"> =
+  {
+    assertNoInteractionBlock: async () => {
+      throw new Error("Blocks service is not configured");
+    },
+  };
 
 @Injectable()
 export class ProfilesService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly analyticsService: AnalyticsService,
-    private readonly configService: Pick<ConfigService, "get"> =
-      noopConfigService,
+    private readonly configService: ConfigService = defaultingConfigService as ConfigService,
+    private readonly blocksService: BlocksService = failClosedBlocksService as BlocksService,
   ) {}
 
   async getPublicProfile(
@@ -78,6 +94,13 @@ export class ProfilesService {
     },
   ) {
     const persona = await this.findPublicPersonaByUsername(username);
+
+    if (tracking?.viewerUserId) {
+      await this.blocksService.assertNoInteractionBlock(
+        tracking.viewerUserId,
+        persona.userId,
+      );
+    }
 
     const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
     const activeProfileQrCode = await this.getActiveProfileQrCode(persona.id);
@@ -109,8 +132,15 @@ export class ProfilesService {
     });
   }
 
-  async getPublicVcard(username: string) {
+  async getPublicVcard(username: string, viewerUserId?: string | null) {
     const persona = await this.findPublicPersonaByUsername(username);
+
+    if (viewerUserId) {
+      await this.blocksService.assertNoInteractionBlock(
+        viewerUserId,
+        persona.userId,
+      );
+    }
 
     if (
       !canExposeVcard({
@@ -129,7 +159,7 @@ export class ProfilesService {
     } satisfies PublicVcardResult;
   }
 
-  async getRequestTarget(username: string) {
+  async getRequestTarget(viewerUserId: string, username: string) {
     const persona = await this.prismaService.persona.findFirst({
       where: {
         username: username.trim().toLowerCase(),
@@ -144,6 +174,11 @@ export class ProfilesService {
       throw new NotFoundException("Public profile not found");
     }
 
+    await this.blocksService.assertNoInteractionBlock(
+      viewerUserId,
+      persona.userId,
+    );
+
     const hasActiveProfileQr = await this.hasActiveProfileQr(persona.id);
 
     if (
@@ -157,7 +192,6 @@ export class ProfilesService {
     }
 
     return {
-      id: persona.id,
       username: persona.username,
       fullName: persona.fullName,
       accessMode: persona.accessMode.toLowerCase(),
@@ -208,7 +242,30 @@ export class ProfilesService {
       throw new NotFoundException("Public profile not found");
     }
 
+    if (this.needsSystemManagedSharingRepair(persona)) {
+      throw new NotFoundException("Public profile not found");
+    }
+
     return persona;
+  }
+
+  private needsSystemManagedSharingRepair(
+    persona: Pick<PublicPersonaRecord, "sharingMode" | "smartCardConfig">,
+  ): boolean {
+    const source = getSharingConfigSource(persona.smartCardConfig);
+
+    if (source === "user_custom") {
+      return false;
+    }
+
+    if (source === null) {
+      return (
+        persona.sharingMode === PrismaPersonaSharingMode.SMART_CARD &&
+        toSafeSmartCardConfig(persona.smartCardConfig) === null
+      );
+    }
+
+    return toSafeSmartCardConfig(persona.smartCardConfig) === null;
   }
 
   private buildVcardPayload(
@@ -263,13 +320,7 @@ export class ProfilesService {
       "BEGIN:VCARD",
       "VERSION:3.0",
       `FN:${this.escapeVcardText(payload.fn)}`,
-      `N:${[
-        payload.n.familyName,
-        payload.n.givenName,
-        "",
-        "",
-        "",
-      ]
+      `N:${[payload.n.familyName, payload.n.givenName, "", "", ""]
         .map((value) => this.escapeVcardText(value))
         .join(";")}`,
     ];
@@ -353,16 +404,35 @@ export class ProfilesService {
   private foldVcardLine(line: string): string {
     const maxLineLength = 75;
 
-    if (line.length <= maxLineLength) {
+    if (Buffer.byteLength(line, "utf8") <= maxLineLength) {
       return line;
     }
 
     const segments: string[] = [];
 
-    for (let index = 0; index < line.length; index += maxLineLength) {
-      const segment = line.slice(index, index + maxLineLength);
+    let currentSegment = "";
 
-      segments.push(index === 0 ? segment : ` ${segment}`);
+    for (const char of Array.from(line)) {
+      const candidate = `${currentSegment}${char}`;
+
+      if (
+        currentSegment.length > 0 &&
+        Buffer.byteLength(candidate, "utf8") > maxLineLength
+      ) {
+        segments.push(
+          segments.length === 0 ? currentSegment : ` ${currentSegment}`,
+        );
+        currentSegment = char;
+        continue;
+      }
+
+      currentSegment = candidate;
+    }
+
+    if (currentSegment.length > 0) {
+      segments.push(
+        segments.length === 0 ? currentSegment : ` ${currentSegment}`,
+      );
     }
 
     return segments.join("\r\n");

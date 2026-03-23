@@ -47,9 +47,15 @@ export class QrController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get("qr/:code")
-  resolveQr(@Param("code") code: string, @Req() request: Request) {
+  resolveQr(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("code") code: string,
+    @Req() request: Request,
+  ) {
     return this.qrService.resolveQr(code, {
+      scannerUserId: user.id,
       idempotencyKey: buildAnalyticsRequestKey(request, `qr:${code}`),
     });
   }

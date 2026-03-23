@@ -49,8 +49,7 @@ export interface PersonaPublicSmartCardResponse {
   publicActions: PersonaPublicActionValues;
 }
 
-export interface PersonaPublicSmartCardActionSource
-  extends PersonaSmartCardActionSource {
+export interface PersonaPublicSmartCardActionSource extends PersonaSmartCardActionSource {
   username: string;
 }
 
@@ -76,15 +75,19 @@ export interface PersonaSmartCardCompatibilityContext {
   hasActiveProfileQr?: boolean;
 }
 
-const prismaSharingModeMap: Record<PersonaSharingMode, PrismaPersonaSharingMode> = {
+const prismaSharingModeMap: Record<
+  PersonaSharingMode,
+  PrismaPersonaSharingMode
+> = {
   [PersonaSharingMode.Controlled]: PrismaPersonaSharingMode.CONTROLLED,
   [PersonaSharingMode.SmartCard]: PrismaPersonaSharingMode.SMART_CARD,
 };
 
-const apiSharingModeMap: Record<PrismaPersonaSharingMode, PersonaSharingMode> = {
-  [PrismaPersonaSharingMode.CONTROLLED]: PersonaSharingMode.Controlled,
-  [PrismaPersonaSharingMode.SMART_CARD]: PersonaSharingMode.SmartCard,
-};
+const apiSharingModeMap: Record<PrismaPersonaSharingMode, PersonaSharingMode> =
+  {
+    [PrismaPersonaSharingMode.CONTROLLED]: PersonaSharingMode.Controlled,
+    [PrismaPersonaSharingMode.SMART_CARD]: PersonaSharingMode.SmartCard,
+  };
 
 const allowedPrimaryActions = new Set<string>([
   PersonaSmartCardPrimaryAction.RequestAccess,
@@ -124,7 +127,10 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 function isSharingConfigSource(
   value: unknown,
 ): value is PersonaSharingConfigSource {
-  return typeof value === "string" && sharingConfigSources.has(value as PersonaSharingConfigSource);
+  return (
+    typeof value === "string" &&
+    sharingConfigSources.has(value as PersonaSharingConfigSource)
+  );
 }
 
 function normalizeBoolean(
@@ -168,7 +174,7 @@ export function isPhoneLikeValue(value: string): boolean {
   return digits.length >= 7 && digits.length <= 15;
 }
 
-function normalizePhoneDigits(value: string): string | null {
+export function normalizePhoneDigits(value: string): string | null {
   if (!isPhoneLikeValue(value)) {
     return null;
   }
@@ -182,7 +188,7 @@ function normalizePhoneDigits(value: string): string | null {
   return digits;
 }
 
-function normalizeTelValue(value: string): string | null {
+export function normalizeTelValue(value: string): string | null {
   const digits = normalizePhoneDigits(value);
 
   if (digits === null) {
@@ -192,7 +198,7 @@ function normalizeTelValue(value: string): string | null {
   return value.trim().startsWith("+") ? `+${digits}` : digits;
 }
 
-function normalizeEmailValue(value: string): string | null {
+export function normalizeEmailValue(value: string): string | null {
   const normalizedValue = value.trim().toLowerCase();
 
   if (!isEmailLikeValue(normalizedValue)) {
@@ -202,7 +208,61 @@ function normalizeEmailValue(value: string): string | null {
   return normalizedValue;
 }
 
-function normalizePublicTextValue(value: string | null | undefined): string | null {
+export function normalizePublicPhoneField(
+  value: unknown,
+  fieldName: string,
+): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    throw new BadRequestException(`${fieldName} must be a string`);
+  }
+
+  const normalizedValue = value.trim();
+
+  if (normalizedValue.length === 0) {
+    return null;
+  }
+
+  if (!isPhoneLikeValue(normalizedValue)) {
+    throw new BadRequestException(
+      `${fieldName} must be a valid phone-like string`,
+    );
+  }
+
+  return normalizedValue;
+}
+
+export function normalizePublicEmailField(
+  value: unknown,
+  fieldName: string,
+): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    throw new BadRequestException(`${fieldName} must be a string`);
+  }
+
+  const normalizedValue = normalizeEmailValue(value);
+
+  if (normalizedValue === null) {
+    if (value.trim().length === 0) {
+      return null;
+    }
+
+    throw new BadRequestException(`${fieldName} must be a valid email`);
+  }
+
+  return normalizedValue;
+}
+
+function normalizePublicTextValue(
+  value: string | null | undefined,
+): string | null {
   if (typeof value !== "string") {
     return null;
   }
@@ -224,7 +284,9 @@ export function toApiSharingMode(
   return apiSharingModeMap[sharingMode];
 }
 
-export function validateSmartCardConfig(value: unknown): PersonaSmartCardConfig {
+export function validateSmartCardConfig(
+  value: unknown,
+): PersonaSmartCardConfig {
   if (!isPlainObject(value)) {
     throw new BadRequestException("smartCardConfig must be an object");
   }
@@ -284,8 +346,8 @@ export function isCallEnabled(persona: PersonaSmartCardActionSource): boolean {
   return Boolean(
     isSmartCardSharingMode(persona.sharingMode) &&
     config?.allowCall &&
-      typeof persona.publicPhone === "string" &&
-      normalizeTelValue(persona.publicPhone) !== null,
+    typeof persona.publicPhone === "string" &&
+    normalizeTelValue(persona.publicPhone) !== null,
   );
 }
 
@@ -297,8 +359,8 @@ export function isWhatsappEnabled(
   return Boolean(
     isSmartCardSharingMode(persona.sharingMode) &&
     config?.allowWhatsapp &&
-      typeof persona.publicWhatsappNumber === "string" &&
-      normalizePhoneDigits(persona.publicWhatsappNumber) !== null,
+    typeof persona.publicWhatsappNumber === "string" &&
+    normalizePhoneDigits(persona.publicWhatsappNumber) !== null,
   );
 }
 
@@ -308,8 +370,8 @@ export function isEmailEnabled(persona: PersonaSmartCardActionSource): boolean {
   return Boolean(
     isSmartCardSharingMode(persona.sharingMode) &&
     config?.allowEmail &&
-      typeof persona.publicEmail === "string" &&
-      normalizeEmailValue(persona.publicEmail) !== null,
+    typeof persona.publicEmail === "string" &&
+    normalizeEmailValue(persona.publicEmail) !== null,
   );
 }
 
@@ -333,7 +395,7 @@ export function hasDirectSmartCardActions(
 ): boolean {
   const actions = buildSmartCardActions(persona);
 
-  return actions.call || actions.whatsapp || actions.email || actions.vcard;
+  return actions.call || actions.whatsapp || actions.email;
 }
 
 export function buildCallLink(
@@ -431,7 +493,10 @@ export function buildSafePublicActionValues(
 }
 
 export function canExposeVcard(
-  persona: Pick<PersonaSmartCardActionSource, "sharingMode" | "smartCardConfig">,
+  persona: Pick<
+    PersonaSmartCardActionSource,
+    "sharingMode" | "smartCardConfig"
+  >,
 ): boolean {
   if (!isSmartCardSharingMode(persona.sharingMode)) {
     return false;
@@ -521,7 +586,6 @@ export function validateSmartCardConfigCompatibility(
     );
   }
 
-
   const actionSource: PersonaSmartCardActionSource = {
     smartCardConfig: config,
     publicPhone: publicFields?.publicPhone ?? null,
@@ -544,6 +608,12 @@ export function validateSmartCardConfigCompatibility(
   if (config.allowEmail && !isEmailEnabled(actionSource)) {
     throw new BadRequestException(
       "smartCardConfig.allowEmail requires a valid publicEmail value",
+    );
+  }
+
+  if (config.allowVcard && !canExposeVcard(actionSource)) {
+    throw new BadRequestException(
+      "smartCardConfig.allowVcard requires Smart Card mode with a valid vCard payload",
     );
   }
 
@@ -589,9 +659,13 @@ export function getSharingConfigSource(
 export function toStoredSmartCardConfig(
   config: PersonaSmartCardConfig | null | undefined,
   source: PersonaSharingConfigSource,
-): Record<string, unknown> {
+) {
+  if (config === null || config === undefined) {
+    return null;
+  }
+
   return {
-    ...(config ?? {}),
+    ...config,
     _meta: {
       source,
     },
@@ -638,6 +712,7 @@ export function supportsRequestAccessFlow(
   }
 
   return (
-    safeSmartCardConfig.primaryAction === PersonaSmartCardPrimaryAction.RequestAccess
+    safeSmartCardConfig.primaryAction ===
+    PersonaSmartCardPrimaryAction.RequestAccess
   );
 }

@@ -5,11 +5,13 @@ import {
   HttpStatus,
   Header,
   Res,
+  UseGuards,
 } from "@nestjs/common";
 import { Response } from "express";
 
 import { VerificationDiagnosticsService } from "../auth/verification-diagnostics.service";
 import { HealthService } from "./health.service";
+import { HealthEndpointGuard } from "./health-endpoint.guard";
 import { MetricsService } from "./metrics.service";
 
 @Controller()
@@ -40,13 +42,15 @@ export class HealthController {
   }
 
   @Get("metrics")
+  @UseGuards(HealthEndpointGuard)
   @Header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
   async getMetrics(): Promise<string> {
     return this.metricsService.getPrometheusSnapshot();
   }
 
   @Get("health/verification")
+  @UseGuards(HealthEndpointGuard)
   async getVerificationDiagnostics(): Promise<Record<string, unknown>> {
-    return this.verificationDiagnosticsService.getRuntimeDiagnostics();
+    return this.verificationDiagnosticsService.getPublicRuntimeDiagnostics();
   }
 }

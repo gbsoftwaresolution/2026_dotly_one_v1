@@ -18,9 +18,8 @@ import { QrService } from "../src/modules/qr/qr.service";
 describe("JwtAuthGuard hardening", () => {
   it("verifies tokens with issuer and audience constraints", async () => {
     let verifyOptions: Record<string, unknown> | null = null;
-    let validateSessionArgs:
-      | { userId: string; sessionId: string }
-      | null = null;
+    let validateSessionArgs: { userId: string; sessionId: string } | null =
+      null;
 
     const guard = new JwtAuthGuard(
       {
@@ -259,6 +258,10 @@ describe("QrService hardening", () => {
       {} as any,
       {} as any,
       {} as any,
+      {} as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
     await assert.rejects(
@@ -321,17 +324,31 @@ describe("QrService hardening", () => {
       } as any,
       {} as any,
       {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      {
+        assertNoInteractionBlockInTransaction: async () => undefined,
+      } as any,
+      {
+        expireRelationshipIfNeeded: async () => undefined,
+      } as any,
+      {
+        createInitialMemory: async () => undefined,
+      } as any,
+      {
+        createSafe: async () => undefined,
+      } as any,
       { trackQrScan: async () => true } as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
-    await assert.rejects(service.resolveQr("qr-code"), (error: unknown) => {
-      assert.ok(error instanceof NotFoundException);
-      assert.equal(error.message, "QR code not found");
-      return true;
-    });
+    await assert.rejects(
+      service.resolveQr("qr-code", { scannerUserId: "viewer-user" }),
+      (error: unknown) => {
+        assert.ok(error instanceof NotFoundException);
+        assert.equal(error.message, "QR code not found");
+        return true;
+      },
+    );
   });
 });

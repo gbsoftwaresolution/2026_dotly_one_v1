@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { authApi } from "@/lib/api";
+import { clearShareFastStore } from "@/lib/share-fast-store";
 
 interface ResetSessionOnLoadProps {
   enabled: boolean;
@@ -14,6 +15,7 @@ export function ResetSessionOnLoad({ enabled }: ResetSessionOnLoadProps) {
       return;
     }
 
+    clearShareFastStore();
     void authApi.logout();
   }, [enabled]);
 

@@ -2,11 +2,7 @@ import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
 import { PersonaSharingMode as PrismaPersonaSharingMode } from "@prisma/client";
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 
 import { PersonaAccessMode } from "../src/common/enums/persona-access-mode.enum";
 import { PersonaSharingMode } from "../src/common/enums/persona-sharing-mode.enum";
@@ -152,6 +148,8 @@ describe("PersonasService sharing mode", () => {
 
   it("applies safe system defaults when a persona is created", async () => {
     let persistedConfig: any = null;
+    let createdProfileQrCount = 0;
+    let activeProfileQrId: string | null = null;
 
     const service = new PersonasService({
       persona: {
@@ -167,6 +165,9 @@ describe("PersonasService sharing mode", () => {
           profilePhotoUrl: null,
           accessMode: "REQUEST",
           verifiedOnly: false,
+          emailVerified: true,
+          phoneVerified: false,
+          businessVerified: false,
           sharingMode: "CONTROLLED",
           smartCardConfig: null,
           publicPhone: null,
@@ -187,6 +188,9 @@ describe("PersonasService sharing mode", () => {
           profilePhotoUrl: null,
           accessMode: "REQUEST",
           verifiedOnly: false,
+          emailVerified: true,
+          phoneVerified: false,
+          businessVerified: false,
           sharingMode: "CONTROLLED",
           smartCardConfig: null,
           publicPhone: null,
@@ -210,6 +214,9 @@ describe("PersonasService sharing mode", () => {
             profilePhotoUrl: null,
             accessMode: "REQUEST",
             verifiedOnly: false,
+            emailVerified: true,
+            phoneVerified: false,
+            businessVerified: false,
             sharingMode: args.data.sharingMode,
             smartCardConfig: args.data.smartCardConfig,
             publicPhone: null,
@@ -221,7 +228,21 @@ describe("PersonasService sharing mode", () => {
         },
       },
       qRAccessToken: {
-        findFirst: async () => null,
+        findFirst: async () =>
+          activeProfileQrId
+            ? {
+                id: activeProfileQrId,
+              }
+            : null,
+        findUnique: async () => null,
+        create: async () => {
+          createdProfileQrCount += 1;
+          activeProfileQrId = `profile-qr-${createdProfileQrCount}`;
+
+          return {
+            id: activeProfileQrId,
+          };
+        },
       },
     } as any);
 
@@ -237,14 +258,119 @@ describe("PersonasService sharing mode", () => {
 
     assert.equal(result.sharingMode, "controlled");
     assert.equal(result.sharingConfigSource, "system_default");
-    assert.deepEqual(result.smartCardConfig, {
-      primaryAction: "request_access",
-      allowCall: false,
-      allowWhatsapp: false,
-      allowEmail: false,
-      allowVcard: false,
-    });
-    assert.equal(persistedConfig._meta.source, "system_default");
+    assert.equal(result.smartCardConfig, null);
+    assert.equal(persistedConfig, null);
+    assert.equal(result.sharingCapabilities?.hasActiveProfileQr, true);
+    assert.equal(result.sharingCapabilities?.primaryActions.instantConnect, true);
+    assert.equal(createdProfileQrCount, 1);
+  });
+
+  it("auto-provisions a profile QR when a trusted public persona is loaded", async () => {
+    let createdProfileQrCount = 0;
+    let activeProfileQrId: string | null = null;
+
+    const service = new PersonasService({
+      persona: {
+        findFirst: async () => ({
+          id: "persona-1",
+          type: "PERSONAL",
+          username: "alice",
+          publicUrl: "dotly.id/alice",
+          fullName: "Alice Demo",
+          jobTitle: "Founder",
+          companyName: "Dotly",
+          tagline: "Connect fast",
+          profilePhotoUrl: null,
+          accessMode: "REQUEST",
+          verifiedOnly: false,
+          emailVerified: true,
+          phoneVerified: false,
+          businessVerified: false,
+          sharingMode: "CONTROLLED",
+          smartCardConfig: null,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
+          createdAt: new Date("2026-03-22T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-22T10:05:00.000Z"),
+        }),
+      },
+      qRAccessToken: {
+        findFirst: async () =>
+          activeProfileQrId
+            ? {
+                id: activeProfileQrId,
+              }
+            : null,
+        findUnique: async () => null,
+        create: async () => {
+          createdProfileQrCount += 1;
+          activeProfileQrId = `profile-qr-${createdProfileQrCount}`;
+
+          return {
+            id: activeProfileQrId,
+          };
+        },
+      },
+    } as any);
+
+    const result = await service.findOneById("user-1", "persona-1");
+
+    assert.equal(result.sharingCapabilities?.hasActiveProfileQr, true);
+    assert.equal(result.sharingCapabilities?.primaryActions.instantConnect, true);
+    assert.equal(createdProfileQrCount, 1);
+  });
+
+  it("auto-provisions profile QR capability in persona listings for trusted public personas", async () => {
+    let createdProfileQrCount = 0;
+
+    const service = new PersonasService({
+      persona: {
+        findMany: async () => [
+          {
+            id: "persona-1",
+            type: "PERSONAL",
+            username: "alice",
+            publicUrl: "dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "REQUEST",
+            verifiedOnly: false,
+            emailVerified: true,
+            phoneVerified: false,
+            businessVerified: false,
+            sharingMode: "CONTROLLED",
+            smartCardConfig: null,
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+            createdAt: new Date("2026-03-22T10:00:00.000Z"),
+            updatedAt: new Date("2026-03-22T10:05:00.000Z"),
+          },
+        ],
+      },
+      qRAccessToken: {
+        findMany: async () => [],
+        create: async () => {
+          createdProfileQrCount += 1;
+
+          return {
+            id: `profile-qr-${createdProfileQrCount}`,
+          };
+        },
+        findUnique: async () => null,
+      },
+    } as any);
+
+    const result = await service.findAllByUser("user-1");
+
+    assert.equal(result.length, 1);
+    assert.equal(result[0].sharingCapabilities?.hasActiveProfileQr, true);
+    assert.equal(result[0].sharingCapabilities?.primaryActions.instantConnect, true);
+    assert.equal(createdProfileQrCount, 1);
   });
 
   it("upgrades defaults to smart_card when public info is meaningful", async () => {
@@ -341,7 +467,10 @@ describe("PersonasService sharing mode", () => {
       },
     } as any);
 
-    const result = await service.recomputePersonaDefaults("user-1", "persona-1");
+    const result = await service.recomputePersonaDefaults(
+      "user-1",
+      "persona-1",
+    );
 
     assert.equal(updateCalled, false);
     assert.equal(result.sharingConfigSource, "user_custom");
@@ -419,13 +548,7 @@ describe("PersonasService sharing mode", () => {
     assert.equal(result.accessMode, "private");
     assert.equal(result.sharingMode, "controlled");
     assert.equal(result.sharingConfigSource, "system_default");
-    assert.deepEqual(result.smartCardConfig, {
-      primaryAction: "contact_me",
-      allowCall: false,
-      allowWhatsapp: false,
-      allowEmail: true,
-      allowVcard: false,
-    });
+    assert.equal(result.smartCardConfig, null);
   });
 
   it("rejects access mode changes that would invalidate user-custom smart card settings", async () => {
@@ -490,7 +613,7 @@ describe("PersonasService sharing mode", () => {
     assert.equal(updateCalled, false);
   });
 
-  it("repairs legacy system-managed sharing when a persona is read", async () => {
+  it("normalizes legacy system-managed sharing when a persona is read", async () => {
     let updateCalled = false;
 
     const service = new PersonasService({
@@ -549,7 +672,7 @@ describe("PersonasService sharing mode", () => {
 
     const result = await service.findOneById("user-1", "persona-1");
 
-    assert.equal(updateCalled, true);
+    assert.equal(updateCalled, false);
     assert.equal(result.sharingMode, "smart_card");
     assert.equal(result.sharingConfigSource, "system_default");
     assert.deepEqual(result.smartCardConfig, {
@@ -638,7 +761,7 @@ describe("PersonasService sharing mode", () => {
     );
   });
 
-  it("returns 403 when the caller does not own the persona", async () => {
+  it("returns the same 404 when the caller does not own the persona", async () => {
     const service = new PersonasService({
       persona: {
         findUnique: async () => ({
@@ -657,7 +780,11 @@ describe("PersonasService sharing mode", () => {
       service.updateSharingMode("user-1", "persona-1", {
         sharingMode: PersonaSharingMode.Controlled,
       }),
-      ForbiddenException,
+      (error: unknown) => {
+        assert.ok(error instanceof NotFoundException);
+        assert.equal(error.message, "Persona not found");
+        return true;
+      },
     );
   });
 
@@ -690,6 +817,8 @@ describe("PersonasService sharing mode", () => {
         findUnique: async () => ({
           userId: "user-1",
           accessMode: "REQUEST",
+          emailVerified: false,
+          phoneVerified: false,
           sharingMode: "CONTROLLED",
           smartCardConfig: null,
           publicPhone: null,
@@ -723,6 +852,83 @@ describe("PersonasService sharing mode", () => {
         return true;
       },
     );
+  });
+
+  it("auto-provisions a profile QR when enabling instant connect for a trusted persona", async () => {
+    let createdProfileQrCount = 0;
+    let activeProfileQrId: string | null = null;
+
+    const service = new PersonasService({
+      persona: {
+        findUnique: async () => ({
+          userId: "user-1",
+          accessMode: "REQUEST",
+          emailVerified: true,
+          phoneVerified: false,
+          sharingMode: "CONTROLLED",
+          smartCardConfig: null,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
+        }),
+        update: async (args: any) => ({
+          id: "persona-1",
+          type: "PERSONAL",
+          username: "alice",
+          publicUrl: "dotly.id/alice",
+          fullName: "Alice Demo",
+          jobTitle: "Founder",
+          companyName: "Dotly",
+          tagline: "Connect fast",
+          profilePhotoUrl: null,
+          accessMode: "REQUEST",
+          verifiedOnly: false,
+          emailVerified: true,
+          phoneVerified: false,
+          businessVerified: false,
+          sharingMode: args.data.sharingMode,
+          smartCardConfig: args.data.smartCardConfig,
+          publicPhone: args.data.publicPhone,
+          publicWhatsappNumber: args.data.publicWhatsappNumber,
+          publicEmail: args.data.publicEmail,
+          createdAt: new Date("2026-03-22T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-22T10:05:00.000Z"),
+        }),
+      },
+      qRAccessToken: {
+        findFirst: async () =>
+          activeProfileQrId
+            ? {
+                id: activeProfileQrId,
+              }
+            : null,
+        findUnique: async () => null,
+        create: async () => {
+          createdProfileQrCount += 1;
+          activeProfileQrId = `profile-qr-${createdProfileQrCount}`;
+
+          return {
+            id: activeProfileQrId,
+          };
+        },
+      },
+    } as any);
+
+    const result = await service.updateSharingMode("user-1", "persona-1", {
+      sharingMode: PersonaSharingMode.SmartCard,
+      smartCardConfig: {
+        primaryAction: PersonaSmartCardPrimaryAction.InstantConnect,
+        allowCall: false,
+        allowWhatsapp: false,
+        allowEmail: false,
+        allowVcard: false,
+      },
+    });
+
+    assert.equal(result.sharingMode, "smart_card");
+    assert.equal(result.smartCardConfig?.primaryAction, "instant_connect");
+    assert.equal(result.sharingCapabilities?.hasActiveProfileQr, true);
+    assert.equal(createdProfileQrCount, 1);
   });
 
   it("reuses smart card mode when only the config is updated", async () => {
@@ -956,6 +1162,44 @@ describe("PersonasService sharing mode", () => {
         assert.equal(
           error.message,
           "smartCardConfig.allowCall requires a valid publicPhone value",
+        );
+
+        return true;
+      },
+    );
+  });
+
+  it("rejects contact_me when only vcard is enabled", async () => {
+    const service = new PersonasService({
+      persona: {
+        findUnique: async () => ({
+          userId: "user-1",
+          accessMode: "REQUEST",
+          sharingMode: "CONTROLLED",
+          smartCardConfig: null,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
+        }),
+      },
+    } as any);
+
+    await assert.rejects(
+      service.updateSharingMode("user-1", "persona-1", {
+        sharingMode: PersonaSharingMode.SmartCard,
+        smartCardConfig: {
+          primaryAction: PersonaSmartCardPrimaryAction.ContactMe,
+          allowCall: false,
+          allowWhatsapp: false,
+          allowEmail: false,
+          allowVcard: true,
+        },
+      }),
+      (error: unknown) => {
+        assert(error instanceof BadRequestException);
+        assert.equal(
+          error.message,
+          "smartCardConfig.primaryAction contact_me requires at least one direct action to be enabled",
         );
 
         return true;

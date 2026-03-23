@@ -4,6 +4,9 @@ import { ContactRequestSourceType } from "../../../common/enums/contact-request-
 
 export class CreateInstantConnectDto {
   @IsUUID()
+  fromPersonaId!: string;
+
+  @IsUUID()
   targetPersonaId!: string;
 
   @IsOptional()

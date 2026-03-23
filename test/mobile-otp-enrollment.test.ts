@@ -12,6 +12,7 @@ const OTP_ATTEMPT_COOLDOWN_MS = 5 * 1000;
 
 interface UserRecord {
   id: string;
+  isVerified?: boolean;
   phoneNumber: string | null;
   pendingPhoneNumber: string | null;
   phoneVerifiedAt: Date | null;
@@ -66,8 +67,13 @@ function createMobileOtpHarness(options?: {
 }) {
   const state = {
     users: [...(options?.users ?? [])],
+    personas: [] as Array<Record<string, unknown>>,
     challenges: [...(options?.challenges ?? [])],
-    sentOtps: [] as Array<{ to: string; code: string; expiresInMinutes: number }>,
+    sentOtps: [] as Array<{
+      to: string;
+      code: string;
+      expiresInMinutes: number;
+    }>,
     audits: [] as Array<Record<string, unknown>>,
   };
 
@@ -89,12 +95,18 @@ function createMobileOtpHarness(options?: {
         return Object.fromEntries(
           Object.entries(select)
             .filter(([, value]) => value)
-            .map(([key]) => [key, (user as unknown as Record<string, unknown>)[key]]),
+            .map(([key]) => [
+              key,
+              (user as unknown as Record<string, unknown>)[key],
+            ]),
         );
       },
       findFirst: async ({ where, select }: any) => {
         const user = state.users.find((candidate) => {
-          if (where.phoneNumber && candidate.phoneNumber !== where.phoneNumber) {
+          if (
+            where.phoneNumber &&
+            candidate.phoneNumber !== where.phoneNumber
+          ) {
             return false;
           }
 
@@ -122,7 +134,10 @@ function createMobileOtpHarness(options?: {
         return Object.fromEntries(
           Object.entries(select)
             .filter(([, value]) => value)
-            .map(([key]) => [key, (user as unknown as Record<string, unknown>)[key]]),
+            .map(([key]) => [
+              key,
+              (user as unknown as Record<string, unknown>)[key],
+            ]),
         );
       },
       update: async ({ where, data, select }: any) => {
@@ -141,9 +156,15 @@ function createMobileOtpHarness(options?: {
         return Object.fromEntries(
           Object.entries(select)
             .filter(([, value]) => value)
-            .map(([key]) => [key, (user as unknown as Record<string, unknown>)[key]]),
+            .map(([key]) => [
+              key,
+              (user as unknown as Record<string, unknown>)[key],
+            ]),
         );
       },
+    },
+    persona: {
+      updateMany: async () => ({ count: state.personas.length }),
     },
     mobileOtpChallenge: {
       findFirst: async ({ where, orderBy, select }: any) => {
@@ -165,7 +186,10 @@ function createMobileOtpHarness(options?: {
               return false;
             }
 
-            if (where.supersededAt === null && challenge.supersededAt !== null) {
+            if (
+              where.supersededAt === null &&
+              challenge.supersededAt !== null
+            ) {
               return false;
             }
 
@@ -212,7 +236,10 @@ function createMobileOtpHarness(options?: {
         return Object.fromEntries(
           Object.entries(select)
             .filter(([, value]) => value)
-            .map(([key]) => [key, (match as unknown as Record<string, unknown>)[key]]),
+            .map(([key]) => [
+              key,
+              (match as unknown as Record<string, unknown>)[key],
+            ]),
         );
       },
       count: async ({ where }: any) =>
@@ -255,7 +282,10 @@ function createMobileOtpHarness(options?: {
         return Object.fromEntries(
           Object.entries(select)
             .filter(([, value]) => value)
-            .map(([key]) => [key, (challenge as unknown as Record<string, unknown>)[key]]),
+            .map(([key]) => [
+              key,
+              (challenge as unknown as Record<string, unknown>)[key],
+            ]),
         );
       },
       updateMany: async ({ where, data }: any) => {
@@ -329,7 +359,10 @@ function createMobileOtpHarness(options?: {
         return Object.fromEntries(
           Object.entries(select)
             .filter(([, value]) => value)
-            .map(([key]) => [key, (challenge as unknown as Record<string, unknown>)[key]]),
+            .map(([key]) => [
+              key,
+              (challenge as unknown as Record<string, unknown>)[key],
+            ]),
         );
       },
     },
@@ -412,7 +445,10 @@ describe("AuthService mobile OTP enrollment", () => {
         expiresAt: result.expiresAt.toISOString(),
       },
     });
-    assert.doesNotMatch(JSON.stringify(state.audits[0]), new RegExp(state.sentOtps[0]!.code));
+    assert.doesNotMatch(
+      JSON.stringify(state.audits[0]),
+      new RegExp(state.sentOtps[0]!.code),
+    );
     assert.equal(
       authMetricsService.getCounterValue("dotly_auth_otp_request_total", {
         outcome: "requested",
@@ -467,7 +503,10 @@ describe("AuthService mobile OTP enrollment", () => {
       (error: any) => {
         assert.ok(error instanceof HttpException);
         assert.equal(error.getStatus(), 429);
-        assert.match(error.message, /wait before requesting another verification code/i);
+        assert.match(
+          error.message,
+          /wait before requesting another verification code/i,
+        );
         return true;
       },
     );
@@ -586,7 +625,10 @@ describe("AuthService mobile OTP enrollment", () => {
         }),
       (error: any) => {
         assert.ok(error instanceof BadRequestException);
-        assert.match(error.message, /request a verification code before trying again/i);
+        assert.match(
+          error.message,
+          /request a verification code before trying again/i,
+        );
         return true;
       },
     );
@@ -720,7 +762,10 @@ describe("AuthService mobile OTP enrollment", () => {
       (error: any) => {
         assert.ok(error instanceof HttpException);
         assert.equal(error.getStatus(), 429);
-        assert.match(error.message, /please wait before trying another verification code/i);
+        assert.match(
+          error.message,
+          /please wait before trying another verification code/i,
+        );
         return true;
       },
     );
@@ -935,6 +980,57 @@ describe("AuthService mobile OTP enrollment", () => {
         reason: "none",
       }),
       1,
+    );
+  });
+
+  it("returns a conflict when another account claims the phone number first", async () => {
+    const { service } = createMobileOtpHarness({
+      users: [
+        {
+          id: "user-1",
+          isVerified: false,
+          phoneNumber: null,
+          pendingPhoneNumber: "+14155550199",
+          phoneVerifiedAt: null,
+        },
+      ],
+      challenges: [
+        {
+          id: "challenge-1",
+          userId: "user-1",
+          phoneNumber: "+14155550199",
+          purpose: "ENROLLMENT",
+          codeHash: hashToken("123456"),
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+          consumedAt: null,
+          supersededAt: null,
+          invalidAttemptCount: 0,
+          lastAttemptAt: null,
+          resendAvailableAt: new Date(Date.now() - 1_000),
+          createdAt: new Date(),
+        },
+      ],
+    });
+
+    const prisma = (service as any).prismaService;
+    prisma.user.update = async () => {
+      throw { code: "P2002" };
+    };
+
+    await assert.rejects(
+      () =>
+        service.verifyMobileOtp("user-1", {
+          challengeId: "challenge-1",
+          code: "123456",
+        }),
+      (error: any) => {
+        assert.equal(error.status, 409);
+        assert.match(
+          error.message,
+          /already verified on another dotly account/i,
+        );
+        return true;
+      },
     );
   });
 });

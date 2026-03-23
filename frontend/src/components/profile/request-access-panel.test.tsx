@@ -105,7 +105,7 @@ describe("RequestAccessPanel", () => {
   });
 
   it("submits a request from the selected persona", async () => {
-    mocks.getRequestTarget.mockResolvedValue({ id: "target-persona" });
+    mocks.getRequestTarget.mockResolvedValue({ username: "target" });
     mocks.sendRequest.mockResolvedValue({ id: "request-1" });
 
     const user = userEvent.setup();
@@ -157,7 +157,7 @@ describe("RequestAccessPanel", () => {
         reason: "We met at a product meetup.",
         sourceId: null,
         sourceType: "profile",
-        toPersonaId: "target-persona",
+        toUsername: "target",
       });
     });
 
@@ -165,7 +165,7 @@ describe("RequestAccessPanel", () => {
   });
 
   it("keeps request access available when smart card mode uses request_access", async () => {
-    mocks.getRequestTarget.mockResolvedValue({ id: "target-persona" });
+    mocks.getRequestTarget.mockResolvedValue({ username: "target" });
     mocks.sendRequest.mockResolvedValue({ id: "request-1" });
 
     const user = userEvent.setup();

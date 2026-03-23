@@ -1,4 +1,8 @@
-import { ConflictException, ForbiddenException, Injectable } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+} from "@nestjs/common";
 import {
   PersonaSharingMode as PrismaPersonaSharingMode,
   ContactRequestStatus as PrismaContactRequestStatus,
@@ -13,6 +17,7 @@ import { PersonaSmartCardPrimaryAction } from "../../common/enums/persona-smart-
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { AnalyticsService } from "../analytics/analytics.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import type { CreateRequestReceivedNotificationData } from "../notifications/notification-payloads";
 import { VerificationPolicyService } from "../auth/verification-policy.service";
 
 import {
@@ -31,11 +36,33 @@ import {
   toSafeSmartCardConfig,
 } from "../personas/persona-sharing";
 
-const noopVerificationPolicyService: Pick<
+function normalizeSharingMode(
+  sharingMode: unknown,
+): PrismaPersonaSharingMode | null {
+  if (
+    sharingMode === PrismaPersonaSharingMode.CONTROLLED ||
+    sharingMode === PrismaPersonaSharingMode.CONTROLLED.toLowerCase()
+  ) {
+    return PrismaPersonaSharingMode.CONTROLLED;
+  }
+
+  if (
+    sharingMode === PrismaPersonaSharingMode.SMART_CARD ||
+    sharingMode === PrismaPersonaSharingMode.SMART_CARD.toLowerCase()
+  ) {
+    return PrismaPersonaSharingMode.SMART_CARD;
+  }
+
+  return null;
+}
+
+const failClosedVerificationPolicyService: Pick<
   VerificationPolicyService,
   "assertUserIsVerified"
 > = {
-  assertUserIsVerified: async () => undefined,
+  assertUserIsVerified: async () => {
+    throw new Error("Verification policy service is not configured");
+  },
 };
 
 @Injectable()
@@ -48,8 +75,7 @@ export class ContactRequestCreateService {
     private readonly requestRateLimitService: RequestRateLimitService,
     private readonly notificationsService: NotificationsService,
     private readonly analyticsService: AnalyticsService,
-    private readonly verificationPolicyService: VerificationPolicyService =
-      noopVerificationPolicyService as VerificationPolicyService,
+    private readonly verificationPolicyService: VerificationPolicyService = failClosedVerificationPolicyService as VerificationPolicyService,
   ) {}
 
   async create(
@@ -65,26 +91,34 @@ export class ContactRequestCreateService {
       await this.recipientPolicyService.resolveEligibleParticipants(
         userId,
         createContactRequestDto.fromPersonaId,
-        createContactRequestDto.toPersonaId,
+        {
+          toPersonaId: createContactRequestDto.toPersonaId,
+          toUsername: createContactRequestDto.toUsername ?? null,
+        },
       );
 
-    const targetSharingMode =
-      targetPersona.sharingMode === PrismaPersonaSharingMode.SMART_CARD.toLowerCase()
-        ? PrismaPersonaSharingMode.SMART_CARD
-        : PrismaPersonaSharingMode.CONTROLLED;
+    const trustedSource = await this.sourcePolicyService.assertSourceAccess(
+      userId,
+      fromPersona.id,
+      targetPersona.id,
+      createContactRequestDto,
+    );
+
+    const targetSharingMode = normalizeSharingMode(targetPersona.sharingMode);
 
     if (
-      createContactRequestDto.sourceType === ContactRequestSourceType.Profile &&
-      !supportsRequestAccessFlow(
-        targetSharingMode,
-        targetPersona.smartCardConfig,
-        {
-          hasActiveProfileQr: await this.hasActiveProfileQr(
-            targetPersona.id,
-            targetPersona.smartCardConfig,
-          ),
-        },
-      )
+      trustedSource.sourceType === ContactRequestSourceType.Profile &&
+      (targetSharingMode === null ||
+        !supportsRequestAccessFlow(
+          targetSharingMode,
+          targetPersona.smartCardConfig,
+          {
+            hasActiveProfileQr: await this.hasActiveProfileQr(
+              targetPersona.id,
+              targetPersona.smartCardConfig,
+            ),
+          },
+        ))
     ) {
       throw new ForbiddenException(
         "This profile is not accepting requests at this time.",
@@ -92,24 +126,17 @@ export class ContactRequestCreateService {
     }
 
     await this.retryPolicyService.assertCanCreateRequest(
-      userId,
-      targetPersona.userId,
-    );
-
-    await this.sourcePolicyService.assertSourceAccess(
-      userId,
       fromPersona.id,
       targetPersona.id,
-      createContactRequestDto,
     );
 
     const reason = createContactRequestDto.reason ?? null;
+    const sourceType = toPrismaContactRequestSourceType(
+      trustedSource.sourceType,
+    );
+    const sourceId = trustedSource.sourceId;
 
     try {
-      const sourceType = toPrismaContactRequestSourceType(
-        createContactRequestDto.sourceType,
-      );
-
       const contactRequest =
         await this.requestRateLimitService.reserveAndCreate(
           userId,
@@ -122,7 +149,7 @@ export class ContactRequestCreateService {
                 toPersonaId: targetPersona.id,
                 reason,
                 sourceType,
-                sourceId: createContactRequestDto.sourceId ?? null,
+                sourceId,
                 status: PrismaContactRequestStatus.PENDING,
               },
               select: sendContactRequestSelect,
@@ -135,31 +162,28 @@ export class ContactRequestCreateService {
         personaId: targetPersona.id,
         requestId: contactRequest.id,
         sourceType: sourceType.toLowerCase(),
-        sourceId: createContactRequestDto.sourceId ?? null,
+        sourceId,
       });
+
+      const notificationData: CreateRequestReceivedNotificationData = {
+        sourceType: trustedSource.sourceType,
+      };
 
       await this.notificationsService.createSafe({
         userId: targetPersona.userId,
         type:
-          createContactRequestDto.sourceType === ContactRequestSourceType.Event
+          trustedSource.sourceType === ContactRequestSourceType.Event
             ? NotificationType.EventRequest
             : NotificationType.RequestReceived,
         title:
-          createContactRequestDto.sourceType === ContactRequestSourceType.Event
+          trustedSource.sourceType === ContactRequestSourceType.Event
             ? "Event request"
             : "New request",
         body: buildRequestReceivedBody(
-          createContactRequestDto.sourceType,
+          trustedSource.sourceType,
           fromPersona.fullName ?? "Someone",
         ),
-        data: {
-          requestId: contactRequest.id,
-          fromPersonaId: fromPersona.id,
-          sourceType: createContactRequestDto.sourceType,
-          ...(createContactRequestDto.sourceId
-            ? { sourceId: createContactRequestDto.sourceId }
-            : {}),
-        },
+        data: notificationData,
       });
 
       return {

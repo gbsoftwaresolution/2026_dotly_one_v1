@@ -77,6 +77,23 @@ export interface PersonaSummary {
   updatedAt: string;
 }
 
+export interface PersonaFastSharePayload {
+  personaId: string;
+  username: string;
+  fullName: string;
+  profilePhotoUrl: string | null;
+  shareUrl: string;
+  qrValue: string;
+  primaryAction: PersonaSmartCardPrimaryAction | null;
+  hasQuickConnect: boolean;
+  quickConnectUrl: string | null;
+}
+
+export interface MyFastSharePayload {
+  selectedPersonaId: string | null;
+  sharePayload: PersonaFastSharePayload | null;
+}
+
 export interface CreatePersonaInput {
   type: PersonaType;
   username: string;
@@ -125,8 +142,11 @@ export interface InstantConnectResult {
   status: "connected";
 }
 
+export interface PublicInstantConnectInput {
+  fromPersonaId: string;
+}
+
 export interface PublicProfileRequestTarget {
-  id: string;
   username: string;
   fullName: string;
   accessMode: PersonaAccessMode;

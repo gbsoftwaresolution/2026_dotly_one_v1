@@ -110,6 +110,11 @@ describe("QrService.connectQuickConnectQr", () => {
           return { id: "memory-id" };
         },
       } as any,
+      undefined,
+      undefined,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
     const result = await service.connectQuickConnectQr("scanner-user", "qr", {
@@ -173,6 +178,11 @@ describe("QrService.connectQuickConnectQr", () => {
       {} as any,
       {} as any,
       {} as any,
+      undefined,
+      undefined,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
     await assert.rejects(
@@ -234,6 +244,11 @@ describe("QrService.connectQuickConnectQr", () => {
       } as any,
       {} as any,
       {} as any,
+      undefined,
+      undefined,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
     await assert.rejects(
@@ -296,6 +311,11 @@ describe("QrService.connectQuickConnectQr", () => {
       } as any,
       {} as any,
       {} as any,
+      undefined,
+      undefined,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
     await assert.rejects(
@@ -357,6 +377,11 @@ describe("QrService.connectQuickConnectQr", () => {
       } as any,
       {} as any,
       {} as any,
+      undefined,
+      undefined,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
     await assert.rejects(
@@ -373,6 +398,50 @@ describe("QrService.connectQuickConnectQr", () => {
 });
 
 describe("QrService verification enforcement", () => {
+  it("blocks quick connect scans for unverified accounts before opening a transaction", async () => {
+    let transactionCalled = false;
+
+    const service = new QrService(
+      {
+        $transaction: async () => {
+          transactionCalled = true;
+          throw new Error("transaction should not run");
+        },
+      } as any,
+      {} as any,
+      {
+        findOwnedPersonaIdentity: async () => ({ id: "from-persona" }),
+      } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {
+        assertUserIsVerified: async () => {
+          throw new ForbiddenException(
+            "Verify your email or complete mobile OTP before using instant connect.",
+          );
+        },
+      } as any,
+    );
+
+    await assert.rejects(
+      service.connectQuickConnectQr("scanner-user", "qr", {
+        fromPersonaId: "from-persona",
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(
+          error.message,
+          "Verify your email or complete mobile OTP before using instant connect.",
+        );
+        assert.equal(transactionCalled, false);
+        return true;
+      },
+    );
+  });
+
   it("blocks profile QR generation for unverified accounts", async () => {
     const service = new QrService(
       {} as any,
@@ -514,6 +583,11 @@ describe("QrService verification enforcement", () => {
         upsertInteractionMemory: async () => ({ id: "memory-1" }),
         createInitialMemory: async () => ({ id: "memory-1" }),
       } as any,
+      undefined,
+      undefined,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
     const result = await service.connectQuickConnectQr("scanner-user", "qr", {
@@ -528,6 +602,85 @@ describe("QrService verification enforcement", () => {
 });
 
 describe("RelationshipsService", () => {
+  it("blocks direct instant connect for unverified actors before opening a transaction", async () => {
+    let transactionCalled = false;
+
+    const service = new RelationshipsService(
+      {
+        $transaction: async () => {
+          transactionCalled = true;
+          throw new Error("transaction should not run");
+        },
+      } as any,
+      undefined as any,
+      undefined as any,
+      {
+        assertUserIsVerified: async () => {
+          throw new ForbiddenException(
+            "Verify your email or complete mobile OTP before using instant connect.",
+          );
+        },
+      } as any,
+      undefined as any,
+    );
+
+    await assert.rejects(
+      service.instantConnect("actor-user", {
+        fromPersonaId: "actor-persona",
+        targetPersonaId: "target-persona",
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(
+          error.message,
+          "Verify your email or complete mobile OTP before using instant connect.",
+        );
+        return true;
+      },
+    );
+
+    assert.equal(transactionCalled, false);
+  });
+
+  it("blocks username instant connect for unverified actors before opening a transaction", async () => {
+    let transactionCalled = false;
+
+    const service = new RelationshipsService(
+      {
+        $transaction: async () => {
+          transactionCalled = true;
+          throw new Error("transaction should not run");
+        },
+      } as any,
+      undefined as any,
+      undefined as any,
+      {
+        assertUserIsVerified: async () => {
+          throw new ForbiddenException(
+            "Verify your email or complete mobile OTP before using instant connect.",
+          );
+        },
+      } as any,
+      undefined as any,
+    );
+
+    await assert.rejects(
+      service.instantConnectByUsername("actor-user", "target", {
+        fromPersonaId: "actor-persona",
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof ForbiddenException);
+        assert.equal(
+          error.message,
+          "Verify your email or complete mobile OTP before using instant connect.",
+        );
+        return true;
+      },
+    );
+
+    assert.equal(transactionCalled, false);
+  });
+
   it("creates an approved relationship immediately for eligible smart-card personas", async () => {
     const updateManyPayloads: Array<Record<string, unknown>> = [];
     const createdRelationships: Array<Record<string, unknown>> = [];
@@ -634,12 +787,21 @@ describe("RelationshipsService", () => {
         assertNoInteractionBlockInTransaction: async () => undefined,
       } as any,
       {
-        upsertInteractionMemory: async (tx: any, payload: Record<string, unknown>) =>
-          tx.contactMemory.create({ data: payload }),
+        upsertInteractionMemory: async (
+          tx: any,
+          payload: Record<string, unknown>,
+        ) => tx.contactMemory.create({ data: payload }),
+      } as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
+      {
+        assertSourceAccess: async () => undefined,
       } as any,
     );
 
     const result = await service.instantConnect("actor-user", {
+      fromPersonaId: "actor-persona",
       targetPersonaId: "target-persona",
       eventId: "event-1",
       source: ContactRequestSourceType.Event,
@@ -664,7 +826,10 @@ describe("RelationshipsService", () => {
       eventId: "event-1",
       label: "Dotly Launch Week",
     });
-    assert.equal((memoryCreatePayload as any)?.relationshipId, "relationship-id");
+    assert.equal(
+      (memoryCreatePayload as any)?.relationshipId,
+      "relationship-id",
+    );
     assert.equal((memoryCreatePayload as any)?.eventId, "event-1");
     assert.equal(
       (memoryCreatePayload as any)?.contextLabel,
@@ -677,10 +842,7 @@ describe("RelationshipsService", () => {
     assert.equal(updateManyPayloads.length, 4);
   });
 
-  it("falls back to source context when the supplied event is missing or inactive", async () => {
-    let createdRelationshipPayload: Record<string, unknown> | null = null;
-    let memoryCreatePayload: Record<string, unknown> | null = null;
-
+  it("rejects event instant connect when the event context is missing or inactive", async () => {
     const service = new RelationshipsService(
       {
         $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
@@ -725,38 +887,18 @@ describe("RelationshipsService", () => {
               findUnique: async () => null,
             },
             contactRelationship: {
-              findUnique: async ({ where }: any) => {
-                if (where.id) {
-                  return {
-                    id: where.id,
-                    lastInteractionAt: new Date("2026-03-23T10:00:00.000Z"),
-                    interactionCount: 1,
-                  };
-                }
-
-                return null;
-              },
-              create: async ({ data }: any) => {
-                createdRelationshipPayload = data;
-
-                return {
-                  id:
-                    data.ownerUserId === "actor-user"
-                      ? "relationship-id"
-                      : "reciprocal-relationship-id",
-                };
-              },
+              findUnique: async () => null,
+              create: async () => ({
+                id: "unexpected-relationship-id",
+              }),
               updateMany: async () => ({ count: 1 }),
-              update: async ({ where }: any) => ({
-                id: where.id,
+              update: async () => ({
+                id: "unexpected-relationship-id",
               }),
             },
             contactMemory: {
               findFirst: async () => null,
-              create: async ({ data }: any) => {
-                memoryCreatePayload = data;
-                return { id: "memory-id" };
-              },
+              create: async () => ({ id: "memory-id" }),
             },
           }),
       } as any,
@@ -764,34 +906,38 @@ describe("RelationshipsService", () => {
         assertNoInteractionBlockInTransaction: async () => undefined,
       } as any,
       {
-        upsertInteractionMemory: async (tx: any, payload: Record<string, unknown>) =>
-          tx.contactMemory.create({ data: payload }),
+        upsertInteractionMemory: async (
+          tx: any,
+          payload: Record<string, unknown>,
+        ) => tx.contactMemory.create({ data: payload }),
+      } as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
+      {
+        assertSourceAccess: async () => undefined,
       } as any,
     );
 
-    const result = await service.instantConnect("actor-user", {
-      targetPersonaId: "target-persona",
-      eventId: "missing-event",
-      source: ContactRequestSourceType.Profile,
-    });
-
-    assert.deepEqual(result, {
-      success: true,
-      relationshipId: "relationship-id",
-      status: "connected",
-    });
-    assert.deepEqual((createdRelationshipPayload as any)?.connectionContext, {
-      type: "profile",
-      eventId: null,
-      label: "Profile",
-    });
-    assert.equal((memoryCreatePayload as any)?.eventId, null);
-    assert.equal((memoryCreatePayload as any)?.contextLabel, "Profile");
+    await assert.rejects(
+      service.instantConnect("actor-user", {
+        fromPersonaId: "actor-persona",
+        targetPersonaId: "target-persona",
+        eventId: "missing-event",
+        source: ContactRequestSourceType.Event,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof BadRequestException);
+        assert.equal(error.message, "Event networking is not active");
+        return true;
+      },
+    );
   });
 
   it("returns the existing approved relationship for repeated taps", async () => {
     let relationshipCreateCalled = false;
-    let memoryUpdatePayload: Record<string, unknown> | null = null;
+    let memoryUpdateCalled = false;
+    let interactionCount = 0;
 
     const service = new RelationshipsService(
       {
@@ -885,8 +1031,8 @@ describe("RelationshipsService", () => {
               findFirst: async () => ({
                 id: "memory-id",
               }),
-              update: async ({ data }: any) => {
-                memoryUpdatePayload = data;
+              update: async () => {
+                memoryUpdateCalled = true;
                 return { id: "memory-id" };
               },
             },
@@ -896,17 +1042,29 @@ describe("RelationshipsService", () => {
         assertNoInteractionBlockInTransaction: async () => undefined,
       } as any,
       {
-        upsertInteractionMemory: async (tx: any, payload: Record<string, unknown>) => {
+        upsertInteractionMemory: async (
+          tx: any,
+          payload: Record<string, unknown>,
+        ) => {
           const existingMemory = await tx.contactMemory.findFirst({});
-          return tx.contactMemory.update({
-            where: { id: existingMemory.id },
-            data: payload,
-          });
+          return { id: existingMemory.id };
         },
+      } as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
+      {
+        assertSourceAccess: async () => undefined,
       } as any,
     );
 
+    (service as any).updateInteractionMetadata = async () => {
+      interactionCount += 1;
+      return null;
+    };
+
     const result = await service.instantConnect("actor-user", {
+      fromPersonaId: "actor-persona",
       targetPersonaId: "target-persona",
     });
 
@@ -916,7 +1074,8 @@ describe("RelationshipsService", () => {
       status: "connected",
     });
     assert.equal(relationshipCreateCalled, false);
-    assert.equal((memoryUpdatePayload as any)?.sourceLabel, "Instant connect");
+    assert.equal(memoryUpdateCalled, false);
+    assert.equal(interactionCount, 0);
   });
 
   it("returns 404 when the target persona does not exist", async () => {
@@ -932,10 +1091,16 @@ describe("RelationshipsService", () => {
             },
           }),
       } as any,
+      undefined,
+      undefined,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
     await assert.rejects(
       service.instantConnect("actor-user", {
+        fromPersonaId: "actor-persona",
         targetPersonaId: "missing-persona",
       }),
       (error: unknown) => {
@@ -1019,8 +1184,16 @@ describe("RelationshipsService", () => {
         assertNoInteractionBlockInTransaction: async () => undefined,
       } as any,
       {
-        upsertInteractionMemory: async (tx: any, payload: Record<string, unknown>) =>
-          tx.contactMemory.create({ data: payload }),
+        upsertInteractionMemory: async (
+          tx: any,
+          payload: Record<string, unknown>,
+        ) => tx.contactMemory.create({ data: payload }),
+      } as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
+      {
+        assertSourceAccess: async () => undefined,
       } as any,
     );
 
@@ -1028,6 +1201,7 @@ describe("RelationshipsService", () => {
       "actor-user",
       "target",
       {
+        fromPersonaId: "actor-persona",
         source: ContactRequestSourceType.Profile,
       },
     );
@@ -1057,15 +1231,69 @@ describe("RelationshipsService", () => {
             },
           }),
       } as any,
+      undefined,
+      undefined,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
     await assert.rejects(
-      service.instantConnectByUsername("actor-user", "missing"),
+      service.instantConnectByUsername("actor-user", "missing", {
+        fromPersonaId: "actor-persona",
+      }),
       (error: unknown) => {
         assert.ok(error instanceof NotFoundException);
         assert.equal(error.message, "Target persona not found");
         return true;
       },
+    );
+  });
+
+  it("returns the same 404 when the username belongs to a private persona", async () => {
+    const usernameLookups: Array<Record<string, unknown>> = [];
+
+    const service = new RelationshipsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            persona: {
+              findFirst: async ({ where }: any) => {
+                if (where.userId) {
+                  return {
+                    id: "actor-persona",
+                  };
+                }
+
+                usernameLookups.push(where);
+                return null;
+              },
+            },
+          }),
+      } as any,
+      undefined,
+      undefined,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
+    );
+
+    await assert.rejects(
+      service.instantConnectByUsername("actor-user", "private-user", {
+        fromPersonaId: "actor-persona",
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof NotFoundException);
+        assert.equal(error.message, "Target persona not found");
+        return true;
+      },
+    );
+
+    assert.equal(usernameLookups.length, 1);
+    assert.equal((usernameLookups[0] as any)?.username, "private-user");
+    assert.equal(
+      (usernameLookups[0] as any)?.accessMode?.not,
+      PrismaPersonaAccessMode.PRIVATE,
     );
   });
 
@@ -1100,10 +1328,15 @@ describe("RelationshipsService", () => {
           throw new ForbiddenException("User has blocked you");
         },
       } as any,
+      undefined,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
     );
 
     await assert.rejects(
       service.instantConnect("actor-user", {
+        fromPersonaId: "actor-persona",
         targetPersonaId: "target-persona",
       }),
       (error: unknown) => {
@@ -1149,7 +1382,9 @@ describe("RelationshipsService", () => {
     );
     assert.equal((updateManyPayloads[1] as any)?.where?.id, "relationship-id");
     assert.equal(
-      (updateManyPayloads[1] as any)?.where?.OR?.[1]?.lastInteractionAt?.lt?.toISOString(),
+      (
+        updateManyPayloads[1] as any
+      )?.where?.OR?.[1]?.lastInteractionAt?.lt?.toISOString(),
       interactionAt.toISOString(),
     );
     assert.equal(
@@ -1157,6 +1392,70 @@ describe("RelationshipsService", () => {
       interactionAt.toISOString(),
     );
     assert.equal(result?.interactionCount, 3);
+  });
+
+  it("rejects instant connect when the supplied source persona is not owned by the actor", async () => {
+    const service = new RelationshipsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            persona: {
+              findFirst: async ({ where }: any) => {
+                if (where.userId && where.id === "foreign-persona") {
+                  return null;
+                }
+
+                return {
+                  id: "target-persona",
+                  userId: "target-user",
+                  accessMode: PrismaPersonaAccessMode.OPEN,
+                  sharingMode: PrismaPersonaSharingMode.SMART_CARD,
+                  smartCardConfig: {
+                    primaryAction: "instant_connect",
+                    allowCall: false,
+                    allowWhatsapp: false,
+                    allowEmail: false,
+                    allowVcard: false,
+                  },
+                  verifiedOnly: false,
+                };
+              },
+              findUnique: async () => ({
+                id: "target-persona",
+                userId: "target-user",
+                accessMode: PrismaPersonaAccessMode.OPEN,
+                sharingMode: PrismaPersonaSharingMode.SMART_CARD,
+                smartCardConfig: {
+                  primaryAction: "instant_connect",
+                  allowCall: false,
+                  allowWhatsapp: false,
+                  allowEmail: false,
+                  allowVcard: false,
+                },
+                verifiedOnly: false,
+              }),
+            },
+          }),
+      } as any,
+      undefined as any,
+      undefined as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
+      undefined as any,
+    );
+
+    await assert.rejects(
+      service.instantConnect("actor-user", {
+        fromPersonaId: "foreign-persona",
+        targetPersonaId: "target-persona",
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof NotFoundException);
+        assert.equal(error.message, "Persona not found");
+        return true;
+      },
+    );
   });
 
   it("returns null when interaction metadata is updated for a missing relationship", async () => {
@@ -1259,6 +1558,31 @@ describe("RelationshipsService", () => {
     assert.equal((updatePayload as any)?.data?.accessEndAt, null);
   });
 
+  it("returns the same 404 when upgrading another user's relationship", async () => {
+    const service = new RelationshipsService({
+      $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+        callback({
+          contactRelationship: {
+            findUnique: async () => ({
+              id: "relationship-id",
+              ownerUserId: "another-user",
+              state: INSTANT_ACCESS_STATE,
+              accessEndAt: new Date("2099-03-20T09:00:00.000Z"),
+            }),
+          },
+        }),
+    } as any);
+
+    await assert.rejects(
+      service.upgradeOwnedRelationship("owner-user", "relationship-id"),
+      (error: unknown) => {
+        assert.ok(error instanceof NotFoundException);
+        assert.equal(error.message, "Relationship not found");
+        return true;
+      },
+    );
+  });
+
   it("returns expired on repeated expire calls", async () => {
     const service = new RelationshipsService({
       $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
@@ -1281,6 +1605,31 @@ describe("RelationshipsService", () => {
 
     assert.equal(result.relationshipId, "relationship-id");
     assert.equal(result.state, "expired");
+  });
+
+  it("returns the same 404 when expiring another user's relationship", async () => {
+    const service = new RelationshipsService({
+      $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+        callback({
+          contactRelationship: {
+            findUnique: async () => ({
+              id: "relationship-id",
+              ownerUserId: "another-user",
+              state: INSTANT_ACCESS_STATE,
+              accessEndAt: new Date("2099-03-20T09:00:00.000Z"),
+            }),
+          },
+        }),
+    } as any);
+
+    await assert.rejects(
+      service.expireOwnedRelationship("owner-user", "relationship-id"),
+      (error: unknown) => {
+        assert.ok(error instanceof NotFoundException);
+        assert.equal(error.message, "Relationship not found");
+        return true;
+      },
+    );
   });
 });
 
@@ -1377,7 +1726,10 @@ describe("ContactsService", () => {
       recentInteractionAt.toISOString(),
     );
     assert.equal(result[0].interactionCount, 4);
-    assert.equal(result[0].metadata.lastInteractionAt?.toISOString(), recentInteractionAt.toISOString());
+    assert.equal(
+      result[0].metadata.lastInteractionAt?.toISOString(),
+      recentInteractionAt.toISOString(),
+    );
     assert.equal(result[0].metadata.interactionCount, 4);
     assert.equal(result[0].metadata.hasInteractions, true);
     assert.equal(result[0].metadata.isRecentlyActive, true);
@@ -1413,56 +1765,57 @@ describe("ContactsService", () => {
           findMany: async (payload: Record<string, unknown>) => {
             findManyPayload = payload;
 
-            const recentRange = (payload.where as Record<string, any> | undefined)
-              ?.lastInteractionAt;
+            const recentRange = (
+              payload.where as Record<string, any> | undefined
+            )?.lastInteractionAt;
 
             const results = [
-            {
-              id: "recent-id",
-              ownerUserId: "owner-user",
-              state: PrismaContactRelationshipState.APPROVED,
-              accessStartAt: null,
-              accessEndAt: null,
-              lastInteractionAt: recentInteractionAt,
-              interactionCount: 1,
-              createdAt: new Date(Date.now() - 4 * DAY_IN_MS),
-              sourceType: PrismaContactRequestSourceType.PROFILE,
-              targetPersona: {
-                id: "persona-recent",
-                username: "recent",
-                publicUrl: "recent",
-                fullName: "Recent User",
-                jobTitle: "Engineer",
-                companyName: "Dotly",
-                tagline: "Recent",
-                profilePhotoUrl: null,
-                accessMode: PrismaPersonaAccessMode.OPEN,
+              {
+                id: "recent-id",
+                ownerUserId: "owner-user",
+                state: PrismaContactRelationshipState.APPROVED,
+                accessStartAt: null,
+                accessEndAt: null,
+                lastInteractionAt: recentInteractionAt,
+                interactionCount: 1,
+                createdAt: new Date(Date.now() - 4 * DAY_IN_MS),
+                sourceType: PrismaContactRequestSourceType.PROFILE,
+                targetPersona: {
+                  id: "persona-recent",
+                  username: "recent",
+                  publicUrl: "recent",
+                  fullName: "Recent User",
+                  jobTitle: "Engineer",
+                  companyName: "Dotly",
+                  tagline: "Recent",
+                  profilePhotoUrl: null,
+                  accessMode: PrismaPersonaAccessMode.OPEN,
+                },
+                memories: [],
               },
-              memories: [],
-            },
-            {
-              id: "stale-id",
-              ownerUserId: "owner-user",
-              state: PrismaContactRelationshipState.APPROVED,
-              accessStartAt: null,
-              accessEndAt: null,
-              lastInteractionAt: staleInteractionAt,
-              interactionCount: 2,
-              createdAt: new Date(Date.now() - 12 * DAY_IN_MS),
-              sourceType: PrismaContactRequestSourceType.EVENT,
-              targetPersona: {
-                id: "persona-stale",
-                username: "stale",
-                publicUrl: "stale",
-                fullName: "Stale User",
-                jobTitle: "Designer",
-                companyName: "Dotly",
-                tagline: "Stale",
-                profilePhotoUrl: null,
-                accessMode: PrismaPersonaAccessMode.REQUEST,
+              {
+                id: "stale-id",
+                ownerUserId: "owner-user",
+                state: PrismaContactRelationshipState.APPROVED,
+                accessStartAt: null,
+                accessEndAt: null,
+                lastInteractionAt: staleInteractionAt,
+                interactionCount: 2,
+                createdAt: new Date(Date.now() - 12 * DAY_IN_MS),
+                sourceType: PrismaContactRequestSourceType.EVENT,
+                targetPersona: {
+                  id: "persona-stale",
+                  username: "stale",
+                  publicUrl: "stale",
+                  fullName: "Stale User",
+                  jobTitle: "Designer",
+                  companyName: "Dotly",
+                  tagline: "Stale",
+                  profilePhotoUrl: null,
+                  accessMode: PrismaPersonaAccessMode.REQUEST,
+                },
+                memories: [],
               },
-              memories: [],
-            },
             ];
 
             if (!recentRange) {
@@ -1493,11 +1846,11 @@ describe("ContactsService", () => {
     assert.equal(result[0]?.relationshipId, "recent-id");
     assert.equal(result[0]?.metadata.isRecentlyActive, true);
     assert.equal(
-      ((findManyPayload as any)?.where?.lastInteractionAt?.gte instanceof Date),
+      (findManyPayload as any)?.where?.lastInteractionAt?.gte instanceof Date,
       true,
     );
     assert.equal(
-      ((findManyPayload as any)?.where?.lastInteractionAt?.lte instanceof Date),
+      (findManyPayload as any)?.where?.lastInteractionAt?.lte instanceof Date,
       true,
     );
   });
@@ -1566,7 +1919,10 @@ describe("ContactsService", () => {
       lastInteractionAt.toISOString(),
     );
     assert.equal(result.interactionCount, 2);
-    assert.equal(result.metadata.lastInteractionAt?.toISOString(), lastInteractionAt.toISOString());
+    assert.equal(
+      result.metadata.lastInteractionAt?.toISOString(),
+      lastInteractionAt.toISOString(),
+    );
     assert.equal(result.metadata.interactionCount, 2);
     assert.equal(result.metadata.hasInteractions, true);
     assert.equal(result.metadata.isRecentlyActive, true);
@@ -1689,7 +2045,10 @@ describe("ContactsService", () => {
           _tx: unknown,
           relationship: Record<string, unknown>,
         ) => relationship,
-        updateInteractionMetadata: async (tx: unknown, relationshipId: string) => {
+        updateInteractionMetadata: async (
+          tx: unknown,
+          relationshipId: string,
+        ) => {
           interactionCalls.push({ tx, relationshipId });
           return {
             id: relationshipId,
@@ -1764,7 +2123,10 @@ describe("ContactsService", () => {
           _tx: unknown,
           relationship: Record<string, unknown>,
         ) => relationship,
-        updateInteractionMetadata: async (tx: unknown, relationshipId: string) => {
+        updateInteractionMetadata: async (
+          tx: unknown,
+          relationshipId: string,
+        ) => {
           interactionCalls.push({ tx, relationshipId });
           return null;
         },

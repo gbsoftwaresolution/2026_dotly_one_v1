@@ -44,7 +44,7 @@ describe("QuickConnectFlow", () => {
       screen.getByText(/start a temporary connection while this introduction is still fresh/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/what happens next/i)).toBeInTheDocument();
-    expect(screen.getByText(/choose the right persona/i)).toBeInTheDocument();
+    expect(screen.getByText(/choose the persona that matches how you met/i)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /start temporary access/i }),
     ).toBeInTheDocument();

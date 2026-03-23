@@ -36,7 +36,7 @@ REDIS_ENABLED=true
 STORAGE_BUCKET=dotly-local
 MAILGUN_API_KEY=
 MAILGUN_DOMAIN=
-MAIL_FROM_EMAIL=
+MAIL_FROM_EMAIL="Dotly.one <noreply@dotly.one>"
 FRONTEND_VERIFICATION_URL_BASE=http://localhost:3001/verify-email
 FRONTEND_PASSWORD_RESET_URL_BASE=http://localhost:3001/reset-password
 TWILIO_ACCOUNT_SID=
@@ -63,6 +63,7 @@ Production hardening rules:
 - Frontend auth cookies are `HttpOnly`, `priority=high`, `Secure` in production, and `SameSite=Lax` by default. If you need cross-subdomain auth continuity, set `AUTH_COOKIE_DOMAIN` to the registrable domain and keep `AUTH_COOKIE_SECURE=true`.
 - `AUTH_COOKIE_SAME_SITE=none` is only valid with `AUTH_COOKIE_SECURE=true` and should be reserved for deliberate cross-site embedding or federation cases.
 - Mailgun is optional in development, but production startup now fails fast unless `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, `MAIL_FROM_EMAIL`, `FRONTEND_VERIFICATION_URL_BASE`, and `FRONTEND_PASSWORD_RESET_URL_BASE` are all present.
+- `MAIL_FROM_EMAIL` may be a plain address or a mailbox string such as `Dotly.one <noreply@dotly.one>` when you want a branded sender name.
 - Twilio is optional in every environment, but partial Twilio configuration is rejected. Configure all three values together or leave all three blank.
 
 Mail behavior:

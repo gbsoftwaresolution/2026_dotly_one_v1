@@ -4,6 +4,7 @@ export const qrResolutionSelect = {
   persona: {
     select: {
       id: true,
+      userId: true,
       username: true,
       fullName: true,
       jobTitle: true,
@@ -19,6 +20,7 @@ export interface QrResolutionRecord {
   type: "profile" | "quick_connect";
   persona: {
     id: string;
+    userId: string;
     username: string;
     fullName: string;
     jobTitle: string;

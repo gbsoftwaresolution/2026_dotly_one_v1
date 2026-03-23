@@ -11,6 +11,7 @@ interface UserRecord {
   email: string;
   passwordHash: string;
   isVerified: boolean;
+  phoneVerifiedAt?: Date | null;
 }
 
 interface EmailVerificationTokenRecord {
@@ -131,6 +132,7 @@ function createAuthServiceHarness(options?: {
       type: string;
       payload: Record<string, unknown>;
     }>,
+    personas: [] as Array<Record<string, unknown>>,
     mailDeliveryEnabled: options?.mailDeliveryEnabled ?? true,
   };
 
@@ -177,6 +179,9 @@ function createAuthServiceHarness(options?: {
 
         return selectFields(user, select);
       },
+    },
+    persona: {
+      updateMany: async () => ({ count: state.personas.length }),
     },
     emailVerificationToken: {
       findUnique: async ({ where, include }: any) => {
@@ -379,7 +384,10 @@ describe("AuthService email verification hardening", () => {
         mailDeliveryAvailable: true,
       },
     });
-    assert.equal((state.audits[1] as any).action, "auth.email_verification.issue");
+    assert.equal(
+      (state.audits[1] as any).action,
+      "auth.email_verification.issue",
+    );
     assert.equal((state.audits[1] as any).outcome, "accepted");
     assert.equal((state.audits[1] as any).reason, "signup");
     assert.equal((state.audits[1] as any).actorUserId, "user-1");
@@ -760,10 +768,13 @@ describe("AuthService email verification hardening", () => {
     );
 
     assert.equal(
-      authMetricsService.getCounterValue("dotly_auth_verification_resend_total", {
-        outcome: "throttled",
-        reason: "cooldown_active",
-      }),
+      authMetricsService.getCounterValue(
+        "dotly_auth_verification_resend_total",
+        {
+          outcome: "throttled",
+          reason: "cooldown_active",
+        },
+      ),
       1,
     );
   });

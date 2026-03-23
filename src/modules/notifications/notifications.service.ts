@@ -7,6 +7,14 @@ import {
 import { NotificationType } from "../../common/enums/notification-type.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { AppLoggerService } from "../../infrastructure/logging/logging.service";
+import {
+  type AnyNotificationView,
+  type CreateNotificationInput,
+  createNotificationView,
+  extractRelationshipId,
+  sanitizeNotificationData,
+  toNotificationJson,
+} from "./notification-payloads";
 
 const DEFAULT_NOTIFICATION_LIMIT = 20;
 
@@ -21,14 +29,6 @@ const notificationSelect = {
 } satisfies Prisma.NotificationSelect;
 
 type NotificationClient = PrismaService | Prisma.TransactionClient;
-
-interface CreateNotificationInput {
-  userId: string;
-  type: NotificationType;
-  title: string;
-  body: string;
-  data?: Prisma.InputJsonValue | null;
-}
 
 @Injectable()
 export class NotificationsService {
@@ -52,8 +52,13 @@ export class NotificationsService {
       }),
     ]);
 
+    const sanitizedNotifications = await this.sanitizeNotificationViews(
+      userId,
+      notifications,
+    );
+
     return {
-      notifications: notifications.map(toNotificationView),
+      notifications: sanitizedNotifications,
       total,
       unreadCount,
     };
@@ -91,7 +96,7 @@ export class NotificationsService {
       select: notificationSelect,
     });
 
-    return toNotificationView(updatedNotification);
+    return this.sanitizeNotificationView(userId, updatedNotification);
   }
 
   async markAllAsRead(userId: string) {
@@ -115,6 +120,11 @@ export class NotificationsService {
     client?: NotificationClient,
   ): Promise<void> {
     const notificationClient = client ?? this.prismaService;
+    const sanitizedInputData = await this.sanitizeNotificationInputData(
+      input.userId,
+      input.data ?? null,
+      notificationClient,
+    );
 
     await notificationClient.notification.create({
       data: {
@@ -122,7 +132,7 @@ export class NotificationsService {
         type: toPrismaNotificationType(input.type),
         title: input.title.trim(),
         body: input.body.trim(),
-        data: input.data ?? undefined,
+        data: toNotificationJson(sanitizedInputData),
       },
     });
   }
@@ -141,6 +151,132 @@ export class NotificationsService {
         "NotificationsService",
       );
     }
+  }
+
+  private async sanitizeNotificationViews(
+    userId: string,
+    notifications: Prisma.NotificationGetPayload<{
+      select: typeof notificationSelect;
+    }>[],
+  ): Promise<AnyNotificationView[]> {
+    const relationshipIds = notifications
+      .map((notification) => extractRelationshipId(notification.data))
+      .filter(
+        (relationshipId): relationshipId is string =>
+          typeof relationshipId === "string",
+      );
+
+    const ownedRelationshipIds = await this.getOwnedRelationshipIds(
+      userId,
+      relationshipIds,
+    );
+
+    return notifications.map((notification) =>
+      toNotificationView(notification, ownedRelationshipIds),
+    );
+  }
+
+  private async sanitizeNotificationView(
+    userId: string,
+    notification: Prisma.NotificationGetPayload<{
+      select: typeof notificationSelect;
+    }>,
+  ): Promise<AnyNotificationView> {
+    const relationshipId = extractRelationshipId(notification.data);
+    const ownedRelationshipIds = await this.getOwnedRelationshipIds(
+      userId,
+      relationshipId ? [relationshipId] : [],
+    );
+
+    return toNotificationView(notification, ownedRelationshipIds);
+  }
+
+  private async getOwnedRelationshipIds(
+    userId: string,
+    relationshipIds: string[],
+  ): Promise<Set<string>> {
+    const uniqueRelationshipIds = [...new Set(relationshipIds)];
+
+    if (uniqueRelationshipIds.length === 0) {
+      return new Set<string>();
+    }
+
+    const relationships = await this.prismaService.contactRelationship.findMany(
+      {
+        where: {
+          ownerUserId: userId,
+          id: {
+            in: uniqueRelationshipIds,
+          },
+        },
+        select: {
+          id: true,
+        },
+      },
+    );
+
+    return new Set(relationships.map((relationship) => relationship.id));
+  }
+
+  private async sanitizeNotificationInputData(
+    userId: string,
+    data: CreateNotificationInput["data"],
+    client: NotificationClient,
+  ): Promise<CreateNotificationInput["data"]> {
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+      return data;
+    }
+
+    const relationshipId =
+      typeof (data as { relationshipId?: unknown }).relationshipId === "string"
+        ? (data as { relationshipId: string }).relationshipId
+        : null;
+
+    if (relationshipId === null) {
+      return data;
+    }
+
+    const ownedRelationshipIds = await this.getOwnedRelationshipIdsForClient(
+      client,
+      userId,
+      [relationshipId],
+    );
+
+    if (ownedRelationshipIds.has(relationshipId)) {
+      return data;
+    }
+
+    const notificationData = data as unknown as Record<string, unknown>;
+    const { relationshipId: _relationshipId, ...sanitizedData } =
+      notificationData;
+
+    return sanitizedData as CreateNotificationInput["data"];
+  }
+
+  private async getOwnedRelationshipIdsForClient(
+    client: NotificationClient,
+    userId: string,
+    relationshipIds: string[],
+  ): Promise<Set<string>> {
+    const uniqueRelationshipIds = [...new Set(relationshipIds)];
+
+    if (uniqueRelationshipIds.length === 0) {
+      return new Set<string>();
+    }
+
+    const relationships = await client.contactRelationship.findMany({
+      where: {
+        ownerUserId: userId,
+        id: {
+          in: uniqueRelationshipIds,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return new Set(relationships.map((relationship) => relationship.id));
   }
 }
 
@@ -188,14 +324,21 @@ function toNotificationView(
   notification: Prisma.NotificationGetPayload<{
     select: typeof notificationSelect;
   }>,
-) {
-  return {
+  ownedRelationshipIds: ReadonlySet<string> = new Set<string>(),
+): AnyNotificationView {
+  const type = toApiNotificationType(notification.type);
+
+  return createNotificationView({
     id: notification.id,
-    type: toApiNotificationType(notification.type),
+    type,
     title: notification.title,
     body: notification.body,
     isRead: notification.isRead,
     createdAt: notification.createdAt,
-    data: notification.data ?? {},
-  };
+    data: sanitizeNotificationData(
+      type,
+      notification.data,
+      ownedRelationshipIds,
+    ),
+  }) as AnyNotificationView;
 }

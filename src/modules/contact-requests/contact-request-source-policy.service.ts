@@ -16,9 +16,27 @@ export class ContactRequestSourcePolicyService {
     fromPersonaId: string,
     targetPersonaId: string,
     createContactRequestDto: CreateContactRequestDto,
-  ): Promise<void> {
-    if (createContactRequestDto.sourceType !== ContactRequestSourceType.Event) {
-      return;
+  ): Promise<{
+    sourceType: ContactRequestSourceType;
+    sourceId: string | null;
+  }> {
+    if (createContactRequestDto.sourceType === ContactRequestSourceType.Qr) {
+      throw new BadRequestException(
+        "QR provenance requires scanning a QR code",
+      );
+    }
+
+    if (createContactRequestDto.sourceType === ContactRequestSourceType.Profile) {
+      if (createContactRequestDto.sourceId) {
+        throw new BadRequestException(
+          "Profile requests cannot carry a custom source id",
+        );
+      }
+
+      return {
+        sourceType: ContactRequestSourceType.Profile,
+        sourceId: null,
+      };
     }
 
     if (!createContactRequestDto.sourceId) {
@@ -31,5 +49,10 @@ export class ContactRequestSourcePolicyService {
       fromPersonaId,
       targetPersonaId,
     );
+
+    return {
+      sourceType: ContactRequestSourceType.Event,
+      sourceId: createContactRequestDto.sourceId,
+    };
   }
 }
