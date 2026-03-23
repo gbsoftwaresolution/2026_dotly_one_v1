@@ -19,7 +19,6 @@ export function LogoutButton() {
     } finally {
       clearShareFastStore();
       router.replace("/login");
-      router.refresh();
       setIsSubmitting(false);
     }
   }

@@ -72,12 +72,8 @@ const fastSharePersonaSelect = Prisma.validator<Prisma.PersonaSelect>()({
   fullName: true,
   profilePhotoUrl: true,
   accessMode: true,
-  emailVerified: true,
-  phoneVerified: true,
   sharingMode: true,
   smartCardConfig: true,
-  createdAt: true,
-  updatedAt: true,
 });
 
 type PersonaDbClient = Pick<PrismaService, "persona" | "qRAccessToken">;
@@ -94,9 +90,9 @@ interface CacheEntry<T> {
   value: T;
 }
 
-type PersonaSharePreferredShareType = "smart_card" | "instant_connect";
+export type PersonaSharePreferredShareType = "smart_card" | "instant_connect";
 
-interface FastSharePayload {
+export interface FastSharePayload {
   personaId: string;
   username: string;
   fullName: string;
@@ -108,12 +104,12 @@ interface FastSharePayload {
   quickConnectUrl: string | null;
 }
 
-interface FastShareSelectionResponse {
+export interface FastShareSelectionResponse {
   selectedPersonaId: string | null;
   sharePayload: FastSharePayload | null;
 }
 
-interface PersonaSharePayload {
+export interface PersonaSharePayload {
   personaId: string;
   username: string;
   fullName: string;

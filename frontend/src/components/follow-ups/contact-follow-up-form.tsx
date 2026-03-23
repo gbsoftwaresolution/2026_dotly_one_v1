@@ -6,10 +6,15 @@ import { useEffect, useState } from "react";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { StatusBadge } from "@/components/shared/status-badge";
+import {
+  optimisticallyInsertFollowUp,
+  reconcileFollowUp,
+} from "@/lib/app-data-store";
 import { followUpsApi } from "@/lib/api/follow-ups-api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
 import { cn } from "@/lib/utils/cn";
+import type { FollowUp } from "@/types/follow-up";
 import type { ContactFollowUpSummary } from "@/types/contact";
 
 const MAX_NOTE_LENGTH = 1000;
@@ -173,6 +178,40 @@ export function ContactFollowUpForm({
     setIsOpen(true);
   }
 
+  function buildOptimisticFollowUp(remindAt: string): FollowUp {
+    const optimisticTimestamp = new Date().toISOString();
+
+    return {
+      id: `optimistic-follow-up-${relationshipId}-${Date.now()}`,
+      relationshipId,
+      remindAt,
+      status: "pending",
+      note: note.trim() ? note.trim() : null,
+      createdAt: optimisticTimestamp,
+      updatedAt: optimisticTimestamp,
+      completedAt: null,
+      relationship: {
+        relationshipId,
+        state: null,
+        sourceType: undefined,
+        sourceLabel: null,
+        targetPersona: {
+          id: "",
+          username: "",
+          fullName: contactName,
+          jobTitle: "",
+          companyName: "",
+          profilePhotoUrl: null,
+        },
+      },
+      metadata: {
+        isTriggered: false,
+        isOverdue: false,
+        isUpcomingSoon: false,
+      },
+    };
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -205,6 +244,18 @@ export function ContactFollowUpForm({
     setIsSaving(true);
     setError(null);
 
+    const previousSummary = followUpSummary;
+    const previousDate = date;
+    const previousTime = time;
+    const previousNote = note;
+    const optimisticFollowUp = buildOptimisticFollowUp(remindAt);
+    const rollback = optimisticallyInsertFollowUp(optimisticFollowUp);
+
+    setFollowUpSummary((current) => mergeFollowUpSummary(current, remindAt));
+    setSuccessMessage(`Follow-up added for ${contactName}. Syncing...`);
+    resetForm();
+    setIsOpen(false);
+
     try {
       const created = await followUpsApi.create({
         relationshipId,
@@ -212,13 +263,16 @@ export function ContactFollowUpForm({
         note: note.trim() ? note.trim() : null,
       });
 
-      resetForm();
-      setIsOpen(false);
-      setFollowUpSummary((current) =>
-        mergeFollowUpSummary(current, created.remindAt),
-      );
+      reconcileFollowUp(created, { replaceId: optimisticFollowUp.id });
       setSuccessMessage(`Follow-up saved for ${contactName}.`);
     } catch (submissionError) {
+      rollback();
+      setFollowUpSummary(previousSummary);
+      setDate(previousDate);
+      setTime(previousTime);
+      setNote(previousNote);
+      setIsOpen(true);
+      setSuccessMessage(null);
       setError(
         submissionError instanceof ApiError
           ? submissionError.message

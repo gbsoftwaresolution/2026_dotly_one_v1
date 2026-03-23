@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { useAuthSessionContext } from "@/context/AuthSessionContext";
 import { authApi } from "@/lib/api";
 import {
   createLoadingSessionSnapshot,
@@ -9,9 +10,15 @@ import {
 } from "@/lib/auth/session";
 
 export function useAuthState() {
+  const contextualSession = useAuthSessionContext();
   const [session, setSession] = useState(createLoadingSessionSnapshot);
 
   useEffect(() => {
+    if (contextualSession) {
+      setSession(contextualSession);
+      return;
+    }
+
     let isActive = true;
 
     void authApi
@@ -30,7 +37,7 @@ export function useAuthState() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [contextualSession]);
 
-  return session;
+  return contextualSession ?? session;
 }

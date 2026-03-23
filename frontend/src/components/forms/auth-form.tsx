@@ -8,6 +8,10 @@ import { PasswordField } from "@/components/forms/password-field";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { authApi } from "@/lib/api";
 import {
+  APP_DATA_WARM_ROUTES,
+  prefetchAppCoreData,
+} from "@/lib/app-data-store";
+import {
   getFriendlyAuthError,
   type AuthMode,
 } from "@/lib/auth/auth-error-messages";
@@ -169,14 +173,19 @@ export function AuthForm({
         router.push(
           `${routes.public.login}?email=${encodeURIComponent(normalizedEmail)}&created=1&delivery=${deliveryState}`,
         );
-        router.refresh();
         return;
       }
 
-  await authApi.login({ email: normalizedEmail, password });
-  void prefetchMyFastShare({ force: true }).catch(() => undefined);
+      await authApi.login({ email: normalizedEmail, password });
+
+      for (const route of APP_DATA_WARM_ROUTES) {
+        router.prefetch(route);
+      }
+
+      router.prefetch(sanitizeRedirectPath(redirectTo));
+      void prefetchMyFastShare({ force: true }).catch(() => undefined);
+      void prefetchAppCoreData({ force: true }).catch(() => undefined);
       router.replace(sanitizeRedirectPath(redirectTo));
-      router.refresh();
     } catch (submissionError) {
       setError(getFriendlyAuthError(mode, submissionError));
     } finally {

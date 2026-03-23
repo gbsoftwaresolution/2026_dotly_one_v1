@@ -61,12 +61,10 @@ export function PersonaForm() {
         tagline: formState.tagline.trim(),
       });
 
-      router.refresh();
       setCreatedPersona(persona);
     } catch (submissionError) {
       if (isApiError(submissionError) && submissionError.status === 401) {
         router.replace("/login?next=/app/personas/create&reason=expired");
-        router.refresh();
         return;
       }
 

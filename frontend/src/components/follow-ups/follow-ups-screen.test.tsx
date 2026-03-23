@@ -30,6 +30,7 @@ vi.mock("@/lib/utils/auth-errors", () => ({
   isExpiredSessionError: () => false,
 }));
 
+import { clearAppDataStore } from "@/lib/app-data-store";
 import { FollowUpsScreen } from "./follow-ups-screen";
 
 function createFollowUp(overrides: Record<string, unknown> = {}) {
@@ -67,6 +68,7 @@ function createFollowUp(overrides: Record<string, unknown> = {}) {
 
 describe("FollowUpsScreen", () => {
   beforeEach(() => {
+    clearAppDataStore();
     mocks.list.mockReset();
     mocks.processDue.mockReset();
     mocks.complete.mockReset();
@@ -85,7 +87,7 @@ describe("FollowUpsScreen", () => {
       expect(mocks.processDue).toHaveBeenCalledTimes(1);
       expect(mocks.list).toHaveBeenCalledWith({ status: "pending" });
     });
-    expect(await screen.findByText(/no follow-ups scheduled/i)).toBeInTheDocument();
+    expect(await screen.findByText(/no follow-ups in view/i)).toBeInTheDocument();
   });
 
   it("renders the load error state and retry action", async () => {
@@ -112,16 +114,14 @@ describe("FollowUpsScreen", () => {
 
     render(React.createElement(FollowUpsScreen));
 
-    expect(
-      await screen.findByRole("heading", { name: /pending/i }),
-    ).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /^complete$/i }));
+    expect(await screen.findByRole("heading", { name: /^open$/i })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^mark done$/i }));
 
     await waitFor(() => {
       expect(mocks.complete).toHaveBeenCalledWith("follow-up-1");
     });
 
-    expect(await screen.findByText(/reminder completed/i)).toBeInTheDocument();
+    expect(await screen.findByText(/follow-up marked done/i)).toBeInTheDocument();
     expect(screen.queryByText("Alice Demo")).not.toBeInTheDocument();
   });
 
@@ -133,7 +133,7 @@ describe("FollowUpsScreen", () => {
     render(React.createElement(FollowUpsScreen));
 
     expect(await screen.findByText("Alice Demo")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /^cancel$/i }));
+    await user.click(screen.getByRole("button", { name: /^dismiss$/i }));
 
     expect(await screen.findByText(/could not cancel this follow-up right now/i)).toBeInTheDocument();
     expect(screen.getByText("Alice Demo")).toBeInTheDocument();
@@ -155,7 +155,7 @@ describe("FollowUpsScreen", () => {
     render(React.createElement(FollowUpsScreen));
 
     expect(await screen.findByText("Alice Demo")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /completed/i }));
+    await user.click(screen.getByRole("button", { name: /^done$/i }));
 
     await waitFor(() => {
       expect(mocks.list).toHaveBeenLastCalledWith({ status: "completed" });
@@ -163,7 +163,7 @@ describe("FollowUpsScreen", () => {
 
     expect(mocks.processDue).toHaveBeenCalledTimes(1);
 
-    expect(await screen.findByText(/completed apr/i)).toBeInTheDocument();
+    expect(await screen.findByText(/finished apr/i)).toBeInTheDocument();
   });
 
   it("groups pending reminders by urgency so due work stays near the top", async () => {
@@ -264,8 +264,8 @@ describe("FollowUpsScreen", () => {
     render(React.createElement(FollowUpsScreen));
 
     expect(await screen.findByRole("heading", { name: /overdue/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /due now/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /due soon/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /ready now/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /coming up/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /later/i })).toBeInTheDocument();
     expect(screen.getByText("Olivia Overdue")).toBeInTheDocument();
     expect(screen.getByText("Dylan Due")).toBeInTheDocument();

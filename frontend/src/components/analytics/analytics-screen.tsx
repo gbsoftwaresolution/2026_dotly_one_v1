@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -11,6 +11,10 @@ import { StatCard } from "@/components/analytics/stat-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { analyticsApi, personaApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
+import {
+  readSessionCache,
+  writeSessionCache,
+} from "@/lib/client-session-cache";
 import { routes } from "@/lib/constants/routes";
 import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import type { AnalyticsSummary } from "@/types/analytics";
@@ -18,6 +22,13 @@ import type { AnalyticsSummary } from "@/types/analytics";
 interface PersonaRowState extends PersonaWithAnalytics {
   isRefreshing?: boolean;
 }
+
+const ANALYTICS_CACHE_KEY = "dotly.analytics-screen";
+
+type AnalyticsCacheValue = {
+  summary: AnalyticsSummary | null;
+  personaRows: PersonaRowState[];
+};
 
 function SummarySkeleton() {
   return (
@@ -37,13 +48,31 @@ function SummarySkeleton() {
 
 export function AnalyticsScreen() {
   const router = useRouter();
-  const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+  const initialCacheRef = useRef(
+    readSessionCache<AnalyticsCacheValue>(ANALYTICS_CACHE_KEY),
+  );
+  const [summary, setSummary] = useState<AnalyticsSummary | null>(
+    () => initialCacheRef.current?.summary ?? null,
+  );
   const [summaryError, setSummaryError] = useState<string | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [summaryLoading, setSummaryLoading] = useState(
+    () => initialCacheRef.current === null,
+  );
 
-  const [personaRows, setPersonaRows] = useState<PersonaRowState[]>([]);
-  const [personasLoading, setPersonasLoading] = useState(true);
+  const [personaRows, setPersonaRows] = useState<PersonaRowState[]>(
+    () => initialCacheRef.current?.personaRows ?? [],
+  );
+  const [personasLoading, setPersonasLoading] = useState(
+    () => initialCacheRef.current === null,
+  );
   const [personasError, setPersonasError] = useState<string | null>(null);
+
+  useEffect(() => {
+    writeSessionCache(ANALYTICS_CACHE_KEY, {
+      summary,
+      personaRows,
+    });
+  }, [personaRows, summary]);
 
   async function loadPersonaAnalytics(personaId: string) {
     setPersonaRows((prev) =>
@@ -68,7 +97,6 @@ export function AnalyticsScreen() {
         router.replace(
           `/login?next=${encodeURIComponent(routes.app.analytics)}&reason=expired`,
         );
-        router.refresh();
         return;
       }
 
@@ -92,6 +120,10 @@ export function AnalyticsScreen() {
 
   useEffect(() => {
     async function loadSummary() {
+      if (initialCacheRef.current === null) {
+        setSummaryLoading(true);
+      }
+
       try {
         const result = await analyticsApi.getSummary();
         setSummary(result);
@@ -100,7 +132,6 @@ export function AnalyticsScreen() {
           router.replace(
             `/login?next=${encodeURIComponent(routes.app.analytics)}&reason=expired`,
           );
-          router.refresh();
           return;
         }
 
@@ -110,7 +141,9 @@ export function AnalyticsScreen() {
             : "Unable to load analytics summary right now.",
         );
       } finally {
-        setSummaryLoading(false);
+        if (initialCacheRef.current === null) {
+          setSummaryLoading(false);
+        }
       }
     }
 
@@ -119,6 +152,10 @@ export function AnalyticsScreen() {
 
   useEffect(() => {
     async function loadPersonas() {
+      if (initialCacheRef.current === null) {
+        setPersonasLoading(true);
+      }
+
       try {
         const personas = await personaApi.list();
 
@@ -162,7 +199,6 @@ export function AnalyticsScreen() {
           router.replace(
             `/login?next=${encodeURIComponent(routes.app.analytics)}&reason=expired`,
           );
-          router.refresh();
           return;
         }
 
@@ -171,6 +207,13 @@ export function AnalyticsScreen() {
             ? error.message
             : "Unable to load personas right now.",
         );
+        if (initialCacheRef.current === null) {
+          setPersonasLoading(false);
+        }
+        return;
+      }
+
+      if (initialCacheRef.current === null) {
         setPersonasLoading(false);
       }
     }

@@ -53,7 +53,6 @@ export function RelationshipActions({
     try {
       const result = await contactsApi.upgrade(relationshipId);
       setState(result.state);
-      router.refresh();
     } catch (error) {
       setUpgradeError(
         error instanceof ApiError
@@ -73,7 +72,6 @@ export function RelationshipActions({
       const result = await contactsApi.expire(relationshipId);
       setState(result.state);
       setIsExpired(true);
-      router.refresh();
     } catch (error) {
       setExpireError(
         error instanceof ApiError

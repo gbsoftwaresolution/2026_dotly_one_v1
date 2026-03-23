@@ -388,13 +388,11 @@ export function PersonaSharingSettingsForm({
       setSharingConfigSource(updatedPersona.sharingConfigSource ?? null);
       setSuccessMessage("Sharing settings saved.");
       setIsExpanded(false);
-      router.refresh();
     } catch (submissionError) {
       if (isApiError(submissionError) && submissionError.status === 401) {
         router.replace(
           `/login?next=${encodeURIComponent(routes.app.personaSettings(persona.id))}&reason=expired`,
         );
-        router.refresh();
         return;
       }
 

@@ -47,7 +47,7 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
     setIsSubmitting(true);
 
     try {
-      await personaApi.update(persona.id, {
+      const updatedPersona = await personaApi.update(persona.id, {
         ...formState,
         fullName: formState.fullName?.trim(),
         jobTitle: formState.jobTitle?.trim(),
@@ -55,14 +55,20 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
         tagline: formState.tagline?.trim(),
       });
 
+      setFormState({
+        fullName: updatedPersona.fullName,
+        jobTitle: updatedPersona.jobTitle,
+        companyName: updatedPersona.companyName,
+        tagline: updatedPersona.tagline,
+        accessMode: updatedPersona.accessMode,
+        verifiedOnly: updatedPersona.verifiedOnly,
+      });
       setSuccessMessage("Persona updated");
-      router.refresh();
     } catch (submissionError) {
       if (isApiError(submissionError) && submissionError.status === 401) {
         router.replace(
           `/login?next=${encodeURIComponent(routes.app.personaDetail(persona.id))}&reason=expired`,
         );
-        router.refresh();
         return;
       }
 

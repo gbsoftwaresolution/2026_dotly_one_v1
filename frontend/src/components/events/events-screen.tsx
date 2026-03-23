@@ -9,6 +9,10 @@ import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { eventApi } from "@/lib/api/event-api";
 import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
 import { personaApi } from "@/lib/api/persona-api";
+import {
+  readSessionCache,
+  writeSessionCache,
+} from "@/lib/client-session-cache";
 import { routes } from "@/lib/constants/routes";
 import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import type { PersonaSummary } from "@/types/persona";
@@ -24,6 +28,8 @@ import { EventCard } from "./event-card";
 // ---------------------------------------------------------------------------
 const inputCls =
   "min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20";
+
+const EVENTS_CACHE_KEY = "dotly.events-screen";
 
 // ---------------------------------------------------------------------------
 // Join panel
@@ -212,13 +218,26 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
 
 export function EventsScreen({ user }: { user: UserProfile }) {
   const router = useRouter();
-  const [events, setEvents] = useState<EventSummary[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const initialCacheRef = useRef(readSessionCache<EventSummary[]>(EVENTS_CACHE_KEY));
+  const [events, setEvents] = useState<EventSummary[]>(
+    () => initialCacheRef.current ?? [],
+  );
+  const [isLoading, setIsLoading] = useState(
+    () => initialCacheRef.current === null,
+  );
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
+    writeSessionCache(EVENTS_CACHE_KEY, events);
+  }, [events]);
+
+  useEffect(() => {
     let cancelled = false;
-    setIsLoading(true);
+
+    if (initialCacheRef.current === null) {
+      setIsLoading(true);
+    }
+
     setLoadError(null);
 
     eventApi
@@ -231,7 +250,6 @@ export function EventsScreen({ user }: { user: UserProfile }) {
           router.replace(
             `/login?next=${encodeURIComponent(routes.app.events)}&reason=expired`,
           );
-          router.refresh();
           return;
         }
 
@@ -241,7 +259,9 @@ export function EventsScreen({ user }: { user: UserProfile }) {
           );
       })
       .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled && initialCacheRef.current === null) {
+          setIsLoading(false);
+        }
       });
 
     return () => {

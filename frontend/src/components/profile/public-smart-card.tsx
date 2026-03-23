@@ -30,6 +30,7 @@ interface PublicSmartCardProps {
   isAuthenticated?: boolean;
   loginHref?: string;
   personaLoadError?: string | null;
+  personasLoading?: boolean;
 }
 
 interface SmartAction {
@@ -282,6 +283,7 @@ export function PublicSmartCard({
   isAuthenticated = true,
   loginHref,
   personaLoadError = null,
+  personasLoading = false,
 }: PublicSmartCardProps) {
   const config = profile.smartCard;
   const [isContactPanelHighlighted, setIsContactPanelHighlighted] =
@@ -310,6 +312,21 @@ export function PublicSmartCard({
   useEffect(() => {
     setShowLoginCta(!isAuthenticated);
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (initialPersonas.length === 0) {
+      setSelectedPersonaId("");
+      return;
+    }
+
+    setSelectedPersonaId((current) => {
+      if (current && initialPersonas.some((persona) => persona.id === current)) {
+        return current;
+      }
+
+      return initialPersonas[0]?.id ?? "";
+    });
+  }, [initialPersonas]);
 
   useEffect(() => {
     return () => {
@@ -605,7 +622,9 @@ export function PublicSmartCard({
 
     if (!selectedPersonaId) {
       setErrorState(
-        personaLoadError ??
+        (personasLoading
+          ? "Loading your personas..."
+          : personaLoadError) ??
           (isAuthenticated
             ? "Choose one of your personas before connecting."
             : "Log in to continue."),
@@ -614,6 +633,13 @@ export function PublicSmartCard({
     }
 
     const measurementId = startInstantConnectMeasurement();
+    const previousUiState = instantConnectUiState;
+
+    setInstantConnectUiState({
+      status: "connected",
+      message: "Connecting...",
+    });
+    resetPrimaryFeedback();
 
     try {
       const result = await relationshipApi.instantConnect(profile.username, {
@@ -639,6 +665,7 @@ export function PublicSmartCard({
 
       if (error instanceof ApiError && error.status === 401) {
         finishInstantConnectMeasurement(measurementId, "login_required");
+        setInstantConnectUiState(previousUiState);
         setShowLoginCta(true);
         setErrorState(getInstantConnectErrorMessage(error));
         return;
@@ -647,6 +674,7 @@ export function PublicSmartCard({
       if (error instanceof ApiError && isRestrictedConnectError(error)) {
         if (isBlockedConnectError(error)) {
           finishInstantConnectMeasurement(measurementId, "blocked");
+          setInstantConnectUiState(previousUiState);
           setErrorState(getBlockedConnectMessage(error));
           return;
         }
@@ -656,6 +684,7 @@ export function PublicSmartCard({
             measurementId,
             "verification_required",
           );
+          setInstantConnectUiState(previousUiState);
           setErrorState(getVerificationRequiredMessage());
           return;
         }
@@ -676,6 +705,7 @@ export function PublicSmartCard({
         }
 
         finishInstantConnectMeasurement(measurementId, "forbidden");
+        setInstantConnectUiState(previousUiState);
         setErrorState(
           "This profile is not accepting instant connections right now.",
         );
@@ -683,6 +713,7 @@ export function PublicSmartCard({
       }
 
       finishInstantConnectMeasurement(measurementId, "failed");
+      setInstantConnectUiState(previousUiState);
 
       setErrorState(
         error instanceof ApiError
@@ -855,6 +886,15 @@ export function PublicSmartCard({
                 ))}
               </select>
             </div>
+          ) : null}
+
+          {isAuthenticated &&
+          personasLoading &&
+          !hasPersonaSelection &&
+          primaryAction === "instant_connect" ? (
+            <p className="text-sm leading-6 text-muted">
+              Loading your personas...
+            </p>
           ) : null}
 
           {isAuthenticated &&

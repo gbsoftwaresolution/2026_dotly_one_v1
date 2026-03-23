@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   IncomingRequestCard,
@@ -12,6 +12,10 @@ import { PrimaryButton } from "@/components/shared/primary-button";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
+import {
+  readSessionCache,
+  writeSessionCache,
+} from "@/lib/client-session-cache";
 import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
 import { isExpiredSessionError } from "@/lib/utils/auth-errors";
@@ -20,6 +24,13 @@ import type { IncomingRequest, OutgoingRequest } from "@/types/request";
 import { useRouter } from "next/navigation";
 
 type RequestTab = "incoming" | "outgoing";
+
+const REQUESTS_CACHE_KEY = "dotly.requests-screen";
+
+type RequestsCacheValue = {
+  incoming: IncomingRequest[];
+  outgoing: OutgoingRequest[];
+};
 
 function toFriendlyActionError(error: unknown, action: "approve" | "reject") {
   if (error instanceof ApiError) {
@@ -41,10 +52,19 @@ function toFriendlyActionError(error: unknown, action: "approve" | "reject") {
 
 export function RequestsScreen() {
   const router = useRouter();
+  const initialCacheRef = useRef(
+    readSessionCache<RequestsCacheValue>(REQUESTS_CACHE_KEY),
+  );
   const [activeTab, setActiveTab] = useState<RequestTab>("incoming");
-  const [incoming, setIncoming] = useState<IncomingRequest[]>([]);
-  const [outgoing, setOutgoing] = useState<OutgoingRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [incoming, setIncoming] = useState<IncomingRequest[]>(
+    () => initialCacheRef.current?.incoming ?? [],
+  );
+  const [outgoing, setOutgoing] = useState<OutgoingRequest[]>(
+    () => initialCacheRef.current?.outgoing ?? [],
+  );
+  const [isLoading, setIsLoading] = useState(
+    () => initialCacheRef.current === null,
+  );
   const [loadError, setLoadError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{
     tone: "success" | "error";
@@ -55,8 +75,15 @@ export function RequestsScreen() {
     action: "approve" | "reject";
   } | null>(null);
 
-  const loadRequests = useCallback(async () => {
-    setIsLoading(true);
+  useEffect(() => {
+    writeSessionCache(REQUESTS_CACHE_KEY, { incoming, outgoing });
+  }, [incoming, outgoing]);
+
+  const loadRequests = useCallback(async (withLoading = true) => {
+    if (withLoading) {
+      setIsLoading(true);
+    }
+
     setLoadError(null);
 
     try {
@@ -72,7 +99,6 @@ export function RequestsScreen() {
         router.replace(
           `/login?next=${encodeURIComponent(routes.app.requests)}&reason=expired`,
         );
-        router.refresh();
         return;
       }
 
@@ -82,12 +108,14 @@ export function RequestsScreen() {
           : "We could not load your requests right now.",
       );
     } finally {
-      setIsLoading(false);
+      if (withLoading) {
+        setIsLoading(false);
+      }
     }
   }, [router]);
 
   useEffect(() => {
-    void loadRequests();
+    void loadRequests(initialCacheRef.current === null);
   }, [loadRequests]);
 
   const visibleRequests = useMemo(
@@ -111,19 +139,15 @@ export function RequestsScreen() {
         setFeedback({ tone: "success", message: "Request rejected." });
       }
 
-      const [nextIncoming, nextOutgoing] = await Promise.all([
-        requestApi.listIncoming(),
-        requestApi.listOutgoing(),
-      ]);
-
-      setIncoming(nextIncoming);
-      setOutgoing(nextOutgoing);
+      setIncoming((current) =>
+        current.filter((request) => request.id !== requestId),
+      );
+      void loadRequests();
     } catch (error) {
       if (isExpiredSessionError(error)) {
         router.replace(
           `/login?next=${encodeURIComponent(routes.app.requests)}&reason=expired`,
         );
-        router.refresh();
         return;
       }
 

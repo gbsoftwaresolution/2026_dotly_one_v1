@@ -143,7 +143,6 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
           router.replace(
             `/login?next=${encodeURIComponent(routes.app.eventDetail(eventId))}&reason=expired`,
           );
-          router.refresh();
           return;
         }
 
@@ -173,7 +172,6 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
           router.replace(
             `/login?next=${encodeURIComponent(routes.app.eventDetail(eventId))}&reason=expired`,
           );
-          router.refresh();
           return;
         }
 
@@ -231,7 +229,6 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
         router.replace(
           `/login?next=${encodeURIComponent(routes.app.eventDetail(eventId))}&reason=expired`,
         );
-        router.refresh();
         return;
       }
 

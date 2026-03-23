@@ -1,12 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { notificationApi } from "@/lib/api/notification-api";
 import { ApiError } from "@/lib/api/client";
+import {
+  readSessionCache,
+  writeSessionCache,
+} from "@/lib/client-session-cache";
 import { routes } from "@/lib/constants/routes";
 import { publishUnreadCount } from "@/lib/notifications/unread-count";
 import { isExpiredSessionError } from "@/lib/utils/auth-errors";
@@ -15,16 +19,39 @@ import { useRouter } from "next/navigation";
 
 import { NotificationItem } from "./notification-item";
 
+const NOTIFICATIONS_CACHE_KEY = "dotly.notifications-screen";
+
+type NotificationsCacheValue = {
+  notifications: Notification[];
+  unreadCount: number;
+};
+
 export function NotificationsScreen() {
   const router = useRouter();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const initialCacheRef = useRef(
+    readSessionCache<NotificationsCacheValue>(NOTIFICATIONS_CACHE_KEY),
+  );
+  const [notifications, setNotifications] = useState<Notification[]>(
+    () => initialCacheRef.current?.notifications ?? [],
+  );
+  const [unreadCount, setUnreadCount] = useState(
+    () => initialCacheRef.current?.unreadCount ?? 0,
+  );
+  const [isLoading, setIsLoading] = useState(
+    () => initialCacheRef.current === null,
+  );
   const [loadError, setLoadError] = useState<string | null>(null);
   const [markingReadId, setMarkingReadId] = useState<string | null>(null);
   const [markReadError, setMarkReadError] = useState<string | null>(null);
   const [isMarkingAll, setIsMarkingAll] = useState(false);
   const [markAllError, setMarkAllError] = useState<string | null>(null);
+
+  useEffect(() => {
+    writeSessionCache(NOTIFICATIONS_CACHE_KEY, {
+      notifications,
+      unreadCount,
+    });
+  }, [notifications, unreadCount]);
 
   const loadNotifications = useCallback(
     async (options?: { withLoading?: boolean; clearError?: boolean }) => {
@@ -47,7 +74,6 @@ export function NotificationsScreen() {
           router.replace(
             `/login?next=${encodeURIComponent(routes.app.notifications)}&reason=expired`,
           );
-          router.refresh();
           return null;
         }
 
@@ -70,7 +96,7 @@ export function NotificationsScreen() {
   );
 
   useEffect(() => {
-    void loadNotifications({ withLoading: true });
+    void loadNotifications({ withLoading: initialCacheRef.current === null });
   }, [loadNotifications]);
 
   function getMarkReadErrorMessage(error: unknown) {
@@ -114,7 +140,6 @@ export function NotificationsScreen() {
         router.replace(
           `/login?next=${encodeURIComponent(routes.app.notifications)}&reason=expired`,
         );
-        router.refresh();
         return;
       }
 
@@ -146,7 +171,6 @@ export function NotificationsScreen() {
         router.replace(
           `/login?next=${encodeURIComponent(routes.app.notifications)}&reason=expired`,
         );
-        router.refresh();
         return;
       }
 

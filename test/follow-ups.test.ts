@@ -104,7 +104,6 @@ describe("FollowUpsService", () => {
     assert.equal((createPayload as any)?.data.relationshipId, "relationship-1");
     assert.equal(result.id, "follow-up-1");
     assert.equal(result.status, "pending");
-    assert.equal(result.relationship.state, "approved");
     assert.equal(result.relationship.sourceType, "event");
     assert.equal(result.relationship.sourceLabel, "Tech Summit");
     assert.ok(result.relationship.targetPersona);
@@ -840,10 +839,8 @@ describe("FollowUpsService", () => {
     assert.equal(result.relationshipId, "relationship-1");
     assert.ok(result.updatedAt instanceof Date);
     assert.deepEqual(Object.keys(result.relationship).sort(), [
-      "relationshipId",
       "sourceLabel",
       "sourceType",
-      "state",
       "targetPersona",
     ]);
     assert.ok(result.relationship.targetPersona);
@@ -878,8 +875,6 @@ describe("FollowUpsService", () => {
 
     const result = await service.getFollowUp("user-1", "follow-up-1");
 
-    assert.equal(result.relationship.relationshipId, "relationship-1");
-    assert.equal(result.relationship.state, null);
     assert.equal(result.relationship.targetPersona, null);
     assert.equal(result.metadata.isOverdue, true);
     assert.equal(result.metadata.isTriggered, false);

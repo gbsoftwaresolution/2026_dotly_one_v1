@@ -240,6 +240,7 @@ model Persona {
   updatedAt                DateTime              @updatedAt
 
   @@index([userId])
+  @@index([userId, updatedAt, createdAt])
   @@unique([id, userId])
 }
 
@@ -349,6 +350,7 @@ model ContactRelationship {
   @@unique([ownerUserId, targetUserId, ownerPersonaId, targetPersonaId])
   @@unique([id, ownerUserId])
   @@index([ownerUserId, state, accessEndAt, createdAt])
+  @@index([ownerUserId, lastInteractionAt, createdAt])
   @@index([targetUserId, createdAt])
 }
 

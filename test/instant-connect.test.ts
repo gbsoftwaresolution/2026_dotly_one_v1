@@ -1734,15 +1734,8 @@ describe("ContactsService", () => {
     assert.equal(result[0].metadata.hasInteractions, true);
     assert.equal(result[0].metadata.isRecentlyActive, true);
     assert.equal(result[0].metadata.relationshipAgeDays, 4);
-    assert.deepEqual(result[0].context, {
-      type: "profile",
-      label: "Profile",
-    });
+    assert.equal(result[0].memory.sourceLabel, "Profile");
     assert.equal(result[1].memory.sourceLabel, "Quick Connect QR");
-    assert.deepEqual(result[1].context, {
-      type: "qr",
-      label: "Quick Connect QR",
-    });
     assert.equal(result[1].interactionCount, 0);
     assert.equal(result[1].metadata.lastInteractionAt, null);
     assert.equal(result[1].metadata.hasInteractions, false);
@@ -1752,6 +1745,20 @@ describe("ContactsService", () => {
       ((findManyPayload as any)?.where?.OR?.[1]?.state as string) ?? "",
       INSTANT_ACCESS_STATE,
     );
+    assert.deepEqual((findManyPayload as any)?.orderBy, [
+      {
+        lastInteractionAt: {
+          sort: "desc",
+          nulls: "last",
+        },
+      },
+      {
+        createdAt: "desc",
+      },
+      {
+        id: "asc",
+      },
+    ]);
   });
 
   it("filters contacts by recent relationship activity when requested", async () => {
@@ -1927,11 +1934,7 @@ describe("ContactsService", () => {
     assert.equal(result.metadata.hasInteractions, true);
     assert.equal(result.metadata.isRecentlyActive, true);
     assert.equal(result.metadata.relationshipAgeDays, 3);
-    assert.deepEqual(result.context, {
-      type: "event",
-      label: "Dotly Launch Week",
-      eventName: "Dotly Launch Week",
-    });
+    assert.equal(result.memory.sourceLabel, "Dotly Launch Week");
     assert.equal(result.followUpSummary.hasPendingFollowUp, true);
     assert.equal(result.followUpSummary.pendingFollowUpCount, 2);
     assert.equal(

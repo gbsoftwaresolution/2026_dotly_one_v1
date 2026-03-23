@@ -100,7 +100,6 @@ describe("AuthForm", () => {
     expect(mocks.push).toHaveBeenCalledWith(
       "/login?email=new%40dotly.one&created=1&delivery=sent",
     );
-    expect(mocks.refresh).toHaveBeenCalled();
     expect(
       screen.getByText(/confirmation email sent\. redirecting you to login/i),
     ).toBeInTheDocument();

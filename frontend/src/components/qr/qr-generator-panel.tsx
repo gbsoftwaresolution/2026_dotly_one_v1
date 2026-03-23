@@ -242,7 +242,6 @@ export function QrGeneratorPanel({
           router.replace(
             `${routes.public.login}?next=${routes.app.qr}&reason=expired`,
           );
-          router.refresh();
           return;
         }
 

@@ -12,8 +12,8 @@ export interface FollowUpTargetPersona {
 }
 
 export interface FollowUpRelationship {
-  relationshipId: string;
-  state: "approved" | "instant_access" | "expired" | null;
+  relationshipId?: string;
+  state?: "approved" | "instant_access" | "expired" | null;
   sourceType?: ContactRequestSourceType;
   sourceLabel?: string | null;
   targetPersona: FollowUpTargetPersona | null;

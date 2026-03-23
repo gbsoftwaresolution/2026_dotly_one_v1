@@ -58,10 +58,12 @@ vi.mock("@/lib/api/follow-ups-api", () => ({
   },
 }));
 
+import { clearAppDataStore } from "@/lib/app-data-store";
 import { ContactFollowUpForm } from "./contact-follow-up-form";
 
 describe("ContactFollowUpForm", () => {
   beforeEach(() => {
+    clearAppDataStore();
     mocks.create.mockReset();
   });
 
@@ -81,7 +83,7 @@ describe("ContactFollowUpForm", () => {
     );
 
     vi.setSystemTime(new Date("2026-03-22T13:20:00.000Z"));
-    fireEvent.click(screen.getByRole("button", { name: /remind me/i }));
+    fireEvent.click(screen.getByRole("button", { name: /add follow-up/i }));
 
     const expected = formatLocalDefaults(new Date("2026-03-22T13:20:00.000Z"));
 
@@ -99,9 +101,9 @@ describe("ContactFollowUpForm", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /remind me/i }));
+    await user.click(screen.getByRole("button", { name: /add follow-up/i }));
     await user.type(screen.getByLabelText(/note/i), "a".repeat(1001));
-    await user.click(screen.getByRole("button", { name: /save reminder/i }));
+    await user.click(screen.getByRole("button", { name: /save follow-up/i }));
 
     expect(screen.getByText(/keep the note under 1000 characters/i)).toBeInTheDocument();
     expect(mocks.create).not.toHaveBeenCalled();
@@ -118,9 +120,9 @@ describe("ContactFollowUpForm", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /remind me/i }));
+    await user.click(screen.getByRole("button", { name: /add follow-up/i }));
     await user.type(screen.getByLabelText(/note/i), "  Follow up after demo  ");
-    await user.click(screen.getByRole("button", { name: /save reminder/i }));
+    await user.click(screen.getByRole("button", { name: /save follow-up/i }));
 
     await waitFor(() => {
       expect(mocks.create).toHaveBeenCalledTimes(1);
@@ -130,16 +132,12 @@ describe("ContactFollowUpForm", () => {
       relationshipId: "relationship-id",
       note: "Follow up after demo",
     });
-    expect(screen.getByText(/reminder added for alex parker/i)).toBeInTheDocument();
+    expect(screen.getByText(/follow-up saved for alex parker/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /view follow-ups/i })).toHaveAttribute(
       "href",
       "/app/follow-ups",
     );
-    expect(screen.getByText(/next reminder/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /manage reminders/i })).toHaveAttribute(
-      "href",
-      "/app/follow-ups",
-    );
+    expect(screen.getByText(/next touchpoint/i)).toBeInTheDocument();
   });
 
   it("shows the current pending reminder summary when one exists", () => {
@@ -155,10 +153,10 @@ describe("ContactFollowUpForm", () => {
       }),
     );
 
-    expect(screen.getByText(/next reminder/i)).toBeInTheDocument();
-    expect(screen.getByText(/keep the next touchpoint in view/i)).toBeInTheDocument();
-    expect(screen.getByText(/2 pending reminders/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /add reminder/i })).toBeInTheDocument();
+    expect(screen.getByText(/next touchpoint/i)).toBeInTheDocument();
+    expect(screen.getByText(/keep the next conversation in view/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 follow-ups waiting/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add follow-up/i })).toBeInTheDocument();
   });
 
   it("surfaces overdue reminders without turning the contact view into a task list", () => {
@@ -177,8 +175,8 @@ describe("ContactFollowUpForm", () => {
       }),
     );
 
-    expect(screen.getByText(/reminder overdue/i)).toBeInTheDocument();
-    expect(screen.getByText(/this reminder needs attention/i)).toBeInTheDocument();
+    expect(screen.getByText(/pick this back up/i)).toBeInTheDocument();
+    expect(screen.getByText(/this conversation is waiting on you/i)).toBeInTheDocument();
     expect(screen.getByText(/^overdue$/i)).toBeInTheDocument();
   });
 });

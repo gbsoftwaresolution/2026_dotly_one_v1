@@ -9,6 +9,12 @@ import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { StatusBadge } from "@/components/shared/status-badge";
+import {
+  optimisticallyTransitionFollowUp,
+  reconcileFollowUp,
+  refreshFollowUps,
+  useAppDataSnapshot,
+} from "@/lib/app-data-store";
 import { followUpsApi } from "@/lib/api/follow-ups-api";
 import { ApiError } from "@/lib/api/client";
 import { dotlyPositioning } from "@/lib/constants/positioning";
@@ -243,64 +249,32 @@ function getConnectionContextLine(followUp: FollowUp) {
 
 export function FollowUpsScreen() {
   const router = useRouter();
-  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { followUps: followUpState } = useAppDataSnapshot();
   const [selectedStatus, setSelectedStatus] =
     useState<FollowUpStatus>("pending");
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [actionState, setActionState] = useState<{
     id: string;
     type: "complete" | "cancel";
   } | null>(null);
-  const requestIdRef = useRef(0);
-
-  const loadFollowUps = useCallback(
-    async (status: FollowUpStatus) => {
-      const requestId = requestIdRef.current + 1;
-      requestIdRef.current = requestId;
-      setIsLoading(true);
-      setLoadError(null);
-
-      try {
-        if (status === "pending") {
-          await followUpsApi.processDue().catch(() => undefined);
-        }
-
-        const result = await followUpsApi.list({ status });
-
-        if (requestId !== requestIdRef.current) {
-          return;
-        }
-
-        setFollowUps(sortFollowUps(result));
-      } catch (error) {
-        if (isExpiredSessionError(error)) {
-          router.replace(
-            `/login?next=${encodeURIComponent(routes.app.followUps)}&reason=expired`,
-          );
-          router.refresh();
-          return;
-        }
-
-        setLoadError(
-          error instanceof ApiError
-            ? error.message
-            : "We could not load your follow-ups right now.",
-        );
-      } finally {
-        if (requestId === requestIdRef.current) {
-          setIsLoading(false);
-        }
-      }
-    },
-    [router],
-  );
+  const statusState = followUpState[selectedStatus];
+  const followUps = statusState.data;
+  const showSkeleton =
+    followUps.length === 0 &&
+    (statusState.status === "idle" || statusState.status === "loading");
+  const isRefreshing = statusState.status === "loading" && followUps.length > 0;
+  const loadError = followUps.length === 0 ? statusState.error : null;
 
   useEffect(() => {
-    void loadFollowUps(selectedStatus);
-  }, [loadFollowUps, selectedStatus]);
+    void refreshFollowUps(selectedStatus).catch((error) => {
+      if (isExpiredSessionError(error)) {
+        router.replace(
+          `/login?next=${encodeURIComponent(routes.app.followUps)}&reason=expired`,
+        );
+      }
+    });
+  }, [router, selectedStatus]);
 
   useEffect(() => {
     if (!actionNotice) {
@@ -319,7 +293,14 @@ export function FollowUpsScreen() {
   async function handleAction(id: string, type: "complete" | "cancel") {
     setActionState({ id, type });
     setActionError(null);
-    setActionNotice(null);
+    setActionNotice(
+      type === "complete" ? "Marking follow-up done..." : "Dismissing follow-up...",
+    );
+
+    const rollback = optimisticallyTransitionFollowUp(
+      id,
+      type === "complete" ? "completed" : "cancelled",
+    );
 
     try {
       const updated =
@@ -327,21 +308,13 @@ export function FollowUpsScreen() {
           ? await followUpsApi.complete(id)
           : await followUpsApi.cancel(id);
 
-      setFollowUps((current) => {
-        const remaining = current.filter(
-          (followUp) => followUp.id !== updated.id,
-        );
-
-        if (updated.status !== selectedStatus) {
-          return remaining;
-        }
-
-        return sortFollowUps([...remaining, updated]);
-      });
+      reconcileFollowUp(updated);
       setActionNotice(
         type === "complete" ? "Follow-up marked done." : "Follow-up dismissed.",
       );
     } catch (error) {
+      rollback();
+      setActionNotice(null);
       setActionError(
         error instanceof ApiError
           ? error.message
@@ -352,7 +325,7 @@ export function FollowUpsScreen() {
     }
   }
 
-  if (isLoading) {
+  if (showSkeleton) {
     return (
       <div className="space-y-3">
         <SkeletonCard />
@@ -371,7 +344,7 @@ export function FollowUpsScreen() {
           <PrimaryButton
             type="button"
             fullWidth
-            onClick={() => void loadFollowUps(selectedStatus)}
+            onClick={() => void refreshFollowUps(selectedStatus, { force: true })}
           >
             Try again
           </PrimaryButton>
@@ -410,13 +383,20 @@ export function FollowUpsScreen() {
           <h2 className="font-sans text-lg font-semibold text-foreground">
             {activeFilter.label}
           </h2>
-          {!isLoading ? (
+          {!showSkeleton ? (
             <span className="font-mono text-[10px] uppercase tracking-widest text-muted">
               {followUps.length}
             </span>
           ) : null}
         </div>
         <p className="text-sm text-muted">{activeFilter.description}</p>
+        <div className="min-h-5">
+          {isRefreshing ? (
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+              Syncing follow-ups...
+            </p>
+          ) : null}
+        </div>
       </div>
 
       {actionNotice ? (

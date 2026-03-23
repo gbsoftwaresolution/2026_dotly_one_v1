@@ -35,18 +35,46 @@ const contactTargetPersonaSelect = {
   profilePhotoUrl: true,
 } satisfies Prisma.PersonaSelect;
 
-const contactRelationshipSelect = {
+const contactListMemorySelect = {
+  contextLabel: true,
+  metAt: true,
+  sourceLabel: true,
+  note: true,
+} satisfies Prisma.ContactMemorySelect;
+
+const contactDetailMemorySelect = {
   id: true,
-  ownerUserId: true,
-  targetUserId: true,
+  eventId: true,
+  contextLabel: true,
+  metAt: true,
+  sourceLabel: true,
+  note: true,
+} satisfies Prisma.ContactMemorySelect;
+
+const contactListRelationshipSelect = {
+  id: true,
   state: true,
-  accessStartAt: true,
   accessEndAt: true,
   lastInteractionAt: true,
   interactionCount: true,
   createdAt: true,
   sourceType: true,
   connectionContext: true,
+  targetPersona: {
+    select: contactTargetPersonaSelect,
+  },
+  memories: {
+    orderBy: {
+      metAt: "desc",
+    },
+    take: 1,
+    select: contactListMemorySelect,
+  },
+} satisfies Prisma.ContactRelationshipSelect;
+
+const contactDetailRelationshipSelect = {
+  ...contactListRelationshipSelect,
+  accessStartAt: true,
   targetPersona: {
     select: {
       ...contactTargetPersonaSelect,
@@ -58,19 +86,16 @@ const contactRelationshipSelect = {
       metAt: "desc",
     },
     take: 1,
-    select: {
-      id: true,
-      eventId: true,
-      contextLabel: true,
-      metAt: true,
-      sourceLabel: true,
-      note: true,
-    },
+    select: contactDetailMemorySelect,
   },
 } satisfies Prisma.ContactRelationshipSelect;
 
-type ContactRelationshipRecord = Prisma.ContactRelationshipGetPayload<{
-  select: typeof contactRelationshipSelect;
+type ContactListRelationshipRecord = Prisma.ContactRelationshipGetPayload<{
+  select: typeof contactListRelationshipSelect;
+}>;
+
+type ContactDetailRelationshipRecord = Prisma.ContactRelationshipGetPayload<{
+  select: typeof contactDetailRelationshipSelect;
 }>;
 
 type RelationshipMetadata = {
@@ -145,10 +170,21 @@ export class ContactsService {
               }
             : {}),
         },
-        orderBy: {
-          createdAt: "desc",
-        },
-        select: contactRelationshipSelect,
+        orderBy: [
+          {
+            lastInteractionAt: {
+              sort: "desc",
+              nulls: "last",
+            },
+          },
+          {
+            createdAt: "desc",
+          },
+          {
+            id: "asc",
+          },
+        ],
+        select: contactListRelationshipSelect,
       },
     );
 
@@ -283,7 +319,7 @@ export class ContactsService {
         id: relationshipId,
         ownerUserId: userId,
       },
-      select: contactRelationshipSelect,
+      select: contactDetailRelationshipSelect,
     });
 
     if (!relationship) {
@@ -294,11 +330,12 @@ export class ContactsService {
   }
 
   private toContactListItem(
-    relationship: ContactRelationshipRecord,
+    relationship: ContactListRelationshipRecord,
     now: Date,
   ) {
     const memory = relationship.memories[0];
     const metadata = this.buildRelationshipMetadata(relationship, now);
+    const sourceLabel = this.buildSourceLabel(relationship);
 
     return {
       relationshipId: relationship.id,
@@ -318,11 +355,9 @@ export class ContactsService {
         tagline: relationship.targetPersona.tagline,
         profilePhotoUrl: relationship.targetPersona.profilePhotoUrl,
       },
-      context: this.buildPublicContext(relationship),
       memory: {
         metAt: memory?.metAt ?? relationship.createdAt,
-        sourceLabel:
-          memory?.sourceLabel ?? toSourceLabel(relationship.sourceType),
+        sourceLabel,
         note: memory?.note ?? null,
       },
       metadata,
@@ -330,7 +365,7 @@ export class ContactsService {
   }
 
   private toContactDetail(
-    relationship: ContactRelationshipRecord,
+    relationship: ContactDetailRelationshipRecord,
     now: Date,
     followUpSummary: {
       hasPendingFollowUp: boolean;
@@ -343,6 +378,7 @@ export class ContactsService {
   ) {
     const memory = relationship.memories[0];
     const metadata = this.buildRelationshipDetailMetadata(relationship, now);
+    const sourceLabel = this.buildSourceLabel(relationship);
 
     return {
       relationshipId: relationship.id,
@@ -365,11 +401,9 @@ export class ContactsService {
         profilePhotoUrl: relationship.targetPersona.profilePhotoUrl,
         accessMode: toApiAccessMode(relationship.targetPersona.accessMode),
       },
-      context: this.buildPublicContext(relationship),
       memory: {
         metAt: memory?.metAt ?? relationship.createdAt,
-        sourceLabel:
-          memory?.sourceLabel ?? toSourceLabel(relationship.sourceType),
+        sourceLabel,
         note: memory?.note ?? null,
       },
       followUpSummary,
@@ -390,7 +424,7 @@ export class ContactsService {
 
   private buildRelationshipMetadata(
     relationship: Pick<
-      ContactRelationshipRecord,
+      ContactListRelationshipRecord,
       "createdAt" | "lastInteractionAt" | "interactionCount"
     >,
     now: Date,
@@ -418,7 +452,7 @@ export class ContactsService {
 
   private buildRelationshipDetailMetadata(
     relationship: Pick<
-      ContactRelationshipRecord,
+      ContactDetailRelationshipRecord,
       "createdAt" | "lastInteractionAt" | "interactionCount"
     >,
     now: Date,
@@ -476,34 +510,28 @@ export class ContactsService {
     return lastInteractionAt;
   }
 
-  private buildPublicContext(
-    relationship: Pick<
-      ContactRelationshipRecord,
-      "sourceType" | "connectionContext" | "memories"
-    >,
+  private buildSourceLabel(
+    relationship: {
+      sourceType: PrismaContactRequestSourceType;
+      connectionContext: Prisma.JsonValue | null;
+      memories: Array<{
+        contextLabel: string;
+        sourceLabel: string | null;
+      }>;
+    },
   ) {
     const memory = relationship.memories[0];
     const storedContext = parseConnectionContext(
       relationship.connectionContext,
     );
-    const type =
-      storedContext?.type ?? toRelationshipContextType(relationship.sourceType);
-    const label =
+
+    return (
       normalizeContextLabel(memory?.contextLabel) ??
       normalizeContextLabel(storedContext?.label) ??
       memory?.sourceLabel ??
       toSourceLabel(relationship.sourceType) ??
-      "Profile";
-
-    return {
-      type,
-      label,
-      ...(type === "event"
-        ? {
-            eventName: label,
-          }
-        : {}),
-    };
+      "Profile"
+    );
   }
 }
 
@@ -577,21 +605,6 @@ function toSourceLabel(
       return "QR";
     case PrismaContactRequestSourceType.EVENT:
       return "Event";
-  }
-
-  throw new Error("Unsupported contact request source type");
-}
-
-function toRelationshipContextType(
-  sourceType: PrismaContactRequestSourceType,
-): "profile" | "qr" | "event" {
-  switch (sourceType) {
-    case PrismaContactRequestSourceType.PROFILE:
-      return "profile";
-    case PrismaContactRequestSourceType.QR:
-      return "qr";
-    case PrismaContactRequestSourceType.EVENT:
-      return "event";
   }
 
   throw new Error("Unsupported contact request source type");

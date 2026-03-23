@@ -705,6 +705,94 @@ describe("ProfilesService analytics hook", () => {
     });
   });
 
+  it("caches safe public profile payloads without skipping per-viewer block checks", async () => {
+    let personaReads = 0;
+    const tracked: Array<Record<string, unknown>> = [];
+    const blockChecks: Array<{ viewerUserId: string; targetUserId: string }> =
+      [];
+
+    const service = new ProfilesService(
+      {
+        persona: {
+          findFirst: async () => {
+            personaReads += 1;
+
+            return {
+              id: "persona-id",
+              userId: "target-user",
+              username: "alice",
+              publicUrl: "https://dotly.id/alice",
+              fullName: "Alice Demo",
+              jobTitle: "Founder",
+              companyName: "Dotly",
+              tagline: "Connect fast",
+              profilePhotoUrl: null,
+              accessMode: "OPEN",
+              sharingMode: "SMART_CARD",
+              smartCardConfig: {
+                primaryAction: "instant_connect",
+                allowCall: false,
+                allowWhatsapp: false,
+                allowEmail: false,
+                allowVcard: false,
+              },
+              emailVerified: false,
+              phoneVerified: false,
+              businessVerified: false,
+              publicPhone: null,
+              publicWhatsappNumber: null,
+              publicEmail: null,
+              qRAccessTokens: [{ code: "profile-qr-1", id: "profile-qr-1" }],
+            };
+          },
+        },
+      } as any,
+      {
+        trackProfileView: async (payload: Record<string, unknown>) => {
+          tracked.push(payload);
+          return true;
+        },
+      } as any,
+      {
+        get: (key: string, fallback?: string) =>
+          key === "qr.baseUrl" ? "https://dotly.id/q" : fallback,
+      } as any,
+      {
+        assertNoInteractionBlock: async (
+          viewerUserId: string,
+          targetUserId: string,
+        ) => {
+          blockChecks.push({ viewerUserId, targetUserId });
+        },
+      } as any,
+    );
+
+    const firstResult = await service.getPublicProfile("alice", {
+      viewerUserId: "viewer-1",
+      idempotencyKey: "request-1",
+    });
+    const secondResult = await service.getPublicProfile("alice", {
+      viewerUserId: "viewer-2",
+      idempotencyKey: "request-2",
+    });
+
+    assert.equal(personaReads, 1);
+    assert.equal(blockChecks.length, 2);
+    assert.deepEqual(blockChecks, [
+      {
+        viewerUserId: "viewer-1",
+        targetUserId: "target-user",
+      },
+      {
+        viewerUserId: "viewer-2",
+        targetUserId: "target-user",
+      },
+    ]);
+    assert.equal(tracked.length, 2);
+    assert.equal(firstResult.instantConnectUrl, "https://dotly.id/q/profile-qr-1");
+    assert.deepEqual(secondResult, firstResult);
+  });
+
   it("builds a public vcard with only safe public fields", async () => {
     const service = new ProfilesService(
       {

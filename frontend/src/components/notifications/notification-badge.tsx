@@ -9,9 +9,18 @@ import {
   publishUnreadCount,
   subscribeToUnreadCount,
 } from "@/lib/notifications/unread-count";
+import { readSessionCache } from "@/lib/client-session-cache";
+
+const NOTIFICATIONS_CACHE_KEY = "dotly.notifications-screen";
 
 export function NotificationBadge() {
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(() => {
+    const cached = readSessionCache<{ unreadCount: number }>(
+      NOTIFICATIONS_CACHE_KEY,
+    );
+
+    return cached?.unreadCount ?? 0;
+  });
 
   useEffect(() => {
     let cancelled = false;

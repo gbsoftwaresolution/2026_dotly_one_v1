@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
+  Prisma,
   PersonaAccessMode as PrismaPersonaAccessMode,
   PersonaSharingMode as PrismaPersonaSharingMode,
   QrStatus as PrismaQrStatus,
@@ -30,6 +31,17 @@ import {
 import { canonicalizePublicUrl } from "../personas/public-url";
 import { PublicPersonaDto } from "./dto/public-persona.dto";
 import { toQrLink } from "../qr/qr.presenter";
+
+interface CacheEntry<T> {
+  expiresAt: number;
+  value: T;
+}
+
+interface CachedPublicProfile {
+  ownerUserId: string;
+  personaId: string;
+  response: PublicPersonaDto;
+}
 
 interface PublicVcardPayload {
   fn: string;
@@ -60,6 +72,30 @@ const authenticatedRequestTargetSelect = {
   smartCardConfig: true,
 } as const;
 
+const publicProfilePersonaSelect = {
+  ...publicPersonaSelect,
+  qRAccessTokens: {
+    where: {
+      type: PrismaQrType.profile,
+      status: PrismaQrStatus.active,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: 1,
+    select: {
+      id: true,
+      code: true,
+    },
+  },
+} as const;
+
+type PublicProfilePersonaRecord = Prisma.PersonaGetPayload<{
+  select: typeof publicProfilePersonaSelect;
+}>;
+
+const PUBLIC_PROFILE_CACHE_TTL_MS = 30_000;
+
 const defaultingConfigService: Pick<ConfigService, "get"> = {
   get: <T>(_propertyPath: string, defaultValue?: T) => {
     if (defaultValue === undefined) {
@@ -79,6 +115,11 @@ const failClosedBlocksService: Pick<BlocksService, "assertNoInteractionBlock"> =
 
 @Injectable()
 export class ProfilesService {
+  private readonly publicProfileCache = new Map<
+    string,
+    CacheEntry<CachedPublicProfile>
+  >();
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly analyticsService: AnalyticsService,
@@ -93,43 +134,22 @@ export class ProfilesService {
       idempotencyKey?: string | null;
     },
   ) {
-    const persona = await this.findPublicPersonaByUsername(username);
+    const publicProfile = await this.getCachedPublicProfile(username);
 
     if (tracking?.viewerUserId) {
       await this.blocksService.assertNoInteractionBlock(
         tracking.viewerUserId,
-        persona.userId,
+        publicProfile.ownerUserId,
       );
     }
 
-    const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
-    const activeProfileQrCode = await this.getActiveProfileQrCode(persona.id);
-
     void this.analyticsService.trackProfileView({
-      personaId: persona.id,
+      personaId: publicProfile.personaId,
       viewerUserId: tracking?.viewerUserId ?? null,
       idempotencyKey: tracking?.idempotencyKey ?? null,
     });
 
-    return PublicPersonaDto.fromRecord(persona, {
-      instantConnectUrl: this.getInstantConnectUrl(
-        safeSmartCardConfig,
-        activeProfileQrCode,
-      ),
-      actionState: buildSmartCardActionState(
-        {
-          sharingMode: persona.sharingMode,
-          accessMode: persona.accessMode,
-          hasActiveProfileQr: activeProfileQrCode !== null,
-        },
-        safeSmartCardConfig,
-        {
-          publicPhone: persona.publicPhone,
-          publicWhatsappNumber: persona.publicWhatsappNumber,
-          publicEmail: persona.publicEmail,
-        },
-      ),
-    });
+    return publicProfile.response;
   }
 
   async getPublicVcard(username: string, viewerUserId?: string | null) {
@@ -225,6 +245,98 @@ export class ProfilesService {
     return activeProfileQr?.code ?? activeProfileQr?.id ?? null;
   }
 
+  private async getCachedPublicProfile(
+    username: string,
+  ): Promise<CachedPublicProfile> {
+    const normalizedUsername = username.trim().toLowerCase();
+    const cachedEntry = this.getCachedValue(
+      this.publicProfileCache,
+      normalizedUsername,
+    );
+
+    if (cachedEntry) {
+      return cachedEntry;
+    }
+
+    const persona = await this.findPublicProfilePersonaByUsername(
+      normalizedUsername,
+    );
+    const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
+    const activeProfileQrCode =
+      this.getActiveProfileQrCodeFromRecord(persona) ??
+      (await this.getActiveProfileQrCode(persona.id));
+    const response = PublicPersonaDto.fromRecord(persona, {
+      instantConnectUrl: this.getInstantConnectUrl(
+        safeSmartCardConfig,
+        activeProfileQrCode,
+      ),
+      actionState: buildSmartCardActionState(
+        {
+          sharingMode: persona.sharingMode,
+          accessMode: persona.accessMode,
+          hasActiveProfileQr: activeProfileQrCode !== null,
+        },
+        safeSmartCardConfig,
+        {
+          publicPhone: persona.publicPhone,
+          publicWhatsappNumber: persona.publicWhatsappNumber,
+          publicEmail: persona.publicEmail,
+        },
+      ),
+    });
+
+    const nextCachedProfile = {
+      ownerUserId: persona.userId,
+      personaId: persona.id,
+      response,
+    } satisfies CachedPublicProfile;
+
+    this.setCachedValue(
+      this.publicProfileCache,
+      normalizedUsername,
+      nextCachedProfile,
+    );
+
+    return nextCachedProfile;
+  }
+
+  private getActiveProfileQrCodeFromRecord(
+    persona: {
+      qRAccessTokens?: Array<{
+        id: string;
+        code: string;
+      }>;
+    },
+  ): string | null {
+    const activeProfileQr = persona.qRAccessTokens?.[0];
+
+    return activeProfileQr?.code ?? activeProfileQr?.id ?? null;
+  }
+
+  private async findPublicProfilePersonaByUsername(
+    username: string,
+  ): Promise<PublicProfilePersonaRecord> {
+    const persona = await this.prismaService.persona.findFirst({
+      where: {
+        username,
+        accessMode: {
+          in: [PrismaPersonaAccessMode.OPEN, PrismaPersonaAccessMode.REQUEST],
+        },
+      },
+      select: publicProfilePersonaSelect,
+    });
+
+    if (!persona) {
+      throw new NotFoundException("Public profile not found");
+    }
+
+    if (this.needsSystemManagedSharingRepair(persona)) {
+      throw new NotFoundException("Public profile not found");
+    }
+
+    return persona;
+  }
+
   private async findPublicPersonaByUsername(
     username: string,
   ): Promise<PublicPersonaRecord> {
@@ -266,6 +378,32 @@ export class ProfilesService {
     }
 
     return toSafeSmartCardConfig(persona.smartCardConfig) === null;
+  }
+
+  private getCachedValue<T>(cache: Map<string, CacheEntry<T>>, key: string) {
+    const entry = cache.get(key);
+
+    if (!entry) {
+      return null;
+    }
+
+    if (entry.expiresAt <= Date.now()) {
+      cache.delete(key);
+      return null;
+    }
+
+    return entry.value;
+  }
+
+  private setCachedValue<T>(
+    cache: Map<string, CacheEntry<T>>,
+    key: string,
+    value: T,
+  ) {
+    cache.set(key, {
+      value,
+      expiresAt: Date.now() + PUBLIC_PROFILE_CACHE_TTL_MS,
+    });
   }
 
   private buildVcardPayload(

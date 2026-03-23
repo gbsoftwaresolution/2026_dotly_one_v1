@@ -1,17 +1,14 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
-import { PublicProfileCard } from "@/components/profile/public-profile-card";
-import { PublicSmartCard } from "@/components/profile/public-smart-card";
-import { RequestAccessPanel } from "@/components/profile/request-access-panel";
-import { personaApi, publicApi, userApi } from "@/lib/api";
+import { PublicUserInteractions } from "@/components/profile/public-user-interactions";
+import { publicApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { getServerAccessToken } from "@/lib/auth/server-session";
 import {
   hasPublicSmartCardDirectActions,
   resolvePublicSmartCardPrimaryCta,
 } from "@/lib/persona/smart-card";
-import type { PersonaSummary } from "@/types";
 
 interface PublicUserPageProps {
   username: string;
@@ -31,36 +28,7 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
       "x-idempotency-key": requestHeaders.get("x-idempotency-key") ?? "",
     });
     const accessToken = await getServerAccessToken();
-
-    let isAuthenticated = false;
-    let currentUser = null;
-    let personas: PersonaSummary[] = [];
-    let personaLoadError: string | null = null;
-
-    if (accessToken) {
-      try {
-        currentUser = await userApi.me(accessToken);
-        isAuthenticated = true;
-
-        try {
-          personas = await personaApi.list(accessToken);
-        } catch (error) {
-          if (error instanceof ApiError && error.status === 401) {
-            isAuthenticated = false;
-            personas = [];
-          }
-
-          personaLoadError =
-            error instanceof ApiError
-              ? error.message
-              : "We could not load your personas right now.";
-        }
-      } catch (error) {
-        if (!(error instanceof ApiError && error.status === 401)) {
-          isAuthenticated = false;
-        }
-      }
-    }
+    const isAuthenticated = Boolean(accessToken);
 
     const isSmartCard = profile.sharingMode === "smart_card";
     const resolvedSmartCardPrimaryCta =
@@ -92,29 +60,12 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
         }`}
       >
         <div className="w-full space-y-4">
-          {isSmartCard ? (
-            <PublicSmartCard
-              profile={profile}
-              initialPersonas={personas}
-              isAuthenticated={isAuthenticated}
-              loginHref={loginHref}
-              personaLoadError={personaLoadError}
-            />
-          ) : (
-            <PublicProfileCard profile={profile} />
-          )}
-
-          {showRequestAccessPanel ? (
-            <div id="request-access-panel" tabIndex={-1}>
-              <RequestAccessPanel
-                profile={profile}
-                initialPersonas={personas}
-                isAuthenticated={isAuthenticated}
-                currentUser={currentUser}
-                personaLoadError={personaLoadError}
-              />
-            </div>
-          ) : null}
+          <PublicUserInteractions
+            profile={profile}
+            isAuthenticated={isAuthenticated}
+            loginHref={loginHref}
+            showRequestAccessPanel={showRequestAccessPanel}
+          />
         </div>
       </main>
     );

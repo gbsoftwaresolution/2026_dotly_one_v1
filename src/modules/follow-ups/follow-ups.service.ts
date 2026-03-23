@@ -31,7 +31,45 @@ const followUpTargetPersonaSelect = {
   profilePhotoUrl: true,
 } satisfies Prisma.PersonaSelect;
 
-const followUpSelect = {
+const followUpRelationshipListSelect = {
+  id: true,
+  state: true,
+  sourceType: true,
+  connectionContext: true,
+  memories: {
+    orderBy: [{ metAt: "desc" }, { id: "desc" }],
+    take: 1,
+    select: {
+      contextLabel: true,
+      sourceLabel: true,
+    },
+  },
+  targetPersona: {
+    select: followUpTargetPersonaSelect,
+  },
+} satisfies Prisma.ContactRelationshipSelect;
+
+const followUpRelationshipDetailSelect = {
+  ...followUpRelationshipListSelect,
+  accessEndAt: true,
+} satisfies Prisma.ContactRelationshipSelect;
+
+const followUpListSelect = {
+  id: true,
+  relationshipId: true,
+  remindAt: true,
+  triggeredAt: true,
+  status: true,
+  note: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true,
+  relationship: {
+    select: followUpRelationshipListSelect,
+  },
+} satisfies Prisma.FollowUpSelect;
+
+const followUpDetailSelect = {
   id: true,
   ownerUserId: true,
   relationshipId: true,
@@ -43,32 +81,18 @@ const followUpSelect = {
   updatedAt: true,
   completedAt: true,
   relationship: {
-    select: {
-      id: true,
-      ownerUserId: true,
-      state: true,
-      sourceType: true,
-      connectionContext: true,
-      accessEndAt: true,
-      memories: {
-        orderBy: [{ metAt: "desc" }, { id: "desc" }],
-        take: 1,
-        select: {
-          contextLabel: true,
-          sourceLabel: true,
-        },
-      },
-      targetPersona: {
-        select: followUpTargetPersonaSelect,
-      },
-    },
+    select: followUpRelationshipDetailSelect,
   },
 } satisfies Prisma.FollowUpSelect;
 
 type PrismaClientLike = PrismaService | Prisma.TransactionClient;
 
-type FollowUpRecord = Prisma.FollowUpGetPayload<{
-  select: typeof followUpSelect;
+type FollowUpListRecord = Prisma.FollowUpGetPayload<{
+  select: typeof followUpListSelect;
+}>;
+
+type FollowUpDetailRecord = Prisma.FollowUpGetPayload<{
+  select: typeof followUpDetailSelect;
 }>;
 
 @Injectable()
@@ -93,7 +117,7 @@ export class FollowUpsService {
           remindAt: toRemindAtDate(dto.remindAt),
           note: dto.note ?? null,
         },
-        select: followUpSelect,
+        select: followUpDetailSelect,
       });
 
       return this.toFollowUpView(createdFollowUp);
@@ -143,7 +167,7 @@ export class FollowUpsService {
                 { createdAt: "asc" },
                 { id: "asc" },
               ],
-      select: followUpSelect,
+      select: followUpListSelect,
     });
 
     return followUps.map((followUp) => this.toFollowUpView(followUp, now));
@@ -168,7 +192,7 @@ export class FollowUpsService {
           }
         : {}),
       orderBy: [{ remindAt: "asc" }, { createdAt: "asc" }, { id: "asc" }],
-      select: followUpSelect,
+      select: followUpListSelect,
     });
 
     return followUps.map((followUp) => this.toFollowUpView(followUp, now));
@@ -366,7 +390,7 @@ export class FollowUpsService {
           id: followUp.id,
         },
         data,
-        select: followUpSelect,
+        select: followUpDetailSelect,
       });
 
       return this.toFollowUpView(updatedFollowUp);
@@ -410,7 +434,7 @@ export class FollowUpsService {
           completedAt:
             nextStatus === PrismaFollowUpStatus.COMPLETED ? new Date() : null,
         },
-        select: followUpSelect,
+        select: followUpDetailSelect,
       });
 
       return this.toFollowUpView(updatedFollowUp);
@@ -506,12 +530,12 @@ export class FollowUpsService {
     const followUpDelegate = prisma.followUp as unknown as {
       findFirst?: (args: {
         where: { id: string; ownerUserId: string };
-        select: typeof followUpSelect;
-      }) => Promise<FollowUpRecord | null>;
+        select: typeof followUpDetailSelect;
+      }) => Promise<FollowUpDetailRecord | null>;
       findUnique?: (args: {
         where: { id: string };
-        select: typeof followUpSelect;
-      }) => Promise<FollowUpRecord | null>;
+        select: typeof followUpDetailSelect;
+      }) => Promise<FollowUpDetailRecord | null>;
     };
 
     const followUp =
@@ -521,13 +545,13 @@ export class FollowUpsService {
               id,
               ownerUserId: userId,
             },
-            select: followUpSelect,
+            select: followUpDetailSelect,
           })
         : await followUpDelegate.findUnique?.({
             where: {
               id,
             },
-            select: followUpSelect,
+            select: followUpDetailSelect,
           });
 
     if (!followUp || followUp.ownerUserId !== userId) {
@@ -570,13 +594,16 @@ export class FollowUpsService {
     };
   }
 
-  private assertPending(followUp: FollowUpRecord, message: string) {
+  private assertPending(followUp: FollowUpDetailRecord, message: string) {
     if (followUp.status !== PrismaFollowUpStatus.PENDING) {
       throw new ConflictException(message);
     }
   }
 
-  private toFollowUpView(followUp: FollowUpRecord, now = new Date()) {
+  private toFollowUpView(
+    followUp: FollowUpListRecord | FollowUpDetailRecord,
+    now = new Date(),
+  ) {
     const relationship = followUp.relationship;
 
     return {
@@ -590,8 +617,6 @@ export class FollowUpsService {
       updatedAt: followUp.updatedAt,
       completedAt: followUp.completedAt,
       relationship: {
-        relationshipId: relationship?.id ?? followUp.relationshipId,
-        state: relationship ? toApiRelationshipState(relationship.state) : null,
         sourceType: relationship
           ? toApiContactRequestSourceType(relationship.sourceType)
           : undefined,
@@ -614,7 +639,10 @@ export class FollowUpsService {
   }
 
   private buildFollowUpMetadata(
-    followUp: Pick<FollowUpRecord, "status" | "remindAt" | "triggeredAt">,
+    followUp: Pick<
+      FollowUpListRecord,
+      "status" | "remindAt" | "triggeredAt"
+    >,
     now: Date,
   ) {
     return {
@@ -625,7 +653,7 @@ export class FollowUpsService {
   }
 
   private isOverdue(
-    followUp: Pick<FollowUpRecord, "status" | "remindAt">,
+    followUp: Pick<FollowUpListRecord, "status" | "remindAt">,
     now: Date,
   ) {
     return (
@@ -635,7 +663,7 @@ export class FollowUpsService {
   }
 
   private isUpcomingSoon(
-    followUp: Pick<FollowUpRecord, "status" | "remindAt">,
+    followUp: Pick<FollowUpListRecord, "status" | "remindAt">,
     now: Date,
   ) {
     if (followUp.status !== PrismaFollowUpStatus.PENDING) {
@@ -665,7 +693,7 @@ function toApiContactRequestSourceType(
 }
 
 function buildRelationshipSourceLabel(
-  relationship: NonNullable<FollowUpRecord["relationship"]>,
+  relationship: NonNullable<FollowUpListRecord["relationship"]>,
 ): string {
   const memory = relationship.memories[0];
   const storedContext = parseConnectionContext(relationship.connectionContext);
