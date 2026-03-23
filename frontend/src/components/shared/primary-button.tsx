@@ -6,6 +6,7 @@ type PrimaryButtonProps = PropsWithChildren<
   ButtonHTMLAttributes<HTMLButtonElement> & {
     isLoading?: boolean;
     isSuccess?: boolean;
+    loadingLabel?: string;
     /** Full-width layout */
     fullWidth?: boolean;
     /** Smaller size variant */
@@ -18,6 +19,7 @@ export function PrimaryButton({
   className,
   isLoading,
   isSuccess,
+  loadingLabel,
   disabled,
   fullWidth,
   size = "md",
@@ -60,7 +62,7 @@ export function PrimaryButton({
         isSuccess && [
           "bg-status-success text-white dark:text-bgOnyx",
           "shadow-[0_0_0_1px_rgba(48,209,88,0.3),0_4px_16px_rgba(48,209,88,0.20)]",
-          "tap-feedback transition-[transform,background-color,border-color,box-shadow,color,opacity] duration-[160ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "scale-[1.01] tap-feedback transition-[transform,background-color,border-color,box-shadow,color,opacity] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
         ],
         // Disabled state
         disabled && !isLoading && "opacity-40 cursor-not-allowed",
@@ -77,7 +79,7 @@ export function PrimaryButton({
       {isLoading ? (
         <span className="flex items-center gap-2">
           <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-          <span>Processing…</span>
+          <span>{loadingLabel ?? "Processing..."}</span>
         </span>
       ) : isSuccess ? (
         <span className="flex items-center gap-2">

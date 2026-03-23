@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 import { Card } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -13,6 +14,7 @@ import { ApiError } from "@/lib/api/client";
 import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
 import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
+import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
 import { formatPrimaryAction } from "@/lib/persona/labels";
 import {
   hasPublicSmartCardDirectActions,
@@ -93,8 +95,9 @@ export function RequestAccessPanel({
   personaLoadError = null,
 }: RequestAccessPanelProps) {
   const [selectedPersonaId, setSelectedPersonaId] = useState(
-    initialPersonas[0]?.id ?? "",
+    resolvePreferredPersonaId(initialPersonas),
   );
+  const [showPersonaPicker, setShowPersonaPicker] = useState(false);
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -144,6 +147,9 @@ export function RequestAccessPanel({
     currentUser,
     "send_contact_request",
   );
+  const selectedPersona =
+    initialPersonas.find((persona) => persona.id === selectedPersonaId) ?? null;
+  const hasMultiplePersonas = initialPersonas.length > 1;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -326,25 +332,54 @@ export function RequestAccessPanel({
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <label
-            htmlFor="fromPersonaId"
-            className="block font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
-          >
-            Send from
-          </label>
-          <select
-            id="fromPersonaId"
-            className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 font-sans text-sm text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
-            value={selectedPersonaId}
-            onChange={(event) => setSelectedPersonaId(event.target.value)}
-            disabled={isSubmitting || Boolean(successMessage)}
-          >
-            {initialPersonas.map((persona) => (
-              <option key={persona.id} value={persona.id}>
-                {persona.fullName} - @{persona.username}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center justify-between gap-3">
+            <label
+              htmlFor="fromPersonaId"
+              className="block font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
+            >
+              Send from
+            </label>
+            {hasMultiplePersonas ? (
+              <button
+                type="button"
+                onClick={() => setShowPersonaPicker((current) => !current)}
+                disabled={isSubmitting || Boolean(successMessage)}
+                className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted transition-colors hover:text-foreground"
+              >
+                {showPersonaPicker ? "Done" : "Change"}
+                <ChevronDown
+                  className={`h-3.5 w-3.5 transition-transform ${
+                    showPersonaPicker ? "rotate-180" : "rotate-0"
+                  }`}
+                />
+              </button>
+            ) : null}
+          </div>
+
+          {selectedPersona ? (
+            <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
+              <p className="text-sm font-semibold text-foreground">
+                {selectedPersona.fullName}
+              </p>
+              <p className="text-sm text-muted">@{selectedPersona.username}</p>
+            </div>
+          ) : null}
+
+          {showPersonaPicker && hasMultiplePersonas ? (
+            <select
+              id="fromPersonaId"
+              className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 font-sans text-sm text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+              value={selectedPersonaId}
+              onChange={(event) => setSelectedPersonaId(event.target.value)}
+              disabled={isSubmitting || Boolean(successMessage)}
+            >
+              {initialPersonas.map((persona) => (
+                <option key={persona.id} value={persona.id}>
+                  {persona.fullName} - @{persona.username}
+                </option>
+              ))}
+            </select>
+          ) : null}
         </div>
 
         <div className="space-y-2">

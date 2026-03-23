@@ -2,14 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { AtSign, Check, Download, MessageCircle, Phone } from "lucide-react";
+import {
+  AtSign,
+  Check,
+  Download,
+  MessageCircle,
+  Phone,
+  Repeat2,
+} from "lucide-react";
 
 import { Card } from "@/components/shared/card";
+import { VerificationPrompt } from "@/components/auth/verification-prompt";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { showToast } from "@/components/shared/toast-viewport";
-import { relationshipApi } from "@/lib/api";
+import { publicApi, relationshipApi, requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
+import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
 import { dotlyPositioning } from "@/lib/constants/positioning";
+import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
 import { getPublicTrustPresentation } from "@/lib/persona/public-trust";
 import {
   getPublicSmartCardActionLinks,
@@ -22,7 +32,9 @@ import type {
   PersonaSmartCardPrimaryAction,
   PersonaSummary,
   PublicProfile,
+  PublicProfileRequestTarget,
 } from "@/types/persona";
+import type { UserProfile } from "@/types/user";
 
 interface PublicSmartCardProps {
   profile: PublicProfile;
@@ -32,6 +44,7 @@ interface PublicSmartCardProps {
   loginHref?: string;
   personaLoadError?: string | null;
   personasLoading?: boolean;
+  currentUser?: UserProfile | null;
 }
 
 interface SmartAction {
@@ -141,6 +154,7 @@ function getCardActionSummary(
 type PrimaryCtaState =
   | { status: "idle" }
   | { status: "loading" }
+  | { status: "settling" }
   | { status: "success"; message: string }
   | { status: "error"; message: string };
 
@@ -154,6 +168,40 @@ type InstantConnectUiState =
   | { status: "idle" }
   | { status: "connected"; message: string }
   | { status: "fallback"; message: string };
+
+function toFriendlyRequestMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 401) {
+      return "Log in to send a request from one of your personas.";
+    }
+
+    if (error.status === 429) {
+      return "Too many attempts. Please wait a few minutes.";
+    }
+
+    if (error.status === 403) {
+      const msg = error.message ?? "";
+
+      if (
+        msg.includes("blocked") ||
+        msg.toLowerCase().includes("you have blocked") ||
+        msg.toLowerCase().includes("has blocked you")
+      ) {
+        return "You cannot contact this user.";
+      }
+
+      return "This profile is not accepting requests right now.";
+    }
+
+    if (error.status === 409) {
+      return "Request already pending.";
+    }
+
+    return error.message;
+  }
+
+  return "We could not send your request right now. Please try again.";
+}
 
 function isAlreadyConnectedError(error: ApiError): boolean {
   const message = error.message.toLowerCase();
@@ -285,6 +333,7 @@ export function PublicSmartCard({
   loginHref,
   personaLoadError = null,
   personasLoading = false,
+  currentUser = null,
 }: PublicSmartCardProps) {
   const config = profile.smartCard;
   const [isContactPanelHighlighted, setIsContactPanelHighlighted] =
@@ -295,7 +344,7 @@ export function PublicSmartCard({
   const [instantConnectUiState, setInstantConnectUiState] =
     useState<InstantConnectUiState>({ status: "idle" });
   const [selectedPersonaId, setSelectedPersonaId] = useState(
-    initialPersonas[0]?.id ?? "",
+    resolvePreferredPersonaId(initialPersonas),
   );
   const [directActionState, setDirectActionState] = useState<DirectActionState>(
     {
@@ -304,6 +353,14 @@ export function PublicSmartCard({
   );
   const [showLoginCta, setShowLoginCta] = useState(!isAuthenticated);
   const [isVcardDownloading, setIsVcardDownloading] = useState(false);
+  const [requestReason, setRequestReason] = useState("");
+  const [requestTarget, setRequestTarget] =
+    useState<PublicProfileRequestTarget | null>(null);
+  const [requestState, setRequestState] = useState<{
+    status: "idle" | "submitting" | "success" | "error";
+    message: string | null;
+  }>({ status: "idle", message: null });
+  const [showPersonaOptions, setShowPersonaOptions] = useState(false);
   const feedbackTimeoutRef = useRef<number | null>(null);
   const directActionFeedbackTimeoutRef = useRef<number | null>(null);
   const panelHighlightTimeoutRef = useRef<number | null>(null);
@@ -328,7 +385,7 @@ export function PublicSmartCard({
         return current;
       }
 
-      return initialPersonas[0]?.id ?? "";
+      return resolvePreferredPersonaId(initialPersonas);
     });
   }, [initialPersonas]);
 
@@ -437,6 +494,23 @@ export function PublicSmartCard({
   );
   const contextSummary =
     profile.tagline?.trim() || dotlyPositioning.shortExplainer;
+  const selectedPersonaSummary = selectedPersona
+    ? `Connecting as ${selectedPersona.fullName}`
+    : null;
+  const canSendRequest = hasUnlockedTrustRequirement(
+    currentUser,
+    "send_contact_request",
+  );
+  const canShowInlineRequest =
+    displayedPrimaryAction === "request_access" || isFallback;
+  const requestButtonLabel =
+    requestState.status === "success" ? "Request Sent" : "Request Access";
+  const requestButtonDisabled =
+    requestState.status === "submitting" || requestState.status === "success";
+  const isPrimaryCtaSettling = primaryCtaState.status === "settling";
+  const requestPanelDescription = isFallback
+    ? "Instant connect is unavailable here, so Dotly is ready to send a request from your default persona instead."
+    : `Request access from ${selectedPersona?.fullName ?? "your default persona"} without leaving this card.`;
 
   const shouldShowDirectActions = smartActions.length > 0;
   const isPrimaryActionDisabled =
@@ -486,6 +560,11 @@ export function PublicSmartCard({
       setPrimaryCtaState({ status: "idle" });
       feedbackTimeoutRef.current = null;
     }, 1800);
+  }
+
+  function setSettlingState() {
+    clearFeedbackTimeout();
+    setPrimaryCtaState({ status: "settling" });
   }
 
   function setErrorState(message: string) {
@@ -581,7 +660,13 @@ export function PublicSmartCard({
   }
 
   function handleRequestAccessAction() {
+    setRequestState({ status: "idle", message: null });
+
     if (!requestAccessHref.startsWith("#")) {
+      setInstantConnectUiState({
+        status: "fallback",
+        message: "Request access is ready.",
+      });
       setSuccessState("Opening request access.");
       window.location.assign(requestAccessHref);
       return;
@@ -592,7 +677,49 @@ export function PublicSmartCard({
       return;
     }
 
+    setInstantConnectUiState({
+      status: "fallback",
+      message: "Request access is ready below.",
+    });
     setSuccessState("Request form ready below.");
+  }
+
+  async function handleInlineRequestAccess() {
+    if (!selectedPersonaId) {
+      setRequestState({
+        status: "error",
+        message: "Choose one of your personas before sending the request.",
+      });
+      return;
+    }
+
+    setRequestState({ status: "submitting", message: null });
+
+    try {
+      const target =
+        requestTarget ?? (await publicApi.getRequestTarget(profile.username));
+
+      setRequestTarget(target);
+
+      await requestApi.send({
+        toUsername: target.username,
+        fromPersonaId: selectedPersonaId,
+        reason: requestReason.trim() || undefined,
+        sourceType: "profile",
+        sourceId: null,
+      });
+
+      setRequestState({
+        status: "success",
+        message: "Request sent. They will see who you are and how you met.",
+      });
+      showToast("Request sent");
+    } catch (error) {
+      setRequestState({
+        status: "error",
+        message: toFriendlyRequestMessage(error),
+      });
+    }
   }
 
   function handleLoginAction() {
@@ -637,24 +764,22 @@ export function PublicSmartCard({
     const measurementId = startInstantConnectMeasurement();
     const previousUiState = instantConnectUiState;
 
-    setInstantConnectUiState({
-      status: "connected",
-      message: "Connecting...",
-    });
-    resetPrimaryFeedback();
+    setSettlingState();
 
     try {
       const result = await relationshipApi.instantConnect(profile.username, {
         fromPersonaId: selectedPersonaId,
       });
       finishInstantConnectMeasurement(measurementId, "connected");
-      setInstantConnectUiState({
-        status: "connected",
-        message:
-          result.status === "connected" ? "Connected instantly" : "Connected",
-      });
-      showToast("Connected");
-      resetPrimaryFeedback();
+      window.setTimeout(() => {
+        setInstantConnectUiState({
+          status: "connected",
+          message:
+            result.status === "connected" ? "Connected instantly" : "Connected",
+        });
+        setSuccessState("Connection saved.");
+        showToast("Connected");
+      }, 220);
     } catch (error) {
       if (error instanceof ApiError && isAlreadyConnectedError(error)) {
         finishInstantConnectMeasurement(measurementId, "already_connected");
@@ -662,7 +787,7 @@ export function PublicSmartCard({
           status: "connected",
           message: "Already connected",
         });
-        resetPrimaryFeedback();
+        setSuccessState("Already connected.");
         return;
       }
 
@@ -766,18 +891,18 @@ export function PublicSmartCard({
 
   return (
     <SmartCardHeroShell>
-      <div className="space-y-5 text-center sm:space-y-6">
-        <div className="space-y-3">
+      <div className="space-y-6 text-center sm:space-y-7">
+        <div className="space-y-4">
           {profile.profilePhotoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={profile.profilePhotoUrl}
               alt={profile.fullName}
-              className="mx-auto h-24 w-24 rounded-full object-cover shadow-[0_18px_40px_rgba(15,23,42,0.16)] ring-4 ring-white/85 sm:h-28 sm:w-28 dark:ring-white/10"
+              className="mx-auto h-28 w-28 rounded-full object-cover shadow-[0_24px_54px_rgba(15,23,42,0.18)] ring-4 ring-white/90 sm:h-32 sm:w-32 dark:ring-white/10"
             />
           ) : (
             <div
-              className="mx-auto flex h-24 w-24 items-center justify-center rounded-full text-[1.75rem] font-semibold text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)] ring-4 ring-white/80 sm:h-28 sm:w-28 sm:text-[2rem] dark:ring-white/10"
+              className="mx-auto flex h-28 w-28 items-center justify-center rounded-full text-[1.95rem] font-semibold text-white shadow-[0_24px_54px_rgba(15,23,42,0.2)] ring-4 ring-white/85 sm:h-32 sm:w-32 sm:text-[2.2rem] dark:ring-white/10"
               style={{
                 background: `linear-gradient(135deg, hsl(${hue}, 68%, 54%), hsl(${(hue + 28) % 360}, 72%, 48%))`,
               }}
@@ -786,21 +911,26 @@ export function PublicSmartCard({
             </div>
           )}
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-center gap-2">
               <span className="inline-flex items-center rounded-full border border-black/8 bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground/72 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/72">
                 Next step
               </span>
               <SmartCardTrustBadge trust={profile.trust} />
             </div>
-            <h1 className="text-[2rem] font-semibold leading-none tracking-tight text-foreground sm:text-[2.2rem]">
+            <h1 className="text-[2.2rem] font-semibold leading-none tracking-tight text-foreground sm:text-[2.5rem]">
               {profile.fullName}
             </h1>
-            <p className="mx-auto max-w-[30ch] text-sm leading-6 text-muted">
+            <p className="mx-auto max-w-[28ch] text-[15px] leading-7 text-muted">
               {cardActionSummary}
             </p>
+            {trustPresentation ? (
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">
+                {dotlyPositioning.publicProfile.verifiedLabel}
+              </p>
+            ) : null}
             {(profile.jobTitle || profile.companyName) && (
-              <p className="text-sm font-medium leading-5 text-foreground/72 sm:text-[15px]">
+              <p className="text-sm font-medium leading-5 text-foreground/72 sm:text-base">
                 {[profile.jobTitle, profile.companyName]
                   .filter(Boolean)
                   .join(" · ")}
@@ -808,7 +938,7 @@ export function PublicSmartCard({
             )}
             {profile.tagline ? (
               <p
-                className="mx-auto max-w-[30ch] text-sm leading-6 text-muted line-clamp-2"
+                className="mx-auto max-w-[30ch] text-sm leading-7 text-muted line-clamp-2"
                 title={profile.tagline}
               >
                 {profile.tagline}
@@ -817,19 +947,28 @@ export function PublicSmartCard({
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <PrimaryButton
             fullWidth
             size="lg"
-            className="h-14 rounded-[20px] text-base font-semibold shadow-[0_18px_42px_rgba(244,63,94,0.24)] dark:shadow-[0_18px_42px_rgba(34,211,238,0.2)]"
+            className="h-16 rounded-[22px] text-base font-semibold shadow-[0_22px_50px_rgba(244,63,94,0.24)] dark:shadow-[0_20px_46px_rgba(34,211,238,0.22)]"
             isLoading={primaryCtaState.status === "loading"}
-            isSuccess={primaryCtaState.status === "success" || isConnected}
+            isSuccess={
+              primaryCtaState.status === "success" ||
+              isPrimaryCtaSettling ||
+              isConnected
+            }
             disabled={isPrimaryActionDisabled}
+            loadingLabel={
+              primaryCtaAction === "instant_connect"
+                ? "Connecting..."
+                : undefined
+            }
             onClick={() => {
               void handlePrimaryAction();
             }}
           >
-            {primaryCtaLabel}
+            {isPrimaryCtaSettling ? "Connected" : primaryCtaLabel}
           </PrimaryButton>
 
           {contextSummary && !profile.tagline ? (
@@ -863,6 +1002,21 @@ export function PublicSmartCard({
               {instantConnectUiState.message}
             </p>
           ) : null}
+          {isPrimaryCtaSettling ? (
+            <p aria-live="polite" className="text-sm leading-6 text-muted">
+              Finalizing your connection...
+            </p>
+          ) : null}
+          {isFallback ? (
+            <div className="rounded-[20px] border border-amber-500/20 bg-amber-500/6 px-4 py-3 text-left">
+              <p className="text-sm font-semibold text-foreground">
+                Request Access
+              </p>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                {instantConnectUiState.message}
+              </p>
+            </div>
+          ) : null}
           {primaryCtaState.status === "success" ? (
             <p aria-live="polite" className="text-sm leading-6 text-muted">
               {primaryCtaState.message}
@@ -871,24 +1025,46 @@ export function PublicSmartCard({
 
           {isAuthenticated && hasMultiplePersonas ? (
             <div className="space-y-2 text-left">
-              <label
-                htmlFor="instant-connect-from-persona"
-                className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
-              >
-                Connecting as
-              </label>
-              <select
-                id="instant-connect-from-persona"
-                value={selectedPersonaId}
-                onChange={(event) => setSelectedPersonaId(event.target.value)}
-                className="w-full rounded-[20px] border border-black/8 bg-white/82 px-4 py-3 text-sm text-foreground shadow-[0_12px_30px_rgba(15,23,42,0.05)] outline-none transition focus:border-brandRose/35 dark:border-white/10 dark:bg-white/[0.04] dark:focus:border-brandCyan/35 dark:shadow-none"
-              >
-                {initialPersonas.map((persona) => (
-                  <option key={persona.id} value={persona.id}>
-                    {persona.fullName} @{persona.username}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+                  Connecting as
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowPersonaOptions((current) => !current)}
+                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted transition-colors hover:text-foreground"
+                >
+                  <Repeat2 className="h-3.5 w-3.5" />
+                  Change
+                </button>
+              </div>
+              {selectedPersona ? (
+                <div className="rounded-[1.35rem] border border-black/8 bg-white/82 px-4 py-3.5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {selectedPersona.fullName}
+                  </p>
+                  <p className="truncate font-mono text-xs text-muted">
+                    @{selectedPersona.username}
+                  </p>
+                </div>
+              ) : null}
+              {showPersonaOptions ? (
+                <select
+                  id="instant-connect-from-persona"
+                  value={selectedPersonaId}
+                  onChange={(event) => {
+                    setSelectedPersonaId(event.target.value);
+                    setShowPersonaOptions(false);
+                  }}
+                  className="w-full rounded-[20px] border border-black/8 bg-white/82 px-4 py-3 text-sm text-foreground shadow-[0_12px_30px_rgba(15,23,42,0.05)] outline-none transition focus:border-brandRose/35 dark:border-white/10 dark:bg-white/[0.04] dark:focus:border-brandCyan/35 dark:shadow-none"
+                >
+                  {initialPersonas.map((persona) => (
+                    <option key={persona.id} value={persona.id}>
+                      {persona.fullName} @{persona.username}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
             </div>
           ) : null}
 
@@ -906,8 +1082,94 @@ export function PublicSmartCard({
           !hasMultiplePersonas &&
           selectedPersona ? (
             <p className="text-sm leading-6 text-muted">
-              Connecting as {selectedPersona.fullName}
+              {selectedPersonaSummary}
             </p>
+          ) : null}
+
+          {canShowInlineRequest ? (
+            <Card className="border-black/6 bg-white/72 text-left shadow-[0_18px_46px_rgba(15,23,42,0.08)] dark:border-white/8 dark:bg-white/[0.03] dark:shadow-none">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+                    Request access
+                  </p>
+                  <h2 className="text-[1.05rem] font-semibold tracking-tight text-foreground">
+                    Continue without leaving this card
+                  </h2>
+                  <p className="text-sm leading-7 text-muted">
+                    {requestPanelDescription}
+                  </p>
+                </div>
+
+                {!isAuthenticated ? (
+                  <p className="text-sm leading-6 text-muted">
+                    Log in to request access.
+                  </p>
+                ) : currentUser && !canSendRequest ? (
+                  <VerificationPrompt
+                    email={currentUser.email}
+                    title="Verify before sending requests"
+                    description={`Dotly sends requests only from verified accounts before introducing you to ${profile.fullName}.`}
+                    compact
+                  />
+                ) : !hasPersonaSelection ? (
+                  <p className="text-sm leading-6 text-muted">
+                    {personasLoading
+                      ? "Loading your personas..."
+                      : "Create a persona to request access from this card."}
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="inline-request-reason"
+                        className="block font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
+                      >
+                        Add context
+                      </label>
+                      <textarea
+                        id="inline-request-reason"
+                        maxLength={280}
+                        rows={3}
+                        className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+                        placeholder="Remind them how you met (optional)"
+                        value={requestReason}
+                        onChange={(event) =>
+                          setRequestReason(event.target.value)
+                        }
+                        disabled={requestButtonDisabled}
+                      />
+                    </div>
+
+                    {requestState.message ? (
+                      <p
+                        className={cn(
+                          "text-sm leading-6",
+                          requestState.status === "error"
+                            ? "text-rose-500 dark:text-rose-300"
+                            : "text-muted",
+                        )}
+                      >
+                        {requestState.message}
+                      </p>
+                    ) : null}
+
+                    <PrimaryButton
+                      fullWidth
+                      type="button"
+                      isLoading={requestState.status === "submitting"}
+                      isSuccess={requestState.status === "success"}
+                      disabled={requestButtonDisabled}
+                      onClick={() => {
+                        void handleInlineRequestAccess();
+                      }}
+                    >
+                      {requestButtonLabel}
+                    </PrimaryButton>
+                  </div>
+                )}
+              </div>
+            </Card>
           ) : null}
         </div>
 

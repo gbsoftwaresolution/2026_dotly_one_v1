@@ -1,4 +1,5 @@
 import { StatusBadge } from "@/components/shared/status-badge";
+import { getShareInstruction } from "@/lib/persona/share-copy";
 import type { ResolvedQr } from "@/types/persona";
 
 interface PublicQrPreviewCardProps {
@@ -13,6 +14,7 @@ function avatarGradient(name: string): string {
 
 export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
   const isQuickConnect = qr.type === "quick_connect";
+  const scanInstruction = getShareInstruction(qr.type);
 
   return (
     <div className="glass overflow-hidden rounded-3xl border border-border bg-surface">
@@ -55,10 +57,13 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
           <p className="label-xs text-muted">
             {isQuickConnect ? "Who shared this QR" : "Profile preview"}
           </p>
+          <p className="text-sm font-semibold text-foreground">
+            {scanInstruction}
+          </p>
           <p className="text-sm leading-6 text-muted">
             {isQuickConnect
-              ? "Confirm who shared this QR, then connect from the persona you are using right now."
-              : "Scanning this QR opens the public profile so they can choose the next step."}
+              ? "You are about to connect with this person. Confirm the name, then continue in one tap."
+              : "You are about to open this person's Dotly card and choose the next step from there."}
           </p>
         </div>
 

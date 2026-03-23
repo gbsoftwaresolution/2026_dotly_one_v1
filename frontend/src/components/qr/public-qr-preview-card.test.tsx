@@ -27,6 +27,9 @@ describe("PublicQrPreviewCard", () => {
     expect(screen.getByText(/^profile$/i)).toBeInTheDocument();
     expect(screen.getByText(/profile preview/i)).toBeInTheDocument();
     expect(
+      screen.getByText(/scan to view this dotly profile/i),
+    ).toBeInTheDocument();
+    expect(
       screen.getByText(
         /scanning this qr opens the public profile so they can choose the next step/i,
       ),
@@ -53,6 +56,7 @@ describe("PublicQrPreviewCard", () => {
 
     expect(screen.getByText(/^quick connect$/i)).toBeInTheDocument();
     expect(screen.getByText(/^who shared this qr$/i)).toBeInTheDocument();
+    expect(screen.getByText(/scan to connect on dotly/i)).toBeInTheDocument();
     expect(
       screen.getByText(
         /confirm who shared this qr, then connect from the persona/i,

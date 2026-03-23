@@ -93,6 +93,7 @@ export function PublicUserInteractions({
           loginHref={loginHref}
           personaLoadError={personaLoadError}
           personasLoading={personasLoading}
+          currentUser={currentUser}
         />
       ) : (
         <PublicProfileCard profile={profile} />
@@ -121,6 +122,9 @@ export function PublicUserInteractions({
               personaLoadError={personaLoadError}
             />
           )}
+          <p className="px-1 pt-3 text-center text-xs font-medium uppercase tracking-[0.14em] text-muted">
+            Get your own Dotly
+          </p>
         </div>
       ) : null}
     </>

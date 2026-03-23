@@ -13,6 +13,11 @@ import { isApiError } from "@/lib/api/client";
 import { personaApi } from "@/lib/api/persona-api";
 import { userApi } from "@/lib/api/user-api";
 import { routes } from "@/lib/constants/routes";
+import {
+  getShareDescription,
+  getShareHeadline,
+  getShareInstruction,
+} from "@/lib/persona/share-copy";
 import { getShareFastSnapshot, seedMyFastShare } from "@/lib/share-fast-store";
 import type {
   MyFastSharePayload,
@@ -62,8 +67,8 @@ function FastQrShell({
           </h1>
           <p className="max-w-[30rem] text-sm leading-6 text-muted">
             {hasCachedShare
-              ? "Your last ready profile QR is visible immediately while Dotly refreshes controls in the background."
-              : "Loading your share controls now."}
+              ? "Your QR is already live. Dotly refreshes the details quietly in the background."
+              : "Loading your live share card now."}
           </p>
         </div>
 
@@ -76,12 +81,12 @@ function FastQrShell({
                 <div className="flex min-h-[22rem] items-center justify-center sm:min-h-[24rem]">
                   <QRCodeSVG
                     value={sharePayload.qrValue}
-                    size={320}
+                    size={360}
                     level="H"
                     includeMargin={false}
                     bgColor="#ffffff"
                     fgColor="#050505"
-                    className="relative h-auto w-full max-w-[20rem]"
+                    className="relative h-auto w-full max-w-[22rem]"
                   />
                 </div>
               ) : (
@@ -95,11 +100,18 @@ function FastQrShell({
 
           <div className="space-y-1.5 text-center">
             <p className="text-base font-semibold text-foreground">
-              {sharePayload ? "Scan to open my profile" : "Preparing your share card"}
+              {sharePayload
+                ? getShareHeadline(sharePayload.preferredShareType)
+                : "Preparing your share card"}
             </p>
+            {sharePayload ? (
+              <p className="text-sm font-medium text-foreground/78">
+                {getShareInstruction(sharePayload.preferredShareType)}
+              </p>
+            ) : null}
             <p className="mx-auto max-w-[34ch] text-sm leading-6 text-muted">
               {sharePayload
-                ? "Keep this screen open while the full share controls finish loading."
+                ? getShareDescription(sharePayload.preferredShareType)
                 : "Dotly is loading your personas and trust-aware sharing controls."}
             </p>
           </div>
@@ -113,7 +125,9 @@ function FastQrShell({
                   <p className="truncate text-lg font-semibold text-foreground">
                     {sharePayload.fullName}
                   </p>
-                  <p className="truncate text-sm text-muted">@{sharePayload.username}</p>
+                  <p className="truncate text-sm text-muted">
+                    @{sharePayload.username}
+                  </p>
                 </div>
 
                 {isRefreshing ? (
@@ -180,9 +194,7 @@ export function InstantShareExperience({
           }
         : null;
 
-    return (
-      initialSharePayload ?? getShareFastSnapshot().sharePayload ?? null
-    );
+    return initialSharePayload ?? getShareFastSnapshot().sharePayload ?? null;
   }, [initialFastShare]);
   const [user, setUser] = useState<UserProfile | null>(initialUser);
   const [fastShare, setFastShare] = useState<MyFastSharePayload | null>(
@@ -204,7 +216,9 @@ export function InstantShareExperience({
 
     setIsBootstrapping(true);
 
-    const userPromise = initialUser ? Promise.resolve(initialUser) : userApi.getCurrent();
+    const userPromise = initialUser
+      ? Promise.resolve(initialUser)
+      : userApi.getCurrent();
     const fastSharePromise = initialFastShare
       ? Promise.resolve(initialFastShare)
       : personaApi.getMyFastShare();
@@ -335,7 +349,13 @@ export function InstantShareExperience({
     );
   }
 
-  if (!isBootstrapping && user && personas && personas.length > 0 && !hasResolvedFastShare) {
+  if (
+    !isBootstrapping &&
+    user &&
+    personas &&
+    personas.length > 0 &&
+    !hasResolvedFastShare
+  ) {
     return (
       <div className="flex min-h-[calc(100dvh-8rem)] flex-col justify-center gap-6">
         <div className="space-y-2">

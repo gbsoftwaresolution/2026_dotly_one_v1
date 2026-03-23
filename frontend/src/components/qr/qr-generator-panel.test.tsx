@@ -275,6 +275,7 @@ describe("QrGeneratorPanel", () => {
 
     expect(mocks.getFastShare).not.toHaveBeenCalled();
     expect(screen.getByText(/scan to open my profile/i)).toBeInTheDocument();
+    expect(screen.getByText(/scan to view my dotly/i)).toBeInTheDocument();
   });
 
   it("renders the backend-selected primary and secondary actions directly", () => {
@@ -328,6 +329,7 @@ describe("QrGeneratorPanel", () => {
     expect(screen.getByText(/^Email$/)).toBeInTheDocument();
     expect(screen.queryByText(/^WhatsApp$/)).not.toBeInTheDocument();
     expect(screen.getByText(/scan to connect instantly/i)).toBeInTheDocument();
+    expect(screen.getByText(/scan to connect on dotly/i)).toBeInTheDocument();
   });
 
   it("enables the share actions once the QR is ready", async () => {
@@ -387,6 +389,8 @@ describe("QrGeneratorPanel", () => {
     await waitFor(() => {
       expect(screen.getByText(/scan to open my profile/i)).toBeInTheDocument();
     });
+
+    expect(screen.getByText(/scan to view my dotly/i)).toBeInTheDocument();
 
     await waitFor(() => {
       expect(copyButton).toBeEnabled();

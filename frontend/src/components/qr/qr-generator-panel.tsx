@@ -13,6 +13,12 @@ import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
 import { isApiError } from "@/lib/api/client";
 import { personaApi } from "@/lib/api/persona-api";
 import { routes } from "@/lib/constants/routes";
+import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
+import {
+  getShareDescription as getShareDescriptionCopy,
+  getShareHeadline,
+  getShareInstruction,
+} from "@/lib/persona/share-copy";
 import {
   getPersonaFastShare,
   getShareFastSnapshot,
@@ -119,25 +125,21 @@ function getEnabledSecondaryActions(
     .map((option) => option.label);
 }
 
-function getShareHeadline(
-  sharePayload: PersonaFastSharePayload | null,
-): string {
-  return sharePayload?.preferredShareType === "instant_connect"
-    ? "Scan to connect instantly"
-    : "Scan to open my profile";
-}
-
 function getShareDescription(
   sharePayload: PersonaFastSharePayload | null,
   persona: PersonaSummary | null,
 ): string {
-  if (sharePayload?.preferredShareType === "instant_connect") {
-    return "They scan once and land on the next step you already chose.";
+  const baseDescription = getShareDescriptionCopy(
+    sharePayload?.preferredShareType,
+  );
+
+  if (!persona) {
+    return baseDescription;
   }
 
-  return persona
-    ? "They open your public profile and see the next step you already set."
-    : "They open your public profile from this QR.";
+  return sharePayload?.preferredShareType === "instant_connect"
+    ? `${baseDescription} ${persona.fullName.split(/\s+/)[0] || "They"} appears with the next step already chosen.`
+    : `${baseDescription} ${persona.fullName.split(/\s+/)[0] || "They"} appears with your public card ready.`;
 }
 
 function avatarGradient(seed: string): string {
@@ -166,11 +168,10 @@ export function QrGeneratorPanel({
   const shareFastSnapshot = getShareFastSnapshot();
   const initialSelectionId =
     initialFastShare?.persona?.id ?? shareFastSnapshot.selectedPersonaId;
-  const initialPersonaId =
-    initialSelectionId &&
-    personas.some((persona) => persona.id === initialSelectionId)
-      ? initialSelectionId
-      : (personas[0]?.id ?? "");
+  const initialPersonaId = resolvePreferredPersonaId(
+    personas,
+    initialSelectionId,
+  );
   const initialSharePayload =
     toInitialSharePayload(initialFastShare) ??
     (initialPersonaId ? getPersonaFastShare(initialPersonaId) : null);
@@ -395,16 +396,16 @@ export function QrGeneratorPanel({
         <div className="absolute bottom-0 right-0 h-52 w-52 rounded-full bg-brandViolet/12 blur-3xl dark:bg-brandCyan/8" />
       </div>
 
-      <div className="relative z-10 flex min-h-[calc(100dvh-3rem)] flex-col gap-5 sm:min-h-[calc(100dvh-4rem)]">
-        <div className="space-y-4">
+      <div className="relative z-10 flex min-h-[calc(100dvh-3rem)] flex-col gap-6 sm:min-h-[calc(100dvh-4rem)]">
+        <div className="space-y-6">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 space-y-1">
               <p className="label-xs text-muted">Share</p>
-              <h1 className="text-[2rem] font-semibold tracking-tight text-foreground">
+              <h1 className="text-[2.2rem] font-semibold tracking-tight text-foreground sm:text-[2.5rem]">
                 Show your QR
               </h1>
-              <p className="max-w-[30rem] text-sm leading-6 text-muted">
-                Keep this screen open and let the other person scan.
+              <p className="max-w-[30rem] text-[15px] leading-7 text-muted">
+                Open once, hold still, and let the other person scan.
               </p>
             </div>
 
@@ -414,7 +415,7 @@ export function QrGeneratorPanel({
           </div>
 
           {selectedPersona ? (
-            <div className="flex items-center gap-3 rounded-[1.75rem] border border-black/[0.06] bg-white/78 px-4 py-4 shadow-[0_12px_40px_rgba(15,23,42,0.05)] dark:border-white/[0.08] dark:bg-white/[0.045] sm:px-5">
+            <div className="flex items-center gap-3 rounded-[1.85rem] border border-black/[0.06] bg-white/78 px-4 py-4 shadow-[0_14px_46px_rgba(15,23,42,0.06)] dark:border-white/[0.08] dark:bg-white/[0.045] sm:px-5 sm:py-5">
               {selectedPersona.profilePhotoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -435,7 +436,7 @@ export function QrGeneratorPanel({
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="truncate text-lg font-semibold text-foreground">
+                  <h2 className="truncate text-[1.15rem] font-semibold tracking-tight text-foreground">
                     {selectedPersona.fullName}
                   </h2>
                   {isVerified ? (
@@ -447,11 +448,13 @@ export function QrGeneratorPanel({
                 </div>
 
                 {identityLine ? (
-                  <p className="truncate text-sm text-muted">{identityLine}</p>
+                  <p className="truncate text-sm leading-6 text-muted">
+                    {identityLine}
+                  </p>
                 ) : null}
 
                 {selectedPersona.tagline ? (
-                  <p className="mt-1 line-clamp-1 text-sm text-foreground/80 dark:text-white/75">
+                  <p className="mt-1 line-clamp-1 text-sm leading-6 text-foreground/80 dark:text-white/75">
                     {selectedPersona.tagline}
                   </p>
                 ) : null}
@@ -459,45 +462,30 @@ export function QrGeneratorPanel({
             </div>
           ) : null}
 
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
             {primaryActionLabel ? (
-              <span className="rounded-full border border-black/[0.06] bg-white/70 px-3 py-1.5 font-medium text-foreground dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-white/90">
-                First step: {primaryActionLabel}
+              <span className="rounded-full border border-emerald-500/18 bg-emerald-500/8 px-3 py-1.5 font-medium text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300">
+                Next step: {primaryActionLabel}
               </span>
             ) : null}
-
-            {secondaryActions.map((action) => (
-              <span
-                key={action}
-                className="rounded-full border border-black/[0.06] bg-white/70 px-3 py-1.5 font-medium text-foreground dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-white/90"
-              >
-                {action}
+            {secondaryActions.length > 0 ? (
+              <span className="text-xs uppercase tracking-[0.14em] text-muted">
+                {secondaryActions.join(" • ")}
               </span>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
-            {selectedPersona ? (
-              <Link
-                href={routes.app.personaSettings(selectedPersona.id)}
-                className="font-medium text-muted transition-colors hover:text-foreground"
-              >
-                Customize share
-              </Link>
             ) : null}
             {personas.length > 1 ? (
               <Link
                 href={routes.app.personas}
                 className="font-medium text-muted transition-colors hover:text-foreground"
               >
-                Switch persona
+                Change persona
               </Link>
             ) : null}
           </div>
         </div>
 
         <div className="flex flex-1 flex-col justify-center gap-4">
-          <div className="mx-auto flex w-full max-w-[26rem] flex-1 items-center justify-center">
+          <div className="mx-auto flex w-full max-w-[32rem] flex-1 items-center justify-center">
             {shareLocked ? (
               <VerificationPrompt
                 email={user.email}
@@ -529,24 +517,37 @@ export function QrGeneratorPanel({
                 </SecondaryButton>
               </div>
             ) : (
-              <div className="relative w-full rounded-[2.25rem] border border-black/[0.08] bg-white px-5 py-6 shadow-[0_28px_80px_rgba(15,23,42,0.10)] dark:border-white/[0.08] dark:bg-zinc-950 sm:px-7 sm:py-7">
+              <div className="relative w-full rounded-[2.7rem] border border-black/[0.08] bg-white px-6 py-8 shadow-[0_38px_100px_rgba(15,23,42,0.13)] dark:border-white/[0.08] dark:bg-zinc-950 sm:px-9 sm:py-10">
                 <div className="pointer-events-none absolute inset-x-10 top-1/2 h-28 -translate-y-1/2 rounded-full bg-brandRose/10 blur-3xl dark:bg-brandCyan/10" />
 
                 {isLoadingQr ? (
-                  <div className="flex min-h-[22rem] flex-col items-center justify-center gap-4 sm:min-h-[24rem]">
-                    <div className="skeleton h-[19rem] w-full max-w-[19rem] rounded-[1.8rem] sm:h-[20rem] sm:max-w-[20rem]" />
-                    <div className="skeleton h-3 w-40 rounded-full" />
-                  </div>
+                  generatedQr ? (
+                    <div className="flex min-h-[25rem] items-center justify-center sm:min-h-[27rem]">
+                      <QRCodeSVG
+                        value={generatedQr.url}
+                        size={388}
+                        level="H"
+                        includeMargin={false}
+                        bgColor="#ffffff"
+                        fgColor="#050505"
+                        className="relative h-auto w-full max-w-[23.5rem]"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex min-h-[25rem] flex-col items-center justify-center gap-4 sm:min-h-[27rem]">
+                      <div className="skeleton h-[21rem] w-full max-w-[21rem] rounded-[2rem] sm:h-[22rem] sm:max-w-[22rem]" />
+                    </div>
+                  )
                 ) : generatedQr ? (
-                  <div className="flex min-h-[22rem] items-center justify-center sm:min-h-[24rem]">
+                  <div className="flex min-h-[25rem] items-center justify-center sm:min-h-[27rem]">
                     <QRCodeSVG
                       value={generatedQr.url}
-                      size={320}
+                      size={388}
                       level="H"
                       includeMargin={false}
                       bgColor="#ffffff"
                       fgColor="#050505"
-                      className="relative h-auto w-full max-w-[20rem]"
+                      className="relative h-auto w-full max-w-[23.5rem]"
                     />
                   </div>
                 ) : null}
@@ -555,10 +556,13 @@ export function QrGeneratorPanel({
           </div>
 
           <div className="space-y-1.5 text-center">
-            <p className="text-base font-semibold text-foreground">
-              {getShareHeadline(sharePayload)}
+            <p className="text-lg font-semibold tracking-tight text-foreground">
+              {getShareHeadline(sharePayload?.preferredShareType)}
             </p>
-            <p className="mx-auto max-w-[34ch] text-sm leading-6 text-muted">
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-foreground/70">
+              {getShareInstruction(sharePayload?.preferredShareType)}
+            </p>
+            <p className="mx-auto max-w-[34ch] text-[15px] leading-7 text-muted">
               {getShareDescription(sharePayload, selectedPersona)}
             </p>
           </div>

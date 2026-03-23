@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Repeat2 } from "lucide-react";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { qrApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
+import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
 import type { ConnectQuickConnectQrResult } from "@/types/persona";
 import type { PersonaSummary } from "@/types/persona";
 
@@ -53,6 +55,7 @@ function getConnectErrorCopy(error: ApiError): string {
 type FlowState =
   | { type: "selecting" }
   | { type: "connecting" }
+  | { type: "settling"; result: ConnectQuickConnectQrResult }
   | { type: "success"; result: ConnectQuickConnectQrResult }
   | { type: "error"; title: string; message: string };
 
@@ -165,9 +168,26 @@ export function QuickConnectFlow({
 }: QuickConnectFlowProps) {
   const hostFirstName = getFirstName(hostName);
   const [selectedPersonaId, setSelectedPersonaId] = useState<string>(
-    personas[0]?.id ?? "",
+    resolvePreferredPersonaId(personas),
   );
+  const [showPersonaOptions, setShowPersonaOptions] = useState(false);
   const [flowState, setFlowState] = useState<FlowState>({ type: "selecting" });
+  const selectedPersona =
+    personas.find((persona) => persona.id === selectedPersonaId) ?? null;
+
+  useEffect(() => {
+    if (flowState.type !== "settling") {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setFlowState({ type: "success", result: flowState.result });
+    }, 260);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [flowState]);
 
   async function handleConnect() {
     if (!selectedPersonaId) return;
@@ -176,7 +196,7 @@ export function QuickConnectFlow({
       const result = await qrApi.connectQuick(code, {
         fromPersonaId: selectedPersonaId,
       });
-      setFlowState({ type: "success", result });
+      setFlowState({ type: "settling", result });
     } catch (error) {
       setFlowState(
         error instanceof ApiError
@@ -219,13 +239,13 @@ export function QuickConnectFlow({
           <div className="space-y-1">
             <StatusBadge label="Connected" tone="success" />
             <h2 className="pt-1 text-xl font-bold text-foreground">
-              Connected instantly
+              Connected
             </h2>
             <p className="text-sm text-muted">
               {target.jobTitle} at {target.companyName}
             </p>
             <p className="text-sm text-muted">
-              This introduction is now saved with a live connection window.
+              This introduction is now live in Dotly with no extra steps.
             </p>
           </div>
         </div>
@@ -254,6 +274,12 @@ export function QuickConnectFlow({
         >
           View connection
         </a>
+        <a
+          href={routes.public.signup}
+          className="inline-flex w-full items-center justify-center rounded-2xl border border-border bg-white/80 py-4 px-5 text-sm font-semibold text-foreground transition-all hover:bg-slate-50 active:scale-95 dark:bg-zinc-950/80 dark:hover:bg-zinc-900"
+        >
+          Get your own Dotly
+        </a>
       </div>
     );
   }
@@ -281,14 +307,16 @@ export function QuickConnectFlow({
   }
 
   const isConnecting = flowState.type === "connecting";
+  const isSettling = flowState.type === "settling";
+  const isBusy = isConnecting || isSettling;
 
   return (
-    <div className="glass rounded-3xl border border-border bg-surface p-6 space-y-6">
-      <div className="space-y-4">
-        <div className="rounded-[28px] border border-border/70 bg-background/80 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.06)] dark:bg-surface/60 dark:shadow-none">
+    <div className="glass rounded-[2rem] border border-border bg-surface p-6 sm:p-7 space-y-7">
+      <div className="space-y-5">
+        <div className="rounded-[30px] border border-border/70 bg-background/85 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.07)] dark:bg-surface/60 dark:shadow-none">
           <div className="flex items-center gap-4 text-left">
             <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white"
+              className="flex h-[3.75rem] w-[3.75rem] shrink-0 items-center justify-center rounded-[1.35rem] text-lg font-bold text-white"
               style={{ background: avatarGradient(hostName) }}
             >
               {hostName.charAt(0).toUpperCase()}
@@ -297,7 +325,7 @@ export function QuickConnectFlow({
               <p className="label-xs text-brandRose dark:text-brandCyan">
                 Quick Connect
               </p>
-              <h2 className="text-lg font-semibold text-foreground">
+              <h2 className="text-[1.15rem] font-semibold tracking-tight text-foreground">
                 {hostName}
               </h2>
               <p className="text-sm text-muted">
@@ -306,80 +334,122 @@ export function QuickConnectFlow({
             </div>
           </div>
           <p className="mt-4 text-left text-sm leading-6 text-muted">
-            Connect while this introduction is still fresh.
+            You are looking at {hostFirstName}&apos;s live Dotly intro.
           </p>
         </div>
 
-        <div className="space-y-1 rounded-2xl border border-border bg-surface/50 px-4 py-3">
+        <div className="space-y-1 rounded-[1.4rem] border border-border bg-surface/50 px-4 py-3.5">
           <p className="label-xs text-muted">What happens next</p>
           <p className="text-left text-sm leading-6 text-muted">
-            Choose the persona that matches how you met {hostFirstName}. We will
-            save it with this connection.
+            We will connect using your default persona now and save this intro
+            instantly.
           </p>
         </div>
       </div>
 
       <div className="space-y-3">
-        <p className="label-xs text-muted">Choose your persona</p>
-        <div className="flex flex-col gap-2">
-          {personas.map((persona) => {
-            const isSelected = selectedPersonaId === persona.id;
-            return (
-              <button
-                key={persona.id}
-                type="button"
-                disabled={isConnecting}
-                onClick={() => setSelectedPersonaId(persona.id)}
-                className={`w-full rounded-2xl border px-4 py-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-brandRose dark:focus:ring-brandCyan focus:ring-offset-2 ${
-                  isSelected
-                    ? "border-brandRose bg-brandRose/5 dark:border-brandCyan dark:bg-brandCyan/5"
-                    : "border-border bg-surface hover:bg-surface/80"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white transition-all"
-                    style={{ background: avatarGradient(persona.fullName) }}
-                  >
-                    {persona.fullName.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {persona.fullName}
-                    </p>
-                    <p className="truncate font-mono text-xs text-muted">
-                      @{persona.username} &middot;{" "}
-                      {persona.type.charAt(0).toUpperCase() +
-                        persona.type.slice(1)}
-                    </p>
-                  </div>
-                  {isSelected && (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      className="h-5 w-5 shrink-0 text-brandRose dark:text-brandCyan"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+        <div className="flex items-center justify-between gap-3">
+          <p className="label-xs text-muted">Connecting as</p>
+          {personas.length > 1 ? (
+            <button
+              type="button"
+              onClick={() => setShowPersonaOptions((current) => !current)}
+              disabled={isBusy}
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted transition-colors hover:text-foreground"
+            >
+              <Repeat2 className="h-3.5 w-3.5" />
+              Change
+            </button>
+          ) : null}
         </div>
+        {selectedPersona ? (
+          <div className="rounded-[1.4rem] border border-border bg-surface/70 px-4 py-3.5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] dark:shadow-none">
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] text-sm font-bold text-white"
+                style={{ background: avatarGradient(selectedPersona.fullName) }}
+              >
+                {selectedPersona.fullName.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="truncate text-sm font-semibold text-foreground">
+                  {selectedPersona.fullName}
+                </p>
+                <p className="truncate font-mono text-xs text-muted">
+                  @{selectedPersona.username}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {showPersonaOptions && personas.length > 1 ? (
+          <div className="flex flex-col gap-2">
+            {personas.map((persona) => {
+              const isSelected = selectedPersonaId === persona.id;
+              return (
+                <button
+                  key={persona.id}
+                  type="button"
+                  disabled={isBusy}
+                  onClick={() => {
+                    setSelectedPersonaId(persona.id);
+                    setShowPersonaOptions(false);
+                  }}
+                  className={`w-full rounded-2xl border px-4 py-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-brandRose dark:focus:ring-brandCyan focus:ring-offset-2 ${
+                    isSelected
+                      ? "border-brandRose bg-brandRose/5 dark:border-brandCyan dark:bg-brandCyan/5"
+                      : "border-border bg-surface hover:bg-surface/80"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white transition-all"
+                      style={{ background: avatarGradient(persona.fullName) }}
+                    >
+                      {persona.fullName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {persona.fullName}
+                      </p>
+                      <p className="truncate font-mono text-xs text-muted">
+                        @{persona.username} &middot;{" "}
+                        {persona.type.charAt(0).toUpperCase() +
+                          persona.type.slice(1)}
+                      </p>
+                    </div>
+                    {isSelected ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="h-5 w-5 shrink-0 text-brandRose dark:text-brandCyan"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
 
       <PrimaryButton
         onClick={() => void handleConnect()}
-        disabled={isConnecting || !selectedPersonaId}
+        disabled={isBusy || !selectedPersonaId}
         className="w-full h-[60px] disabled:opacity-50 disabled:cursor-not-allowed"
+        isLoading={isConnecting}
+        isSuccess={isSettling}
+        loadingLabel="Connecting..."
       >
-        {isConnecting ? "Connecting..." : "Connect now"}
+        {isSettling ? "Connected" : "Connect"}
       </PrimaryButton>
     </div>
   );
