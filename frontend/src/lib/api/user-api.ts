@@ -7,4 +7,10 @@ export const userApi = {
     apiRequest<UserProfile>("/users/me", {
       token,
     }),
+
+  getCurrent: () =>
+    apiRequest<UserProfile>("/api/users/me", {
+      baseUrl: "",
+      credentials: "same-origin",
+    }),
 };

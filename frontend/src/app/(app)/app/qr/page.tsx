@@ -1,74 +1,13 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
-
-import { QrGeneratorPanel } from "@/components/qr/qr-generator-panel";
-import { EmptyState } from "@/components/shared/empty-state";
-import { SecondaryButton } from "@/components/shared/secondary-button";
-import { personaApi } from "@/lib/api";
-import { ApiError } from "@/lib/api/client";
+import { InstantShareExperience } from "@/components/share/instant-share-experience";
 import { requireServerSession } from "@/lib/auth/protected-route";
-import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
 
 export default async function QrPage() {
-  const { accessToken, user } = await requireServerSession(routes.app.qr);
+  const { user } = await requireServerSession(routes.app.qr);
 
-  try {
-    const personas = await personaApi.list(accessToken);
-
-    return (
-      <section className="mx-auto flex w-full max-w-xl flex-col items-center justify-center space-y-8 py-12">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Share in person
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-zinc-400">
-            Share your Dotly in real life with control, context, and trust.
-          </p>
-        </div>
-
-        {personas.length === 0 ? (
-          <EmptyState
-            title="Create a persona first"
-            description={dotlyPositioning.app.noPersonas}
-            action={
-              <Link href={routes.app.createPersona}>
-                <SecondaryButton className="w-full py-5 h-[60px] active:scale-95">
-                  Create persona
-                </SecondaryButton>
-              </Link>
-            }
-          />
-        ) : (
-          <div className="w-full">
-            <QrGeneratorPanel
-              personas={personas}
-              user={user}
-            />
-          </div>
-        )}
-      </section>
-    );
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 401) {
-      redirect(`${routes.public.login}?next=${routes.app.qr}&reason=expired`);
-    }
-
-    return (
-      <section className="mx-auto flex w-full max-w-xl flex-col items-center justify-center space-y-8 py-12">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Share in person
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-zinc-400">
-            Share your Dotly in real life with control, context, and trust.
-          </p>
-        </div>
-        <EmptyState
-          title="QR is unavailable"
-          description="We could not load your personas right now. Refresh the page and try again in a moment."
-        />
-      </section>
-    );
-  }
+  return (
+    <section className="mx-auto flex min-h-screen-dvh w-full max-w-2xl flex-col justify-center px-4 py-4 sm:px-6 sm:py-6">
+      <InstantShareExperience initialUser={user} />
+    </section>
+  );
 }
