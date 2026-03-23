@@ -89,7 +89,6 @@ describe("PersonaForm", () => {
     expect(
       screen.getByRole("link", { name: /edit sharing settings/i }),
     ).toHaveAttribute("href", "/app/personas/settings/persona-1");
-    expect(mocks.refresh).toHaveBeenCalled();
     expect(mocks.replace).not.toHaveBeenCalledWith("/app/personas");
   });
 });

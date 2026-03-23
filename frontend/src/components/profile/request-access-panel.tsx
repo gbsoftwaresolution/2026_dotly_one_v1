@@ -7,6 +7,7 @@ import { Card } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
+import { showToast } from "@/components/shared/toast-viewport";
 import { publicApi, requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
@@ -171,6 +172,7 @@ export function RequestAccessPanel({
       });
 
       setSuccessMessage("Request sent");
+      showToast("Request sent");
     } catch (submissionError) {
       setError(toFriendlyMessage(submissionError));
     } finally {
@@ -372,16 +374,21 @@ export function RequestAccessPanel({
 
         <div className="pt-2">
           {successMessage ? (
-            <div className="flex h-[60px] w-full items-center justify-center rounded-2xl bg-brandRose/10 px-5 font-sans text-sm font-bold text-brandRose dark:bg-brandCyan/10 dark:text-brandCyan">
-              Request sent
-            </div>
+            <PrimaryButton
+              type="button"
+              className="h-[60px] w-full"
+              isSuccess
+              disabled
+            >
+              Request Sent
+            </PrimaryButton>
           ) : (
             <PrimaryButton
               type="submit"
               className="h-[60px] w-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Sending request..." : "Request intro"}
+              {isSubmitting ? "Sending request..." : "Request Access"}
             </PrimaryButton>
           )}
         </div>

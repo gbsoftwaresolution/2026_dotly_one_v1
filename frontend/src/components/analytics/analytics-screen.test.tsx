@@ -102,7 +102,5 @@ describe("AnalyticsScreen", () => {
         "/login?next=%2Fapp%2Fanalytics&reason=expired",
       );
     });
-
-    expect(mocks.refresh).toHaveBeenCalled();
   });
 });

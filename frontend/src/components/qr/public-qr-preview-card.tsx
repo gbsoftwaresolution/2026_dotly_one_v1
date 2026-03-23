@@ -57,8 +57,8 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
           </p>
           <p className="text-sm leading-6 text-muted">
             {isQuickConnect
-              ? "Confirm who shared this QR, then continue with the persona you are using right now."
-              : "Scanning this QR opens the public profile first."}
+              ? "Confirm who shared this QR, then connect from the persona you are using right now."
+              : "Scanning this QR opens the public profile so they can choose the next step."}
           </p>
         </div>
 
@@ -77,9 +77,7 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
           {isQuickConnect ? (
             <div className="space-y-1">
               <dt className="label-xs text-muted">Access type</dt>
-              <dd className="text-foreground">
-                Temporary intro
-              </dd>
+              <dd className="text-foreground">Temporary intro</dd>
             </div>
           ) : null}
         </dl>

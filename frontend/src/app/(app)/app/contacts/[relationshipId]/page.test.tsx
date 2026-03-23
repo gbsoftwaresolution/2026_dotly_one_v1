@@ -34,7 +34,13 @@ vi.mock("@/lib/api/client", () => ({
 }));
 
 vi.mock("@/components/shared/page-header", () => ({
-  PageHeader: ({ title, description }: { title: string; description?: string }) =>
+  PageHeader: ({
+    title,
+    description,
+  }: {
+    title: string;
+    description?: string;
+  }) =>
     React.createElement(
       "header",
       null,
@@ -45,7 +51,11 @@ vi.mock("@/components/shared/page-header", () => ({
 
 vi.mock("@/components/contacts/note-editor", () => ({
   NoteEditor: ({ initialNote }: { initialNote: string | null }) =>
-    React.createElement("div", { "data-testid": "note-editor" }, initialNote ?? "empty-note"),
+    React.createElement(
+      "div",
+      { "data-testid": "note-editor" },
+      initialNote ?? "empty-note",
+    ),
 }));
 
 vi.mock("@/components/follow-ups/contact-follow-up-form", () => ({
@@ -78,7 +88,11 @@ vi.mock("@/components/follow-ups/contact-follow-up-form", () => ({
 
 vi.mock("@/components/contacts/relationship-actions", () => ({
   RelationshipActions: ({ displayName }: { displayName: string }) =>
-    React.createElement("div", { "data-testid": "relationship-actions" }, displayName),
+    React.createElement(
+      "div",
+      { "data-testid": "relationship-actions" },
+      displayName,
+    ),
 }));
 
 import ContactDetailPage from "./page";
@@ -154,8 +168,12 @@ describe("ContactDetailPage", () => {
     expect(mocks.requireServerSession).toHaveBeenCalledWith(
       "/app/contacts/relationship-id",
     );
-    expect(screen.getByText("Relationship")).toBeInTheDocument();
-    expect(screen.getByText("Follow up")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /^connection$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /^follow-up$/i }),
+    ).toBeInTheDocument();
     expect(screen.getByTestId("follow-up-form")).toHaveTextContent(
       "Remind Alex Parker",
     );
@@ -163,7 +181,6 @@ describe("ContactDetailPage", () => {
     expect(screen.getByText("1 day ago")).toBeInTheDocument();
     expect(screen.getByText("5")).toBeInTheDocument();
     expect(screen.getByText("14 days ago")).toBeInTheDocument();
-    expect(screen.getByText("Connection")).toBeInTheDocument();
     expect(screen.getByText("Met at Launch Week")).toBeInTheDocument();
     expect(screen.getByText("Launch Week")).toBeInTheDocument();
   });

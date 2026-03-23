@@ -28,9 +28,10 @@ describe("PublicProfileCard", () => {
       }),
     );
 
-    expect(screen.getByText(/controlled mode/i)).toBeInTheDocument();
+    expect(screen.getByText(/^controlled$/i)).toBeInTheDocument();
+    expect(screen.getByText(/request access/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/you control who can reach you/i),
+      screen.getByText(/ask for access when you want an intentional intro/i),
     ).toBeInTheDocument();
   });
 
@@ -69,9 +70,12 @@ describe("PublicProfileCard", () => {
       }),
     );
 
-    expect(screen.getByText(/smart card mode/i)).toBeInTheDocument();
-  expect(screen.getByText(/profile access/i)).toBeInTheDocument();
-    expect(screen.getByText(/instant connect/i)).toBeInTheDocument();
+    expect(screen.getByText(/^smart card$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^next step$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^connect$/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/pick the next step that fits how you met/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/verified identity/i)).toBeInTheDocument();
     expect(screen.getByText(/^call$/i)).toBeInTheDocument();
     expect(screen.getByText(/^email$/i)).toBeInTheDocument();

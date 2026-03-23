@@ -26,6 +26,9 @@
   --header-height: 64px;
   --nav-height: 68px;
   --page-x: 1.25rem;
+  --motion-micro-duration: 160ms;
+  --motion-feedback-duration: 180ms;
+  --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Luminous (light) theme overrides */
@@ -124,6 +127,21 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+button:not(:disabled),
+a[data-tap-feedback="true"] {
+  transform-origin: center;
+}
+
+button:not(:disabled) {
+  transition:
+    transform var(--motion-micro-duration) var(--motion-ease-standard),
+    opacity var(--motion-feedback-duration) var(--motion-ease-standard);
+}
+
+button:not(:disabled):active {
+  transform: scale(0.96);
 }
 
 /* Better focus visible */
@@ -248,8 +266,24 @@ select {
 
   /* --- Haptic button press (no JS) --- */
   .press {
-    @apply transition-transform duration-[100ms] active:scale-[0.97];
+    @apply active:scale-[0.96];
+    transition: transform var(--motion-micro-duration) var(--motion-ease-standard);
     transform-origin: center;
+  }
+
+  .tap-feedback {
+    transition:
+      transform var(--motion-micro-duration) var(--motion-ease-standard),
+      background-color var(--motion-feedback-duration) var(--motion-ease-standard),
+      border-color var(--motion-feedback-duration) var(--motion-ease-standard),
+      box-shadow var(--motion-feedback-duration) var(--motion-ease-standard),
+      color var(--motion-feedback-duration) var(--motion-ease-standard),
+      opacity var(--motion-feedback-duration) var(--motion-ease-standard);
+    transform-origin: center;
+  }
+
+  .tap-feedback:active {
+    transform: scale(0.96);
   }
 
   /* --- Label / eyebrow style --- */

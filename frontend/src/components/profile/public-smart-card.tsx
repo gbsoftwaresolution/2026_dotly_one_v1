@@ -6,6 +6,7 @@ import { AtSign, Check, Download, MessageCircle, Phone } from "lucide-react";
 
 import { Card } from "@/components/shared/card";
 import { PrimaryButton } from "@/components/shared/primary-button";
+import { showToast } from "@/components/shared/toast-viewport";
 import { relationshipApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { dotlyPositioning } from "@/lib/constants/positioning";
@@ -115,7 +116,7 @@ function getPrimaryCtaLabel(
     case "login":
       return "Log in to continue";
     case "request_access":
-      return "Request intro";
+      return "Request Access";
     case "instant_connect":
       return "Connect";
     case "contact_me":
@@ -129,11 +130,11 @@ function getCardActionSummary(
 ): string {
   switch (primaryAction) {
     case "request_access":
-      return `${fullName} reviews your request before sharing the next step.`;
+      return `Ask ${fullName} for access when you want a more intentional intro.`;
     case "instant_connect":
-      return "Connect now and save this introduction without leaving the card.";
+      return "Connect now and save this introduction right away.";
     case "contact_me":
-      return "Open one of the direct actions below to reach out right away.";
+      return "Use one of the direct actions below to reach out right away.";
   }
 }
 
@@ -320,7 +321,10 @@ export function PublicSmartCard({
     }
 
     setSelectedPersonaId((current) => {
-      if (current && initialPersonas.some((persona) => persona.id === current)) {
+      if (
+        current &&
+        initialPersonas.some((persona) => persona.id === current)
+      ) {
         return current;
       }
 
@@ -588,7 +592,7 @@ export function PublicSmartCard({
       return;
     }
 
-    setSuccessState("Request details are ready below.");
+    setSuccessState("Request form ready below.");
   }
 
   function handleLoginAction() {
@@ -611,7 +615,7 @@ export function PublicSmartCard({
 
     highlightContactPanel();
     contactPanelRef.current?.focus();
-    setSuccessState("Choose how to reach out below.");
+    setSuccessState("Choose a direct way to reach out below.");
   }
 
   async function handleInstantConnectAction() {
@@ -622,9 +626,7 @@ export function PublicSmartCard({
 
     if (!selectedPersonaId) {
       setErrorState(
-        (personasLoading
-          ? "Loading your personas..."
-          : personaLoadError) ??
+        (personasLoading ? "Loading your personas..." : personaLoadError) ??
           (isAuthenticated
             ? "Choose one of your personas before connecting."
             : "Log in to continue."),
@@ -651,6 +653,7 @@ export function PublicSmartCard({
         message:
           result.status === "connected" ? "Connected instantly" : "Connected",
       });
+      showToast("Connected");
       resetPrimaryFeedback();
     } catch (error) {
       if (error instanceof ApiError && isAlreadyConnectedError(error)) {
@@ -729,7 +732,8 @@ export function PublicSmartCard({
 
     try {
       await downloadVcard(href, profile.username);
-      setDirectActionSuccessState("Contact download started.");
+      showToast("Contact saved");
+      setDirectActionSuccessState("Contact saved.");
     } catch {
       setDirectActionErrorState("Unable to download contact.");
     } finally {
@@ -785,7 +789,7 @@ export function PublicSmartCard({
           <div className="space-y-2">
             <div className="flex flex-wrap items-center justify-center gap-2">
               <span className="inline-flex items-center rounded-full border border-black/8 bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground/72 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/72">
-                Profile access
+                Next step
               </span>
               <SmartCardTrustBadge trust={profile.trust} />
             </div>
@@ -941,7 +945,8 @@ export function PublicSmartCard({
                       target={action.key === "whatsapp" ? "_blank" : undefined}
                       rel={action.key === "whatsapp" ? "noreferrer" : undefined}
                       aria-label={action.label}
-                      className={actionClassName}
+                      className={cn(actionClassName, "tap-feedback")}
+                      data-tap-feedback="true"
                     >
                       <span className="flex flex-col items-center gap-2">
                         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brandRose/10 text-brandRose dark:bg-brandCyan/12 dark:text-brandCyan">
@@ -967,6 +972,7 @@ export function PublicSmartCard({
                     aria-label={action.label}
                     className={cn(
                       actionClassName,
+                      "tap-feedback",
                       isVcardDownloading &&
                         "cursor-wait opacity-70 hover:translate-y-0",
                     )}

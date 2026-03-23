@@ -124,9 +124,11 @@ describe("AccountSecuritySettings", () => {
     );
 
     expect(screen.getByText(/dotly security center/i)).toBeInTheDocument();
-    expect(screen.getByText(/change password/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/enroll your next trust factor/i),
+      screen.getByRole("heading", { name: /^change password$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /^add mobile verification$/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/active sessions and devices/i),
@@ -138,7 +140,9 @@ describe("AccountSecuritySettings", () => {
 
     expect(screen.getByText(/email trust status/i)).toBeInTheDocument();
     expect(screen.getByText(/mobile otp status/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/trust requirements/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/verification requirements/i).length,
+    ).toBeGreaterThan(0);
   });
 
   it("shows verified email and planned mobile otp states in the overview", async () => {
@@ -157,9 +161,13 @@ describe("AccountSecuritySettings", () => {
       React.createElement(AccountSecuritySettings, { user: createUser(false) }),
     );
 
-    expect(screen.getByText(/mobile otp is the next trust factor/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^planned$/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/send contact requests/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getByText(/mobile verification is the next step you can add/i),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(/coming soon/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/send contact requests/i).length,
+    ).toBeGreaterThan(0);
     expect(screen.getAllByText(/^restricted$/i).length).toBeGreaterThan(0);
   });
 
@@ -226,7 +234,10 @@ describe("AccountSecuritySettings", () => {
       React.createElement(AccountSecuritySettings, { user: createUser(true) }),
     );
 
-    await user.type(screen.getByLabelText(/current password/i), "WrongPass123!");
+    await user.type(
+      screen.getByLabelText(/current password/i),
+      "WrongPass123!",
+    );
     await user.type(screen.getByLabelText(/new password/i), "NewPass123!");
     await user.click(screen.getByRole("button", { name: /update password/i }));
 
@@ -270,9 +281,7 @@ describe("AccountSecuritySettings", () => {
     expect(screen.getByText(/state: code sent/i)).toBeInTheDocument();
 
     await user.type(screen.getByPlaceholderText(/123456/i), "123456");
-    await user.click(
-      screen.getByRole("button", { name: /verify mobile otp/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /verify mobile/i }));
 
     await waitFor(() => {
       expect(mocks.verifyMobileOtp).toHaveBeenCalledWith({
@@ -306,7 +315,11 @@ describe("AccountSecuritySettings", () => {
 
   it("shows the verifying state while a code check is in flight", async () => {
     let resolveVerify:
-      | ((value: { verified: boolean; phoneNumber: string; verifiedAt: string }) => void)
+      | ((value: {
+          verified: boolean;
+          phoneNumber: string;
+          verifiedAt: string;
+        }) => void)
       | undefined;
 
     mocks.verifyMobileOtp.mockImplementation(
@@ -335,9 +348,7 @@ describe("AccountSecuritySettings", () => {
     );
 
     await user.type(screen.getByPlaceholderText(/123456/i), "123456");
-    await user.click(
-      screen.getByRole("button", { name: /verify mobile otp/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /verify mobile/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/state: verifying/i)).toBeInTheDocument();
@@ -416,7 +427,9 @@ describe("AccountSecuritySettings", () => {
     );
 
     expect(
-      screen.getByText(/reset email delivery is unavailable in this environment/i),
+      screen.getByText(
+        /reset email delivery is unavailable in this environment/i,
+      ),
     ).toBeInTheDocument();
   });
 });

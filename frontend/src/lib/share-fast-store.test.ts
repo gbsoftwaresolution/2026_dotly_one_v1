@@ -19,17 +19,23 @@ describe("share-fast-store", () => {
 
   it("prefetches once and reuses the cached share payload", async () => {
     mocks.getMyFastShare.mockResolvedValue({
-      selectedPersonaId: "persona-1",
-      sharePayload: {
-        personaId: "persona-1",
+      persona: {
+        id: "persona-1",
         username: "alice",
         fullName: "Alice Demo",
         profilePhotoUrl: null,
+      },
+      share: {
         shareUrl: "https://dotly.one/u/alice",
         qrValue: "https://dotly.one/u/alice",
-        primaryAction: null,
-        hasQuickConnect: false,
-        quickConnectUrl: null,
+        primaryAction: "request_access",
+        effectiveActions: {
+          canCall: false,
+          canWhatsapp: false,
+          canEmail: false,
+          canSaveContact: false,
+        },
+        preferredShareType: "smart_card",
       },
     });
 
@@ -57,17 +63,23 @@ describe("share-fast-store", () => {
     const firstStore = await import("./share-fast-store");
 
     firstStore.seedMyFastShare({
-      selectedPersonaId: "persona-2",
-      sharePayload: {
-        personaId: "persona-2",
+      persona: {
+        id: "persona-2",
         username: "naveen",
         fullName: "Naveen P",
         profilePhotoUrl: null,
-        shareUrl: "https://dotly.one/u/naveen",
-        qrValue: "https://dotly.one/u/naveen",
+      },
+      share: {
+        shareUrl: "https://dotly.one/q/quick-share-2",
+        qrValue: "https://dotly.one/q/quick-share-2",
         primaryAction: "instant_connect",
-        hasQuickConnect: true,
-        quickConnectUrl: "https://dotly.one/q/quick-share-2",
+        effectiveActions: {
+          canCall: false,
+          canWhatsapp: false,
+          canEmail: false,
+          canSaveContact: true,
+        },
+        preferredShareType: "instant_connect",
       },
     });
 

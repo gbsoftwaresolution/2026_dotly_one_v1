@@ -4,6 +4,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ToastViewport } from "@/components/shared/toast-viewport";
+
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   processDue: vi.fn(),
@@ -112,7 +114,14 @@ describe("FollowUpsScreen", () => {
     );
     const user = userEvent.setup();
 
-    render(React.createElement(FollowUpsScreen));
+    render(
+      React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(ToastViewport),
+        React.createElement(FollowUpsScreen),
+      ),
+    );
 
     expect(await screen.findByRole("heading", { name: /^open$/i })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^mark done$/i }));
@@ -121,7 +130,7 @@ describe("FollowUpsScreen", () => {
       expect(mocks.complete).toHaveBeenCalledWith("follow-up-1");
     });
 
-    expect(await screen.findByText(/follow-up marked done/i)).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent(/marked complete/i);
     expect(screen.queryByText("Alice Demo")).not.toBeInTheDocument();
   });
 

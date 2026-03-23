@@ -31,11 +31,11 @@ function getPrimaryActionLabel(
   primaryAction?: PersonaSmartCardPrimaryAction | "" | null,
 ): string {
   if (sharingMode === "controlled") {
-    return "Approval first";
+    return "Request Access";
   }
 
   if (!primaryAction) {
-    return "Request intro";
+    return "Request Access";
   }
 
   return formatPrimaryAction(primaryAction);
@@ -133,8 +133,7 @@ export function PersonaSharingSummary({
   title = "Sharing setup",
   className,
 }: PersonaSharingSummaryProps) {
-  const primaryActionTitle =
-    sharingMode === "controlled" ? "Connection path" : "First action";
+  const primaryActionTitle = "Main action";
   const primaryActionLabel = getPrimaryActionLabel(sharingMode, primaryAction);
   const availableActionsLabel = getAvailableActionsLabel({
     sharingMode,

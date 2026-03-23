@@ -103,7 +103,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
           <div className="space-y-3 rounded-3xl border border-cyan-200 bg-cyan-50/70 p-4 dark:border-brandCyan/25 dark:bg-brandCyan/10">
             <div className="space-y-1">
               <p className="label-xs text-cyan-700 dark:text-brandCyan">
-                Profile access
+                Next step
               </p>
               <p className="text-sm leading-6 text-cyan-800 dark:text-white/80">
                 {profile.smartCard
@@ -134,7 +134,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
           </div>
         ) : (
           <div className="space-y-1 rounded-3xl border border-border bg-surface/60 p-4">
-            <p className="label-xs text-muted">Controlled access</p>
+            <p className="label-xs text-muted">Request access</p>
             <p className="text-sm leading-6 text-muted">
               {dotlyPositioning.publicProfile.controlledHelper}
             </p>

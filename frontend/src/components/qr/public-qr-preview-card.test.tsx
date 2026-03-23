@@ -27,7 +27,9 @@ describe("PublicQrPreviewCard", () => {
     expect(screen.getByText(/^profile$/i)).toBeInTheDocument();
     expect(screen.getByText(/profile preview/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/scanning this qr opens the public profile first/i),
+      screen.getByText(
+        /scanning this qr opens the public profile so they can choose the next step/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -53,7 +55,7 @@ describe("PublicQrPreviewCard", () => {
     expect(screen.getByText(/^who shared this qr$/i)).toBeInTheDocument();
     expect(
       screen.getByText(
-        /confirm who shared this qr, then continue with the persona/i,
+        /confirm who shared this qr, then connect from the persona/i,
       ),
     ).toBeInTheDocument();
     expect(screen.getByText(/temporary intro/i)).toBeInTheDocument();

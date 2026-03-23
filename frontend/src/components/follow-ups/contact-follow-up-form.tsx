@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { showToast } from "@/components/shared/toast-viewport";
 import {
   optimisticallyInsertFollowUp,
   reconcileFollowUp,
@@ -146,18 +147,8 @@ export function ContactFollowUpForm({
   const [note, setNote] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [followUpSummary, setFollowUpSummary] =
     useState<ContactFollowUpSummary | null>(initialFollowUpSummary);
-
-  useEffect(() => {
-    if (!successMessage) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => setSuccessMessage(null), 3500);
-    return () => window.clearTimeout(timer);
-  }, [successMessage]);
 
   const isOverLimit = note.length > MAX_NOTE_LENGTH;
   const charsLeft = MAX_NOTE_LENGTH - note.length;
@@ -252,7 +243,6 @@ export function ContactFollowUpForm({
     const rollback = optimisticallyInsertFollowUp(optimisticFollowUp);
 
     setFollowUpSummary((current) => mergeFollowUpSummary(current, remindAt));
-    setSuccessMessage(`Follow-up added for ${contactName}. Syncing...`);
     resetForm();
     setIsOpen(false);
 
@@ -264,7 +254,7 @@ export function ContactFollowUpForm({
       });
 
       reconcileFollowUp(created, { replaceId: optimisticFollowUp.id });
-      setSuccessMessage(`Follow-up saved for ${contactName}.`);
+      showToast("Reminder set");
     } catch (submissionError) {
       rollback();
       setFollowUpSummary(previousSummary);
@@ -272,7 +262,6 @@ export function ContactFollowUpForm({
       setTime(previousTime);
       setNote(previousNote);
       setIsOpen(true);
-      setSuccessMessage(null);
       setError(
         submissionError instanceof ApiError
           ? submissionError.message
@@ -335,20 +324,6 @@ export function ContactFollowUpForm({
               View follow-ups
             </Link>
           </div>
-        </div>
-      ) : null}
-
-      {successMessage ? (
-        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3">
-          <p className="font-sans text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-            {successMessage}
-          </p>
-          <Link
-            href={routes.app.followUps}
-            className="mt-1 inline-flex text-sm font-medium text-emerald-700 underline underline-offset-4 dark:text-emerald-300"
-          >
-            Open follow-ups
-          </Link>
         </div>
       ) : null}
 

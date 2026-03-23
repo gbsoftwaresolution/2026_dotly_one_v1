@@ -44,28 +44,72 @@ function canUseStorage() {
   return typeof window !== "undefined";
 }
 
+function toNormalizedSharePayload(
+  value: MyFastSharePayload,
+): PersonaFastSharePayload | null {
+  if (value.persona === null || value.share === null) {
+    return null;
+  }
+
+  return {
+    personaId: value.persona.id,
+    username: value.persona.username,
+    fullName: value.persona.fullName,
+    profilePhotoUrl: value.persona.profilePhotoUrl,
+    shareUrl: value.share.shareUrl,
+    qrValue: value.share.qrValue,
+    primaryAction: value.share.primaryAction,
+    effectiveActions: value.share.effectiveActions,
+    preferredShareType: value.share.preferredShareType,
+    hasQuickConnect: value.share.preferredShareType === "instant_connect",
+    quickConnectUrl:
+      value.share.preferredShareType === "instant_connect"
+        ? value.share.shareUrl
+        : null,
+  };
+}
+
 function toStoredSnapshot(
   value: MyFastSharePayload,
   existingPersonaPayloads: Record<string, PersonaFastSharePayload>,
 ): ShareFastSnapshot {
   const personaPayloads = { ...existingPersonaPayloads };
+  const normalizedSharePayload = toNormalizedSharePayload(value);
 
-  if (value.sharePayload) {
-    personaPayloads[value.sharePayload.personaId] = value.sharePayload;
+  if (normalizedSharePayload) {
+    personaPayloads[normalizedSharePayload.personaId] = normalizedSharePayload;
   }
 
   return {
     status: "ready",
-    selectedPersonaId: value.selectedPersonaId,
-    sharePayload: value.sharePayload,
+    selectedPersonaId: normalizedSharePayload?.personaId ?? null,
+    sharePayload: normalizedSharePayload,
     personaPayloads,
   };
 }
 
 function toMyFastSharePayload(value: ShareFastSnapshot): MyFastSharePayload {
+  if (value.sharePayload === null) {
+    return {
+      persona: null,
+      share: null,
+    };
+  }
+
   return {
-    selectedPersonaId: value.selectedPersonaId,
-    sharePayload: value.sharePayload,
+    persona: {
+      id: value.sharePayload.personaId,
+      username: value.sharePayload.username,
+      fullName: value.sharePayload.fullName,
+      profilePhotoUrl: value.sharePayload.profilePhotoUrl,
+    },
+    share: {
+      shareUrl: value.sharePayload.shareUrl,
+      qrValue: value.sharePayload.qrValue,
+      primaryAction: value.sharePayload.primaryAction,
+      effectiveActions: value.sharePayload.effectiveActions,
+      preferredShareType: value.sharePayload.preferredShareType,
+    },
   };
 }
 

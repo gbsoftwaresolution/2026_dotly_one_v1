@@ -13,6 +13,7 @@ import { MailModule } from "./infrastructure/mail/mail.module";
 import { StorageModule } from "./infrastructure/storage/storage.module";
 import { SmsModule } from "./infrastructure/sms/sms.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
+import { AgenciesModule } from "./modules/agencies/agencies.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { BlocksModule } from "./modules/blocks/blocks.module";
 import { ContactMemoryModule } from "./modules/contact-memory/contact-memory.module";
@@ -43,6 +44,7 @@ import { UsersModule } from "./modules/users/users.module";
     StorageModule,
     MailModule,
     SmsModule,
+    AgenciesModule,
     AuthModule,
     UsersModule,
     PersonasModule,

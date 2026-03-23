@@ -9,6 +9,7 @@ import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { showToast } from "@/components/shared/toast-viewport";
 import {
   optimisticallyTransitionFollowUp,
   reconcileFollowUp,
@@ -253,11 +254,11 @@ export function FollowUpsScreen() {
   const [selectedStatus, setSelectedStatus] =
     useState<FollowUpStatus>("pending");
   const [actionError, setActionError] = useState<string | null>(null);
-  const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [actionState, setActionState] = useState<{
     id: string;
     type: "complete" | "cancel";
   } | null>(null);
+  const [exitingIds, setExitingIds] = useState<Record<string, true>>({});
   const statusState = followUpState[selectedStatus];
   const followUps = statusState.data;
   const showSkeleton =
@@ -276,15 +277,6 @@ export function FollowUpsScreen() {
     });
   }, [router, selectedStatus]);
 
-  useEffect(() => {
-    if (!actionNotice) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => setActionNotice(null), 3000);
-    return () => window.clearTimeout(timer);
-  }, [actionNotice]);
-
   const activeFilter =
     FILTERS.find((filter) => filter.key === selectedStatus) ?? FILTERS[0];
   const pendingSections =
@@ -293,34 +285,38 @@ export function FollowUpsScreen() {
   async function handleAction(id: string, type: "complete" | "cancel") {
     setActionState({ id, type });
     setActionError(null);
-    setActionNotice(
-      type === "complete" ? "Marking follow-up done..." : "Dismissing follow-up...",
-    );
+    setExitingIds((current) => ({ ...current, [id]: true }));
 
-    const rollback = optimisticallyTransitionFollowUp(
-      id,
-      type === "complete" ? "completed" : "cancelled",
-    );
+    const request =
+      type === "complete"
+        ? followUpsApi.complete(id)
+        : followUpsApi.cancel(id);
+
+    let rollback: (() => void) | null = null;
 
     try {
-      const updated =
-        type === "complete"
-          ? await followUpsApi.complete(id)
-          : await followUpsApi.cancel(id);
+      await new Promise((resolve) => window.setTimeout(resolve, 180));
+      rollback = optimisticallyTransitionFollowUp(
+        id,
+        type === "complete" ? "completed" : "cancelled",
+      );
+      const updated = await request;
 
       reconcileFollowUp(updated);
-      setActionNotice(
-        type === "complete" ? "Follow-up marked done." : "Follow-up dismissed.",
-      );
+      showToast(type === "complete" ? "Marked complete" : "Cancelled");
     } catch (error) {
-      rollback();
-      setActionNotice(null);
+      rollback?.();
       setActionError(
         error instanceof ApiError
           ? error.message
           : `Could not ${type} this follow-up right now.`,
       );
     } finally {
+      setExitingIds((current) => {
+        const next = { ...current };
+        delete next[id];
+        return next;
+      });
       setActionState(null);
     }
   }
@@ -399,14 +395,6 @@ export function FollowUpsScreen() {
         </div>
       </div>
 
-      {actionNotice ? (
-        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3">
-          <p className="font-sans text-sm text-emerald-700 dark:text-emerald-300">
-            {actionNotice}
-          </p>
-        </div>
-      ) : null}
-
       {actionError ? (
         <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-3">
           <p className="font-sans text-sm text-rose-600 dark:text-rose-400">
@@ -449,6 +437,10 @@ export function FollowUpsScreen() {
                     <div
                       key={followUp.id}
                       className={cn(
+                        "transition-[opacity,transform] duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+                        exitingIds[followUp.id]
+                          ? "translate-y-2 opacity-0"
+                          : "translate-y-0 opacity-100",
                         "rounded-card border border-black/[0.06] bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_0_rgba(255,255,255,0.9)] dark:border-white/[0.06] dark:bg-surface1 dark:shadow-card sm:p-5",
                         section.key === "overdue"
                           ? "border-rose-200/80 dark:border-rose-900/60"
@@ -558,6 +550,10 @@ export function FollowUpsScreen() {
               <div
                 key={followUp.id}
                 className={cn(
+                  "transition-[opacity,transform] duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+                  exitingIds[followUp.id]
+                    ? "translate-y-2 opacity-0"
+                    : "translate-y-0 opacity-100",
                   "rounded-card border border-black/[0.06] bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_0_rgba(255,255,255,0.9)] dark:border-white/[0.06] dark:bg-surface1 dark:shadow-card sm:p-5",
                   followUp.status !== "pending" ? "opacity-90" : "",
                 )}

@@ -14,7 +14,11 @@ import { personaApi } from "@/lib/api/persona-api";
 import { userApi } from "@/lib/api/user-api";
 import { routes } from "@/lib/constants/routes";
 import { getShareFastSnapshot, seedMyFastShare } from "@/lib/share-fast-store";
-import type { MyFastSharePayload, PersonaSummary } from "@/types/persona";
+import type {
+  MyFastSharePayload,
+  PersonaFastSharePayload,
+  PersonaSummary,
+} from "@/types/persona";
 import type { UserProfile } from "@/types/user";
 
 interface InstantShareExperienceProps {
@@ -36,7 +40,7 @@ function FastQrShell({
   error,
   onRetry,
 }: {
-  sharePayload: NonNullable<MyFastSharePayload["sharePayload"]> | null;
+  sharePayload: PersonaFastSharePayload | null;
   isRefreshing: boolean;
   error: string | null;
   onRetry: () => void;
@@ -155,11 +159,35 @@ export function InstantShareExperience({
   initialUser = null,
 }: InstantShareExperienceProps) {
   const cachedSharePayload = useMemo(() => {
+    const initialSharePayload =
+      initialFastShare?.persona && initialFastShare.share
+        ? {
+            personaId: initialFastShare.persona.id,
+            username: initialFastShare.persona.username,
+            fullName: initialFastShare.persona.fullName,
+            profilePhotoUrl: initialFastShare.persona.profilePhotoUrl,
+            shareUrl: initialFastShare.share.shareUrl,
+            qrValue: initialFastShare.share.qrValue,
+            primaryAction: initialFastShare.share.primaryAction,
+            effectiveActions: initialFastShare.share.effectiveActions,
+            preferredShareType: initialFastShare.share.preferredShareType,
+            hasQuickConnect:
+              initialFastShare.share.preferredShareType === "instant_connect",
+            quickConnectUrl:
+              initialFastShare.share.preferredShareType === "instant_connect"
+                ? initialFastShare.share.shareUrl
+                : null,
+          }
+        : null;
+
     return (
-      initialFastShare?.sharePayload ?? getShareFastSnapshot().sharePayload ?? null
+      initialSharePayload ?? getShareFastSnapshot().sharePayload ?? null
     );
   }, [initialFastShare]);
   const [user, setUser] = useState<UserProfile | null>(initialUser);
+  const [fastShare, setFastShare] = useState<MyFastSharePayload | null>(
+    initialFastShare,
+  );
   const [personas, setPersonas] = useState<PersonaSummary[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadNonce, setReloadNonce] = useState(0);
@@ -177,16 +205,22 @@ export function InstantShareExperience({
     setIsBootstrapping(true);
 
     const userPromise = initialUser ? Promise.resolve(initialUser) : userApi.getCurrent();
+    const fastSharePromise = initialFastShare
+      ? Promise.resolve(initialFastShare)
+      : personaApi.getMyFastShare();
 
-    void Promise.all([userPromise, personaApi.list()])
-      .then(([nextUser, nextPersonas]) => {
+    void Promise.all([userPromise, personaApi.list(), fastSharePromise])
+      .then(([nextUser, nextPersonas, nextFastShare]) => {
         if (isCancelled) {
           return;
         }
 
+        seedMyFastShare(nextFastShare);
+
         startTransition(() => {
           setUser(nextUser);
           setPersonas(nextPersonas);
+          setFastShare(nextFastShare);
           setLoadError(null);
           setIsBootstrapping(false);
         });
@@ -205,12 +239,17 @@ export function InstantShareExperience({
     return () => {
       isCancelled = true;
     };
-  }, [initialUser, reloadNonce]);
+  }, [initialFastShare, initialUser, reloadNonce]);
 
-  if (user && personas && personas.length > 0) {
+  const resolvedFastShare = fastShare ?? initialFastShare;
+  const hasResolvedFastShare = Boolean(
+    resolvedFastShare?.persona && resolvedFastShare?.share,
+  );
+
+  if (user && personas && personas.length > 0 && hasResolvedFastShare) {
     return (
       <QrGeneratorPanel
-        initialFastShare={initialFastShare}
+        initialFastShare={resolvedFastShare}
         personas={personas}
         user={user}
       />
@@ -282,6 +321,36 @@ export function InstantShareExperience({
         <EmptyState
           title="Share unavailable"
           description={loadError}
+          action={
+            <SecondaryButton
+              type="button"
+              className="h-[60px] w-full active:scale-95"
+              onClick={() => setReloadNonce((current) => current + 1)}
+            >
+              Try again
+            </SecondaryButton>
+          }
+        />
+      </div>
+    );
+  }
+
+  if (!isBootstrapping && user && personas && personas.length > 0 && !hasResolvedFastShare) {
+    return (
+      <div className="flex min-h-[calc(100dvh-8rem)] flex-col justify-center gap-6">
+        <div className="space-y-2">
+          <p className="label-xs text-muted">Share</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            Show your QR
+          </h1>
+          <p className="max-w-md text-sm leading-6 text-muted">
+            Dotly could not resolve your ready share yet.
+          </p>
+        </div>
+
+        <EmptyState
+          title="Share unavailable"
+          description="Your share card is not ready right now. Try again or review this persona's share settings."
           action={
             <SecondaryButton
               type="button"

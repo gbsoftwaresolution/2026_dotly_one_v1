@@ -46,7 +46,12 @@ describe("EmailVerificationBanner", () => {
     render(React.createElement(EmailVerificationBanner));
 
     expect(
-      screen.getByText(/add a trust factor to unlock trust actions/i),
+      screen.getByText(/verify your account to unlock protected actions/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /unlock connection requests, qr sharing, and event discovery/i,
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText(/email unverified/i)).toBeInTheDocument();
   });
@@ -65,7 +70,10 @@ describe("EmailVerificationBanner", () => {
       },
     });
     mocks.resendVerificationEmail.mockRejectedValue(
-      new ApiError("Please wait before requesting another verification email", 429),
+      new ApiError(
+        "Please wait before requesting another verification email",
+        429,
+      ),
     );
 
     const user = userEvent.setup();
@@ -77,7 +85,9 @@ describe("EmailVerificationBanner", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/you can request another verification email in about a minute/i),
+        screen.getByText(
+          /you can request another verification email in about a minute/i,
+        ),
       ).toBeInTheDocument();
     });
   });

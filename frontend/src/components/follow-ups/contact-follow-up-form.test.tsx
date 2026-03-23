@@ -4,6 +4,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ToastViewport } from "@/components/shared/toast-viewport";
+
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
 }));
@@ -76,10 +78,15 @@ describe("ContactFollowUpForm", () => {
     vi.setSystemTime(new Date("2026-03-22T10:15:00.000Z"));
 
     render(
-      React.createElement(ContactFollowUpForm, {
-        relationshipId: "relationship-id",
-        contactName: "Alex Parker",
-      }),
+      React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(ToastViewport),
+        React.createElement(ContactFollowUpForm, {
+          relationshipId: "relationship-id",
+          contactName: "Alex Parker",
+        }),
+      ),
     );
 
     vi.setSystemTime(new Date("2026-03-22T13:20:00.000Z"));
@@ -95,10 +102,15 @@ describe("ContactFollowUpForm", () => {
     const user = userEvent.setup();
 
     render(
-      React.createElement(ContactFollowUpForm, {
-        relationshipId: "relationship-id",
-        contactName: "Alex Parker",
-      }),
+      React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(ToastViewport),
+        React.createElement(ContactFollowUpForm, {
+          relationshipId: "relationship-id",
+          contactName: "Alex Parker",
+        }),
+      ),
     );
 
     await user.click(screen.getByRole("button", { name: /add follow-up/i }));
@@ -114,10 +126,15 @@ describe("ContactFollowUpForm", () => {
     const user = userEvent.setup();
 
     render(
-      React.createElement(ContactFollowUpForm, {
-        relationshipId: "relationship-id",
-        contactName: "Alex Parker",
-      }),
+      React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(ToastViewport),
+        React.createElement(ContactFollowUpForm, {
+          relationshipId: "relationship-id",
+          contactName: "Alex Parker",
+        }),
+      ),
     );
 
     await user.click(screen.getByRole("button", { name: /add follow-up/i }));
@@ -132,7 +149,7 @@ describe("ContactFollowUpForm", () => {
       relationshipId: "relationship-id",
       note: "Follow up after demo",
     });
-    expect(screen.getByText(/follow-up saved for alex parker/i)).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent(/reminder set/i);
     expect(screen.getByRole("link", { name: /view follow-ups/i })).toHaveAttribute(
       "href",
       "/app/follow-ups",

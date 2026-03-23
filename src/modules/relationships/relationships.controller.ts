@@ -1,4 +1,12 @@
-import { Body, Controller, Param, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
 
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import type { AuthenticatedUser } from "../../common/decorators/current-user.decorator";
@@ -14,6 +22,7 @@ export class RelationshipsController {
   constructor(private readonly relationshipsService: RelationshipsService) {}
 
   @Post("instant-connect")
+  @HttpCode(HttpStatus.OK)
   instantConnect(
     @CurrentUser() user: AuthenticatedUser,
     @Body() createInstantConnectDto: CreateInstantConnectDto,
@@ -25,6 +34,7 @@ export class RelationshipsController {
   }
 
   @Post("instant-connect/by-username/:username")
+  @HttpCode(HttpStatus.OK)
   instantConnectByUsername(
     @CurrentUser() user: AuthenticatedUser,
     @Param("username") username: string,

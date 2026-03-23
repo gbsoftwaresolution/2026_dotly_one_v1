@@ -50,6 +50,7 @@ export function NoteEditor({
       const canonicalValue = result.note ?? "";
       setValue(canonicalValue);
       savedValueRef.current = canonicalValue;
+      router.refresh();
       setFeedback({ tone: "success", message: "Note saved" });
     } catch (error) {
       setFeedback({

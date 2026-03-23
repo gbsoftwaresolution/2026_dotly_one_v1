@@ -52,6 +52,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Post("me/verification/resend")
+  @HttpCode(200)
   resendVerificationEmail(
     @CurrentUser() user: AuthenticatedUser,
     @Headers("x-request-id") requestId?: string,
@@ -66,6 +67,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Post("me/password/change")
+  @HttpCode(200)
   changePassword(
     @CurrentUser() user: AuthenticatedUser,
     @Body() changePasswordDto: ChangePasswordDto,
@@ -83,6 +85,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Post("me/mobile-otp/request")
+  @HttpCode(200)
   requestMobileOtp(
     @CurrentUser() user: AuthenticatedUser,
     @Body() requestMobileOtpDto: RequestMobileOtpDto,
@@ -99,6 +102,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Post("me/mobile-otp/verify")
+  @HttpCode(200)
   verifyMobileOtp(
     @CurrentUser() user: AuthenticatedUser,
     @Body() verifyMobileOtpDto: VerifyMobileOtpDto,

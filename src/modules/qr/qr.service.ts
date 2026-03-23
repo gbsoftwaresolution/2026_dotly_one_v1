@@ -439,7 +439,7 @@ export class QrService {
 
       return {
         relationshipId: relationship.id,
-        state: "instant_access" as const,
+        status: "connected" as const,
         accessStartAt: relationship.accessStartAt,
         accessEndAt: relationship.accessEndAt,
         targetPersona: {

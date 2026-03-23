@@ -122,7 +122,7 @@ describe("QrService.connectQuickConnectQr", () => {
     });
 
     assert.equal(result.relationshipId, "relationship-id");
-    assert.equal(result.state, "instant_access");
+    assert.equal(result.status, "connected");
     assert.equal(result.targetPersona.id, "target-persona");
     assert.equal((updateManyPayload as any)?.where.id, "qr-token-id");
     assert.equal((relationshipPayload as any)?.ownerUserId, "scanner-user");
@@ -595,7 +595,7 @@ describe("QrService verification enforcement", () => {
     });
 
     assert.equal(result.relationshipId, "relationship-1");
-    assert.equal(result.state, "instant_access");
+    assert.equal(result.status, "connected");
     assert.equal(result.targetPersona.id, "target-persona");
     assert.equal(updateManyCalls, 1);
   });
@@ -808,7 +808,6 @@ describe("RelationshipsService", () => {
     });
 
     assert.deepEqual(result, {
-      success: true,
       relationshipId: "relationship-id",
       status: "connected",
     });
@@ -1069,7 +1068,6 @@ describe("RelationshipsService", () => {
     });
 
     assert.deepEqual(result, {
-      success: true,
       relationshipId: "existing-relationship",
       status: "connected",
     });
@@ -1207,7 +1205,6 @@ describe("RelationshipsService", () => {
     );
 
     assert.deepEqual(result, {
-      success: true,
       relationshipId: "relationship-id",
       status: "connected",
     });

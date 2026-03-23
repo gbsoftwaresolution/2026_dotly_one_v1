@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
@@ -42,6 +44,7 @@ export class ContactRequestsController {
   }
 
   @Post(":requestId/approve")
+  @HttpCode(HttpStatus.OK)
   approve(
     @CurrentUser() user: AuthenticatedUser,
     @Param("requestId", new ParseUUIDPipe()) requestId: string,
@@ -50,6 +53,7 @@ export class ContactRequestsController {
   }
 
   @Post(":requestId/reject")
+  @HttpCode(HttpStatus.OK)
   reject(
     @CurrentUser() user: AuthenticatedUser,
     @Param("requestId", new ParseUUIDPipe()) requestId: string,

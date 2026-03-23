@@ -31,6 +31,7 @@ import {
 } from "./persona.presenter";
 import { buildPublicUrl } from "./public-url";
 import {
+  buildSmartCardActions,
   getSharingConfigSource,
   type PersonaSharingConfigSource,
   type PersonaSmartCardConfig,
@@ -74,6 +75,9 @@ const fastSharePersonaSelect = Prisma.validator<Prisma.PersonaSelect>()({
   accessMode: true,
   sharingMode: true,
   smartCardConfig: true,
+  publicPhone: true,
+  publicWhatsappNumber: true,
+  publicEmail: true,
 });
 
 type PersonaDbClient = Pick<PrismaService, "persona" | "qRAccessToken">;
@@ -99,14 +103,27 @@ export interface FastSharePayload {
   profilePhotoUrl: string | null;
   shareUrl: string;
   qrValue: string;
-  primaryAction: PersonaSmartCardPrimaryAction | null;
+  primaryAction: PersonaSmartCardPrimaryAction;
+  effectiveActions: PersonaShareEffectiveActions;
+  preferredShareType: PersonaSharePreferredShareType;
   hasQuickConnect: boolean;
   quickConnectUrl: string | null;
 }
 
 export interface FastShareSelectionResponse {
-  selectedPersonaId: string | null;
-  sharePayload: FastSharePayload | null;
+  persona: {
+    id: string;
+    username: string;
+    fullName: string;
+    profilePhotoUrl: string | null;
+  } | null;
+  share: {
+    shareUrl: string;
+    qrValue: string;
+    primaryAction: PersonaSmartCardPrimaryAction;
+    effectiveActions: PersonaShareEffectiveActions;
+    preferredShareType: PersonaSharePreferredShareType;
+  } | null;
 }
 
 export interface PersonaSharePayload {
@@ -114,9 +131,10 @@ export interface PersonaSharePayload {
   username: string;
   fullName: string;
   sharingMode: "controlled" | "smart_card";
-  primaryAction: PersonaSmartCardPrimaryAction | null;
+  primaryAction: PersonaSmartCardPrimaryAction;
   shareUrl: string;
   qrValue: string;
+  effectiveActions: PersonaShareEffectiveActions;
   preferredShareType: PersonaSharePreferredShareType;
   hasQuickConnect: boolean;
   quickConnectUrl: string | null;
@@ -124,6 +142,24 @@ export interface PersonaSharePayload {
 }
 
 interface QuickConnectAvailability {
+  hasQuickConnect: boolean;
+  quickConnectUrl: string | null;
+}
+
+export interface PersonaShareEffectiveActions {
+  canCall: boolean;
+  canWhatsapp: boolean;
+  canEmail: boolean;
+  canSaveContact: boolean;
+}
+
+interface ResolvedPreferredShareConfig {
+  sharingMode: "controlled" | "smart_card";
+  primaryAction: PersonaSmartCardPrimaryAction;
+  shareUrl: string;
+  qrValue: string;
+  effectiveActions: PersonaShareEffectiveActions;
+  preferredShareType: PersonaSharePreferredShareType;
   hasQuickConnect: boolean;
   quickConnectUrl: string | null;
 }
@@ -183,11 +219,21 @@ export class PersonasService {
         throw new NotFoundException("User not found");
       }
 
+      const existingPersonaCount =
+        typeof this.prismaService.persona.count === "function"
+          ? await this.prismaService.persona.count({
+              where: {
+                userId,
+              },
+            })
+          : 0;
+
       const trustState = buildStoredPersonaTrustState(user);
       const persona = await this.prismaService.persona.create({
         data: {
           userId,
           type: toPrismaPersonaType(createPersonaDto.type),
+          isPrimary: existingPersonaCount === 0,
           username: createPersonaDto.username,
           publicUrl: buildPublicUrl(createPersonaDto.username),
           fullName: createPersonaDto.fullName,
@@ -296,6 +342,8 @@ export class PersonasService {
   ): Promise<PersonaSharePayload> {
     const persona = await this.findOwnedPersona(userId, personaId);
 
+    await this.persistLastUsedPersonaId(userId, personaId);
+
     return this.buildSharePayload(persona);
   }
 
@@ -327,6 +375,8 @@ export class PersonasService {
 
     const payload = await this.buildFastSharePayload(persona);
 
+    await this.persistLastUsedPersonaId(userId, personaId);
+
     this.setCachedValue(this.fastSharePayloadCache, cacheKey, payload);
 
     return payload;
@@ -341,11 +391,33 @@ export class PersonasService {
       return cachedPersona;
     }
 
+    const lastUsedPersonaId = await this.getLastUsedPersonaId(userId);
+
+    if (lastUsedPersonaId !== null) {
+      const lastUsedPersona = await this.prismaService.persona.findFirst({
+        where: {
+          id: lastUsedPersonaId,
+          userId,
+        },
+        select: fastSharePersonaSelect,
+      });
+
+      if (lastUsedPersona) {
+        this.setCachedValue(this.primaryPersonaCache, userId, lastUsedPersona);
+
+        return lastUsedPersona;
+      }
+    }
+
     const persona = await this.prismaService.persona.findFirst({
       where: {
         userId,
       },
-      orderBy: [{ updatedAt: "desc" }, { createdAt: "asc" }, { id: "asc" }],
+      orderBy: [
+        { isPrimary: "desc" },
+        { createdAt: "asc" },
+        { id: "asc" },
+      ],
       select: fastSharePersonaSelect,
     });
 
@@ -370,8 +442,8 @@ export class PersonasService {
 
     if (!selectedPersona) {
       const emptyResponse = {
-        selectedPersonaId: null,
-        sharePayload: null,
+        persona: null,
+        share: null,
       } satisfies FastShareSelectionResponse;
 
       this.setCachedValue(this.myFastSharePayloadCache, userId, emptyResponse);
@@ -380,8 +452,15 @@ export class PersonasService {
     }
 
     const response = {
-      selectedPersonaId: selectedPersona.id,
-      sharePayload: await this.getFastSharePayload(userId, selectedPersona.id),
+      persona: {
+        id: selectedPersona.id,
+        username: selectedPersona.username,
+        fullName: selectedPersona.fullName,
+        profilePhotoUrl: selectedPersona.profilePhotoUrl,
+      },
+      share: this.toFastShareResponse(
+        await this.getFastSharePayload(userId, selectedPersona.id),
+      ),
     } satisfies FastShareSelectionResponse;
 
     this.setCachedValue(this.myFastSharePayloadCache, userId, response);
@@ -845,6 +924,18 @@ export class PersonasService {
   async remove(userId: string, personaId: string) {
     await this.assertOwner(userId, personaId);
 
+    if (typeof this.prismaService.user?.updateMany === "function") {
+      await this.prismaService.user.updateMany({
+        where: {
+          id: userId,
+          lastUsedPersonaId: personaId,
+        },
+        data: {
+          lastUsedPersonaId: null,
+        },
+      });
+    }
+
     await this.prismaService.persona.delete({
       where: {
         id: personaId,
@@ -925,25 +1016,20 @@ export class PersonasService {
   ): Promise<PersonaSharePayload> {
     const repairedPersona =
       await this.applySystemManagedSharingDefaultsIfNeeded(persona);
-    const smartCardConfig = toSafeSmartCardConfig(repairedPersona.smartCardConfig);
-    const shareUrl = this.buildShareProfileUrl(repairedPersona.username);
-    const quickConnectAvailability =
-      await this.resolveQuickConnectAvailability(repairedPersona, smartCardConfig);
+    const preferredShare = await this.resolvePreferredShareConfig(repairedPersona);
 
     return {
       personaId: repairedPersona.id,
       username: repairedPersona.username,
       fullName: repairedPersona.fullName,
-      sharingMode: toApiSharingMode(repairedPersona.sharingMode),
-      primaryAction: smartCardConfig?.primaryAction ?? null,
-      shareUrl,
-      qrValue: shareUrl,
-      preferredShareType: this.resolvePreferredShareType(
-        smartCardConfig,
-        quickConnectAvailability.hasQuickConnect,
-      ),
-      hasQuickConnect: quickConnectAvailability.hasQuickConnect,
-      quickConnectUrl: quickConnectAvailability.quickConnectUrl,
+      sharingMode: preferredShare.sharingMode,
+      primaryAction: preferredShare.primaryAction,
+      shareUrl: preferredShare.shareUrl,
+      qrValue: preferredShare.qrValue,
+      effectiveActions: preferredShare.effectiveActions,
+      preferredShareType: preferredShare.preferredShareType,
+      hasQuickConnect: preferredShare.hasQuickConnect,
+      quickConnectUrl: preferredShare.quickConnectUrl,
       trust: buildPublicPersonaTrustSignals({
         emailVerified: repairedPersona.emailVerified,
         phoneVerified: repairedPersona.phoneVerified,
@@ -955,37 +1041,140 @@ export class PersonasService {
   private async buildFastSharePayload(
     persona: FastSharePersonaRecord,
   ): Promise<FastSharePayload> {
-    const smartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
-    const shareUrl = this.buildShareProfileUrl(persona.username);
-    const quickConnectAvailability =
-      await this.resolveQuickConnectAvailability(persona, smartCardConfig);
+    const preferredShare = await this.resolvePreferredShareConfig(persona);
 
     return {
       personaId: persona.id,
       username: persona.username,
       fullName: persona.fullName,
       profilePhotoUrl: persona.profilePhotoUrl,
-      shareUrl,
-      qrValue: shareUrl,
-      primaryAction: smartCardConfig?.primaryAction ?? null,
-      hasQuickConnect: quickConnectAvailability.hasQuickConnect,
-      quickConnectUrl: quickConnectAvailability.quickConnectUrl,
+      shareUrl: preferredShare.shareUrl,
+      qrValue: preferredShare.qrValue,
+      primaryAction: preferredShare.primaryAction,
+      effectiveActions: preferredShare.effectiveActions,
+      preferredShareType: preferredShare.preferredShareType,
+      hasQuickConnect: preferredShare.hasQuickConnect,
+      quickConnectUrl: preferredShare.quickConnectUrl,
     };
   }
 
-  private resolvePreferredShareType(
-    smartCardConfig: PersonaSmartCardConfig | null,
-    hasQuickConnect: boolean,
-  ): PersonaSharePreferredShareType {
-    if (
-      smartCardConfig?.primaryAction ===
-        PersonaSmartCardPrimaryAction.InstantConnect &&
-      hasQuickConnect
-    ) {
-      return "instant_connect";
+  private async resolvePreferredShareConfig(
+    persona: Pick<
+      FastSharePersonaRecord,
+      | "id"
+      | "username"
+      | "accessMode"
+      | "sharingMode"
+      | "smartCardConfig"
+      | "publicPhone"
+      | "publicWhatsappNumber"
+      | "publicEmail"
+    >,
+  ): Promise<ResolvedPreferredShareConfig> {
+    const canonicalShareUrl = this.buildShareProfileUrl(persona.username);
+    const fallback = this.buildPreferredShareFallback(canonicalShareUrl);
+
+    if (persona.sharingMode !== PrismaPersonaSharingMode.SMART_CARD) {
+      return fallback;
     }
 
-    return "smart_card";
+    const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
+
+    if (safeSmartCardConfig === null) {
+      return fallback;
+    }
+
+    try {
+      const quickConnectAvailability =
+        await this.resolveQuickConnectAvailability(persona, safeSmartCardConfig);
+      const compatibleSmartCardConfig = validateSmartCardConfigCompatibility(
+        safeSmartCardConfig,
+        {
+          sharingMode: PrismaPersonaSharingMode.SMART_CARD,
+          accessMode: persona.accessMode,
+          hasActiveProfileQr: quickConnectAvailability.hasQuickConnect,
+        },
+        this.toPublicActionFields(persona),
+      );
+      const smartCardActions = buildSmartCardActions({
+        sharingMode: PrismaPersonaSharingMode.SMART_CARD,
+        smartCardConfig: compatibleSmartCardConfig,
+        publicPhone: persona.publicPhone,
+        publicWhatsappNumber: persona.publicWhatsappNumber,
+        publicEmail: persona.publicEmail,
+      });
+      const effectiveActions = {
+        canCall: smartCardActions.call,
+        canWhatsapp: smartCardActions.whatsapp,
+        canEmail: smartCardActions.email,
+        canSaveContact: smartCardActions.vcard,
+      } satisfies PersonaShareEffectiveActions;
+      const primaryAction = this.resolveEffectivePrimaryAction({
+        hasInstantConnect: quickConnectAvailability.hasQuickConnect,
+        effectiveActions,
+      });
+      const preferredShareType =
+        primaryAction === PersonaSmartCardPrimaryAction.InstantConnect
+          ? "instant_connect"
+          : "smart_card";
+      const resolvedShareUrl =
+        preferredShareType === "instant_connect" &&
+        quickConnectAvailability.quickConnectUrl !== null
+          ? quickConnectAvailability.quickConnectUrl
+          : canonicalShareUrl;
+
+      return {
+        sharingMode: "smart_card",
+        primaryAction,
+        shareUrl: resolvedShareUrl,
+        qrValue: resolvedShareUrl,
+        effectiveActions,
+        preferredShareType,
+        hasQuickConnect: quickConnectAvailability.hasQuickConnect,
+        quickConnectUrl: quickConnectAvailability.quickConnectUrl,
+      };
+    } catch {
+      return fallback;
+    }
+  }
+
+  private resolveEffectivePrimaryAction(options: {
+    hasInstantConnect: boolean;
+    effectiveActions: PersonaShareEffectiveActions;
+  }): PersonaSmartCardPrimaryAction {
+    if (options.hasInstantConnect) {
+      return PersonaSmartCardPrimaryAction.InstantConnect;
+    }
+
+    if (
+      options.effectiveActions.canCall ||
+      options.effectiveActions.canWhatsapp ||
+      options.effectiveActions.canEmail
+    ) {
+      return PersonaSmartCardPrimaryAction.ContactMe;
+    }
+
+    return PersonaSmartCardPrimaryAction.RequestAccess;
+  }
+
+  private buildPreferredShareFallback(
+    canonicalShareUrl: string,
+  ): ResolvedPreferredShareConfig {
+    return {
+      sharingMode: "controlled",
+      primaryAction: PersonaSmartCardPrimaryAction.RequestAccess,
+      shareUrl: canonicalShareUrl,
+      qrValue: canonicalShareUrl,
+      effectiveActions: {
+        canCall: false,
+        canWhatsapp: false,
+        canEmail: false,
+        canSaveContact: false,
+      },
+      preferredShareType: "smart_card",
+      hasQuickConnect: false,
+      quickConnectUrl: null,
+    };
   }
 
   private async resolveQuickConnectAvailability(
@@ -1041,6 +1230,18 @@ export class PersonasService {
     return {
       hasQuickConnect: true,
       quickConnectUrl: this.buildQuickConnectShareUrl(activeToken.code),
+    };
+  }
+
+  private toFastShareResponse(
+    payload: FastSharePayload,
+  ): NonNullable<FastShareSelectionResponse["share"]> {
+    return {
+      shareUrl: payload.shareUrl,
+      qrValue: payload.qrValue,
+      primaryAction: payload.primaryAction,
+      effectiveActions: payload.effectiveActions,
+      preferredShareType: payload.preferredShareType,
     };
   }
 
@@ -1115,6 +1316,47 @@ export class PersonasService {
     }
 
     return "https://dotly.one";
+  }
+
+  private async getLastUsedPersonaId(userId: string): Promise<string | null> {
+    if (typeof this.prismaService.user?.findUnique !== "function") {
+      return null;
+    }
+
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        lastUsedPersonaId: true,
+      },
+    });
+
+    return user?.lastUsedPersonaId ?? null;
+  }
+
+  private async persistLastUsedPersonaId(
+    userId: string,
+    personaId: string,
+  ): Promise<void> {
+    if (typeof this.prismaService.user?.update !== "function") {
+      return;
+    }
+
+    try {
+      await this.prismaService.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          lastUsedPersonaId: personaId,
+        },
+      });
+      this.primaryPersonaCache.delete(userId);
+      this.myFastSharePayloadCache.delete(userId);
+    } catch {
+      // Share reads must stay non-failing even if last-used persistence is unavailable.
+    }
   }
 
   private async buildSharingCapabilities(

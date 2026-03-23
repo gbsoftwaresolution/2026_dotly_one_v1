@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BadgeCheck, Copy, RefreshCw, Share2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
+import { showToast } from "@/components/shared/toast-viewport";
 import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
 import { isApiError } from "@/lib/api/client";
 import { personaApi } from "@/lib/api/persona-api";
-import { qrApi } from "@/lib/api/qr-api";
 import { routes } from "@/lib/constants/routes";
 import {
   getPersonaFastShare,
@@ -21,14 +22,13 @@ import {
 import { cn } from "@/lib/utils/cn";
 import type {
   MyFastSharePayload,
+  PersonaFastSharePayload,
   PersonaSummary,
   QrTokenSummary,
-  QuickConnectQrSummary,
 } from "@/types/persona";
 import type { UserProfile } from "@/types/user";
 
 import { VerificationPrompt } from "../auth/verification-prompt";
-import { QrModeToggle } from "./qr-mode-toggle";
 
 interface QrGeneratorPanelProps {
   initialFastShare?: MyFastSharePayload | null;
@@ -36,25 +36,108 @@ interface QrGeneratorPanelProps {
   user: UserProfile;
 }
 
-type QrMode = "standard" | "quick_connect";
-type GeneratedQr = QrTokenSummary | QuickConnectQrSummary;
+type GeneratedQr = QrTokenSummary;
 type FeedbackState = {
   tone: "success" | "error";
   message: string;
 } | null;
 
-const QUICK_CONNECT_DEFAULTS = {
-  durationHours: 12,
-  maxUses: 25,
+const primaryActionLabels = {
+  instant_connect: "Connect",
+  request_access: "Request Access",
+  contact_me: "Contact",
 } as const;
 
-function toStandardQrSummary(sharePayload: NonNullable<MyFastSharePayload["sharePayload"]>): QrTokenSummary {
+const secondaryActionLabels: Array<{
+  key: keyof PersonaFastSharePayload["effectiveActions"];
+  label: string;
+}> = [
+  { key: "canCall", label: "Call" },
+  { key: "canWhatsapp", label: "WhatsApp" },
+  { key: "canEmail", label: "Email" },
+  { key: "canSaveContact", label: "Save Contact" },
+];
+
+function toInitialSharePayload(
+  value: MyFastSharePayload | null,
+): PersonaFastSharePayload | null {
+  if (value?.persona === null || value?.share === null || value === null) {
+    return null;
+  }
+
+  return {
+    personaId: value.persona.id,
+    username: value.persona.username,
+    fullName: value.persona.fullName,
+    profilePhotoUrl: value.persona.profilePhotoUrl,
+    shareUrl: value.share.shareUrl,
+    qrValue: value.share.qrValue,
+    primaryAction: value.share.primaryAction,
+    effectiveActions: value.share.effectiveActions,
+    preferredShareType: value.share.preferredShareType,
+    hasQuickConnect: value.share.preferredShareType === "instant_connect",
+    quickConnectUrl:
+      value.share.preferredShareType === "instant_connect"
+        ? value.share.shareUrl
+        : null,
+  };
+}
+
+function toShareQrSummary(
+  sharePayload: PersonaFastSharePayload,
+): QrTokenSummary {
   return {
     id: sharePayload.personaId,
     code: sharePayload.username,
-    type: "profile",
+    type:
+      sharePayload.preferredShareType === "instant_connect"
+        ? "quick_connect"
+        : "profile",
     url: sharePayload.qrValue,
   };
+}
+
+function getPrimaryActionLabel(
+  sharePayload: PersonaFastSharePayload | null,
+): string | null {
+  if (!sharePayload) {
+    return null;
+  }
+
+  return primaryActionLabels[sharePayload.primaryAction];
+}
+
+function getEnabledSecondaryActions(
+  sharePayload: PersonaFastSharePayload | null,
+): string[] {
+  if (!sharePayload) {
+    return [];
+  }
+
+  return secondaryActionLabels
+    .filter((option) => sharePayload.effectiveActions[option.key])
+    .map((option) => option.label);
+}
+
+function getShareHeadline(
+  sharePayload: PersonaFastSharePayload | null,
+): string {
+  return sharePayload?.preferredShareType === "instant_connect"
+    ? "Scan to connect instantly"
+    : "Scan to open my profile";
+}
+
+function getShareDescription(
+  sharePayload: PersonaFastSharePayload | null,
+  persona: PersonaSummary | null,
+): string {
+  if (sharePayload?.preferredShareType === "instant_connect") {
+    return "They scan once and land on the next step you already chose.";
+  }
+
+  return persona
+    ? "They open your public profile and see the next step you already set."
+    : "They open your public profile from this QR.";
 }
 
 function avatarGradient(seed: string): string {
@@ -74,24 +157,6 @@ function getInitials(fullName: string): string {
   return letters || fullName.charAt(0).toUpperCase() || "D";
 }
 
-function getModeLabel(mode: QrMode, persona: PersonaSummary | null): string {
-  if (mode === "quick_connect") {
-    return "Quick Connect";
-  }
-
-  return "Profile";
-}
-
-function getModeDescription(mode: QrMode, persona: PersonaSummary | null): string {
-  if (mode === "quick_connect") {
-    return `They scan once and jump into a temporary introduction flow that stays live for ${QUICK_CONNECT_DEFAULTS.durationHours} hours.`;
-  }
-
-  return persona
-    ? "They open your public profile and choose the next step from there."
-    : "They open your public profile from this QR.";
-}
-
 export function QrGeneratorPanel({
   initialFastShare = null,
   personas,
@@ -100,27 +165,27 @@ export function QrGeneratorPanel({
   const router = useRouter();
   const shareFastSnapshot = getShareFastSnapshot();
   const initialSelectionId =
-    initialFastShare?.selectedPersonaId ?? shareFastSnapshot.selectedPersonaId;
+    initialFastShare?.persona?.id ?? shareFastSnapshot.selectedPersonaId;
   const initialPersonaId =
-    initialSelectionId && personas.some((persona) => persona.id === initialSelectionId)
+    initialSelectionId &&
+    personas.some((persona) => persona.id === initialSelectionId)
       ? initialSelectionId
-      : personas[0]?.id ?? "";
+      : (personas[0]?.id ?? "");
   const initialSharePayload =
-    initialFastShare?.sharePayload ??
+    toInitialSharePayload(initialFastShare) ??
     (initialPersonaId ? getPersonaFastShare(initialPersonaId) : null);
   const initialShareQr = initialSharePayload
-    ? toStandardQrSummary(initialSharePayload)
+    ? toShareQrSummary(initialSharePayload)
     : null;
-  const [selectedPersonaId, setSelectedPersonaId] = useState(
-    initialPersonaId,
-  );
-  const [mode, setMode] = useState<QrMode>("standard");
+  const [selectedPersonaId] = useState(initialPersonaId);
   const initialCacheKey =
-    initialPersonaId && initialShareQr ? `${initialPersonaId}:standard` : "";
+    initialPersonaId && initialShareQr ? initialPersonaId : "";
   const [generatedQr, setGeneratedQr] = useState<GeneratedQr | null>(
     initialShareQr,
   );
   const [generatedQrKey, setGeneratedQrKey] = useState(initialCacheKey);
+  const [sharePayload, setSharePayload] =
+    useState<PersonaFastSharePayload | null>(initialSharePayload);
   const [isLoadingQr, setIsLoadingQr] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
@@ -134,36 +199,33 @@ export function QrGeneratorPanel({
   );
   const latestRequestRef = useRef(0);
 
-  const selectedPersona = useMemo(
-    () => personas.find((persona) => persona.id === selectedPersonaId) ?? null,
-    [personas, selectedPersonaId],
-  );
+  const selectedPersona =
+    personas.find((persona) => persona.id === selectedPersonaId) ?? null;
 
   const canGenerateProfileQr = hasUnlockedTrustRequirement(
     user,
     "create_profile_qr",
   );
-  const canGenerateQuickConnectQr =
-    hasUnlockedTrustRequirement(user, "create_quick_connect_qr") &&
-    Boolean(selectedPersona?.sharingCapabilities?.primaryActions.instantConnect);
+  const canGenerateQuickConnectQr = hasUnlockedTrustRequirement(
+    user,
+    "create_quick_connect_qr",
+  );
   const shareLocked = !canGenerateProfileQr && !canGenerateQuickConnectQr;
-  const canGenerateCurrentMode =
-    mode === "standard" ? canGenerateProfileQr : canGenerateQuickConnectQr;
-  const cacheKey = selectedPersonaId ? `${selectedPersonaId}:${mode}` : "";
-  const modeLabel = getModeLabel(mode, selectedPersona);
+  const cacheKey = selectedPersonaId;
   const identityLine = [selectedPersona?.jobTitle, selectedPersona?.companyName]
     .filter(Boolean)
     .join(" at ");
   const isVerified = user.security.trustBadge === "verified";
-  const hasMultiplePersonas = personas.length > 1;
   const shareTitle = selectedPersona
     ? `${selectedPersona.fullName} on Dotly`
     : "Dotly";
   const shareText = selectedPersona
-    ? mode === "quick_connect"
-      ? `Connect instantly with ${selectedPersona.fullName} on Dotly.`
+    ? sharePayload?.preferredShareType === "instant_connect"
+      ? `Connect with ${selectedPersona.fullName} on Dotly.`
       : `Open ${selectedPersona.fullName}'s profile on Dotly.`
     : "Open this Dotly profile.";
+  const primaryActionLabel = getPrimaryActionLabel(sharePayload);
+  const secondaryActions = getEnabledSecondaryActions(sharePayload);
 
   useEffect(() => {
     if (initialFastShare) {
@@ -172,14 +234,9 @@ export function QrGeneratorPanel({
   }, [initialFastShare]);
 
   useEffect(() => {
-    if (mode === "quick_connect" && !canGenerateQuickConnectQr) {
-      setMode("standard");
-    }
-  }, [canGenerateQuickConnectQr, mode]);
-
-  useEffect(() => {
-    if (!selectedPersonaId || !canGenerateCurrentMode) {
+    if (!selectedPersonaId || shareLocked) {
       setGeneratedQr(null);
+      setSharePayload(null);
       setIsLoadingQr(false);
       setError(null);
       return;
@@ -191,21 +248,21 @@ export function QrGeneratorPanel({
     const cachedQr = cacheRef.current.get(cacheKey);
     if (cachedQr) {
       setGeneratedQr(cachedQr);
+      setSharePayload(getPersonaFastShare(selectedPersonaId));
       setIsLoadingQr(false);
       return;
     }
 
-    if (mode === "standard") {
-      const cachedSharePayload = getPersonaFastShare(selectedPersonaId);
+    const cachedSharePayload = getPersonaFastShare(selectedPersonaId);
 
-      if (cachedSharePayload) {
-        const nextQr = toStandardQrSummary(cachedSharePayload);
-        cacheRef.current.set(cacheKey, nextQr);
-        setGeneratedQr(nextQr);
-        setGeneratedQrKey(cacheKey);
-        setIsLoadingQr(false);
-        return;
-      }
+    if (cachedSharePayload) {
+      const nextQr = toShareQrSummary(cachedSharePayload);
+      cacheRef.current.set(cacheKey, nextQr);
+      setGeneratedQr(nextQr);
+      setGeneratedQrKey(cacheKey);
+      setSharePayload(cachedSharePayload);
+      setIsLoadingQr(false);
+      return;
     }
 
     const requestId = latestRequestRef.current + 1;
@@ -217,18 +274,11 @@ export function QrGeneratorPanel({
 
     void (async () => {
       try {
-        let nextQr: GeneratedQr;
+        const nextSharePayload =
+          await personaApi.getFastShare(selectedPersonaId);
+        const nextQr = toShareQrSummary(nextSharePayload);
 
-        if (mode === "standard") {
-          const sharePayload = await personaApi.getFastShare(selectedPersonaId);
-          upsertPersonaFastShare(sharePayload, { selected: true });
-          nextQr = toStandardQrSummary(sharePayload);
-        } else {
-          nextQr = await qrApi.createQuickConnectQr(
-            selectedPersonaId,
-            QUICK_CONNECT_DEFAULTS,
-          );
-        }
+        upsertPersonaFastShare(nextSharePayload, { selected: true });
 
         if (latestRequestRef.current !== requestId) {
           return;
@@ -237,6 +287,7 @@ export function QrGeneratorPanel({
         cacheRef.current.set(cacheKey, nextQr);
         setGeneratedQr(nextQr);
         setGeneratedQrKey(cacheKey);
+        setSharePayload(nextSharePayload);
       } catch (submissionError) {
         if (isApiError(submissionError) && submissionError.status === 401) {
           router.replace(
@@ -265,11 +316,10 @@ export function QrGeneratorPanel({
     })();
   }, [
     cacheKey,
-    canGenerateCurrentMode,
     generatedQrKey,
-    mode,
     refreshNonce,
     router,
+    shareLocked,
     selectedPersonaId,
   ]);
 
@@ -284,7 +334,8 @@ export function QrGeneratorPanel({
 
     try {
       await navigator.clipboard.writeText(generatedQr.url);
-      setFeedback({ tone: "success", message: successMessage });
+      setFeedback(null);
+      showToast(successMessage);
       return true;
     } catch {
       setFeedback({
@@ -305,7 +356,7 @@ export function QrGeneratorPanel({
     }
 
     if (typeof navigator.share !== "function") {
-      await copyCurrentLink("Link copied. Native share is unavailable here.");
+      await copyCurrentLink("Link copied");
       return;
     }
 
@@ -315,13 +366,16 @@ export function QrGeneratorPanel({
         text: shareText,
         url: generatedQr.url,
       });
-      setFeedback({ tone: "success", message: "Share sheet opened." });
+      setFeedback(null);
     } catch (shareError) {
-      if (shareError instanceof DOMException && shareError.name === "AbortError") {
+      if (
+        shareError instanceof DOMException &&
+        shareError.name === "AbortError"
+      ) {
         return;
       }
 
-      await copyCurrentLink("Link copied instead.");
+      await copyCurrentLink("Link copied");
     }
   }
 
@@ -354,27 +408,9 @@ export function QrGeneratorPanel({
               </p>
             </div>
 
-            {hasMultiplePersonas ? (
-              <label className="min-w-0 max-w-[13rem] flex-1 space-y-1.5" htmlFor="qr-persona">
-                <span className="label-xs block text-right text-muted">Persona</span>
-                <select
-                  id="qr-persona"
-                  value={selectedPersonaId}
-                  onChange={(event) => setSelectedPersonaId(event.target.value)}
-                  className="min-h-12 w-full rounded-2xl border border-black/[0.08] bg-white/88 px-4 text-sm font-medium text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/15 dark:border-white/[0.08] dark:bg-white/[0.06] dark:focus:border-brandCyan dark:focus:ring-brandCyan/15"
-                >
-                  {personas.map((persona) => (
-                    <option key={persona.id} value={persona.id}>
-                      {persona.fullName}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : (
-              <div className="rounded-full border border-black/[0.06] bg-black/[0.03] px-3 py-1.5 text-xs font-semibold text-muted dark:border-white/[0.08] dark:bg-white/[0.05]">
-                @{selectedPersona?.username}
-              </div>
-            )}
+            <div className="rounded-full border border-black/[0.06] bg-black/[0.03] px-3 py-1.5 text-xs font-semibold text-muted dark:border-white/[0.08] dark:bg-white/[0.05]">
+              @{selectedPersona?.username}
+            </div>
           </div>
 
           {selectedPersona ? (
@@ -389,7 +425,9 @@ export function QrGeneratorPanel({
               ) : (
                 <div
                   className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.2rem] text-base font-semibold text-white"
-                  style={{ background: avatarGradient(selectedPersona.fullName) }}
+                  style={{
+                    background: avatarGradient(selectedPersona.fullName),
+                  }}
                 >
                   {getInitials(selectedPersona.fullName)}
                 </div>
@@ -421,11 +459,41 @@ export function QrGeneratorPanel({
             </div>
           ) : null}
 
-          {canGenerateQuickConnectQr ? (
-            <div>
-              <QrModeToggle value={mode} onChange={setMode} />
-            </div>
-          ) : null}
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
+            {primaryActionLabel ? (
+              <span className="rounded-full border border-black/[0.06] bg-white/70 px-3 py-1.5 font-medium text-foreground dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-white/90">
+                First step: {primaryActionLabel}
+              </span>
+            ) : null}
+
+            {secondaryActions.map((action) => (
+              <span
+                key={action}
+                className="rounded-full border border-black/[0.06] bg-white/70 px-3 py-1.5 font-medium text-foreground dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-white/90"
+              >
+                {action}
+              </span>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
+            {selectedPersona ? (
+              <Link
+                href={routes.app.personaSettings(selectedPersona.id)}
+                className="font-medium text-muted transition-colors hover:text-foreground"
+              >
+                Customize share
+              </Link>
+            ) : null}
+            {personas.length > 1 ? (
+              <Link
+                href={routes.app.personas}
+                className="font-medium text-muted transition-colors hover:text-foreground"
+              >
+                Switch persona
+              </Link>
+            ) : null}
+          </div>
         </div>
 
         <div className="flex flex-1 flex-col justify-center gap-4">
@@ -440,7 +508,9 @@ export function QrGeneratorPanel({
               />
             ) : error ? (
               <div className="flex min-h-[21rem] w-full flex-col items-center justify-center rounded-[2rem] border border-rose-500/20 bg-white p-6 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)] dark:bg-zinc-950">
-                <p className="label-xs text-rose-600 dark:text-rose-400">Share unavailable</p>
+                <p className="label-xs text-rose-600 dark:text-rose-400">
+                  Share unavailable
+                </p>
                 <h3 className="mt-2 text-xl font-semibold text-foreground">
                   Could not refresh this code
                 </h3>
@@ -486,12 +556,10 @@ export function QrGeneratorPanel({
 
           <div className="space-y-1.5 text-center">
             <p className="text-base font-semibold text-foreground">
-              {mode === "quick_connect"
-                ? "Scan to start a temporary intro"
-                : "Scan to open my profile"}
+              {getShareHeadline(sharePayload)}
             </p>
             <p className="mx-auto max-w-[34ch] text-sm leading-6 text-muted">
-              {getModeDescription(mode, selectedPersona)}
+              {getShareDescription(sharePayload, selectedPersona)}
             </p>
           </div>
         </div>
@@ -502,7 +570,7 @@ export function QrGeneratorPanel({
               type="button"
               className="h-14 w-full"
               disabled={!generatedQr || isLoadingQr || shareLocked}
-              onClick={() => void copyCurrentLink("Link copied.")}
+              onClick={() => void copyCurrentLink("Link copied")}
             >
               <span className="inline-flex items-center gap-2">
                 <Copy className="h-4 w-4" />
@@ -525,7 +593,9 @@ export function QrGeneratorPanel({
 
           <div className="flex items-center justify-between gap-3 px-1">
             <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">
-              {modeLabel}
+              {sharePayload?.preferredShareType === "instant_connect"
+                ? "Instant Connect"
+                : "Smart Card"}
             </p>
 
             {!shareLocked ? (

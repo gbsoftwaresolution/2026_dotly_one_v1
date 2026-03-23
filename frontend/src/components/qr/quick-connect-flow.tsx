@@ -306,7 +306,7 @@ export function QuickConnectFlow({
             </div>
           </div>
           <p className="mt-4 text-left text-sm leading-6 text-muted">
-            Start a temporary connection while this introduction is still fresh.
+            Connect while this introduction is still fresh.
           </p>
         </div>
 
@@ -314,7 +314,7 @@ export function QuickConnectFlow({
           <p className="label-xs text-muted">What happens next</p>
           <p className="text-left text-sm leading-6 text-muted">
             Choose the persona that matches how you met {hostFirstName}. We will
-            save that context with the connection.
+            save it with this connection.
           </p>
         </div>
       </div>
@@ -379,7 +379,7 @@ export function QuickConnectFlow({
         disabled={isConnecting || !selectedPersonaId}
         className="w-full h-[60px] disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isConnecting ? "Connecting..." : "Start temporary access"}
+        {isConnecting ? "Connecting..." : "Connect now"}
       </PrimaryButton>
     </div>
   );

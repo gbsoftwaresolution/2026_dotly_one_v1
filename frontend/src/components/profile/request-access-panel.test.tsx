@@ -4,6 +4,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ToastViewport } from "@/components/shared/toast-viewport";
+
 const mocks = vi.hoisted(() => ({
   getRequestTarget: vi.fn(),
   sendRequest: vi.fn(),
@@ -111,38 +113,43 @@ describe("RequestAccessPanel", () => {
     const user = userEvent.setup();
 
     render(
-      React.createElement(RequestAccessPanel, {
-        profile: profileFixture,
-        initialPersonas: [personaFixture],
-        isAuthenticated: true,
-        currentUser: {
-          id: "user-1",
-          email: "user@dotly.one",
-          isVerified: true,
-          security: {
-            trustBadge: "verified",
-            maskedEmail: "us**@dotly.one",
-            mailDeliveryAvailable: true,
-            passwordResetAvailable: true,
-            smsDeliveryAvailable: true,
-            maskedPhoneNumber: null,
-            phoneVerificationStatus: "not_enrolled",
-            mobileOtpEnrollment: null,
-            explanation:
-              "Email verification is the first trust factor for your Dotly identity.",
-            unlockedActions: ["Send contact requests"],
-            restrictedActions: [],
-            requirements: [
-              {
-                key: "send_contact_request",
-                label: "Send contact requests",
-                unlocked: true,
-              },
-            ],
-            trustFactors: [],
+      React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(ToastViewport),
+        React.createElement(RequestAccessPanel, {
+          profile: profileFixture,
+          initialPersonas: [personaFixture],
+          isAuthenticated: true,
+          currentUser: {
+            id: "user-1",
+            email: "user@dotly.one",
+            isVerified: true,
+            security: {
+              trustBadge: "verified",
+              maskedEmail: "us**@dotly.one",
+              mailDeliveryAvailable: true,
+              passwordResetAvailable: true,
+              smsDeliveryAvailable: true,
+              maskedPhoneNumber: null,
+              phoneVerificationStatus: "not_enrolled",
+              mobileOtpEnrollment: null,
+              explanation:
+                "Email verification is the first trust factor for your Dotly identity.",
+              unlockedActions: ["Send contact requests"],
+              restrictedActions: [],
+              requirements: [
+                {
+                  key: "send_contact_request",
+                  label: "Send contact requests",
+                  unlocked: true,
+                },
+              ],
+              trustFactors: [],
+            },
           },
-        },
-      }),
+        }),
+      ),
     );
 
     await user.type(
@@ -161,7 +168,10 @@ describe("RequestAccessPanel", () => {
       });
     });
 
-    expect(screen.getByText(/request sent/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /request sent/i }),
+    ).toBeDisabled();
+    expect(await screen.findByRole("status")).toHaveTextContent(/request sent/i);
   });
 
   it("keeps request access available when smart card mode uses request_access", async () => {
@@ -261,7 +271,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/instant connect leads this card/i),
+      screen.getByText(/^connect leads this card$/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /request access/i }),
@@ -379,7 +389,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/add a trust factor before sending requests/i),
+      screen.getByText(/verify your account before sending requests/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /request access/i }),

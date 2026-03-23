@@ -28,9 +28,8 @@ export const dotlyPositioning = {
       "Return to your people, context, and connection controls.",
   },
   publicProfile: {
-    controlledHelper:
-      "Request access when the next step should stay intentional.",
-    smartCardHelper: "Choose the next step that fits how you met.",
+    controlledHelper: "Ask for access when you want an intentional intro.",
+    smartCardHelper: "Pick the next step that fits how you met.",
     verifiedLabel: "Verified identity",
   },
   app: {

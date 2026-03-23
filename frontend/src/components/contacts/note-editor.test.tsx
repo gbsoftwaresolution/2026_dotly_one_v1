@@ -51,8 +51,8 @@ describe("NoteEditor", () => {
       }),
     );
 
-    await user.clear(screen.getByLabelText(/relationship note/i));
-    await user.type(screen.getByLabelText(/relationship note/i), "Updated note");
+    await user.clear(screen.getByLabelText(/connection note/i));
+    await user.type(screen.getByLabelText(/connection note/i), "Updated note");
     await user.click(screen.getByRole("button", { name: /save note/i }));
 
     await waitFor(() => {
@@ -62,6 +62,6 @@ describe("NoteEditor", () => {
     });
 
     expect(mocks.refresh).toHaveBeenCalledTimes(1);
-    expect(screen.getByText(/sync success/i)).toBeInTheDocument();
+    expect(screen.getByText(/note saved/i)).toBeInTheDocument();
   });
 });

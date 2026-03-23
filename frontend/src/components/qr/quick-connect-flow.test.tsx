@@ -41,12 +41,14 @@ describe("QuickConnectFlow", () => {
     expect(screen.getByText(/^quick connect$/i)).toBeInTheDocument();
     expect(screen.getByText(/jane doe/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/start a temporary connection while this introduction is still fresh/i),
+      screen.getByText(/connect while this introduction is still fresh/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/what happens next/i)).toBeInTheDocument();
-    expect(screen.getByText(/choose the persona that matches how you met/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /start temporary access/i }),
+      screen.getByText(/choose the persona that matches how you met/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /connect now/i }),
     ).toBeInTheDocument();
   });
 });

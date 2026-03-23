@@ -3,12 +3,14 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastViewport } from "@/components/shared/toast-viewport";
+import { clearShareFastStore } from "@/lib/share-fast-store";
 
 const mocks = vi.hoisted(() => ({
   getFastShare: vi.fn(),
-  createQuickConnectQr: vi.fn(),
   replace: vi.fn(),
   refresh: vi.fn(),
+  writeText: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -21,12 +23,6 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/api/persona-api", () => ({
   personaApi: {
     getFastShare: mocks.getFastShare,
-  },
-}));
-
-vi.mock("@/lib/api/qr-api", () => ({
-  qrApi: {
-    createQuickConnectQr: mocks.createQuickConnectQr,
   },
 }));
 
@@ -74,9 +70,13 @@ const userFixture = {
     maskedPhoneNumber: null,
     phoneVerificationStatus: "not_enrolled" as const,
     mobileOtpEnrollment: null,
-    explanation: "Add a verified email or mobile OTP to unlock trust-sensitive actions.",
+    explanation:
+      "Add a verified email or mobile OTP to unlock trust-sensitive actions.",
     unlockedActions: [],
-    restrictedActions: ["Create profile QR codes", "Create Quick Connect QR codes"],
+    restrictedActions: [
+      "Create profile QR codes",
+      "Create Quick Connect QR codes",
+    ],
     requirements: [
       {
         key: "create_profile_qr" as const,
@@ -96,14 +96,16 @@ const userFixture = {
 describe("QrGeneratorPanel", () => {
   beforeEach(() => {
     mocks.getFastShare.mockReset();
-    mocks.createQuickConnectQr.mockReset();
     mocks.replace.mockReset();
     mocks.refresh.mockReset();
+    mocks.writeText.mockReset();
+    mocks.writeText.mockResolvedValue(undefined);
+    clearShareFastStore();
 
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: {
-        writeText: vi.fn().mockResolvedValue(undefined),
+        writeText: mocks.writeText,
       },
     });
 
@@ -121,7 +123,14 @@ describe("QrGeneratorPanel", () => {
       profilePhotoUrl: null,
       shareUrl: "https://dotly.one/u/sender",
       qrValue: "https://dotly.one/u/sender",
-      primaryAction: null,
+      primaryAction: "request_access",
+      effectiveActions: {
+        canCall: false,
+        canWhatsapp: false,
+        canEmail: false,
+        canSaveContact: false,
+      },
+      preferredShareType: "smart_card",
       hasQuickConnect: false,
       quickConnectUrl: null,
     });
@@ -140,10 +149,12 @@ describe("QrGeneratorPanel", () => {
               "Create Quick Connect QR codes",
             ],
             restrictedActions: [],
-            requirements: userFixture.security.requirements.map((requirement) => ({
-              ...requirement,
-              unlocked: true,
-            })),
+            requirements: userFixture.security.requirements.map(
+              (requirement) => ({
+                ...requirement,
+                unlocked: true,
+              }),
+            ),
           },
         },
       }),
@@ -154,21 +165,89 @@ describe("QrGeneratorPanel", () => {
     });
   });
 
+  it("removes persona and mode selection from the primary flow", () => {
+    render(
+      React.createElement(QrGeneratorPanel, {
+        initialFastShare: {
+          persona: {
+            id: "persona-1",
+            username: "sender",
+            fullName: "Sender Persona",
+            profilePhotoUrl: null,
+          },
+          share: {
+            shareUrl: "https://dotly.one/u/sender",
+            qrValue: "https://dotly.one/u/sender",
+            primaryAction: "request_access",
+            effectiveActions: {
+              canCall: false,
+              canWhatsapp: false,
+              canEmail: false,
+              canSaveContact: false,
+            },
+            preferredShareType: "smart_card",
+          },
+        },
+        personas: [
+          personaFixture,
+          {
+            ...personaFixture,
+            id: "persona-2",
+            username: "sender-ops",
+            fullName: "Sender Ops",
+            publicUrl: "dotly.id/sender-ops",
+          },
+        ],
+        user: {
+          ...userFixture,
+          isVerified: true,
+          security: {
+            ...userFixture.security,
+            trustBadge: "verified",
+            unlockedActions: [
+              "Create profile QR codes",
+              "Create Quick Connect QR codes",
+            ],
+            restrictedActions: [],
+            requirements: userFixture.security.requirements.map(
+              (requirement) => ({
+                ...requirement,
+                unlocked: true,
+              }),
+            ),
+          },
+        },
+      }),
+    );
+
+    expect(screen.queryByLabelText(/persona/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /quick connect/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/switch persona/i)).toBeInTheDocument();
+  });
+
   it("uses an initial profile QR without refetching on first paint", () => {
     render(
       React.createElement(QrGeneratorPanel, {
         initialFastShare: {
-          selectedPersonaId: "persona-1",
-          sharePayload: {
-            personaId: "persona-1",
+          persona: {
+            id: "persona-1",
             username: "sender",
             fullName: "Sender Persona",
             profilePhotoUrl: null,
+          },
+          share: {
             shareUrl: "https://dotly.one/u/sender",
             qrValue: "https://dotly.one/u/sender",
-            primaryAction: null,
-            hasQuickConnect: false,
-            quickConnectUrl: null,
+            primaryAction: "request_access",
+            effectiveActions: {
+              canCall: false,
+              canWhatsapp: false,
+              canEmail: false,
+              canSaveContact: false,
+            },
+            preferredShareType: "smart_card",
           },
         },
         personas: [personaFixture],
@@ -183,10 +262,12 @@ describe("QrGeneratorPanel", () => {
               "Create Quick Connect QR codes",
             ],
             restrictedActions: [],
-            requirements: userFixture.security.requirements.map((requirement) => ({
-              ...requirement,
-              unlocked: true,
-            })),
+            requirements: userFixture.security.requirements.map(
+              (requirement) => ({
+                ...requirement,
+                unlocked: true,
+              }),
+            ),
           },
         },
       }),
@@ -196,32 +277,29 @@ describe("QrGeneratorPanel", () => {
     expect(screen.getByText(/scan to open my profile/i)).toBeInTheDocument();
   });
 
-  it("creates a quick-connect QR with the share-mode defaults", async () => {
-    mocks.getFastShare.mockResolvedValue({
-      personaId: "persona-1",
-      username: "sender",
-      fullName: "Sender Persona",
-      profilePhotoUrl: null,
-      shareUrl: "https://dotly.one/u/sender",
-      qrValue: "https://dotly.one/u/sender",
-      primaryAction: null,
-      hasQuickConnect: false,
-      quickConnectUrl: null,
-    });
-    mocks.createQuickConnectQr.mockResolvedValue({
-      id: "qr-1",
-      url: "https://dotly.id/q/abc",
-      code: "abc",
-      type: "quick_connect",
-      startsAt: new Date().toISOString(),
-      endsAt: new Date().toISOString(),
-      maxUses: 25,
-    });
-
-    const user = userEvent.setup();
-
+  it("renders the backend-selected primary and secondary actions directly", () => {
     render(
       React.createElement(QrGeneratorPanel, {
+        initialFastShare: {
+          persona: {
+            id: "persona-1",
+            username: "sender",
+            fullName: "Sender Persona",
+            profilePhotoUrl: null,
+          },
+          share: {
+            shareUrl: "https://dotly.one/q/instant-1",
+            qrValue: "https://dotly.one/q/instant-1",
+            primaryAction: "instant_connect",
+            effectiveActions: {
+              canCall: true,
+              canWhatsapp: false,
+              canEmail: true,
+              canSaveContact: false,
+            },
+            preferredShareType: "instant_connect",
+          },
+        },
         personas: [personaFixture],
         user: {
           ...userFixture,
@@ -234,23 +312,22 @@ describe("QrGeneratorPanel", () => {
               "Create Quick Connect QR codes",
             ],
             restrictedActions: [],
-            requirements: userFixture.security.requirements.map((requirement) => ({
-              ...requirement,
-              unlocked: true,
-            })),
+            requirements: userFixture.security.requirements.map(
+              (requirement) => ({
+                ...requirement,
+                unlocked: true,
+              }),
+            ),
           },
         },
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /quick connect/i }));
-
-    await waitFor(() => {
-      expect(mocks.createQuickConnectQr).toHaveBeenCalledWith("persona-1", {
-        durationHours: 12,
-        maxUses: 25,
-      });
-    });
+    expect(screen.getByText(/first step: connect/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Call$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Email$/)).toBeInTheDocument();
+    expect(screen.queryByText(/^WhatsApp$/)).not.toBeInTheDocument();
+    expect(screen.getByText(/scan to connect instantly/i)).toBeInTheDocument();
   });
 
   it("enables the share actions once the QR is ready", async () => {
@@ -261,7 +338,14 @@ describe("QrGeneratorPanel", () => {
       profilePhotoUrl: null,
       shareUrl: "https://dotly.one/u/sender",
       qrValue: "https://dotly.one/u/sender",
-      primaryAction: null,
+      primaryAction: "request_access",
+      effectiveActions: {
+        canCall: false,
+        canWhatsapp: false,
+        canEmail: false,
+        canSaveContact: false,
+      },
+      preferredShareType: "smart_card",
       hasQuickConnect: false,
       quickConnectUrl: null,
     });
@@ -282,10 +366,12 @@ describe("QrGeneratorPanel", () => {
               "Create Quick Connect QR codes",
             ],
             restrictedActions: [],
-            requirements: userFixture.security.requirements.map((requirement) => ({
-              ...requirement,
-              unlocked: true,
-            })),
+            requirements: userFixture.security.requirements.map(
+              (requirement) => ({
+                ...requirement,
+                unlocked: true,
+              }),
+            ),
           },
         },
       }),
@@ -306,6 +392,71 @@ describe("QrGeneratorPanel", () => {
       expect(copyButton).toBeEnabled();
       expect(shareButton).toBeEnabled();
     });
+  });
+
+  it("shows a bottom toast when the share link is copied", async () => {
+    mocks.getFastShare.mockResolvedValue({
+      personaId: "persona-1",
+      username: "sender",
+      fullName: "Sender Persona",
+      profilePhotoUrl: null,
+      shareUrl: "https://dotly.one/u/sender",
+      qrValue: "https://dotly.one/u/sender",
+      primaryAction: "request_access",
+      effectiveActions: {
+        canCall: false,
+        canWhatsapp: false,
+        canEmail: false,
+        canSaveContact: false,
+      },
+      preferredShareType: "smart_card",
+      hasQuickConnect: false,
+      quickConnectUrl: null,
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(ToastViewport),
+        React.createElement(QrGeneratorPanel, {
+          personas: [personaFixture],
+          user: {
+            ...userFixture,
+            isVerified: true,
+            security: {
+              ...userFixture.security,
+              trustBadge: "verified",
+              unlockedActions: [
+                "Create profile QR codes",
+                "Create Quick Connect QR codes",
+              ],
+              restrictedActions: [],
+              requirements: userFixture.security.requirements.map(
+                (requirement) => ({
+                  ...requirement,
+                  unlocked: true,
+                }),
+              ),
+            },
+          },
+        }),
+      ),
+    );
+
+    const copyButton = await screen.findByRole("button", {
+      name: /copy link/i,
+    });
+
+    await waitFor(() => {
+      expect(copyButton).toBeEnabled();
+    });
+
+    await user.click(copyButton);
+
+    expect(await screen.findByRole("status")).toHaveTextContent(/link copied/i);
   });
 
   it("shows trust guidance and does not generate when QR requirements are locked", () => {

@@ -4,6 +4,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ToastViewport } from "@/components/shared/toast-viewport";
+
 import { PublicSmartCard } from "./public-smart-card";
 
 const createObjectUrl = vi.fn(() => "blob:smart-card");
@@ -61,7 +63,11 @@ function createPersonas() {
   ];
 }
 
-function createProfile(overrides: Partial<React.ComponentProps<typeof PublicSmartCard>["profile"]> = {}) {
+function createProfile(
+  overrides: Partial<
+    React.ComponentProps<typeof PublicSmartCard>["profile"]
+  > = {},
+) {
   const baseProfile = {
     username: "jane",
     publicUrl: "https://dotly.id/jane",
@@ -168,18 +174,20 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    expect(screen.getByRole("button", { name: /request intro/i })).toBeEnabled();
-    expect(screen.getByText(/profile access/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/reviews your request before sharing the next step/i),
+      screen.getByRole("button", { name: /request access/i }),
+    ).toBeEnabled();
+    expect(screen.getByText(/^next step$/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /ask jane doe for access when you want a more intentional intro/i,
+      ),
     ).toBeInTheDocument();
     expect(screen.getByTestId("smart-card-actions-grid")).toHaveAttribute(
       "data-action-count",
       "4",
     );
-    expect(
-      screen.getByLabelText(/verified identity/i),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/verified identity/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /call/i })).toHaveAttribute(
       "href",
       "tel:+15551234567",
@@ -192,7 +200,9 @@ describe("PublicSmartCard", () => {
       "href",
       "mailto:jane@dotly.one",
     );
-    expect(screen.getByText(/trusted identity, zero clutter/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/trusted identity, zero clutter/i),
+    ).toBeInTheDocument();
   });
 
   it("renders a stronger public trust label for fully verified profiles", () => {
@@ -212,7 +222,9 @@ describe("PublicSmartCard", () => {
       "bg-emerald-700",
     );
     expect(
-      screen.getByTitle(/dotly verified both an email address and a mobile number/i),
+      screen.getByTitle(
+        /dotly verified both an email address and a mobile number/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -242,6 +254,7 @@ describe("PublicSmartCard", () => {
       React.createElement(
         React.Fragment,
         null,
+        React.createElement(ToastViewport),
         React.createElement(PublicSmartCard, {
           profile: createProfile(),
         }),
@@ -249,12 +262,10 @@ describe("PublicSmartCard", () => {
       ),
     );
 
-    await user.click(screen.getByRole("button", { name: /request intro/i }));
+    await user.click(screen.getByRole("button", { name: /request access/i }));
 
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
-    expect(
-      screen.getByText(/request details are ready below/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/request form ready below/i)).toBeInTheDocument();
   });
 
   it("reveals the action panel when contact me is the primary action", async () => {
@@ -284,13 +295,17 @@ describe("PublicSmartCard", () => {
 
     expect(screen.getByRole("link", { name: /call/i })).toBeInTheDocument();
     expect(
-      screen.getByText(/open one of the direct actions below to reach out right away/i),
+      screen.getByText(
+        /use one of the direct actions below to reach out right away/i,
+      ),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /^contact$/i }));
 
     expect(scrollIntoView).not.toHaveBeenCalled();
-    expect(screen.getByText(/choose how to reach out below/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/choose a direct way to reach out below/i),
+    ).toBeInTheDocument();
   });
 
   it("connects inline when instant connect succeeds", async () => {
@@ -308,26 +323,31 @@ describe("PublicSmartCard", () => {
     });
 
     render(
-      React.createElement(PublicSmartCard, {
-        profile: createProfile({
-          instantConnectUrl: "https://dotly.id/q/profile-qr-1",
-          smartCard: {
-            primaryAction: "instant_connect",
-            actionState: {
-              requestAccessEnabled: true,
-              instantConnectEnabled: true,
-              contactMeEnabled: false,
+      React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(ToastViewport),
+        React.createElement(PublicSmartCard, {
+          profile: createProfile({
+            instantConnectUrl: "https://dotly.id/q/profile-qr-1",
+            smartCard: {
+              primaryAction: "instant_connect",
+              actionState: {
+                requestAccessEnabled: true,
+                instantConnectEnabled: true,
+                contactMeEnabled: false,
+              },
+              actionLinks: {
+                call: null,
+                whatsapp: null,
+                email: null,
+                vcard: null,
+              },
             },
-            actionLinks: {
-              call: null,
-              whatsapp: null,
-              email: null,
-              vcard: null,
-            },
-          },
+          }),
+          initialPersonas: createPersonas(),
         }),
-        initialPersonas: createPersonas(),
-      }),
+      ),
     );
 
     await user.click(screen.getByRole("button", { name: /^connect$/i }));
@@ -348,6 +368,7 @@ describe("PublicSmartCard", () => {
       }),
     );
     expect(screen.getByText(/connected instantly/i)).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent(/connected/i);
     expect(assignLocation).not.toHaveBeenCalled();
   });
 
@@ -388,7 +409,10 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    await user.selectOptions(screen.getByLabelText(/connecting as/i), "persona-2");
+    await user.selectOptions(
+      screen.getByLabelText(/connecting as/i),
+      "persona-2",
+    );
     await user.click(screen.getByRole("button", { name: /^connect$/i }));
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -462,7 +486,9 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /log in to continue/i }));
+    await user.click(
+      screen.getByRole("button", { name: /log in to continue/i }),
+    );
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(assignLocation).toHaveBeenCalledWith("/login?next=%2Fu%2Fjane");
@@ -559,10 +585,12 @@ describe("PublicSmartCard", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: /request intro/i }),
+        screen.getByRole("button", { name: /request access/i }),
       ).toBeEnabled();
     });
-    expect(screen.getByRole("alert")).toHaveTextContent(/request access instead/i);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /request access instead/i,
+    );
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
   });
 
@@ -603,7 +631,10 @@ describe("PublicSmartCard", () => {
           }),
           initialPersonas: createPersonas(),
         }),
-        React.createElement("div", { id: "request-access-panel", tabIndex: -1 }),
+        React.createElement("div", {
+          id: "request-access-panel",
+          tabIndex: -1,
+        }),
       ),
     );
 
@@ -612,9 +643,7 @@ describe("PublicSmartCard", () => {
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(/has blocked you/i);
     });
-    expect(
-      screen.getByRole("button", { name: /^connect$/i }),
-    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeEnabled();
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
@@ -630,24 +659,29 @@ describe("PublicSmartCard", () => {
     });
 
     render(
-      React.createElement(PublicSmartCard, {
-        profile: createProfile({
-          smartCard: {
-            primaryAction: "request_access",
-            actionState: {
-              requestAccessEnabled: true,
-              instantConnectEnabled: false,
-              contactMeEnabled: true,
+      React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(ToastViewport),
+        React.createElement(PublicSmartCard, {
+          profile: createProfile({
+            smartCard: {
+              primaryAction: "request_access",
+              actionState: {
+                requestAccessEnabled: true,
+                instantConnectEnabled: false,
+                contactMeEnabled: true,
+              },
+              actionLinks: {
+                call: null,
+                whatsapp: null,
+                email: null,
+                vcard: "/api/public/jane/vcard",
+              },
             },
-            actionLinks: {
-              call: null,
-              whatsapp: null,
-              email: null,
-              vcard: "/api/public/jane/vcard",
-            },
-          },
+          }),
         }),
-      }),
+      ),
     );
 
     await user.click(screen.getByRole("button", { name: /^save$/i }));
@@ -657,7 +691,9 @@ describe("PublicSmartCard", () => {
     });
     expect(createObjectUrl).toHaveBeenCalledTimes(1);
     expect(revokeObjectUrl).toHaveBeenCalledTimes(1);
-    expect(screen.getByText(/contact download started/i)).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      /contact saved/i,
+    );
   });
 
   it("shows a lightweight error when the vcard download fails", async () => {
@@ -747,7 +783,7 @@ describe("PublicSmartCard", () => {
     await user.click(saveContactButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/contact download started/i)).toBeInTheDocument();
+      expect(screen.getByText(/contact saved/i)).toBeInTheDocument();
     });
   });
 
@@ -776,7 +812,9 @@ describe("PublicSmartCard", () => {
     expect(
       screen.queryByRole("button", { name: /^save$/i }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /request intro/i })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: /request access/i }),
+    ).toBeEnabled();
   });
 
   it("falls back to request access when instant connect has no public QR target", () => {
@@ -802,8 +840,12 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    expect(screen.getByRole("button", { name: /request intro/i })).toBeInTheDocument();
-    expect(screen.getByText(/showing request intro right now/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /request access/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/showing request access right now/i),
+    ).toBeInTheDocument();
   });
 
   it("falls back to request access when contact me is unavailable but requests are enabled", () => {
@@ -828,8 +870,12 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    expect(screen.getByRole("button", { name: /request intro/i })).toBeEnabled();
-    expect(screen.getByText(/showing request intro right now/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /request access/i }),
+    ).toBeEnabled();
+    expect(
+      screen.getByText(/showing request access right now/i),
+    ).toBeInTheDocument();
   });
 
   it("shows a disabled CTA with helper text when no fallback is available", () => {
@@ -857,7 +903,9 @@ describe("PublicSmartCard", () => {
     expect(screen.getByRole("button", { name: /^contact$/i })).toBeDisabled();
     expect(screen.getByText(/try again later/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/open one of the direct actions below to reach out right away/i),
+      screen.getByText(
+        /use one of the direct actions below to reach out right away/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -899,9 +947,7 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    expect(
-      screen.getByText(/profile not available/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/profile not available/i)).toBeInTheDocument();
   });
 
   it("uses safe public actions even when channels are redacted", () => {
@@ -954,7 +1000,9 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    expect(screen.getByRole("button", { name: /request intro/i })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: /request access/i }),
+    ).toBeEnabled();
   });
 
   it("fails closed when action links are missing from a partial smart card payload", () => {
@@ -983,7 +1031,11 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    expect(screen.queryByRole("link", { name: /call/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /request intro/i })).toBeEnabled();
+    expect(
+      screen.queryByRole("link", { name: /call/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /request access/i }),
+    ).toBeEnabled();
   });
 });

@@ -308,7 +308,6 @@ export class RelationshipsService {
     }
 
     return {
-      success: true,
       relationshipId: relationshipResult.id,
       status: "connected" as const,
     };

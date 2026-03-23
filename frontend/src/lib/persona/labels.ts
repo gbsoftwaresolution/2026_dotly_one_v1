@@ -31,7 +31,7 @@ export const personaSharingModeOptions: Array<{
 }> = [
   {
     value: "controlled",
-    label: "Approval first",
+    label: "Controlled",
     description:
       "Start with a request before any direct contact details are shared",
   },
@@ -47,9 +47,9 @@ export const personaSmartCardPrimaryActionOptions: Array<{
   value: PersonaSmartCardPrimaryAction;
   label: string;
 }> = [
-  { value: "request_access", label: "Request intro" },
-  { value: "instant_connect", label: "Connect instantly" },
-  { value: "contact_me", label: "Contact directly" },
+  { value: "request_access", label: "Request Access" },
+  { value: "instant_connect", label: "Connect" },
+  { value: "contact_me", label: "Contact" },
 ];
 
 export function formatAccessMode(accessMode: PersonaAccessMode): string {

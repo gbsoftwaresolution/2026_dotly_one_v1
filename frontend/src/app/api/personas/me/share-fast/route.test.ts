@@ -28,17 +28,23 @@ describe("GET /api/personas/me/share-fast", () => {
   it("returns the proxied fast-share payload for the authenticated user", async () => {
     mocks.getServerAccessToken.mockResolvedValue("token");
     mocks.apiRequest.mockResolvedValue({
-      selectedPersonaId: "persona-1",
-      sharePayload: {
-        personaId: "persona-1",
+      persona: {
+        id: "persona-1",
         username: "sender",
         fullName: "Sender Persona",
         profilePhotoUrl: null,
+      },
+      share: {
         shareUrl: "https://dotly.one/u/sender",
         qrValue: "https://dotly.one/u/sender",
-        primaryAction: null,
-        hasQuickConnect: false,
-        quickConnectUrl: null,
+        primaryAction: "request_access",
+        effectiveActions: {
+          canCall: false,
+          canWhatsapp: false,
+          canEmail: false,
+          canSaveContact: false,
+        },
+        preferredShareType: "smart_card",
       },
     });
 

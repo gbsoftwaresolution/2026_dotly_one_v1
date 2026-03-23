@@ -48,8 +48,8 @@ export function SecondaryButton({
             "bg-white border border-black/[0.08] text-slate-900",
             "hover:bg-slate-50 hover:border-black/[0.12]",
             // Shared interactions
-            "transition-all duration-250 ease-spring",
-            "hover:-translate-y-px active:scale-[0.97] active:translate-y-0",
+            "tap-feedback transition-[transform,background-color,border-color,box-shadow,color,opacity] duration-[160ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+            "hover:-translate-y-px active:translate-y-0",
             "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:focus-visible:ring-offset-bgOnyx",
           ],
         // Loading state
@@ -61,6 +61,7 @@ export function SecondaryButton({
         // Success state
         isSuccess && [
           "border border-status-success/30 bg-status-success/10 text-status-success",
+          "tap-feedback transition-[transform,background-color,border-color,box-shadow,color,opacity] duration-[160ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
         ],
         // Disabled
         disabled && !isLoading && "opacity-40 cursor-not-allowed",

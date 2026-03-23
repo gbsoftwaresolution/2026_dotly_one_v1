@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
@@ -62,6 +64,7 @@ export class QrController {
 
   @UseGuards(JwtAuthGuard)
   @Post("qr/:code/connect")
+  @HttpCode(HttpStatus.OK)
   connectQuickConnectQr(
     @CurrentUser() user: AuthenticatedUser,
     @Param("code") code: string,

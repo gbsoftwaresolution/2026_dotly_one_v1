@@ -11,6 +11,15 @@ export type PersonaSmartCardPrimaryAction =
   | "instant_connect"
   | "contact_me";
 
+export type PersonaSharePreferredShareType = "smart_card" | "instant_connect";
+
+export interface PersonaShareEffectiveActions {
+  canCall: boolean;
+  canWhatsapp: boolean;
+  canEmail: boolean;
+  canSaveContact: boolean;
+}
+
 export interface PersonaSmartCardActionState {
   requestAccessEnabled: boolean;
   instantConnectEnabled: boolean;
@@ -84,14 +93,27 @@ export interface PersonaFastSharePayload {
   profilePhotoUrl: string | null;
   shareUrl: string;
   qrValue: string;
-  primaryAction: PersonaSmartCardPrimaryAction | null;
+  primaryAction: PersonaSmartCardPrimaryAction;
+  effectiveActions: PersonaShareEffectiveActions;
+  preferredShareType: PersonaSharePreferredShareType;
   hasQuickConnect: boolean;
   quickConnectUrl: string | null;
 }
 
 export interface MyFastSharePayload {
-  selectedPersonaId: string | null;
-  sharePayload: PersonaFastSharePayload | null;
+  persona: {
+    id: string;
+    username: string;
+    fullName: string;
+    profilePhotoUrl: string | null;
+  } | null;
+  share: {
+    shareUrl: string;
+    qrValue: string;
+    primaryAction: PersonaSmartCardPrimaryAction;
+    effectiveActions: PersonaShareEffectiveActions;
+    preferredShareType: PersonaSharePreferredShareType;
+  } | null;
 }
 
 export interface CreatePersonaInput {
@@ -137,7 +159,6 @@ export interface PublicProfile {
 }
 
 export interface InstantConnectResult {
-  success: boolean;
   relationshipId: string;
   status: "connected";
 }
@@ -188,7 +209,7 @@ export interface QuickConnectTargetPersona {
 
 export interface ConnectQuickConnectQrResult {
   relationshipId: string;
-  state: "instant_access";
+  status: "connected";
   accessStartAt: string;
   accessEndAt: string;
   targetPersona: QuickConnectTargetPersona;

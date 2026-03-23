@@ -120,6 +120,7 @@ export class AuthController {
   }
 
   @Post("verify-email/resend")
+  @HttpCode(200)
   resendVerificationEmail(
     @Body() resendVerificationEmailDto: ResendVerificationEmailDto,
     @Headers("x-request-id") requestId?: string,
@@ -134,6 +135,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post("change-password")
+  @HttpCode(200)
   changePassword(
     @CurrentUser() user: AuthenticatedUser,
     @Body() changePasswordDto: ChangePasswordDto,
@@ -151,6 +153,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post("mobile-otp/request")
+  @HttpCode(200)
   requestMobileOtp(
     @CurrentUser() user: AuthenticatedUser,
     @Body() requestMobileOtpDto: RequestMobileOtpDto,
@@ -167,6 +170,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post("mobile-otp/verify")
+  @HttpCode(200)
   verifyMobileOtp(
     @CurrentUser() user: AuthenticatedUser,
     @Body() verifyMobileOtpDto: VerifyMobileOtpDto,

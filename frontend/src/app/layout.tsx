@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/context/ThemeContext";
+import { ToastViewport } from "@/components/shared/toast-viewport";
 import { dotlyPositioning } from "@/lib/constants/positioning";
 import { pwaConfig } from "@/lib/constants/pwa";
 import { buildThemeInitScript } from "@/lib/theme/theme";
@@ -121,7 +122,10 @@ export default function RootLayout({
         className="bg-background text-foreground transition-theme overflow-x-hidden"
         suppressHydrationWarning
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <ToastViewport />
+        </ThemeProvider>
       </body>
     </html>
   );

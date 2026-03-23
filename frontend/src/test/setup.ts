@@ -39,6 +39,18 @@ Object.defineProperty(navigator, "clipboard", {
   },
 });
 
+Object.defineProperty(window, "scrollTo", {
+  configurable: true,
+  writable: true,
+  value: vi.fn(),
+});
+
+Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+  configurable: true,
+  writable: true,
+  value: vi.fn(),
+});
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
