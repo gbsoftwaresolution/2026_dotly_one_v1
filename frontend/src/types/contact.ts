@@ -47,6 +47,7 @@ export interface ContactFollowUpSummary {
 }
 
 export interface Contact {
+  id?: string;
   relationshipId: string;
   state: ContactRelationshipState;
   createdAt: string;
@@ -60,6 +61,7 @@ export interface Contact {
   sourceType: ContactRequestSourceType;
   targetPersona: ContactTargetPersona;
   memory: ContactMemory;
+  followUpSummary: ContactFollowUpSummary;
   metadata: ContactRelationshipMetadata;
 }
 

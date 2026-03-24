@@ -3,10 +3,6 @@ import Link from "next/link";
 import { Card } from "@/components/shared/card";
 import { ExpiryBadge } from "@/components/shared/expiry-badge";
 import { StatusBadge } from "@/components/shared/status-badge";
-import {
-  getPassiveReminderBadgeLabel,
-  getPassiveReminderBody,
-} from "@/lib/follow-ups/passive-reminder";
 import { routes } from "@/lib/constants/routes";
 import {
   formatConnectionContext,
@@ -52,14 +48,20 @@ function isNearExpiry(accessEndAt: string): boolean {
   return hoursUntilExpiry <= 24;
 }
 
+type ContactCardPriorityTone = "attention" | "recent" | "planned";
+
 interface ContactCardProps {
   contact: Contact;
   hasPassiveReminder?: boolean;
+  priorityLabel?: string;
+  priorityTone?: ContactCardPriorityTone;
 }
 
 export function ContactCard({
   contact,
   hasPassiveReminder = false,
+  priorityLabel,
+  priorityTone,
 }: ContactCardProps) {
   const {
     targetPersona,
@@ -98,6 +100,8 @@ export function ContactCard({
     connectionSource,
     contextLabel,
   );
+  const fallbackPriorityTone = hasPassiveReminder ? "attention" : undefined;
+  const resolvedPriorityTone = priorityTone ?? fallbackPriorityTone;
 
   return (
     <Link
@@ -109,7 +113,18 @@ export function ContactCard({
           "space-y-4 transition-all hover:bg-slate-50/50 active:scale-[0.99] dark:hover:bg-zinc-900/50",
           nearExpiry &&
             "border-amber-400/40 dark:border-amber-500/30 shadow-[0_0_20px_rgba(251,191,36,0.12)]",
-          hasPassiveReminder &&
+          !nearExpiry &&
+            resolvedPriorityTone === "attention" &&
+            "border-rose-200/80 bg-rose-50/50 dark:border-rose-300/15 dark:bg-rose-300/[0.05]",
+          !nearExpiry &&
+            resolvedPriorityTone === "recent" &&
+            "border-emerald-200/80 bg-emerald-50/40 dark:border-emerald-300/15 dark:bg-emerald-300/[0.05]",
+          !nearExpiry &&
+            resolvedPriorityTone === "planned" &&
+            "border-sky-200/80 bg-sky-50/40 dark:border-sky-300/15 dark:bg-sky-300/[0.05]",
+          !nearExpiry &&
+            !resolvedPriorityTone &&
+            hasPassiveReminder &&
             !nearExpiry &&
             "border-cyan-200/80 bg-cyan-50/40 dark:border-brandCyan/20 dark:bg-brandCyan/[0.07]",
         )}
@@ -134,6 +149,20 @@ export function ContactCard({
           )}
 
           <div className="min-w-0 flex-1 space-y-1 pt-1">
+            {priorityLabel ? (
+              <p
+                className={cn(
+                  "font-mono text-[10px] font-semibold uppercase tracking-widest",
+                  resolvedPriorityTone === "attention"
+                    ? "text-rose-700 dark:text-rose-300"
+                    : resolvedPriorityTone === "planned"
+                      ? "text-sky-700 dark:text-sky-300"
+                    : "text-emerald-700 dark:text-emerald-300",
+                )}
+              >
+                {priorityLabel}
+              </p>
+            ) : null}
             <h2 className="truncate font-sans text-base font-semibold text-foreground">
               {targetPersona.fullName}
             </h2>
@@ -159,17 +188,6 @@ export function ContactCard({
             ) : null}
           </div>
         </div>
-
-        {hasPassiveReminder ? (
-          <div className="rounded-2xl border border-cyan-200/80 bg-cyan-50/70 px-4 py-3 dark:border-brandCyan/20 dark:bg-brandCyan/[0.08]">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-cyan-700 dark:text-brandCyan">
-              {getPassiveReminderBadgeLabel()}
-            </p>
-            <p className="mt-1 font-sans text-xs leading-5 text-cyan-900 dark:text-white/78">
-              {getPassiveReminderBody()}
-            </p>
-          </div>
-        ) : null}
 
         {memory.note ? (
           <div className="rounded-2xl border border-border/80 bg-surface/70 px-4 py-3">

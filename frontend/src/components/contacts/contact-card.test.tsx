@@ -9,6 +9,7 @@ import { ContactCard } from "./contact-card";
 
 function createContact(overrides: Partial<Contact> = {}): Contact {
   return {
+    id: "relationship-id",
     relationshipId: "relationship-id",
     state: "approved",
     createdAt: "2026-03-08T12:00:00.000Z",
@@ -34,6 +35,15 @@ function createContact(overrides: Partial<Contact> = {}): Contact {
       metAt: "2026-03-08T12:00:00.000Z",
       sourceLabel: null,
       note: null,
+    },
+    followUpSummary: {
+      hasPendingFollowUp: false,
+      nextFollowUpAt: null,
+      pendingFollowUpCount: 0,
+      hasPassiveInactivityFollowUp: false,
+      isTriggered: false,
+      isOverdue: false,
+      isUpcomingSoon: false,
     },
     metadata: {
       lastInteractionAt: "2026-03-21T12:00:00.000Z",
@@ -99,6 +109,15 @@ describe("ContactCard", () => {
     render(
       React.createElement(ContactCard, {
         contact: createContact({
+          followUpSummary: {
+            hasPendingFollowUp: true,
+            nextFollowUpAt: "2026-03-25T12:00:00.000Z",
+            pendingFollowUpCount: 1,
+            hasPassiveInactivityFollowUp: true,
+            isTriggered: false,
+            isOverdue: false,
+            isUpcomingSoon: false,
+          },
           metadata: {
             lastInteractionAt: "2026-03-01T12:00:00.000Z",
             interactionCount: 0,
@@ -108,13 +127,45 @@ describe("ContactCard", () => {
           },
         }),
         hasPassiveReminder: true,
+        priorityLabel: "Reconnect",
+        priorityTone: "attention",
       }),
     );
 
-    expect(screen.getByText(/stay in touch/i)).toBeInTheDocument();
+    expect(screen.getByText("Reconnect")).toBeInTheDocument();
+    expect(screen.queryByText(/stay in touch/i)).not.toBeInTheDocument();
     expect(
-      screen.getByText(/you haven't interacted in a while/i),
-    ).toBeInTheDocument();
+      screen.queryByText(/you haven't interacted in a while/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders scheduled follow-ups with a lighter planned label", () => {
+    render(
+      React.createElement(ContactCard, {
+        contact: createContact({
+          followUpSummary: {
+            hasPendingFollowUp: true,
+            nextFollowUpAt: "2026-03-28T12:00:00.000Z",
+            pendingFollowUpCount: 1,
+            hasPassiveInactivityFollowUp: false,
+            isTriggered: false,
+            isOverdue: false,
+            isUpcomingSoon: false,
+          },
+          metadata: {
+            lastInteractionAt: "2026-03-10T12:00:00.000Z",
+            interactionCount: 1,
+            hasInteractions: true,
+            isRecentlyActive: false,
+            relationshipAgeDays: 12,
+          },
+        }),
+        priorityLabel: "Planned",
+        priorityTone: "planned",
+      }),
+    );
+
+    expect(screen.getByText("Planned")).toBeInTheDocument();
   });
 
   it("surfaces a private note preview when one exists", () => {

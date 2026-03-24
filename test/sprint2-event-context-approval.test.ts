@@ -350,11 +350,17 @@ describe("Sprint 2 event approval context", () => {
       "owner-user",
       "relationship-context-fallback",
     );
+    const memoryFirstContact = list.find(
+      (relationship) => relationship.relationshipId === "relationship-memory-first",
+    );
+    const contextFallbackContact = list.find(
+      (relationship) => relationship.relationshipId === "relationship-context-fallback",
+    );
 
-    assert.equal(list[0]?.memory.sourceLabel, "Event");
-    assert.equal(list[0]?.contextLabel, "Memory Event Label");
-    assert.equal(list[1]?.memory.sourceLabel, "Event");
-    assert.equal(list[1]?.contextLabel, "Connection Event Label");
+    assert.equal(memoryFirstContact?.memory.sourceLabel, "Event");
+    assert.equal(memoryFirstContact?.contextLabel, "Memory Event Label");
+    assert.equal(contextFallbackContact?.memory.sourceLabel, "Event");
+    assert.equal(contextFallbackContact?.contextLabel, "Connection Event Label");
     assert.equal(detail.memory.sourceLabel, "Event");
     assert.equal(detail.contextLabel, "Connection Event Label");
   });

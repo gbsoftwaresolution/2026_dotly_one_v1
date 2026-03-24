@@ -128,6 +128,16 @@ type FollowUpCreateRecord = Prisma.FollowUpGetPayload<{
   select: typeof followUpCreateSelect;
 }>;
 
+type RelationshipFollowUpSummary = {
+  hasPendingFollowUp: boolean;
+  nextFollowUpAt: Date | null;
+  pendingFollowUpCount: number;
+  hasPassiveInactivityFollowUp: boolean;
+  isTriggered: boolean;
+  isOverdue: boolean;
+  isUpcomingSoon: boolean;
+};
+
 type PassiveFollowUpCandidate = {
   id: string;
   ownerUserId: string;
@@ -437,54 +447,75 @@ export class FollowUpsService {
     userId: string,
     relationshipId: string,
   ) {
-    await this.relationshipsService.expireOwnedExpiredRelationships(userId);
-
-    const now = new Date();
-    const where = {
-      ownerUserId: userId,
+    const summaries = await this.getFollowUpSummariesForRelationships(userId, [
       relationshipId,
-      ...buildActiveRelationshipFollowUpWhere(now, userId),
-      status: PrismaFollowUpStatus.PENDING,
-    } satisfies Prisma.FollowUpWhereInput;
-
-    const [aggregate, nextFollowUp] = await Promise.all([
-      this.prismaService.followUp.aggregate({
-        where,
-        _count: {
-          id: true,
-        },
-        _min: {
-          remindAt: true,
-        },
-      }),
-      this.prismaService.followUp.findFirst({
-        where,
-        orderBy: [{ remindAt: "asc" }, { createdAt: "asc" }, { id: "asc" }],
-        select: {
-          remindAt: true,
-          triggeredAt: true,
-          status: true,
-          isSystemGenerated: true,
-          type: true,
-        },
-      }),
     ]);
 
-    const pendingFollowUpCount = aggregate._count.id;
-    const metadata = nextFollowUp
-      ? this.buildFollowUpMetadata(nextFollowUp, now)
-      : buildEmptyFollowUpMetadata();
+    return summaries.get(relationshipId) ?? buildEmptyRelationshipFollowUpSummary();
+  }
 
-    return {
-      hasPendingFollowUp: pendingFollowUpCount > 0,
-      nextFollowUpAt: aggregate._min.remindAt ?? null,
-      pendingFollowUpCount,
-      hasPassiveInactivityFollowUp: Boolean(
-        nextFollowUp?.isSystemGenerated &&
-          nextFollowUp.type === PrismaFollowUpType.INACTIVITY,
-      ),
-      ...metadata,
-    };
+  async getFollowUpSummariesForRelationships(
+    userId: string,
+    relationshipIds: string[],
+  ) {
+    await this.relationshipsService.expireOwnedExpiredRelationships(userId);
+
+    if (relationshipIds.length === 0) {
+      return new Map<string, RelationshipFollowUpSummary>();
+    }
+
+    const now = new Date();
+    const followUps = await this.prismaService.followUp.findMany({
+      where: {
+        ownerUserId: userId,
+        relationshipId: {
+          in: relationshipIds,
+        },
+        ...buildActiveRelationshipFollowUpWhere(now, userId),
+        status: PrismaFollowUpStatus.PENDING,
+      },
+      orderBy: [
+        { relationshipId: "asc" },
+        { remindAt: "asc" },
+        { createdAt: "asc" },
+        { id: "asc" },
+      ],
+      select: {
+        id: true,
+        relationshipId: true,
+        remindAt: true,
+        triggeredAt: true,
+        status: true,
+        isSystemGenerated: true,
+        type: true,
+        createdAt: true,
+      },
+    });
+
+    const summaries = new Map<string, RelationshipFollowUpSummary>();
+
+    for (const followUp of followUps) {
+      const existingSummary = summaries.get(followUp.relationshipId);
+
+      if (!existingSummary) {
+        summaries.set(followUp.relationshipId, {
+          hasPendingFollowUp: true,
+          nextFollowUpAt: followUp.remindAt,
+          pendingFollowUpCount: 1,
+          hasPassiveInactivityFollowUp: Boolean(
+            followUp.isSystemGenerated &&
+              followUp.type === PrismaFollowUpType.INACTIVITY,
+          ),
+          ...this.buildFollowUpMetadata(followUp, now),
+        });
+
+        continue;
+      }
+
+      existingSummary.pendingFollowUpCount += 1;
+    }
+
+    return summaries;
   }
 
   async updateFollowUp(userId: string, id: string, dto: UpdateFollowUpDto) {
@@ -1037,6 +1068,16 @@ function buildEmptyFollowUpMetadata() {
     isOverdue: false,
     isUpcomingSoon: false,
     isTriggered: false,
+  };
+}
+
+function buildEmptyRelationshipFollowUpSummary(): RelationshipFollowUpSummary {
+  return {
+    hasPendingFollowUp: false,
+    nextFollowUpAt: null,
+    pendingFollowUpCount: 0,
+    hasPassiveInactivityFollowUp: false,
+    ...buildEmptyFollowUpMetadata(),
   };
 }
 

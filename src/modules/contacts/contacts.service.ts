@@ -20,6 +20,7 @@ import { FollowUpsService } from "../follow-ups/follow-ups.service";
 import { RelationshipsService } from "../relationships/relationships.service";
 
 import { ListContactsQueryDto } from "./dto/list-contacts-query.dto";
+import { calculateRelationshipPriority } from "./relationship-priority.util";
 import { UpdateContactNoteDto } from "./dto/update-contact-note.dto";
 
 const RECENT_ACTIVITY_WINDOW_DAYS = 7;
@@ -119,6 +120,16 @@ type RelationshipTimeline = {
   contextLabel: string | null;
 };
 
+type RelationshipFollowUpSummary = {
+  hasPendingFollowUp: boolean;
+  nextFollowUpAt: Date | null;
+  pendingFollowUpCount: number;
+  hasPassiveInactivityFollowUp: boolean;
+  isTriggered: boolean;
+  isOverdue: boolean;
+  isUpcomingSoon: boolean;
+};
+
 @Injectable()
 export class ContactsService {
   constructor(
@@ -201,9 +212,20 @@ export class ContactsService {
       },
     );
 
-    return relationships.map((relationship) =>
-      this.toContactListItem(relationship, now),
+    const followUpSummaries = await this.getFollowUpSummaries(
+      userId,
+      relationships.map((relationship) => relationship.id),
     );
+
+    return relationships
+      .map((relationship) =>
+        this.toContactListItem(
+          relationship,
+          now,
+          followUpSummaries.get(relationship.id) ?? buildEmptyFollowUpSummary(),
+        ),
+      )
+      .sort(compareContactListItemsByPriority);
   }
 
   async findOne(userId: string, relationshipId: string) {
@@ -326,13 +348,34 @@ export class ContactsService {
   private toContactListItem(
     relationship: ContactListRelationshipRecord,
     now: Date,
+    followUpSummary: RelationshipFollowUpSummary,
   ) {
-    const memory = relationship.memories[0];
     const timeline = this.buildRelationshipTimeline(relationship);
     const metadata = this.buildRelationshipMetadata(relationship, now);
     const sourceLabel = this.buildMemorySourceLabel(relationship);
+    const contact = {
+      id: relationship.targetPersona.id,
+      username: relationship.targetPersona.username,
+      publicUrl: relationship.targetPersona.publicUrl,
+      fullName: relationship.targetPersona.fullName,
+      jobTitle: relationship.targetPersona.jobTitle,
+      companyName: relationship.targetPersona.companyName,
+      tagline: relationship.targetPersona.tagline,
+      profilePhotoUrl: relationship.targetPersona.profilePhotoUrl,
+    };
+    const priorityScore = calculateRelationshipPriority(
+      {
+        lastInteractionAt: metadata.lastInteractionAt,
+        connectedAt: timeline.connectedAt,
+        hasPendingFollowUp: followUpSummary.hasPendingFollowUp,
+        isOverdue: followUpSummary.isOverdue,
+        isUpcomingSoon: followUpSummary.isUpcomingSoon,
+      },
+      now,
+    );
 
     return {
+      id: relationship.id,
       relationshipId: relationship.id,
       state: toApiRelationshipState(relationship.state),
       createdAt: relationship.createdAt,
@@ -343,24 +386,19 @@ export class ContactsService {
       ),
       contextLabel: timeline.contextLabel,
       accessEndAt: relationship.accessEndAt,
+      priorityScore,
       lastInteractionAt: metadata.lastInteractionAt,
+      hasPendingFollowUp: followUpSummary.hasPendingFollowUp,
       interactionCount: metadata.interactionCount,
       sourceType: toApiContactRequestSourceType(relationship.sourceType),
-      targetPersona: {
-        id: relationship.targetPersona.id,
-        username: relationship.targetPersona.username,
-        publicUrl: relationship.targetPersona.publicUrl,
-        fullName: relationship.targetPersona.fullName,
-        jobTitle: relationship.targetPersona.jobTitle,
-        companyName: relationship.targetPersona.companyName,
-        tagline: relationship.targetPersona.tagline,
-        profilePhotoUrl: relationship.targetPersona.profilePhotoUrl,
-      },
+      contact,
+      targetPersona: contact,
       memory: {
         metAt: timeline.metAt,
         sourceLabel,
         note: relationship.notes ?? null,
       },
+      followUpSummary,
       metadata,
     };
   }
@@ -429,6 +467,35 @@ export class ContactsService {
       userId,
       relationshipId,
     );
+  }
+
+  private async getFollowUpSummaries(userId: string, relationshipIds: string[]) {
+    if (!this.followUpsService || relationshipIds.length === 0) {
+      return new Map<string, RelationshipFollowUpSummary>();
+    }
+
+    const followUpsService = this.followUpsService;
+
+    if (
+      typeof followUpsService.getFollowUpSummariesForRelationships === "function"
+    ) {
+      return followUpsService.getFollowUpSummariesForRelationships(
+        userId,
+        relationshipIds,
+      );
+    }
+
+    const summaries = await Promise.all(
+      relationshipIds.map(async (relationshipId) => [
+        relationshipId,
+        await followUpsService.getFollowUpSummaryForRelationship(
+          userId,
+          relationshipId,
+        ),
+      ] as const),
+    );
+
+    return new Map(summaries);
   }
 
   private buildRelationshipMetadata(
@@ -801,4 +868,38 @@ function buildEmptyFollowUpSummary() {
     isOverdue: false,
     isUpcomingSoon: false,
   };
+}
+
+function compareContactListItemsByPriority(
+  left: {
+    priorityScore: number;
+    lastInteractionAt: Date | null;
+    createdAt: Date;
+    relationshipId: string;
+  },
+  right: {
+    priorityScore: number;
+    lastInteractionAt: Date | null;
+    createdAt: Date;
+    relationshipId: string;
+  },
+) {
+  if (right.priorityScore !== left.priorityScore) {
+    return right.priorityScore - left.priorityScore;
+  }
+
+  const leftLastInteractionAt = left.lastInteractionAt?.getTime() ?? -1;
+  const rightLastInteractionAt = right.lastInteractionAt?.getTime() ?? -1;
+
+  if (rightLastInteractionAt !== leftLastInteractionAt) {
+    return rightLastInteractionAt - leftLastInteractionAt;
+  }
+
+  const createdAtDelta = right.createdAt.getTime() - left.createdAt.getTime();
+
+  if (createdAtDelta !== 0) {
+    return createdAtDelta;
+  }
+
+  return left.relationshipId.localeCompare(right.relationshipId);
 }
