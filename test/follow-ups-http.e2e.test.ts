@@ -259,6 +259,31 @@ describe("Follow-ups HTTP E2E", () => {
     assert.equal(createCalls.length, 0);
   });
 
+  it("rejects non-ISO remindAt values before reaching the service", async () => {
+    const token = await jwtService.signAsync({
+      sub: "user-84",
+      email: "user84@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(`${baseUrl}/v1/follow-ups`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        relationshipId: "4b26dc1f-9238-46db-89c5-d9d2476f8c51",
+        remindAt: "April 10 2099 10:00 AM",
+      }),
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.success, false);
+    assert.equal(createCalls.length, 0);
+  });
+
   it("rejects invalid relationship ids before reaching the service", async () => {
     const token = await jwtService.signAsync({
       sub: "user-84",
@@ -279,6 +304,62 @@ describe("Follow-ups HTTP E2E", () => {
     });
 
     assert.equal(response.status, 400);
+    assert.equal(createCalls.length, 0);
+  });
+
+  it("accepts preset-based creation with minimal input", async () => {
+    const token = await jwtService.signAsync({
+      sub: "user-84",
+      email: "user84@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(`${baseUrl}/v1/follow-ups`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        relationshipId: "4b26dc1f-9238-46db-89c5-d9d2476f8c51",
+        preset: "TOMORROW",
+      }),
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 201);
+    assert.equal(payload.success, true);
+    assert.deepEqual(JSON.parse(JSON.stringify(createCalls.at(-1))), {
+      userId: "user-84",
+      payload: {
+        relationshipId: "4b26dc1f-9238-46db-89c5-d9d2476f8c51",
+        preset: "TOMORROW",
+      },
+    });
+  });
+
+  it("rejects invalid follow-up presets before reaching the service", async () => {
+    const token = await jwtService.signAsync({
+      sub: "user-84",
+      email: "user84@example.com",
+      sessionId: TEST_SESSION_ID,
+    });
+
+    const response = await fetch(`${baseUrl}/v1/follow-ups`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        relationshipId: "4b26dc1f-9238-46db-89c5-d9d2476f8c51",
+        preset: "LATER",
+      }),
+    });
+    const payload = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(payload.success, false);
     assert.equal(createCalls.length, 0);
   });
 

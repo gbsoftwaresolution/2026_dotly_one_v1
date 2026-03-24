@@ -1,5 +1,6 @@
 import type {
   CreateFollowUpInput,
+  CreateFollowUpResponse,
   FollowUp,
   FollowUpListQuery,
   UpdateFollowUpInput,
@@ -28,7 +29,7 @@ function buildListPath(query?: FollowUpListQuery) {
 
 export const followUpsApi = {
   create: (payload: CreateFollowUpInput) =>
-    apiRequest<FollowUp>("/api/follow-ups", {
+    apiRequest<CreateFollowUpResponse>("/api/follow-ups", {
       method: "POST",
       body: payload,
       baseUrl: "",

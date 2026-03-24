@@ -6,7 +6,11 @@ import {
   clearAuthCookie,
   getServerAccessToken,
 } from "@/lib/auth/server-session";
-import type { CreateFollowUpInput, FollowUp } from "@/types/follow-up";
+import type {
+  CreateFollowUpInput,
+  CreateFollowUpResponse,
+  FollowUp,
+} from "@/types/follow-up";
 
 export async function GET(request: NextRequest) {
   const accessToken = await getServerAccessToken();
@@ -64,7 +68,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await apiRequest<FollowUp>("/follow-ups", {
+    const result = await apiRequest<CreateFollowUpResponse>("/follow-ups", {
       method: "POST",
       body,
       token: accessToken,

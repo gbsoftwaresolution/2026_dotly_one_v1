@@ -22,8 +22,10 @@ export type {
 } from "./contact";
 export type {
   CreateFollowUpInput,
+  CreateFollowUpResponse,
   FollowUp,
   FollowUpListQuery,
+  FollowUpPreset,
   FollowUpRelationship,
   FollowUpStatus,
   FollowUpTargetPersona,

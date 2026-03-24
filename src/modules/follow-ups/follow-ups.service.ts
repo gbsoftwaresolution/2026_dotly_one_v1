@@ -19,6 +19,7 @@ import { RelationshipsService } from "../relationships/relationships.service";
 import { CreateFollowUpDto } from "./dto/create-follow-up.dto";
 import { ListFollowUpsQueryDto } from "./dto/list-follow-ups-query.dto";
 import { UpdateFollowUpDto } from "./dto/update-follow-up.dto";
+import { resolveFollowUpPreset } from "./follow-up-preset.util";
 
 const UPCOMING_SOON_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -85,6 +86,13 @@ const followUpDetailSelect = {
   },
 } satisfies Prisma.FollowUpSelect;
 
+const followUpCreateSelect = {
+  id: true,
+  relationshipId: true,
+  remindAt: true,
+  status: true,
+} satisfies Prisma.FollowUpSelect;
+
 type PrismaClientLike = PrismaService | Prisma.TransactionClient;
 
 type FollowUpListRecord = Prisma.FollowUpGetPayload<{
@@ -93,6 +101,10 @@ type FollowUpListRecord = Prisma.FollowUpGetPayload<{
 
 type FollowUpDetailRecord = Prisma.FollowUpGetPayload<{
   select: typeof followUpDetailSelect;
+}>;
+
+type FollowUpCreateRecord = Prisma.FollowUpGetPayload<{
+  select: typeof followUpCreateSelect;
 }>;
 
 @Injectable()
@@ -110,17 +122,30 @@ export class FollowUpsService {
         dto.relationshipId,
       );
 
+      const now = new Date();
+      const remindAt = resolveCreateFollowUpRemindAt(dto, now);
+
       const createdFollowUp = await tx.followUp.create({
         data: {
           ownerUserId: userId,
           relationshipId: relationship.id,
-          remindAt: toRemindAtDate(dto.remindAt),
+          remindAt,
           note: dto.note ?? null,
+          status: PrismaFollowUpStatus.PENDING,
+          createdAt: now,
+          triggeredAt: null,
+          completedAt: null,
         },
-        select: followUpDetailSelect,
+        select: followUpCreateSelect,
       });
 
-      return this.toFollowUpView(createdFollowUp);
+      await this.relationshipsService.updateLastInteractionAt?.(
+        tx,
+        relationship.id,
+        now,
+      );
+
+      return this.toCreateFollowUpResponse(createdFollowUp);
     });
   }
 
@@ -393,6 +418,11 @@ export class FollowUpsService {
         select: followUpDetailSelect,
       });
 
+      await this.relationshipsService.updateLastInteractionAt?.(
+        tx,
+        followUp.relationshipId,
+      );
+
       return this.toFollowUpView(updatedFollowUp);
     });
   }
@@ -436,6 +466,11 @@ export class FollowUpsService {
         },
         select: followUpDetailSelect,
       });
+
+      await this.relationshipsService.updateLastInteractionAt?.(
+        tx,
+        followUp.relationshipId,
+      );
 
       return this.toFollowUpView(updatedFollowUp);
     });
@@ -638,6 +673,15 @@ export class FollowUpsService {
     };
   }
 
+  private toCreateFollowUpResponse(followUp: FollowUpCreateRecord) {
+    return {
+      id: followUp.id,
+      relationshipId: followUp.relationshipId,
+      remindAt: followUp.remindAt,
+      status: toApiFollowUpStatus(followUp.status),
+    };
+  }
+
   private buildFollowUpMetadata(
     followUp: Pick<
       FollowUpListRecord,
@@ -756,12 +800,31 @@ function buildEmptyFollowUpMetadata() {
   };
 }
 
-function toRemindAtDate(remindAt: string) {
+function resolveCreateFollowUpRemindAt(
+  dto: CreateFollowUpDto,
+  now: Date,
+): Date {
+  if (dto.preset !== undefined) {
+    return resolveFollowUpPreset(dto.preset, now);
+  }
+
+  const remindAt = dto.customDate ?? dto.remindAt;
+
+  if (remindAt === undefined) {
+    throw new BadRequestException(
+      "preset, customDate, or remindAt must be provided",
+    );
+  }
+
+  return toRemindAtDate(remindAt, now);
+}
+
+function toRemindAtDate(remindAt: string, now = new Date()) {
   const remindAtDate = new Date(remindAt);
 
   if (
     Number.isNaN(remindAtDate.getTime()) ||
-    remindAtDate.getTime() <= Date.now()
+    remindAtDate.getTime() <= now.getTime()
   ) {
     throw new BadRequestException("remindAt must be a future datetime");
   }

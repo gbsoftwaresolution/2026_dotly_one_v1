@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState, type FormEvent } from "react";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
@@ -15,10 +15,23 @@ import { followUpsApi } from "@/lib/api/follow-ups-api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
 import { cn } from "@/lib/utils/cn";
-import type { FollowUp } from "@/types/follow-up";
+import type {
+  CreateFollowUpResponse,
+  FollowUp,
+  FollowUpPreset,
+} from "@/types/follow-up";
 import type { ContactFollowUpSummary } from "@/types/contact";
 
-const MAX_NOTE_LENGTH = 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const QUICK_PRESETS: Array<{
+  label: string;
+  preset: FollowUpPreset;
+}> = [
+  { label: "Tomorrow", preset: "TOMORROW" },
+  { label: "Next Week", preset: "NEXT_WEEK" },
+  { label: "1 Month", preset: "ONE_MONTH" },
+];
 
 interface ContactFollowUpFormProps {
   relationshipId: string;
@@ -27,30 +40,40 @@ interface ContactFollowUpFormProps {
   disabled?: boolean;
 }
 
-function pad(value: number) {
-  return String(value).padStart(2, "0");
-}
-
 function formatDateInputValue(date: Date) {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function formatTimeInputValue(date: Date) {
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+function getTomorrowDateInputValue() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+
+  return formatDateInputValue(tomorrow);
 }
 
-function getDefaultReminderValues() {
-  const nextHour = new Date();
-  nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
-
-  return {
-    date: formatDateInputValue(nextHour),
-    time: formatTimeInputValue(nextHour),
-  };
+function formatDateTimeInputValue(date: Date) {
+  return `${formatDateInputValue(date)}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
-function toIsoString(date: string, time: string) {
-  const combined = new Date(`${date}T${time}`);
+function getDefaultCustomDateTimeValue() {
+  const tomorrowMorning = new Date();
+  tomorrowMorning.setDate(tomorrowMorning.getDate() + 1);
+  tomorrowMorning.setHours(9, 0, 0, 0);
+
+  return formatDateTimeInputValue(tomorrowMorning);
+}
+
+function getMinimumCustomDateTimeValue() {
+  const minimum = new Date();
+  minimum.setSeconds(0, 0);
+  minimum.setMinutes(minimum.getMinutes() + 5);
+
+  return formatDateTimeInputValue(minimum);
+}
+
+function toCustomDateIsoString(value: string) {
+  const combined = new Date(value);
 
   if (Number.isNaN(combined.getTime())) {
     return null;
@@ -66,8 +89,51 @@ function formatReminder(value: string) {
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZoneName: "short",
   }).format(new Date(value));
+}
+
+function formatReminderCount(count: number) {
+  return count === 1 ? "1 reminder in view" : `${count} reminders in view`;
+}
+
+function startOfDay(value: Date) {
+  const nextValue = new Date(value);
+  nextValue.setHours(0, 0, 0, 0);
+  return nextValue;
+}
+
+function getDayDifference(remindAt: string) {
+  const targetDate = new Date(remindAt);
+
+  if (Number.isNaN(targetDate.getTime())) {
+    return null;
+  }
+
+  const today = startOfDay(new Date()).getTime();
+  const target = startOfDay(targetDate).getTime();
+  return Math.round((target - today) / DAY_MS);
+}
+
+function formatFollowUpLabel(remindAt: string) {
+  const dayDifference = getDayDifference(remindAt);
+
+  if (dayDifference === null) {
+    return "soon";
+  }
+
+  if (dayDifference <= 0) {
+    return dayDifference === 0 ? "today" : "now";
+  }
+
+  if (dayDifference === 1) {
+    return "tomorrow";
+  }
+
+  if (dayDifference === 30) {
+    return "in 1 month";
+  }
+
+  return `in ${dayDifference} days`;
 }
 
 function getFollowUpSummaryState(summary: ContactFollowUpSummary | null) {
@@ -79,6 +145,7 @@ function getFollowUpSummaryState(summary: ContactFollowUpSummary | null) {
     return {
       eyebrow: "Pick this back up",
       title: "This conversation is waiting on you.",
+      detail: formatReminderCount(summary.pendingFollowUpCount),
       tone: "error" as const,
     };
   }
@@ -87,6 +154,7 @@ function getFollowUpSummaryState(summary: ContactFollowUpSummary | null) {
     return {
       eyebrow: "Ready now",
       title: "This is ready for a quick follow-up.",
+      detail: formatReminderCount(summary.pendingFollowUpCount),
       tone: "warning" as const,
     };
   }
@@ -94,6 +162,7 @@ function getFollowUpSummaryState(summary: ContactFollowUpSummary | null) {
   return {
     eyebrow: "Next touchpoint",
     title: "Keep the next conversation in view.",
+    detail: formatReminderCount(summary.pendingFollowUpCount),
     tone: null,
   };
 }
@@ -135,38 +204,61 @@ function mergeFollowUpSummary(
   };
 }
 
+function reconcileCreatedFollowUpSummary(
+  current: ContactFollowUpSummary | null,
+  optimisticRemindAt: string,
+  actualRemindAt: string,
+): ContactFollowUpSummary {
+  if (!current?.hasPendingFollowUp) {
+    return mergeFollowUpSummary(current, actualRemindAt);
+  }
+
+  const nextFollowUpAt =
+    current.nextFollowUpAt === optimisticRemindAt
+      ? actualRemindAt
+      : current.nextFollowUpAt &&
+          new Date(current.nextFollowUpAt).getTime() <=
+            new Date(actualRemindAt).getTime()
+        ? current.nextFollowUpAt
+        : actualRemindAt;
+  const preservesCurrentUrgency = current.nextFollowUpAt === nextFollowUpAt;
+  const flags = buildFollowUpSummaryFlags(
+    nextFollowUpAt,
+    preservesCurrentUrgency ? (current.isTriggered ?? false) : false,
+  );
+
+  return {
+    hasPendingFollowUp: true,
+    nextFollowUpAt,
+    pendingFollowUpCount: current.pendingFollowUpCount,
+    ...flags,
+  };
+}
+
 export function ContactFollowUpForm({
   relationshipId,
   contactName,
   initialFollowUpSummary = null,
   disabled = false,
 }: ContactFollowUpFormProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [date, setDate] = useState(() => getDefaultReminderValues().date);
-  const [time, setTime] = useState(() => getDefaultReminderValues().time);
-  const [note, setNote] = useState("");
+  const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
+  const [customDate, setCustomDate] = useState(getDefaultCustomDateTimeValue);
   const [isSaving, setIsSaving] = useState(false);
+  const [activePreset, setActivePreset] = useState<FollowUpPreset | "CUSTOM" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [followUpSummary, setFollowUpSummary] =
     useState<ContactFollowUpSummary | null>(initialFollowUpSummary);
 
-  const isOverLimit = note.length > MAX_NOTE_LENGTH;
-  const charsLeft = MAX_NOTE_LENGTH - note.length;
   const hasPendingReminder =
     followUpSummary?.hasPendingFollowUp && followUpSummary.nextFollowUpAt;
   const followUpSummaryState = getFollowUpSummaryState(followUpSummary);
 
-  function resetForm() {
-    const nextDefaults = getDefaultReminderValues();
-    setDate(nextDefaults.date);
-    setTime(nextDefaults.time);
-    setNote("");
+  function resetComposer() {
+    setCustomDate(getDefaultCustomDateTimeValue());
+    setIsCustomDateOpen(false);
     setError(null);
-  }
-
-  function handleOpen() {
-    resetForm();
-    setIsOpen(true);
   }
 
   function buildOptimisticFollowUp(remindAt: string): FollowUp {
@@ -177,7 +269,7 @@ export function ContactFollowUpForm({
       relationshipId,
       remindAt,
       status: "pending",
-      note: note.trim() ? note.trim() : null,
+      note: null,
       createdAt: optimisticTimestamp,
       updatedAt: optimisticTimestamp,
       completedAt: null,
@@ -203,65 +295,61 @@ export function ContactFollowUpForm({
     };
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function mergeCreatedFollowUp(
+    createdFollowUp: CreateFollowUpResponse,
+    optimisticFollowUp: FollowUp,
+  ): FollowUp {
+    return {
+      ...optimisticFollowUp,
+      id: createdFollowUp.id,
+      relationshipId: createdFollowUp.relationshipId,
+      remindAt: createdFollowUp.remindAt,
+      status: createdFollowUp.status,
+    };
+  }
 
+  async function createFollowUp(payload: {
+    remindAt: string;
+    preset?: FollowUpPreset;
+    customDate?: string;
+  }) {
     if (disabled || isSaving) {
       return;
     }
 
-    if (!date || !time) {
-      setError("Choose when you want to revisit this.");
-      return;
-    }
-
-    if (isOverLimit) {
-      setError("Keep the note under 1000 characters.");
-      return;
-    }
-
-    const remindAt = toIsoString(date, time);
-
-    if (!remindAt) {
-      setError("Enter a valid follow-up time.");
-      return;
-    }
-
-    if (new Date(remindAt).getTime() <= Date.now()) {
-      setError("Pick a future time for this follow-up.");
-      return;
-    }
-
     setIsSaving(true);
+    setActivePreset(payload.preset ?? (payload.customDate ? "CUSTOM" : null));
     setError(null);
 
     const previousSummary = followUpSummary;
-    const previousDate = date;
-    const previousTime = time;
-    const previousNote = note;
-    const optimisticFollowUp = buildOptimisticFollowUp(remindAt);
+    const optimisticFollowUp = buildOptimisticFollowUp(payload.remindAt);
     const rollback = optimisticallyInsertFollowUp(optimisticFollowUp);
 
-    setFollowUpSummary((current) => mergeFollowUpSummary(current, remindAt));
-    resetForm();
-    setIsOpen(false);
+    setFollowUpSummary((current) =>
+      mergeFollowUpSummary(current, payload.remindAt),
+    );
+    resetComposer();
 
     try {
       const created = await followUpsApi.create({
         relationshipId,
-        remindAt,
-        note: note.trim() ? note.trim() : null,
+        preset: payload.preset,
+        customDate: payload.customDate,
       });
+      const reconciledFollowUp = mergeCreatedFollowUp(created, optimisticFollowUp);
 
-      reconcileFollowUp(created, { replaceId: optimisticFollowUp.id });
-      showToast("Reminder set");
+      reconcileFollowUp(reconciledFollowUp, { replaceId: optimisticFollowUp.id });
+      setFollowUpSummary((current) =>
+        reconcileCreatedFollowUpSummary(
+          current,
+          optimisticFollowUp.remindAt,
+          reconciledFollowUp.remindAt,
+        ),
+      );
+      showToast(`Reminder set for ${formatReminder(reconciledFollowUp.remindAt)}`);
     } catch (submissionError) {
       rollback();
       setFollowUpSummary(previousSummary);
-      setDate(previousDate);
-      setTime(previousTime);
-      setNote(previousNote);
-      setIsOpen(true);
       setError(
         submissionError instanceof ApiError
           ? submissionError.message
@@ -269,11 +357,143 @@ export function ContactFollowUpForm({
       );
     } finally {
       setIsSaving(false);
+      setActivePreset(null);
     }
+  }
+
+  async function handlePresetCreate(preset: FollowUpPreset) {
+    const optimisticRemindAt = new Date();
+
+    switch (preset) {
+      case "TOMORROW":
+        optimisticRemindAt.setDate(optimisticRemindAt.getDate() + 1);
+        break;
+      case "NEXT_WEEK":
+        optimisticRemindAt.setDate(optimisticRemindAt.getDate() + 7);
+        break;
+      case "ONE_MONTH":
+        optimisticRemindAt.setDate(optimisticRemindAt.getDate() + 30);
+        break;
+    }
+
+    await createFollowUp({
+      preset,
+      remindAt: optimisticRemindAt.toISOString(),
+    });
+  }
+
+  async function handleCustomDateSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!customDate) {
+      setError("Pick a date and time for this reminder.");
+      return;
+    }
+
+    const resolvedCustomDate = toCustomDateIsoString(customDate);
+
+    if (!resolvedCustomDate || new Date(resolvedCustomDate).getTime() <= Date.now()) {
+      setError("Pick a future date and time for this reminder.");
+      return;
+    }
+
+    await createFollowUp({
+      customDate: resolvedCustomDate,
+      remindAt: resolvedCustomDate,
+    });
   }
 
   return (
     <div className="space-y-4">
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {QUICK_PRESETS.map((option) => (
+            <PrimaryButton
+              key={option.preset}
+              type="button"
+              className="min-h-12"
+              disabled={disabled || isSaving}
+              onClick={() => {
+                void handlePresetCreate(option.preset);
+              }}
+            >
+              {activePreset === option.preset && isSaving
+                ? "Setting..."
+                : option.label}
+            </PrimaryButton>
+          ))}
+        </div>
+
+        {!isCustomDateOpen ? (
+          <button
+            type="button"
+            onClick={() => {
+              setIsCustomDateOpen(true);
+              setError(null);
+            }}
+            disabled={disabled || isSaving}
+            className="text-sm font-medium text-muted transition-colors hover:text-foreground disabled:opacity-50"
+          >
+            Pick date and time
+          </button>
+        ) : (
+          <form
+            className="flex flex-col gap-2 rounded-2xl border border-border bg-surface/50 p-3 sm:flex-row"
+            onSubmit={(event) => {
+              void handleCustomDateSubmit(event);
+            }}
+          >
+            <label className="flex-1 space-y-2">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+                When should this come back up?
+              </span>
+              <input
+                type="datetime-local"
+                value={customDate}
+                min={getMinimumCustomDateTimeValue()}
+                onChange={(event) => {
+                  setCustomDate(event.target.value);
+                  setError(null);
+                }}
+                className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+              />
+            </label>
+
+            <div className="flex gap-2 sm:self-end">
+              <SecondaryButton
+                type="button"
+                size="sm"
+                className="min-h-12 flex-1 sm:flex-none"
+                disabled={isSaving}
+                onClick={() => {
+                  resetComposer();
+                }}
+              >
+                Cancel
+              </SecondaryButton>
+              <PrimaryButton
+                type="submit"
+                size="sm"
+                className="min-h-12 flex-1 sm:flex-none"
+                disabled={disabled || isSaving}
+              >
+                {activePreset === "CUSTOM" && isSaving
+                  ? "Setting..."
+                  : "Schedule reminder"}
+              </PrimaryButton>
+            </div>
+          </form>
+        )}
+
+        {error ? (
+          <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-3">
+            <p className="font-sans text-sm text-rose-600 dark:text-rose-400">
+              {error}
+            </p>
+          </div>
+        ) : null}
+      </div>
+
       {hasPendingReminder ? (
         <div
           className={cn(
@@ -289,7 +509,7 @@ export function ContactFollowUpForm({
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                  {followUpSummaryState?.eyebrow ?? "Next touchpoint"}
+                  {followUpSummaryState?.eyebrow ?? "Follow up"}
                 </p>
                 {followUpSummaryState?.tone ? (
                   <StatusBadge
@@ -303,139 +523,32 @@ export function ContactFollowUpForm({
                   />
                 ) : null}
               </div>
-              <p className="text-sm font-medium text-foreground">
+              <p className="text-sm font-semibold text-foreground">
+                {followUpSummaryState?.title ??
+                  `Follow up ${formatFollowUpLabel(followUpSummary.nextFollowUpAt!)}`}
+              </p>
+              <p className="text-xs text-muted">
+                Next up {formatFollowUpLabel(followUpSummary.nextFollowUpAt!)} at{" "}
                 {formatReminder(followUpSummary.nextFollowUpAt!)}
               </p>
               <p className="text-xs text-muted">
-                {followUpSummaryState?.title ??
-                  "Keep the next touchpoint in view."}
+                {followUpSummaryState?.detail ??
+                  formatReminderCount(followUpSummary.pendingFollowUpCount)}
               </p>
-              {followUpSummary.pendingFollowUpCount > 1 ? (
-                <p className="text-xs text-muted">
-                  {followUpSummary.pendingFollowUpCount} follow-ups waiting
-                </p>
-              ) : null}
             </div>
 
             <Link
               href={routes.app.followUps}
-              className="inline-flex min-h-12 items-center justify-center self-start rounded-2xl border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:border-black/15 hover:bg-white dark:hover:border-white/15 dark:hover:bg-white/[0.08] sm:self-auto"
+              className="text-sm font-medium text-muted transition-colors hover:text-foreground"
             >
-              View follow-ups
+              Open follow-ups
             </Link>
           </div>
         </div>
-      ) : null}
-
-      {!isOpen ? (
-        <SecondaryButton
-          type="button"
-          fullWidth
-          onClick={handleOpen}
-          disabled={disabled}
-        >
-          Add follow-up
-        </SecondaryButton>
       ) : (
-        <form
-          className="space-y-4"
-          onSubmit={(event) => void handleSubmit(event)}
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="space-y-2">
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                Date
-              </span>
-              <input
-                type="date"
-                value={date}
-                min={formatDateInputValue(new Date())}
-                onChange={(event) => {
-                  setDate(event.target.value);
-                  setError(null);
-                }}
-                className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                Time
-              </span>
-              <input
-                type="time"
-                value={time}
-                onChange={(event) => {
-                  setTime(event.target.value);
-                  setError(null);
-                }}
-                className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
-              />
-            </label>
-          </div>
-
-          <label className="space-y-2">
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-              Note
-            </span>
-            <textarea
-              value={note}
-              onChange={(event) => {
-                setNote(event.target.value);
-                setError(null);
-              }}
-              rows={4}
-              placeholder="Optional context for when you pick this back up"
-              className={cn(
-                "w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted/60 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20",
-                isOverLimit ? "border-rose-300 dark:border-rose-800" : "",
-              )}
-            />
-            <div className="flex justify-end px-1">
-              <span
-                className={cn(
-                  "font-mono text-[10px] uppercase tracking-widest",
-                  isOverLimit ? "text-rose-500" : "text-muted",
-                )}
-              >
-                {isOverLimit
-                  ? `${Math.abs(charsLeft)} chars over`
-                  : `${charsLeft} chars remaining`}
-              </span>
-            </div>
-          </label>
-
-          {error ? (
-            <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-3">
-              <p className="font-sans text-sm text-rose-600 dark:text-rose-400">
-                {error}
-              </p>
-            </div>
-          ) : null}
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-            <SecondaryButton
-              type="button"
-              fullWidth
-              className="sm:w-auto"
-              onClick={() => {
-                resetForm();
-                setIsOpen(false);
-              }}
-              disabled={isSaving}
-            >
-              Cancel
-            </SecondaryButton>
-            <PrimaryButton
-              type="submit"
-              fullWidth
-              className="sm:w-auto"
-              disabled={isSaving}
-            >
-              {isSaving ? "Saving..." : "Save follow-up"}
-            </PrimaryButton>
-          </div>
-        </form>
+        <div className="rounded-2xl border border-dashed border-border bg-surface/40 px-4 py-4 text-sm text-muted">
+          Set a one-tap reminder for the next conversation.
+        </div>
       )}
     </div>
   );

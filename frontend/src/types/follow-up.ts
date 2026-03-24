@@ -1,6 +1,7 @@
 import type { ContactRequestSourceType } from "./request";
 
 export type FollowUpStatus = "pending" | "completed" | "cancelled";
+export type FollowUpPreset = "TOMORROW" | "NEXT_WEEK" | "ONE_MONTH";
 
 export interface FollowUpTargetPersona {
   id: string;
@@ -40,8 +41,17 @@ export interface FollowUp {
 
 export interface CreateFollowUpInput {
   relationshipId: string;
-  remindAt: string;
+  preset?: FollowUpPreset;
+  customDate?: string;
+  remindAt?: string;
   note?: string | null;
+}
+
+export interface CreateFollowUpResponse {
+  id: string;
+  relationshipId: string;
+  remindAt: string;
+  status: FollowUpStatus;
 }
 
 export interface UpdateFollowUpInput {

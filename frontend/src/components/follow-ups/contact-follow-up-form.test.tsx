@@ -5,51 +5,29 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ToastViewport } from "@/components/shared/toast-viewport";
+import type { ContactFollowUpSummary } from "@/types/contact";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
 }));
 
-function pad(value: number) {
-  return String(value).padStart(2, "0");
+function createRelativeIsoDate(dayOffset: number) {
+  const value = new Date();
+  value.setDate(value.getDate() + dayOffset);
+  value.setHours(12, 0, 0, 0);
+  return value.toISOString();
 }
 
-function formatLocalDefaults(value: Date) {
-  const nextHour = new Date(value);
-  nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
-
+function createFollowUpSummary(
+  overrides: Partial<ContactFollowUpSummary> = {},
+): ContactFollowUpSummary {
   return {
-    date: `${nextHour.getFullYear()}-${pad(nextHour.getMonth() + 1)}-${pad(nextHour.getDate())}`,
-    time: `${pad(nextHour.getHours())}:${pad(nextHour.getMinutes())}`,
-  };
-}
-
-function createFollowUp(overrides: Record<string, unknown> = {}) {
-  return {
-    id: "follow-up-1",
-    relationshipId: "relationship-id",
-    remindAt: "2026-03-23T14:00:00.000Z",
-    status: "pending",
-    note: null,
-    createdAt: "2026-03-22T12:00:00.000Z",
-    updatedAt: "2026-03-22T12:00:00.000Z",
-    completedAt: null,
-    relationship: {
-      relationshipId: "relationship-id",
-      targetPersona: {
-        id: "persona-id",
-        username: "alex",
-        fullName: "Alex Parker",
-        jobTitle: "Engineer",
-        companyName: "Dotly",
-        profilePhotoUrl: null,
-      },
-    },
-    metadata: {
-      isTriggered: false,
-      isOverdue: false,
-      isUpcomingSoon: false,
-    },
+    hasPendingFollowUp: true,
+    nextFollowUpAt: createRelativeIsoDate(1),
+    pendingFollowUpCount: 1,
+    isTriggered: false,
+    isOverdue: false,
+    isUpcomingSoon: true,
     ...overrides,
   };
 }
@@ -73,10 +51,7 @@ describe("ContactFollowUpForm", () => {
     vi.useRealTimers();
   });
 
-  it("refreshes the default reminder when the form is opened later", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-03-22T10:15:00.000Z"));
-
+  it("shows one-tap preset buttons with the empty follow-up state", async () => {
     render(
       React.createElement(
         React.Fragment,
@@ -89,17 +64,21 @@ describe("ContactFollowUpForm", () => {
       ),
     );
 
-    vi.setSystemTime(new Date("2026-03-22T13:20:00.000Z"));
-    fireEvent.click(screen.getByRole("button", { name: /add follow-up/i }));
-
-    const expected = formatLocalDefaults(new Date("2026-03-22T13:20:00.000Z"));
-
-    expect(screen.getByLabelText(/date/i)).toHaveValue(expected.date);
-    expect(screen.getByLabelText(/time/i)).toHaveValue(expected.time);
+    expect(screen.getByRole("button", { name: /tomorrow/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /next week/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /1 month/i })).toBeInTheDocument();
+    expect(
+      await screen.findByText(/set a one-tap reminder for the next conversation/i),
+    ).toBeInTheDocument();
   });
 
-  it("blocks long notes before submitting", async () => {
-    const user = userEvent.setup();
+  it("creates a follow-up in one tap with the tomorrow preset", async () => {
+    mocks.create.mockResolvedValue({
+      id: "follow-up-1",
+      relationshipId: "relationship-id",
+      remindAt: createRelativeIsoDate(1),
+      status: "pending",
+    });
 
     render(
       React.createElement(
@@ -113,17 +92,34 @@ describe("ContactFollowUpForm", () => {
       ),
     );
 
-    await user.click(screen.getByRole("button", { name: /add follow-up/i }));
-    await user.type(screen.getByLabelText(/note/i), "a".repeat(1001));
-    await user.click(screen.getByRole("button", { name: /save follow-up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /tomorrow/i }));
 
-    expect(screen.getByText(/keep the note under 1000 characters/i)).toBeInTheDocument();
-    expect(mocks.create).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mocks.create).toHaveBeenCalledWith({
+        relationshipId: "relationship-id",
+        preset: "TOMORROW",
+        customDate: undefined,
+      });
+    });
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      /reminder set for/i,
+    );
+    expect(
+      await screen.findByText(/keep the next conversation in view/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/1 reminder in view/i)).toBeInTheDocument();
   });
 
-  it("submits a trimmed note and shows success state", async () => {
-    mocks.create.mockResolvedValue(createFollowUp({ note: "Follow up after demo" }));
+  it("reveals a small custom date-time flow only when requested", async () => {
     const user = userEvent.setup();
+
+    mocks.create.mockResolvedValue({
+      id: "follow-up-2",
+      relationshipId: "relationship-id",
+      remindAt: "2026-04-15T12:00:00.000Z",
+      status: "pending",
+    });
 
     render(
       React.createElement(
@@ -137,9 +133,19 @@ describe("ContactFollowUpForm", () => {
       ),
     );
 
-    await user.click(screen.getByRole("button", { name: /add follow-up/i }));
-    await user.type(screen.getByLabelText(/note/i), "  Follow up after demo  ");
-    await user.click(screen.getByRole("button", { name: /save follow-up/i }));
+    expect(
+      screen.queryByLabelText(/when should this come back up\?/i),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /pick date and time/i }));
+    expect(
+      screen.getByLabelText(/when should this come back up\?/i),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/when should this come back up\?/i), {
+      target: { value: "2099-04-15T14:30" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /schedule reminder/i }));
 
     await waitFor(() => {
       expect(mocks.create).toHaveBeenCalledTimes(1);
@@ -147,52 +153,49 @@ describe("ContactFollowUpForm", () => {
 
     expect(mocks.create.mock.calls[0]?.[0]).toMatchObject({
       relationshipId: "relationship-id",
-      note: "Follow up after demo",
+      customDate: expect.any(String),
     });
-    expect(await screen.findByRole("status")).toHaveTextContent(/reminder set/i);
-    expect(screen.getByRole("link", { name: /view follow-ups/i })).toHaveAttribute(
+    expect(
+      Number.isNaN(Date.parse(mocks.create.mock.calls[0]?.[0].customDate)),
+    ).toBe(false);
+  });
+
+  it("shows a lightweight summary for existing reminders without loading the full list", async () => {
+    render(
+      React.createElement(ContactFollowUpForm, {
+        relationshipId: "relationship-id",
+        contactName: "Alex Parker",
+        initialFollowUpSummary: createFollowUpSummary({
+          nextFollowUpAt: createRelativeIsoDate(7),
+          pendingFollowUpCount: 2,
+          isUpcomingSoon: false,
+        }),
+      }),
+    );
+
+    expect(screen.getByText(/keep the next conversation in view/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 reminders in view/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /open follow-ups/i })).toHaveAttribute(
       "href",
       "/app/follow-ups",
     );
-    expect(screen.getByText(/next touchpoint/i)).toBeInTheDocument();
+    expect(mocks.create).not.toHaveBeenCalled();
   });
 
-  it("shows the current pending reminder summary when one exists", () => {
+  it("surfaces overdue reminders with direct copy", async () => {
     render(
       React.createElement(ContactFollowUpForm, {
         relationshipId: "relationship-id",
         contactName: "Alex Parker",
-        initialFollowUpSummary: {
-          hasPendingFollowUp: true,
-          nextFollowUpAt: "2026-03-23T14:00:00.000Z",
-          pendingFollowUpCount: 2,
-        },
-      }),
-    );
-
-    expect(screen.getByText(/next touchpoint/i)).toBeInTheDocument();
-    expect(screen.getByText(/keep the next conversation in view/i)).toBeInTheDocument();
-    expect(screen.getByText(/2 follow-ups waiting/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /add follow-up/i })).toBeInTheDocument();
-  });
-
-  it("surfaces overdue reminders without turning the contact view into a task list", () => {
-    render(
-      React.createElement(ContactFollowUpForm, {
-        relationshipId: "relationship-id",
-        contactName: "Alex Parker",
-        initialFollowUpSummary: {
-          hasPendingFollowUp: true,
-          nextFollowUpAt: "2026-03-21T14:00:00.000Z",
-          pendingFollowUpCount: 1,
+        initialFollowUpSummary: createFollowUpSummary({
+          nextFollowUpAt: createRelativeIsoDate(-1),
           isTriggered: false,
           isOverdue: true,
           isUpcomingSoon: false,
-        },
+        }),
       }),
     );
 
-    expect(screen.getByText(/pick this back up/i)).toBeInTheDocument();
     expect(screen.getByText(/this conversation is waiting on you/i)).toBeInTheDocument();
     expect(screen.getByText(/^overdue$/i)).toBeInTheDocument();
   });

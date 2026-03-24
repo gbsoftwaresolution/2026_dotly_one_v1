@@ -12,6 +12,7 @@ import {
   FollowUpStatus as PrismaFollowUpStatus,
 } from "@prisma/client";
 
+import { resolveFollowUpPreset } from "../src/modules/follow-ups/follow-up-preset.util";
 import { FollowUpsService } from "../src/modules/follow-ups/follow-ups.service";
 
 function createFollowUpRecord(overrides: Record<string, unknown> = {}) {
@@ -60,10 +61,28 @@ const noopRelationshipExpiryService = {
   expireExpiredRelationships: async () => undefined,
   expireRelationshipIfNeeded: async (_tx: unknown, relationship: unknown) =>
     relationship,
+  updateLastInteractionAt: async () => null,
 };
 
 describe("FollowUpsService", () => {
-  it("creates a follow-up for an owned active relationship", async () => {
+  it("resolves follow-up presets to the expected future dates", () => {
+    const now = new Date("2026-03-24T10:15:00.000Z");
+
+    assert.equal(
+      resolveFollowUpPreset("TOMORROW", now).toISOString(),
+      "2026-03-25T10:15:00.000Z",
+    );
+    assert.equal(
+      resolveFollowUpPreset("NEXT_WEEK", now).toISOString(),
+      "2026-03-31T10:15:00.000Z",
+    );
+    assert.equal(
+      resolveFollowUpPreset("ONE_MONTH", now).toISOString(),
+      "2026-04-23T10:15:00.000Z",
+    );
+  });
+
+  it("creates a follow-up for an owned active relationship with a custom date", async () => {
     let createPayload: Record<string, unknown> | null = null;
 
     const service = new FollowUpsService(
@@ -96,18 +115,124 @@ describe("FollowUpsService", () => {
 
     const result = await service.createFollowUp("user-1", {
       relationshipId: "relationship-1",
-      remindAt: "2099-04-10T10:00:00.000Z",
+      customDate: "2099-04-10T10:00:00.000Z",
       note: "Follow up on partnership discussion",
     });
 
     assert.equal((createPayload as any)?.data.ownerUserId, "user-1");
     assert.equal((createPayload as any)?.data.relationshipId, "relationship-1");
+    assert.equal((createPayload as any)?.data.status, PrismaFollowUpStatus.PENDING);
+    assert.equal((createPayload as any)?.data.triggeredAt, null);
+    assert.equal((createPayload as any)?.data.completedAt, null);
+    assert.ok((createPayload as any)?.data.createdAt instanceof Date);
     assert.equal(result.id, "follow-up-1");
     assert.equal(result.status, "pending");
-    assert.equal(result.relationship.sourceType, "event");
-    assert.equal(result.relationship.sourceLabel, "Tech Summit");
-    assert.ok(result.relationship.targetPersona);
-    assert.equal(result.relationship.targetPersona.username, "alice");
+    assert.equal(result.relationshipId, "relationship-1");
+    assert.ok(result.remindAt instanceof Date);
+    assert.deepEqual(Object.keys(result).sort(), [
+      "id",
+      "relationshipId",
+      "remindAt",
+      "status",
+    ]);
+  });
+
+  it("creates a follow-up from a preset with minimal input", async () => {
+    let createPayload: Record<string, unknown> | null = null;
+    let touchedAt: Date | null = null;
+
+    const service = new FollowUpsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            contactRelationship: {
+              findUnique: async () => ({
+                id: "relationship-1",
+                ownerUserId: "user-1",
+                state: PrismaContactRelationshipState.APPROVED,
+                accessEndAt: null,
+              }),
+            },
+            followUp: {
+              create: async (args: Record<string, unknown>) => {
+                createPayload = args;
+                return createFollowUpRecord();
+              },
+            },
+          }),
+      } as any,
+      {
+        expireRelationshipIfNeeded: async (
+          _tx: unknown,
+          relationship: unknown,
+        ) => relationship,
+        updateLastInteractionAt: async (
+          _tx: unknown,
+          _relationshipId: string,
+          interactionAt: Date,
+        ) => {
+          touchedAt = interactionAt;
+          return null;
+        },
+      } as any,
+    );
+
+    await service.createFollowUp("user-1", {
+      relationshipId: "relationship-1",
+      preset: "TOMORROW",
+    });
+
+    const createdAt = (createPayload as any)?.data.createdAt as Date;
+    const remindAt = (createPayload as any)?.data.remindAt as Date;
+    const touchedAtValue = touchedAt as Date | null;
+
+    assert.ok(createdAt instanceof Date);
+    assert.ok(remindAt instanceof Date);
+    if (touchedAtValue === null) {
+      assert.fail("Expected relationship activity timestamp to be recorded");
+    }
+    assert.equal(remindAt.getTime() - createdAt.getTime(), 24 * 60 * 60 * 1000);
+    assert.equal(touchedAtValue.getTime(), createdAt.getTime());
+  });
+
+  it("touches relationship activity when a follow-up is created", async () => {
+    const touchedRelationships: string[] = [];
+
+    const service = new FollowUpsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            contactRelationship: {
+              findUnique: async () => ({
+                id: "relationship-1",
+                ownerUserId: "user-1",
+                state: PrismaContactRelationshipState.APPROVED,
+                accessEndAt: null,
+              }),
+            },
+            followUp: {
+              create: async () => createFollowUpRecord(),
+            },
+          }),
+      } as any,
+      {
+        expireRelationshipIfNeeded: async (
+          _tx: unknown,
+          relationship: unknown,
+        ) => relationship,
+        updateLastInteractionAt: async (_tx: unknown, relationshipId: string) => {
+          touchedRelationships.push(relationshipId);
+          return null;
+        },
+      } as any,
+    );
+
+    await service.createFollowUp("user-1", {
+      relationshipId: "relationship-1",
+      remindAt: "2099-04-10T10:00:00.000Z",
+    });
+
+    assert.deepEqual(touchedRelationships, ["relationship-1"]);
   });
 
   it("returns the same not found for a relationship owned by another user", async () => {
@@ -172,6 +297,44 @@ describe("FollowUpsService", () => {
       (error: unknown) => {
         assert.ok(error instanceof NotFoundException);
         assert.equal(error.message, "Relationship not found");
+        return true;
+      },
+    );
+  });
+
+  it("rejects follow-up creation when no reminder input is provided", async () => {
+    const service = new FollowUpsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            contactRelationship: {
+              findUnique: async () => ({
+                id: "relationship-1",
+                ownerUserId: "user-1",
+                state: PrismaContactRelationshipState.APPROVED,
+                accessEndAt: null,
+              }),
+            },
+          }),
+      } as any,
+      {
+        expireRelationshipIfNeeded: async (
+          _tx: unknown,
+          relationship: unknown,
+        ) => relationship,
+      } as any,
+    );
+
+    await assert.rejects(
+      service.createFollowUp("user-1", {
+        relationshipId: "relationship-1",
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof BadRequestException);
+        assert.equal(
+          error.message,
+          "preset, customDate, or remindAt must be provided",
+        );
         return true;
       },
     );
@@ -575,6 +738,7 @@ describe("FollowUpsService", () => {
 
   it("completes a pending follow-up and records completion time", async () => {
     let updateArgs: Record<string, unknown> | null = null;
+    const touchedRelationships: string[] = [];
 
     const service = new FollowUpsService(
       {
@@ -592,7 +756,16 @@ describe("FollowUpsService", () => {
             },
           }),
       } as any,
-      noopRelationshipExpiryService as any,
+      {
+        ...noopRelationshipExpiryService,
+        updateLastInteractionAt: async (
+          _tx: unknown,
+          relationshipId: string,
+        ) => {
+          touchedRelationships.push(relationshipId);
+          return null;
+        },
+      } as any,
     );
 
     const result = await service.completeFollowUp("user-1", "follow-up-1");
@@ -604,6 +777,7 @@ describe("FollowUpsService", () => {
     assert.ok((updateArgs as any)?.data.completedAt instanceof Date);
     assert.equal(result.status, "completed");
     assert.ok(result.completedAt instanceof Date);
+    assert.deepEqual(touchedRelationships, ["relationship-1"]);
   });
 
   it("rejects follow-up completion when the relationship is no longer active", async () => {
