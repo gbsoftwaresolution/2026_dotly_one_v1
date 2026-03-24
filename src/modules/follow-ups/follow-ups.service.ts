@@ -1133,7 +1133,13 @@ function toApiFollowUpStatus(status: PrismaFollowUpStatus): FollowUpStatus {
   throw new Error("Unsupported follow-up status");
 }
 
-function toApiFollowUpType(type: PrismaFollowUpType): FollowUpType {
+function toApiFollowUpType(
+  type: PrismaFollowUpType | null | undefined,
+): FollowUpType {
+  if (!type) {
+    return FollowUpType.Manual;
+  }
+
   switch (type) {
     case PrismaFollowUpType.MANUAL:
       return FollowUpType.Manual;
