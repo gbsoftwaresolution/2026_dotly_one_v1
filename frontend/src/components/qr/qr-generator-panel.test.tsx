@@ -168,7 +168,7 @@ describe("QrGeneratorPanel", () => {
     });
   });
 
-  it("keeps persona switching behind customize instead of a visible picker", () => {
+  it("keeps persona switching behind a separate Dotly switcher instead of a visible picker", () => {
     render(
       React.createElement(QrGeneratorPanel, {
         initialFastShare: {
@@ -205,9 +205,10 @@ describe("QrGeneratorPanel", () => {
       }),
     );
 
-    expect(
-      screen.getByRole("link", { name: /customize/i }),
-    ).toHaveAttribute("href", "/app/personas");
+    expect(screen.getByRole("link", { name: /switch dotly/i })).toHaveAttribute(
+      "href",
+      "/app/personas",
+    );
     expect(
       screen.queryByRole("button", { name: /quick connect/i }),
     ).not.toBeInTheDocument();
@@ -247,6 +248,47 @@ describe("QrGeneratorPanel", () => {
     expect(mocks.getFastShare).not.toHaveBeenCalled();
     expect(screen.getByText(/scan to view my contact/i)).toBeInTheDocument();
     expect(screen.getByText(/founder at dotly/i)).toBeInTheDocument();
+  });
+
+  it("keeps a cached QR visible while offline", async () => {
+    const onlineGetter = vi.spyOn(window.navigator, "onLine", "get");
+    onlineGetter.mockReturnValue(false);
+
+    render(
+      React.createElement(QrGeneratorPanel, {
+        initialFastShare: {
+          persona: {
+            id: "persona-1",
+            username: "sender",
+            fullName: "Sender Persona",
+            profilePhotoUrl: null,
+          },
+          share: {
+            shareUrl: "https://dotly.one/u/sender",
+            qrValue: "https://dotly.one/u/sender",
+            primaryAction: "request_access",
+            effectiveActions: {
+              canCall: false,
+              canWhatsapp: false,
+              canEmail: false,
+              canSaveContact: false,
+            },
+            preferredShareType: "smart_card",
+          },
+        },
+        personas: [personaFixture],
+        user: createUnlockedUser(),
+      }),
+    );
+
+    window.dispatchEvent(new Event("offline"));
+
+    expect(
+      screen.getByText(/offline\. your last ready qr is still available/i),
+    ).toBeInTheDocument();
+    expect(mocks.getFastShare).not.toHaveBeenCalled();
+
+    onlineGetter.mockRestore();
   });
 
   it("shows the instant connect scan instruction for instant share payloads", () => {
@@ -313,8 +355,8 @@ describe("QrGeneratorPanel", () => {
       expect(mocks.getFastShare).toHaveBeenCalledWith("persona-1");
     });
 
-    const copyButton = screen.getByRole("button", { name: /copy link/i });
-    const shareButton = screen.getByRole("button", { name: /^share$/i });
+    const copyButton = screen.getByRole("button", { name: /^copy$/i });
+    const shareButton = screen.getByRole("button", { name: /^send$/i });
 
     await waitFor(() => {
       expect(copyButton).toBeEnabled();
@@ -357,7 +399,7 @@ describe("QrGeneratorPanel", () => {
     );
 
     const copyButton = await screen.findByRole("button", {
-      name: /copy link/i,
+      name: /^copy$/i,
     });
 
     await waitFor(() => {
@@ -369,7 +411,7 @@ describe("QrGeneratorPanel", () => {
     expect(await screen.findByRole("status")).toHaveTextContent(/link copied/i);
   });
 
-  it("prefetches other personas while keeping switching behind customize", async () => {
+  it("prefetches other personas while keeping switching behind the Dotly switcher", async () => {
     mocks.getFastShare.mockResolvedValueOnce({
       personaId: "persona-2",
       username: "sender-ops",
@@ -431,9 +473,10 @@ describe("QrGeneratorPanel", () => {
       expect(mocks.getFastShare).toHaveBeenCalledWith("persona-2");
     });
 
-    expect(
-      screen.getByRole("link", { name: /customize/i }),
-    ).toHaveAttribute("href", "/app/personas");
+    expect(screen.getByRole("link", { name: /switch dotly/i })).toHaveAttribute(
+      "href",
+      "/app/personas",
+    );
     expect(
       screen.queryByRole("combobox", { name: /share persona/i }),
     ).not.toBeInTheDocument();

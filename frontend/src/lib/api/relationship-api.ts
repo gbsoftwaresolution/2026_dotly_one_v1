@@ -7,7 +7,11 @@ import type {
 import { apiRequest } from "./client";
 
 export const relationshipApi = {
-  instantConnect: (username: string, payload: PublicInstantConnectInput) =>
+  instantConnect: (
+    username: string,
+    payload: PublicInstantConnectInput,
+    options?: { signal?: AbortSignal; requestKey?: string },
+  ) =>
     apiRequest<InstantConnectResult>(
       `/api/public/${encodeURIComponent(username)}/instant-connect`,
       {
@@ -15,6 +19,12 @@ export const relationshipApi = {
         body: payload,
         baseUrl: "",
         credentials: "same-origin",
+        signal: options?.signal,
+        headers: options?.requestKey
+          ? {
+              "x-idempotency-key": options.requestKey,
+            }
+          : undefined,
       },
     ),
   list: async () =>

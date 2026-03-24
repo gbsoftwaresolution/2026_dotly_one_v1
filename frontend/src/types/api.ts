@@ -15,6 +15,7 @@ export interface ApiRequestOptions {
   baseUrl?: string;
   credentials?: RequestCredentials;
   next?: NextFetchRequestConfig;
+  signal?: AbortSignal;
 }
 
 export interface ApiErrorShape {

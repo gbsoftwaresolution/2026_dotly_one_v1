@@ -28,12 +28,21 @@ function buildListPath(query?: FollowUpListQuery) {
 }
 
 export const followUpsApi = {
-  create: (payload: CreateFollowUpInput) =>
+  create: (
+    payload: CreateFollowUpInput,
+    options?: { signal?: AbortSignal; requestKey?: string },
+  ) =>
     apiRequest<CreateFollowUpResponse>("/api/follow-ups", {
       method: "POST",
       body: payload,
       baseUrl: "",
       credentials: "same-origin",
+      signal: options?.signal,
+      headers: options?.requestKey
+        ? {
+            "x-idempotency-key": options.requestKey,
+          }
+        : undefined,
     }),
 
   list: (query?: FollowUpListQuery) =>

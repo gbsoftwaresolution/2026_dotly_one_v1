@@ -17,6 +17,53 @@ vi.mock("@/lib/api", () => ({
 import { QuickConnectFlow } from "./quick-connect-flow";
 
 describe("QuickConnectFlow", () => {
+  it("blocks connect while offline", async () => {
+    const user = userEvent.setup();
+    const onlineGetter = vi.spyOn(window.navigator, "onLine", "get");
+    onlineGetter.mockReturnValue(false);
+
+    render(
+      React.createElement(QuickConnectFlow, {
+        code: "qr-123",
+        hostName: "Jane Doe",
+        hostJobTitle: "Founder",
+        hostCompany: "Dotly",
+        personas: [
+          {
+            id: "persona-1",
+            type: "professional",
+            fullName: "Alex Sender",
+            username: "alex",
+            publicUrl: "https://dotly.id/alex",
+            jobTitle: "Operator",
+            companyName: "Dotly",
+            tagline: "Keeps relationships warm.",
+            profilePhotoUrl: null,
+            accessMode: "open",
+            verifiedOnly: false,
+            sharingMode: "controlled",
+            smartCardConfig: null,
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+            createdAt: "2026-03-20T00:00:00.000Z",
+            updatedAt: "2026-03-20T00:00:00.000Z",
+          },
+        ],
+      }),
+    );
+
+    window.dispatchEvent(new Event("offline"));
+    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+
+    expect(mocks.connectQuick).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/reconnect to finish this connection/i),
+    ).toBeInTheDocument();
+
+    onlineGetter.mockRestore();
+  });
+
   it("shows host context and one clear next step before the CTA", () => {
     render(
       React.createElement(QuickConnectFlow, {

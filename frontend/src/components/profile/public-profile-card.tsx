@@ -16,6 +16,7 @@ interface PublicProfileCardProps {
 export function PublicProfileCard({ profile }: PublicProfileCardProps) {
   const avatarHue = ((profile.username?.charCodeAt(0) ?? 72) * 137) % 360;
   const trustPresentation = getPublicTrustPresentation(profile.trust);
+  const fullName = profile.fullName?.trim() || "Profile";
   const tagline = profile.tagline?.trim() || null;
   const companyName = profile.companyName?.trim() || null;
   const websiteUrl = profile.websiteUrl?.trim() || null;
@@ -55,7 +56,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
             ) : null}
             <div className="space-y-2">
               <h2 className="text-3xl font-bold tracking-tight text-white">
-                {profile.fullName}
+                {fullName}
               </h2>
               {tagline ? (
                 <p className="max-w-[32ch] text-sm leading-6 text-white/78">
@@ -98,7 +99,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
                 background: `hsl(${avatarHue}, 60%, 45%)`,
               }}
             >
-              {profile.fullName.charAt(0).toUpperCase()}
+              {fullName.charAt(0).toUpperCase() || "P"}
             </div>
           )}
         </div>

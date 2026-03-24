@@ -21,6 +21,7 @@ type PersistedShareFastSnapshot = Pick<
 >;
 
 const STORAGE_KEY = "dotly.share-fast";
+const FALLBACK_STORAGE_KEY = "dotly.share-fast.backup";
 
 let snapshot: ShareFastSnapshot = {
   status: "idle",
@@ -124,7 +125,9 @@ function persistSnapshot() {
     personaPayloads: snapshot.personaPayloads,
   };
 
-  window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+  const serializedValue = JSON.stringify(value);
+  window.sessionStorage.setItem(STORAGE_KEY, serializedValue);
+  window.localStorage.setItem(FALLBACK_STORAGE_KEY, serializedValue);
 }
 
 function setSnapshot(nextSnapshot: ShareFastSnapshot) {
@@ -140,7 +143,9 @@ export function hydrateShareFastStore() {
 
   hydrated = true;
 
-  const storedValue = window.sessionStorage.getItem(STORAGE_KEY);
+  const storedValue =
+    window.sessionStorage.getItem(STORAGE_KEY) ??
+    window.localStorage.getItem(FALLBACK_STORAGE_KEY);
 
   if (!storedValue) {
     return;
@@ -181,6 +186,7 @@ export function clearShareFastStore() {
   if (canUseStorage()) {
     hydrated = true;
     window.sessionStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(FALLBACK_STORAGE_KEY);
   }
 
   emitChange();
@@ -279,5 +285,9 @@ function subscribe(listener: () => void) {
 }
 
 export function useShareFastSnapshot() {
-  return useSyncExternalStore(subscribe, getShareFastSnapshot, getShareFastSnapshot);
+  return useSyncExternalStore(
+    subscribe,
+    getShareFastSnapshot,
+    getShareFastSnapshot,
+  );
 }

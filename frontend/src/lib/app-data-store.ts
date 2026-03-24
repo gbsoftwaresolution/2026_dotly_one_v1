@@ -5,7 +5,10 @@ import { ApiError } from "@/lib/api/client";
 import { followUpsApi } from "@/lib/api/follow-ups-api";
 import { personaApi } from "@/lib/api/persona-api";
 import { routes } from "@/lib/constants/routes";
-import { getShareFastSnapshot, prefetchMyFastShare } from "@/lib/share-fast-store";
+import {
+  getShareFastSnapshot,
+  prefetchMyFastShare,
+} from "@/lib/share-fast-store";
 import type { Contact } from "@/types/contact";
 import type { FollowUp, FollowUpStatus } from "@/types/follow-up";
 import type { PersonaSummary } from "@/types/persona";
@@ -22,7 +25,10 @@ type ResourceState<T> = {
 type PersistedAppDataSnapshot = {
   personas: Pick<ResourceState<PersonaSummary[]>, "data" | "refreshedAt">;
   contacts: Pick<ResourceState<Contact[]>, "data" | "refreshedAt">;
-  followUps: Record<FollowUpStatus, Pick<ResourceState<FollowUp[]>, "data" | "refreshedAt">>;
+  followUps: Record<
+    FollowUpStatus,
+    Pick<ResourceState<FollowUp[]>, "data" | "refreshedAt">
+  >;
 };
 
 export type AppDataSnapshot = {
@@ -33,6 +39,7 @@ export type AppDataSnapshot = {
 };
 
 const STORAGE_KEY = "dotly.app-data";
+const FALLBACK_STORAGE_KEY = "dotly.app-data.backup";
 
 const APP_DATA_WARM_ROUTES = [
   routes.app.home,
@@ -60,7 +67,10 @@ function createResourceState<T>(data: T): ResourceState<T> {
   };
 }
 
-function createFollowUpState(): Record<FollowUpStatus, ResourceState<FollowUp[]>> {
+function createFollowUpState(): Record<
+  FollowUpStatus,
+  ResourceState<FollowUp[]>
+> {
   return {
     pending: createResourceState(EMPTY_FOLLOW_UPS),
     completed: createResourceState(EMPTY_FOLLOW_UPS),
@@ -92,7 +102,9 @@ let hydrated = false;
 let pendingCorePrefetch: Promise<void> | null = null;
 let pendingPersonasLoad: Promise<PersonaSummary[]> | null = null;
 let pendingContactsLoad: Promise<Contact[]> | null = null;
-const pendingFollowUpLoads: Partial<Record<FollowUpStatus, Promise<FollowUp[]>>> = {};
+const pendingFollowUpLoads: Partial<
+  Record<FollowUpStatus, Promise<FollowUp[]>>
+> = {};
 
 const listeners = new Set<() => void>();
 
@@ -110,7 +122,9 @@ function deriveCurrentPersona(personas: PersonaSummary[]) {
   const selectedPersonaId = getShareFastSnapshot().selectedPersonaId;
 
   if (selectedPersonaId) {
-    const selectedPersona = personas.find((persona) => persona.id === selectedPersonaId);
+    const selectedPersona = personas.find(
+      (persona) => persona.id === selectedPersonaId,
+    );
 
     if (selectedPersona) {
       return selectedPersona;
@@ -137,7 +151,9 @@ function toLoadingState<T>(current: ResourceState<T>): ResourceState<T> {
   };
 }
 
-function cloneFollowUpResources(source: Record<FollowUpStatus, ResourceState<FollowUp[]>>) {
+function cloneFollowUpResources(
+  source: Record<FollowUpStatus, ResourceState<FollowUp[]>>,
+) {
   return {
     pending: { ...source.pending, data: [...source.pending.data] },
     completed: { ...source.completed, data: [...source.completed.data] },
@@ -188,7 +204,9 @@ function persistSnapshot() {
     },
   };
 
-  window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+  const serializedValue = JSON.stringify(value);
+  window.sessionStorage.setItem(STORAGE_KEY, serializedValue);
+  window.localStorage.setItem(FALLBACK_STORAGE_KEY, serializedValue);
 }
 
 function setSnapshot(nextSnapshot: typeof snapshot) {
@@ -198,7 +216,10 @@ function setSnapshot(nextSnapshot: typeof snapshot) {
   emitChange();
 }
 
-function setFollowUpState(status: FollowUpStatus, nextState: ResourceState<FollowUp[]>) {
+function setFollowUpState(
+  status: FollowUpStatus,
+  nextState: ResourceState<FollowUp[]>,
+) {
   setSnapshot({
     ...snapshot,
     followUps: {
@@ -230,10 +251,14 @@ function sortFollowUps(items: FollowUp[]) {
     }
 
     if (leftPending && rightPending) {
-      return new Date(left.remindAt).getTime() - new Date(right.remindAt).getTime();
+      return (
+        new Date(left.remindAt).getTime() - new Date(right.remindAt).getTime()
+      );
     }
 
-    return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+    return (
+      new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
+    );
   });
 }
 
@@ -249,14 +274,18 @@ export function hydrateAppDataStore() {
 
   hydrated = true;
 
-  const storedValue = window.sessionStorage.getItem(STORAGE_KEY);
+  const storedValue =
+    window.sessionStorage.getItem(STORAGE_KEY) ??
+    window.localStorage.getItem(FALLBACK_STORAGE_KEY);
 
   if (!storedValue) {
     return false;
   }
 
   try {
-    const parsedValue = JSON.parse(storedValue) as PersistedAppDataSnapshot | null;
+    const parsedValue = JSON.parse(
+      storedValue,
+    ) as PersistedAppDataSnapshot | null;
 
     if (!parsedValue || typeof parsedValue !== "object") {
       return false;
@@ -265,13 +294,17 @@ export function hydrateAppDataStore() {
     snapshot = {
       personas: {
         status: "ready",
-        data: Array.isArray(parsedValue.personas?.data) ? parsedValue.personas.data : EMPTY_PERSONAS,
+        data: Array.isArray(parsedValue.personas?.data)
+          ? parsedValue.personas.data
+          : EMPTY_PERSONAS,
         error: null,
         refreshedAt: parsedValue.personas?.refreshedAt ?? null,
       },
       contacts: {
         status: "ready",
-        data: Array.isArray(parsedValue.contacts?.data) ? parsedValue.contacts.data : EMPTY_CONTACTS,
+        data: Array.isArray(parsedValue.contacts?.data)
+          ? parsedValue.contacts.data
+          : EMPTY_CONTACTS,
         error: null,
         refreshedAt: parsedValue.contacts?.refreshedAt ?? null,
       },
@@ -327,6 +360,7 @@ export function clearAppDataStore() {
   if (canUseStorage()) {
     hydrated = true;
     window.sessionStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(FALLBACK_STORAGE_KEY);
   }
 
   emitChange();
@@ -372,7 +406,10 @@ export async function refreshPersonas(options?: { force?: boolean }) {
         personas: {
           ...snapshot.personas,
           status: snapshot.personas.data.length > 0 ? "ready" : "error",
-          error: getErrorMessage(error, "We could not refresh personas right now."),
+          error: getErrorMessage(
+            error,
+            "We could not refresh personas right now.",
+          ),
         },
       });
       throw error;
@@ -415,7 +452,10 @@ export async function refreshContacts(options?: { force?: boolean }) {
         contacts: {
           ...snapshot.contacts,
           status: snapshot.contacts.data.length > 0 ? "ready" : "error",
-          error: getErrorMessage(error, "We could not refresh contacts right now."),
+          error: getErrorMessage(
+            error,
+            "We could not refresh contacts right now.",
+          ),
         },
       });
       throw error;
@@ -452,14 +492,20 @@ export async function refreshFollowUps(
       return followUpsApi.list({ status });
     })
     .then((followUps) => {
-      setFollowUpState(status, toReadyState(snapshot.followUps[status], sortFollowUps(followUps)));
+      setFollowUpState(
+        status,
+        toReadyState(snapshot.followUps[status], sortFollowUps(followUps)),
+      );
       return followUps;
     })
     .catch((error) => {
       setFollowUpState(status, {
         ...snapshot.followUps[status],
         status: snapshot.followUps[status].data.length > 0 ? "ready" : "error",
-        error: getErrorMessage(error, "We could not refresh follow-ups right now."),
+        error: getErrorMessage(
+          error,
+          "We could not refresh follow-ups right now.",
+        ),
       });
       throw error;
     })
@@ -481,7 +527,9 @@ export async function prefetchAppCoreData(options?: { force?: boolean }) {
     prefetchMyFastShare(options).catch(() => null),
     refreshPersonas(options).catch(() => EMPTY_PERSONAS),
     refreshContacts(options).catch(() => EMPTY_CONTACTS),
-    refreshFollowUps("pending", { ...options, processDue: true }).catch(() => EMPTY_FOLLOW_UPS),
+    refreshFollowUps("pending", { ...options, processDue: true }).catch(
+      () => EMPTY_FOLLOW_UPS,
+    ),
   ]).then(() => undefined);
 
   return pendingCorePrefetch.finally(() => {
@@ -519,7 +567,9 @@ export function optimisticallyTransitionFollowUp(
   let sourceFollowUp: FollowUp | null = null;
 
   for (const status of ["pending", "completed", "cancelled"] as const) {
-    sourceFollowUp = snapshot.followUps[status].data.find((followUp) => followUp.id === id) ?? sourceFollowUp;
+    sourceFollowUp =
+      snapshot.followUps[status].data.find((followUp) => followUp.id === id) ??
+      sourceFollowUp;
   }
 
   if (!sourceFollowUp) {
@@ -544,7 +594,10 @@ export function optimisticallyTransitionFollowUp(
 
   nextFollowUps.completed = {
     ...nextFollowUps.completed,
-    status: nextStatus === "completed" || nextFollowUps.completed.status === "ready" ? "ready" : nextFollowUps.completed.status,
+    status:
+      nextStatus === "completed" || nextFollowUps.completed.status === "ready"
+        ? "ready"
+        : nextFollowUps.completed.status,
     data:
       nextStatus === "completed"
         ? upsertFollowUpItem(nextFollowUps.completed.data, optimisticFollowUp)
@@ -555,7 +608,10 @@ export function optimisticallyTransitionFollowUp(
 
   nextFollowUps.cancelled = {
     ...nextFollowUps.cancelled,
-    status: nextStatus === "cancelled" || nextFollowUps.cancelled.status === "ready" ? "ready" : nextFollowUps.cancelled.status,
+    status:
+      nextStatus === "cancelled" || nextFollowUps.cancelled.status === "ready"
+        ? "ready"
+        : nextFollowUps.cancelled.status,
     data:
       nextStatus === "cancelled"
         ? upsertFollowUpItem(nextFollowUps.cancelled.data, optimisticFollowUp)
@@ -577,16 +633,23 @@ export function optimisticallyTransitionFollowUp(
   };
 }
 
-export function reconcileFollowUp(followUp: FollowUp, options?: { replaceId?: string }) {
+export function reconcileFollowUp(
+  followUp: FollowUp,
+  options?: { replaceId?: string },
+) {
   hydrateAppDataStore();
 
   const nextFollowUps = cloneFollowUpResources(snapshot.followUps);
-  const idsToRemove = new Set([followUp.id, options?.replaceId].filter(Boolean));
+  const idsToRemove = new Set(
+    [followUp.id, options?.replaceId].filter(Boolean),
+  );
 
   for (const status of ["pending", "completed", "cancelled"] as const) {
     nextFollowUps[status] = {
       ...nextFollowUps[status],
-      data: nextFollowUps[status].data.filter((item) => !idsToRemove.has(item.id)),
+      data: nextFollowUps[status].data.filter(
+        (item) => !idsToRemove.has(item.id),
+      ),
       refreshedAt: Date.now(),
       error: null,
     };

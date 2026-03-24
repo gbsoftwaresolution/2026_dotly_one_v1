@@ -130,6 +130,7 @@ export async function apiRequest<T>(
     cache: options.cache || "no-store",
     credentials: options.credentials,
     next: options.next,
+    signal: options.signal,
   });
 
   const rawBody = await response.text();

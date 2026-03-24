@@ -401,6 +401,7 @@ describe("PublicSmartCard", () => {
       expect.objectContaining({
         method: "POST",
         credentials: "same-origin",
+        headers: expect.any(Headers),
         body: JSON.stringify({
           fromPersonaId: "persona-1",
         }),
@@ -411,6 +412,43 @@ describe("PublicSmartCard", () => {
       screen.queryByRole("link", { name: /get your own dotly/i }),
     ).not.toBeInTheDocument();
     expect(assignLocation).not.toHaveBeenCalled();
+  });
+
+  it("blocks connect while offline", async () => {
+    const user = userEvent.setup();
+    const onlineGetter = vi.spyOn(window.navigator, "onLine", "get");
+    onlineGetter.mockReturnValue(false);
+
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: createProfile({
+          instantConnectUrl: "https://dotly.id/q/profile-qr-1",
+          smartCard: {
+            primaryAction: "instant_connect",
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: true,
+              contactMeEnabled: false,
+            },
+            actionLinks: {
+              call: null,
+              whatsapp: null,
+              email: null,
+              vcard: null,
+            },
+          },
+        }),
+        initialPersonas: createPersonas(),
+      }),
+    );
+
+    window.dispatchEvent(new Event("offline"));
+    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByText(/^you are offline\.$/i)).toBeInTheDocument();
+
+    onlineGetter.mockRestore();
   });
 
   it("sends the selected persona when connecting", async () => {

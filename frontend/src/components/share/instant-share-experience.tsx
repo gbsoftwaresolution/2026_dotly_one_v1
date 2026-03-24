@@ -14,6 +14,7 @@ import { isApiError } from "@/lib/api/client";
 import { personaApi } from "@/lib/api/persona-api";
 import { userApi } from "@/lib/api/user-api";
 import { routes } from "@/lib/constants/routes";
+import { useNetworkStatus } from "@/lib/network/use-network-status";
 import { getShareInstruction } from "@/lib/persona/share-copy";
 import { getShareFastSnapshot, seedMyFastShare } from "@/lib/share-fast-store";
 import type { CurrentUserAnalytics } from "@/types/analytics";
@@ -61,12 +62,14 @@ function FastQrShell({
   error,
   onRetry,
   isVerified,
+  isOnline,
 }: {
   sharePayload: PersonaFastSharePayload | null;
   isRefreshing: boolean;
   error: string | null;
   onRetry: () => void;
   isVerified: boolean;
+  isOnline: boolean;
 }) {
   const hasCachedShare = sharePayload !== null;
 
@@ -151,6 +154,11 @@ function FastQrShell({
                 Updating quietly
               </p>
             ) : null}
+            {!isOnline ? (
+              <p className="mx-auto max-w-[30ch] text-sm leading-6 text-amber-700 dark:text-amber-300">
+                You are offline. Showing your last ready QR.
+              </p>
+            ) : null}
             {error && hasCachedShare ? (
               <p className="mx-auto max-w-[30ch] text-sm leading-6 text-amber-700 dark:text-amber-300">
                 Showing your last ready QR while Dotly reconnects.
@@ -192,6 +200,7 @@ export function InstantShareExperience({
   initialUser = null,
   initialAnalytics = null,
 }: InstantShareExperienceProps) {
+  const isOnline = useNetworkStatus();
   const cachedSharePayload = useMemo(() => {
     const initialSharePayload =
       initialFastShare?.persona && initialFastShare.share
@@ -235,6 +244,11 @@ export function InstantShareExperience({
   }, [initialFastShare]);
 
   useEffect(() => {
+    if (!isOnline && cachedSharePayload) {
+      setIsBootstrapping(false);
+      return;
+    }
+
     let isCancelled = false;
 
     setIsBootstrapping(true);
@@ -285,7 +299,14 @@ export function InstantShareExperience({
     return () => {
       isCancelled = true;
     };
-  }, [initialAnalytics, initialFastShare, initialUser, reloadNonce]);
+  }, [
+    cachedSharePayload,
+    initialAnalytics,
+    initialFastShare,
+    initialUser,
+    isOnline,
+    reloadNonce,
+  ]);
 
   const resolvedFastShare = fastShare ?? initialFastShare;
   const hasResolvedFastShare = Boolean(
@@ -312,19 +333,39 @@ export function InstantShareExperience({
             Show your QR
           </h1>
           <p className="max-w-md text-sm leading-6 text-muted">
-            Open one screen and hand over a large, scannable QR in seconds.
+            {isOnline
+              ? "Open one screen and hand over a large, scannable QR in seconds."
+              : "You are offline and no cached QR is available yet."}
           </p>
         </div>
 
         <EmptyState
-          title="Create a profile to start sharing"
-          description="Create your first profile so you can share a live QR for meetings, events, and introductions."
+          title={
+            isOnline
+              ? "Create a profile to start sharing"
+              : "No offline QR available"
+          }
+          description={
+            isOnline
+              ? "Create your first profile so you can share a live QR for meetings, events, and introductions."
+              : "Reconnect once to load your ready QR, then Dotly can keep it available if the network drops."
+          }
           action={
-            <Link href={routes.app.createPersona}>
-              <SecondaryButton className="h-[60px] w-full active:scale-95">
-                Create profile
+            isOnline ? (
+              <Link href={routes.app.createPersona}>
+                <SecondaryButton className="h-[60px] w-full active:scale-95">
+                  Create profile
+                </SecondaryButton>
+              </Link>
+            ) : (
+              <SecondaryButton
+                type="button"
+                className="h-[60px] w-full active:scale-95"
+                onClick={() => setReloadNonce((current) => current + 1)}
+              >
+                Retry when online
               </SecondaryButton>
-            </Link>
+            )
           }
         />
       </div>
@@ -427,6 +468,7 @@ export function InstantShareExperience({
         error={loadError}
         onRetry={() => setReloadNonce((current) => current + 1)}
         isVerified={initialUser?.security.trustBadge === "verified"}
+        isOnline={isOnline}
       />
     </div>
   );

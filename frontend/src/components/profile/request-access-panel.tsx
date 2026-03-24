@@ -12,6 +12,8 @@ import { publicApi, requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
 import { routes } from "@/lib/constants/routes";
+import { buildRequestKey } from "@/lib/network/request-key";
+import { useNetworkStatus } from "@/lib/network/use-network-status";
 import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
 import { formatPrimaryAction } from "@/lib/persona/labels";
 import {
@@ -92,6 +94,7 @@ export function RequestAccessPanel({
   currentUser = null,
   personaLoadError = null,
 }: RequestAccessPanelProps) {
+  const isOnline = useNetworkStatus();
   const [selectedPersonaId, setSelectedPersonaId] = useState(
     resolvePreferredPersonaId(initialPersonas),
   );
@@ -102,6 +105,7 @@ export function RequestAccessPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestTarget, setRequestTarget] =
     useState<PublicProfileRequestTarget | null>(null);
+  const [showSlowHint, setShowSlowHint] = useState(false);
 
   const loginHref = useMemo(
     () => buildLoginHref(profile.username),
@@ -159,9 +163,23 @@ export function RequestAccessPanel({
       return;
     }
 
+    if (!isOnline) {
+      setError("Reconnect to send this request.");
+      return;
+    }
+
     setError(null);
     setSuccessMessage(null);
     setIsSubmitting(true);
+    setShowSlowHint(false);
+    const requestKey = buildRequestKey(
+      "request-access",
+      profile.username,
+      selectedPersonaId,
+    );
+    const slowHintTimeout = window.setTimeout(() => {
+      setShowSlowHint(true);
+    }, 2000);
 
     try {
       const target =
@@ -169,13 +187,18 @@ export function RequestAccessPanel({
 
       setRequestTarget(target);
 
-      await requestApi.send({
-        toUsername: target.username,
-        fromPersonaId: selectedPersonaId,
-        reason: reason.trim() || undefined,
-        sourceType: "profile",
-        sourceId: null,
-      });
+      await requestApi.send(
+        {
+          toUsername: target.username,
+          fromPersonaId: selectedPersonaId,
+          reason: reason.trim() || undefined,
+          sourceType: "profile",
+          sourceId: null,
+        },
+        {
+          requestKey,
+        },
+      );
 
       setSuccessMessage("Request sent ✓");
       setShowCustomizeOptions(false);
@@ -183,6 +206,8 @@ export function RequestAccessPanel({
     } catch (submissionError) {
       setError(toFriendlyMessage(submissionError));
     } finally {
+      window.clearTimeout(slowHintTimeout);
+      setShowSlowHint(false);
       setIsSubmitting(false);
     }
   }
@@ -391,6 +416,16 @@ export function RequestAccessPanel({
           <div className="rounded-2xl border border-rose-500 bg-rose-500/10 px-4 py-3">
             <p className="font-mono text-sm text-rose-500">{error}</p>
           </div>
+        ) : null}
+        {showSlowHint ? (
+          <p className="text-sm leading-6 text-muted">
+            Still sending. Keep this screen open.
+          </p>
+        ) : null}
+        {!isOnline ? (
+          <p className="text-sm leading-6 text-amber-700 dark:text-amber-300">
+            You are offline.
+          </p>
         ) : null}
 
         <div className="pt-2">

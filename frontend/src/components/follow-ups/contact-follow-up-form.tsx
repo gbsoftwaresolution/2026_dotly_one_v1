@@ -14,6 +14,8 @@ import {
 import { followUpsApi } from "@/lib/api/follow-ups-api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
+import { buildRequestKey } from "@/lib/network/request-key";
+import { useNetworkStatus } from "@/lib/network/use-network-status";
 import {
   getPassiveReminderBadgeLabel,
   getPassiveReminderBody,
@@ -215,8 +217,7 @@ function mergeFollowUpSummary(
     nextFollowUpAt,
     pendingFollowUpCount: (current?.pendingFollowUpCount ?? 0) + 1,
     hasPassiveInactivityFollowUp:
-      preservesCurrentUrgency &&
-      Boolean(current?.hasPassiveInactivityFollowUp),
+      preservesCurrentUrgency && Boolean(current?.hasPassiveInactivityFollowUp),
     ...flags,
   };
 }
@@ -249,8 +250,7 @@ function reconcileCreatedFollowUpSummary(
     nextFollowUpAt,
     pendingFollowUpCount: current.pendingFollowUpCount,
     hasPassiveInactivityFollowUp:
-      preservesCurrentUrgency &&
-      Boolean(current.hasPassiveInactivityFollowUp),
+      preservesCurrentUrgency && Boolean(current.hasPassiveInactivityFollowUp),
     ...flags,
   };
 }
@@ -261,12 +261,13 @@ export function ContactFollowUpForm({
   initialFollowUpSummary = null,
   disabled = false,
 }: ContactFollowUpFormProps) {
+  const isOnline = useNetworkStatus();
   const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
   const [customDate, setCustomDate] = useState(getDefaultCustomDateTimeValue);
   const [isSaving, setIsSaving] = useState(false);
-  const [activePreset, setActivePreset] = useState<FollowUpPreset | "CUSTOM" | null>(
-    null,
-  );
+  const [activePreset, setActivePreset] = useState<
+    FollowUpPreset | "CUSTOM" | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const [followUpSummary, setFollowUpSummary] =
     useState<ContactFollowUpSummary | null>(initialFollowUpSummary);
@@ -339,6 +340,11 @@ export function ContactFollowUpForm({
       return;
     }
 
+    if (!isOnline) {
+      setError("Reconnect to save this reminder.");
+      return;
+    }
+
     setIsSaving(true);
     setActivePreset(payload.preset ?? (payload.customDate ? "CUSTOM" : null));
     setError(null);
@@ -353,14 +359,28 @@ export function ContactFollowUpForm({
     resetComposer();
 
     try {
-      const created = await followUpsApi.create({
-        relationshipId,
-        preset: payload.preset,
-        customDate: payload.customDate,
-      });
-      const reconciledFollowUp = mergeCreatedFollowUp(created, optimisticFollowUp);
+      const created = await followUpsApi.create(
+        {
+          relationshipId,
+          preset: payload.preset,
+          customDate: payload.customDate,
+        },
+        {
+          requestKey: buildRequestKey(
+            "follow-up",
+            relationshipId,
+            payload.preset ?? payload.customDate ?? payload.remindAt,
+          ),
+        },
+      );
+      const reconciledFollowUp = mergeCreatedFollowUp(
+        created,
+        optimisticFollowUp,
+      );
 
-      reconcileFollowUp(reconciledFollowUp, { replaceId: optimisticFollowUp.id });
+      reconcileFollowUp(reconciledFollowUp, {
+        replaceId: optimisticFollowUp.id,
+      });
       setFollowUpSummary((current) =>
         reconcileCreatedFollowUpSummary(
           current,
@@ -368,7 +388,9 @@ export function ContactFollowUpForm({
           reconciledFollowUp.remindAt,
         ),
       );
-      showToast(`Reminder set for ${formatReminder(reconciledFollowUp.remindAt)}`);
+      showToast(
+        `Reminder set for ${formatReminder(reconciledFollowUp.remindAt)}`,
+      );
     } catch (submissionError) {
       rollback();
       setFollowUpSummary(previousSummary);
@@ -414,7 +436,10 @@ export function ContactFollowUpForm({
 
     const resolvedCustomDate = toCustomDateIsoString(customDate);
 
-    if (!resolvedCustomDate || new Date(resolvedCustomDate).getTime() <= Date.now()) {
+    if (
+      !resolvedCustomDate ||
+      new Date(resolvedCustomDate).getTime() <= Date.now()
+    ) {
       setError("Pick a future date and time for this reminder.");
       return;
     }
@@ -514,6 +539,13 @@ export function ContactFollowUpForm({
             </p>
           </div>
         ) : null}
+        {!isOnline ? (
+          <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3">
+            <p className="font-sans text-sm text-amber-700 dark:text-amber-300">
+              You are offline. Reminders save when you reconnect.
+            </p>
+          </div>
+        ) : null}
       </div>
 
       {hasPendingReminder ? (
@@ -539,8 +571,8 @@ export function ContactFollowUpForm({
                       followUpSummaryState.tone === "cyan"
                         ? "Gentle"
                         : followUpSummaryState.tone === "error"
-                        ? "Overdue"
-                        : "Ready"
+                          ? "Overdue"
+                          : "Ready"
                     }
                     tone={followUpSummaryState.tone}
                     dot
@@ -552,8 +584,8 @@ export function ContactFollowUpForm({
                   `Follow up ${formatFollowUpLabel(followUpSummary.nextFollowUpAt!)}`}
               </p>
               <p className="text-xs text-muted">
-                Next up {formatFollowUpLabel(followUpSummary.nextFollowUpAt!)} at{" "}
-                {formatReminder(followUpSummary.nextFollowUpAt!)}
+                Next up {formatFollowUpLabel(followUpSummary.nextFollowUpAt!)}{" "}
+                at {formatReminder(followUpSummary.nextFollowUpAt!)}
               </p>
               <p className="text-xs text-muted">
                 {followUpSummaryState?.detail ??
@@ -571,7 +603,7 @@ export function ContactFollowUpForm({
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-border bg-surface/40 px-4 py-4 text-sm text-muted">
-          Set a one-tap reminder for the next conversation.
+          Keep the next conversation easy to pick back up.
         </div>
       )}
     </div>

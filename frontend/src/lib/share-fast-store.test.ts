@@ -15,6 +15,7 @@ describe("share-fast-store", () => {
     vi.resetModules();
     mocks.getMyFastShare.mockReset();
     window.sessionStorage.clear();
+    window.localStorage.clear();
   });
 
   it("prefetches once and reuses the cached share payload", async () => {
@@ -100,5 +101,8 @@ describe("share-fast-store", () => {
       username: "naveen",
       hasQuickConnect: true,
     });
+    expect(window.localStorage.getItem("dotly.share-fast.backup")).toContain(
+      "persona-2",
+    );
   });
 });

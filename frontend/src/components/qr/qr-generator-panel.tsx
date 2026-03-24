@@ -3,12 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  BadgeCheck,
-  Copy,
-  RefreshCw,
-  Share2,
-} from "lucide-react";
+import { BadgeCheck, Copy, RefreshCw, Share2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
@@ -20,6 +15,7 @@ import { personaApi } from "@/lib/api/persona-api";
 import { routes } from "@/lib/constants/routes";
 import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
 import { getShareInstruction } from "@/lib/persona/share-copy";
+import { useNetworkStatus } from "@/lib/network/use-network-status";
 import {
   getPersonaFastShare,
   getShareFastSnapshot,
@@ -36,9 +32,11 @@ import type {
 import type { UserProfile } from "@/types/user";
 
 import { VerificationPrompt } from "../auth/verification-prompt";
+import { ConnectionProgressNote } from "../analytics/connection-progress-note";
 
 interface QrGeneratorPanelProps {
   initialFastShare?: MyFastSharePayload | null;
+  analytics?: import("@/types/analytics").CurrentUserAnalytics | null;
   personas: PersonaSummary[];
   user: UserProfile;
 }
@@ -107,9 +105,11 @@ function getInitials(fullName: string): string {
 
 export function QrGeneratorPanel({
   initialFastShare = null,
+  analytics = null,
   personas,
   user,
 }: QrGeneratorPanelProps) {
+  const isOnline = useNetworkStatus();
   const router = useRouter();
   const shareFastSnapshot = getShareFastSnapshot();
   const initialSelectionId =
@@ -192,6 +192,12 @@ export function QrGeneratorPanel({
       return;
     }
 
+    if (!isOnline && (getPersonaFastShare(selectedPersonaId) || generatedQr)) {
+      setIsLoadingQr(false);
+      setError(null);
+      return;
+    }
+
     setFeedback(null);
     setError(null);
 
@@ -268,6 +274,7 @@ export function QrGeneratorPanel({
   }, [
     cacheKey,
     generatedQrKey,
+    isOnline,
     refreshNonce,
     router,
     shareLocked,
@@ -437,13 +444,18 @@ export function QrGeneratorPanel({
                 size="sm"
                 className="h-11 rounded-[1.2rem] px-4 sm:h-12"
               >
-                Customize
+                Switch Dotly
               </SecondaryButton>
             </Link>
           ) : null}
         </div>
 
         <div className="flex flex-1 flex-col justify-center gap-4">
+          <ConnectionProgressNote
+            analytics={analytics}
+            className="mx-auto w-full max-w-md"
+          />
+
           <div className="mx-auto flex w-full flex-1 items-center justify-center">
             {shareLocked ? (
               <VerificationPrompt
@@ -523,6 +535,11 @@ export function QrGeneratorPanel({
                 Updating quietly
               </p>
             ) : null}
+            {!isOnline && generatedQr ? (
+              <p className="mx-auto max-w-[30ch] text-sm leading-6 text-amber-700 dark:text-amber-300">
+                Offline. Your last ready QR is still available.
+              </p>
+            ) : null}
             {error && generatedQr ? (
               <p className="mx-auto max-w-[30ch] text-sm leading-6 text-amber-700 dark:text-amber-300">
                 Showing your last ready QR while Dotly reconnects.
@@ -534,31 +551,31 @@ export function QrGeneratorPanel({
         <div className="space-y-3">
           <div className="rounded-[1.55rem] border border-black/[0.06] bg-white/76 p-2 shadow-[0_14px_40px_rgba(15,23,42,0.06)] dark:border-white/[0.08] dark:bg-white/[0.045]">
             <div className="grid grid-cols-2 gap-2">
-            <SecondaryButton
-              type="button"
-              size="sm"
-              className="h-13 w-full rounded-[1.2rem]"
-              disabled={!generatedQr || isLoadingQr || shareLocked}
-              onClick={() => void copyCurrentLink("Link copied")}
-            >
-              <span className="inline-flex items-center gap-2">
-                <Copy className="h-4 w-4" />
-                Copy Link
-              </span>
-            </SecondaryButton>
+              <SecondaryButton
+                type="button"
+                size="sm"
+                className="h-13 w-full rounded-[1.2rem]"
+                disabled={!generatedQr || isLoadingQr || shareLocked}
+                onClick={() => void copyCurrentLink("Link copied")}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </span>
+              </SecondaryButton>
 
-            <PrimaryButton
-              type="button"
-              size="sm"
-              className="h-13 w-full rounded-[1.2rem]"
-              disabled={!generatedQr || isLoadingQr || shareLocked}
-              onClick={() => void handleShare()}
-            >
-              <span className="inline-flex items-center gap-2">
-                <Share2 className="h-4 w-4" />
-                Share
-              </span>
-            </PrimaryButton>
+              <PrimaryButton
+                type="button"
+                size="sm"
+                className="h-13 w-full rounded-[1.2rem]"
+                disabled={!generatedQr || isLoadingQr || shareLocked}
+                onClick={() => void handleShare()}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Share2 className="h-4 w-4" />
+                  Send
+                </span>
+              </PrimaryButton>
             </div>
           </div>
 

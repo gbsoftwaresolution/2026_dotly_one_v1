@@ -19,6 +19,8 @@ import { publicApi, relationshipApi, requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
 import { dotlyPositioning } from "@/lib/constants/positioning";
+import { buildRequestKey } from "@/lib/network/request-key";
+import { useNetworkStatus } from "@/lib/network/use-network-status";
 import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
 import { getPublicTrustPresentation } from "@/lib/persona/public-trust";
 import {
@@ -370,6 +372,7 @@ export function PublicSmartCard({
   personasLoading = false,
   currentUser = null,
 }: PublicSmartCardProps) {
+  const isOnline = useNetworkStatus();
   const config = profile.smartCard;
   const [primaryCtaState, setPrimaryCtaState] = useState<PrimaryCtaState>({
     status: "idle",
@@ -394,6 +397,11 @@ export function PublicSmartCard({
   const feedbackTimeoutRef = useRef<number | null>(null);
   const directActionFeedbackTimeoutRef = useRef<number | null>(null);
   const instantConnectMeasureIdRef = useRef(0);
+  const requestAbortRef = useRef<AbortController | null>(null);
+  const connectAbortRef = useRef<AbortController | null>(null);
+  const requestKeyRef = useRef<string | null>(null);
+  const connectKeyRef = useRef<string | null>(null);
+  const [showSlowNetworkHint, setShowSlowNetworkHint] = useState(false);
 
   useEffect(() => {
     setShowLoginCta(!isAuthenticated);
@@ -419,6 +427,8 @@ export function PublicSmartCard({
 
   useEffect(() => {
     return () => {
+      requestAbortRef.current?.abort();
+      connectAbortRef.current?.abort();
       if (feedbackTimeoutRef.current !== null) {
         window.clearTimeout(feedbackTimeoutRef.current);
       }
@@ -637,6 +647,11 @@ export function PublicSmartCard({
   async function handleRequestAccessAction() {
     setRequestSucceeded(false);
 
+    if (!isOnline) {
+      setErrorState("Reconnect to send this request.");
+      return;
+    }
+
     if (!selectedPersonaId) {
       setErrorState(
         (personasLoading ? "Loading your personas..." : personaLoadError) ??
@@ -648,25 +663,45 @@ export function PublicSmartCard({
     }
 
     try {
+      requestAbortRef.current?.abort();
+      const controller = new AbortController();
+      requestAbortRef.current = controller;
+      requestKeyRef.current ??= buildRequestKey(
+        "request-access",
+        profile.username,
+        selectedPersonaId,
+      );
+
       const target =
         requestTarget ?? (await publicApi.getRequestTarget(profile.username));
 
       setRequestTarget(target);
 
-      await requestApi.send({
-        toUsername: target.username,
-        fromPersonaId: selectedPersonaId,
-        reason: undefined,
-        sourceType: "profile",
-        sourceId: null,
-      });
+      await requestApi.send(
+        {
+          toUsername: target.username,
+          fromPersonaId: selectedPersonaId,
+          reason: undefined,
+          sourceType: "profile",
+          sourceId: null,
+        },
+        {
+          signal: controller.signal,
+          requestKey: requestKeyRef.current,
+        },
+      );
 
+      requestKeyRef.current = null;
       setRequestSucceeded(true);
       setShowCustomizeOptions(false);
       setInstantConnectUiState({ status: "idle" });
       setSuccessState("Request sent ✓");
       showToast("Request sent");
     } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
       setErrorState(toFriendlyRequestMessage(error));
     }
   }
@@ -712,6 +747,11 @@ export function PublicSmartCard({
   }
 
   async function handleInstantConnectAction() {
+    if (!isOnline) {
+      setErrorState("Reconnect to connect.");
+      return;
+    }
+
     if (!profile.instantConnectUrl) {
       handleRequestAccessAction();
       return;
@@ -731,11 +771,37 @@ export function PublicSmartCard({
     const previousUiState = instantConnectUiState;
 
     setSettlingState();
+    setShowSlowNetworkHint(false);
+    window.setTimeout(() => {
+      setShowSlowNetworkHint((current) =>
+        primaryCtaState.status === "loading" ||
+        primaryCtaState.status === "settling"
+          ? true
+          : current,
+      );
+    }, 2000);
 
     try {
-      await relationshipApi.instantConnect(profile.username, {
-        fromPersonaId: selectedPersonaId,
-      });
+      connectAbortRef.current?.abort();
+      const controller = new AbortController();
+      connectAbortRef.current = controller;
+      connectKeyRef.current ??= buildRequestKey(
+        "instant-connect",
+        profile.username,
+        selectedPersonaId,
+      );
+
+      await relationshipApi.instantConnect(
+        profile.username,
+        {
+          fromPersonaId: selectedPersonaId,
+        },
+        {
+          signal: controller.signal,
+          requestKey: connectKeyRef.current,
+        },
+      );
+      connectKeyRef.current = null;
       finishInstantConnectMeasurement(measurementId, "connected");
       window.setTimeout(() => {
         setInstantConnectUiState({
@@ -746,6 +812,10 @@ export function PublicSmartCard({
         showToast("Connected");
       }, 160);
     } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
       if (error instanceof ApiError && isAlreadyConnectedError(error)) {
         finishInstantConnectMeasurement(measurementId, "already_connected");
         setInstantConnectUiState({
@@ -805,6 +875,8 @@ export function PublicSmartCard({
           ? getInstantConnectErrorMessage(error)
           : "Connect is unavailable right now.",
       );
+    } finally {
+      setShowSlowNetworkHint(false);
     }
   }
 
@@ -968,6 +1040,16 @@ export function PublicSmartCard({
           {primaryCtaState.status === "success" ? (
             <p aria-live="polite" className="text-sm leading-6 text-muted">
               {primaryCtaState.message}
+            </p>
+          ) : null}
+          {showSlowNetworkHint ? (
+            <p className="text-sm leading-6 text-muted">
+              Still working. Keep this screen open.
+            </p>
+          ) : null}
+          {!isOnline ? (
+            <p className="text-sm leading-6 text-amber-700 dark:text-amber-300">
+              You are offline.
             </p>
           ) : null}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Repeat2 } from "lucide-react";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
@@ -8,6 +8,8 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { qrApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
+import { buildRequestKey } from "@/lib/network/request-key";
+import { useNetworkStatus } from "@/lib/network/use-network-status";
 import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
 import type { ConnectQuickConnectQrResult } from "@/types/persona";
 import type { PersonaSummary } from "@/types/persona";
@@ -162,12 +164,17 @@ export function QuickConnectFlow({
   hostJobTitle,
   hostCompany,
 }: QuickConnectFlowProps) {
+  const isOnline = useNetworkStatus();
   const hostFirstName = getFirstName(hostName);
   const [selectedPersonaId, setSelectedPersonaId] = useState<string>(
     resolvePreferredPersonaId(personas),
   );
   const [showPersonaOptions, setShowPersonaOptions] = useState(false);
   const [flowState, setFlowState] = useState<FlowState>({ type: "selecting" });
+  const pendingAbortRef = useRef<AbortController | null>(null);
+  const requestKeyRef = useRef<string | null>(null);
+  const slowFeedbackTimeoutRef = useRef<number | null>(null);
+  const [showSlowFeedback, setShowSlowFeedback] = useState(false);
   const selectedPersona =
     personas.find((persona) => persona.id === selectedPersonaId) ?? null;
 
@@ -185,15 +192,63 @@ export function QuickConnectFlow({
     };
   }, [flowState]);
 
+  useEffect(() => {
+    return () => {
+      pendingAbortRef.current?.abort();
+      if (slowFeedbackTimeoutRef.current !== null) {
+        window.clearTimeout(slowFeedbackTimeoutRef.current);
+      }
+    };
+  }, []);
+
   async function handleConnect() {
     if (!selectedPersonaId) return;
+
+    if (!isOnline) {
+      setFlowState({
+        type: "error",
+        title: "Offline",
+        message: "Reconnect to finish this connection.",
+      });
+      return;
+    }
+
+    pendingAbortRef.current?.abort();
+    const controller = new AbortController();
+    pendingAbortRef.current = controller;
+    requestKeyRef.current ??= buildRequestKey(
+      "quick-connect",
+      code,
+      selectedPersonaId,
+    );
+    setShowSlowFeedback(false);
+    if (slowFeedbackTimeoutRef.current !== null) {
+      window.clearTimeout(slowFeedbackTimeoutRef.current);
+    }
+    slowFeedbackTimeoutRef.current = window.setTimeout(() => {
+      setShowSlowFeedback(true);
+      slowFeedbackTimeoutRef.current = null;
+    }, 2000);
+
     setFlowState({ type: "connecting" });
     try {
-      const result = await qrApi.connectQuick(code, {
-        fromPersonaId: selectedPersonaId,
-      });
+      const result = await qrApi.connectQuick(
+        code,
+        {
+          fromPersonaId: selectedPersonaId,
+        },
+        {
+          signal: controller.signal,
+          requestKey: requestKeyRef.current,
+        },
+      );
+      requestKeyRef.current = null;
       setFlowState({ type: "settling", result });
     } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
       setFlowState(
         error instanceof ApiError
           ? getConnectErrorState(error)
@@ -203,10 +258,17 @@ export function QuickConnectFlow({
               message: "Something went wrong. Please try again.",
             },
       );
+    } finally {
+      if (slowFeedbackTimeoutRef.current !== null) {
+        window.clearTimeout(slowFeedbackTimeoutRef.current);
+        slowFeedbackTimeoutRef.current = null;
+      }
+      setShowSlowFeedback(false);
     }
   }
 
   function handleRetry() {
+    requestKeyRef.current = null;
     setFlowState({ type: "selecting" });
   }
 
@@ -440,6 +502,17 @@ export function QuickConnectFlow({
       >
         {isSettling ? "Connected ✓" : "Connect"}
       </PrimaryButton>
+
+      {showSlowFeedback ? (
+        <p className="text-center text-sm leading-6 text-muted">
+          Still connecting. Keep this screen open.
+        </p>
+      ) : null}
+      {!isOnline ? (
+        <p className="text-center text-sm leading-6 text-amber-700 dark:text-amber-300">
+          You are offline. Connect will resume once you retry online.
+        </p>
+      ) : null}
     </div>
   );
 }

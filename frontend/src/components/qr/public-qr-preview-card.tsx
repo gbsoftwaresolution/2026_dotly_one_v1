@@ -14,6 +14,11 @@ function avatarGradient(name: string): string {
 
 export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
   const isQuickConnect = qr.type === "quick_connect";
+  const fullName = qr.persona.fullName?.trim() || "Profile";
+  const fallbackInitial = fullName.charAt(0).toUpperCase() || "P";
+  const roleLine = [qr.persona.jobTitle, qr.persona.companyName]
+    .filter(Boolean)
+    .join(" at ");
   const scanInstruction = isQuickConnect
     ? "Scan to open their profile, then tap Connect."
     : getShareInstruction(qr.type);
@@ -36,20 +41,18 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
             />
             <div className="space-y-1">
               <h1 className="text-3xl font-semibold tracking-tight text-white">
-                {qr.persona.fullName}
+                {fullName}
               </h1>
-              <p className="text-base text-white/75">
-                {[qr.persona.jobTitle, qr.persona.companyName]
-                  .filter(Boolean)
-                  .join(" at ")}
-              </p>
+              {roleLine ? (
+                <p className="text-base text-white/75">{roleLine}</p>
+              ) : null}
             </div>
           </div>
           <div
             className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl text-xl font-bold text-white shadow-lg"
-            style={{ background: avatarGradient(qr.persona.fullName) }}
+            style={{ background: avatarGradient(fullName) }}
           >
-            {qr.persona.fullName.charAt(0).toUpperCase()}
+            {fallbackInitial}
           </div>
         </div>
       </div>

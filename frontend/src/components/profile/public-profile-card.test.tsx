@@ -16,6 +16,8 @@ describe("PublicProfileCard", () => {
           jobTitle: "Founder",
           companyName: "Dotly",
           tagline: "Trusted identity",
+          websiteUrl: null,
+          isVerified: false,
           profilePhotoUrl: null,
           sharingMode: "controlled",
           smartCard: null,
@@ -29,7 +31,12 @@ describe("PublicProfileCard", () => {
     );
 
     expect(screen.getByText(/request access/i)).toBeInTheDocument();
-    expect(screen.getByText(/you control who can contact you/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/you control who can contact you/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/clear identity, calm gatekeeping/i),
+    ).toBeInTheDocument();
   });
 
   it("renders smart card mode details and enabled actions", () => {
@@ -42,6 +49,8 @@ describe("PublicProfileCard", () => {
           jobTitle: "Founder",
           companyName: "Dotly",
           tagline: "Trusted identity",
+          websiteUrl: "https://dotly.one",
+          isVerified: true,
           profilePhotoUrl: null,
           sharingMode: "smart_card",
           trust: {
@@ -67,11 +76,17 @@ describe("PublicProfileCard", () => {
       }),
     );
 
-    expect(screen.getByText(/^next step$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^next$/i)).toBeInTheDocument();
     expect(screen.getByText(/^connect$/i)).toBeInTheDocument();
-    expect(screen.getByText(/choose the next step/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/tap the main button to continue with this person/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/^verified$/i)).toBeInTheDocument();
     expect(screen.getByText(/^call$/i)).toBeInTheDocument();
     expect(screen.getByText(/^email$/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /website/i })).toHaveAttribute(
+      "href",
+      "https://dotly.one",
+    );
   });
 });

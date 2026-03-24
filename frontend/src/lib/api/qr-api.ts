@@ -23,7 +23,11 @@ export const qrApi = {
     apiRequest<ResolvedQr>(`/qr/${encodeURIComponent(code)}`, {
       headers,
     }),
-  connectQuick: (code: string, payload: ConnectQuickConnectQrInput) =>
+  connectQuick: (
+    code: string,
+    payload: ConnectQuickConnectQrInput,
+    options?: { signal?: AbortSignal; requestKey?: string },
+  ) =>
     apiRequest<ConnectQuickConnectQrResult>(
       `/api/qr/${encodeURIComponent(code)}/connect`,
       {
@@ -31,6 +35,12 @@ export const qrApi = {
         body: payload,
         baseUrl: "",
         credentials: "same-origin",
+        signal: options?.signal,
+        headers: options?.requestKey
+          ? {
+              "x-idempotency-key": options.requestKey,
+            }
+          : undefined,
       },
     ),
 };

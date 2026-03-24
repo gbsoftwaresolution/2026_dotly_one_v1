@@ -45,10 +45,10 @@ const FILTERS: Array<{
 }> = [
   {
     key: "pending",
-    label: "Open",
+    label: "Next up",
     description:
       "Keep the next conversation cue visible without turning this into work.",
-    emptyTitle: "No follow-ups in view",
+    emptyTitle: "Nothing to follow up right now",
     emptyDescription: dotlyPositioning.app.noFollowUps,
   },
   {
@@ -185,6 +185,9 @@ function getPendingSections(followUps: FollowUp[]) {
   const pending = sortFollowUps(followUps).filter(
     (followUp) => followUp.status === "pending",
   );
+  const passiveReminderCount = pending.filter((followUp) =>
+    isPassiveInactivityFollowUp(followUp),
+  ).length;
 
   return [
     {
@@ -215,7 +218,7 @@ function getPendingSections(followUps: FollowUp[]) {
     {
       key: "later",
       title: "Later",
-      description: "Everything else you want to come back to later.",
+      description: "People you want to revisit later, without pressure.",
       items: pending.filter(
         (followUp) => getPendingUrgency(followUp) === "later",
       ),
@@ -301,6 +304,9 @@ export function FollowUpsScreen() {
     FILTERS.find((filter) => filter.key === selectedStatus) ?? FILTERS[0];
   const pendingSections =
     selectedStatus === "pending" ? getPendingSections(followUps) : [];
+  const passiveReminderCount = followUps.filter((followUp) =>
+    isPassiveInactivityFollowUp(followUp),
+  ).length;
 
   async function handleAction(id: string, type: "complete" | "cancel") {
     setActionState({ id, type });
@@ -308,9 +314,7 @@ export function FollowUpsScreen() {
     setExitingIds((current) => ({ ...current, [id]: true }));
 
     const request =
-      type === "complete"
-        ? followUpsApi.complete(id)
-        : followUpsApi.cancel(id);
+      type === "complete" ? followUpsApi.complete(id) : followUpsApi.cancel(id);
 
     let rollback: (() => void) | null = null;
 
@@ -362,7 +366,9 @@ export function FollowUpsScreen() {
           <PrimaryButton
             type="button"
             fullWidth
-            onClick={() => void refreshFollowUps(selectedStatus, { force: true })}
+            onClick={() =>
+              void refreshFollowUps(selectedStatus, { force: true })
+            }
           >
             Try again
           </PrimaryButton>
@@ -417,6 +423,15 @@ export function FollowUpsScreen() {
         </div>
       </div>
 
+      {selectedStatus === "pending" && passiveReminderCount >= 6 ? (
+        <div className="rounded-2xl border border-cyan-200/80 bg-cyan-50/70 px-4 py-3 dark:border-brandCyan/20 dark:bg-brandCyan/[0.08]">
+          <p className="text-sm leading-6 text-cyan-900 dark:text-white/85">
+            {passiveReminderCount} passive reminders are grouped here. Focus on
+            the first few instead of clearing everything at once.
+          </p>
+        </div>
+      ) : null}
+
       {actionError ? (
         <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-3">
           <p className="font-sans text-sm text-rose-600 dark:text-rose-400">
@@ -449,7 +464,8 @@ export function FollowUpsScreen() {
               <div className="space-y-3">
                 {section.items.map((followUp) => {
                   const isWorking = actionState?.id === followUp.id;
-                  const isPassiveReminder = isPassiveInactivityFollowUp(followUp);
+                  const isPassiveReminder =
+                    isPassiveInactivityFollowUp(followUp);
                   const title = getFollowUpTitle(followUp);
                   const companyLine = getCompanyLine(followUp);
                   const connectionContextLine =
@@ -725,7 +741,9 @@ export function FollowUpsScreen() {
                       </PrimaryButton>
                       {isPassiveReminder ? (
                         <Link
-                          href={routes.app.contactDetail(followUp.relationshipId)}
+                          href={routes.app.contactDetail(
+                            followUp.relationshipId,
+                          )}
                           className="inline-flex min-h-[60px] w-full items-center justify-center rounded-2xl border border-border bg-transparent px-5 py-4 text-sm font-semibold text-foreground transition-all hover:bg-slate-50 hover:border-border active:scale-95 dark:hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-border focus:ring-offset-2"
                         >
                           Set follow-up

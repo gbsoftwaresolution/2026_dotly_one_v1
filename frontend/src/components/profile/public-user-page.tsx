@@ -2,9 +2,17 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { PublicUserInteractions } from "@/components/profile/public-user-interactions";
+import { PublicProfileOfflineCard } from "@/components/profile/public-profile-offline-card";
 import { publicApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { getServerAccessToken } from "@/lib/auth/server-session";
+import {
+  readSessionCache,
+  writeSessionCache,
+} from "@/lib/client-session-cache";
+import type { PublicProfile } from "@/types/persona";
+
+const PUBLIC_PROFILE_CACHE_PREFIX = "dotly.public-profile";
 
 interface PublicUserPageProps {
   username: string;
@@ -23,6 +31,7 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
       "x-forwarded-for": requestHeaders.get("x-forwarded-for") ?? "",
       "x-idempotency-key": requestHeaders.get("x-idempotency-key") ?? "",
     });
+    writeSessionCache(`${PUBLIC_PROFILE_CACHE_PREFIX}:${username}`, profile);
     const accessToken = await getServerAccessToken();
     const isAuthenticated = Boolean(accessToken);
 
@@ -58,13 +67,24 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
         ? error.message
         : "We could not load this public profile right now.";
 
+    const cachedProfile = readSessionCache<PublicProfile>(
+      `${PUBLIC_PROFILE_CACHE_PREFIX}:${username}`,
+    );
+
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-xl items-center px-4 py-8 sm:px-6">
-        <div className="w-full rounded-3xl border border-rose-500/30 bg-rose-500/10 p-6 text-center space-y-2">
-          <h1 className="text-xl font-semibold text-rose-500 dark:text-rose-400">
-            Profile not available
-          </h1>
-        </div>
+        {cachedProfile ? (
+          <PublicProfileOfflineCard profile={cachedProfile} />
+        ) : (
+          <div className="w-full rounded-3xl border border-rose-500/30 bg-rose-500/10 p-6 text-center space-y-2">
+            <h1 className="text-xl font-semibold text-rose-500 dark:text-rose-400">
+              Profile not available
+            </h1>
+            <p className="text-sm leading-6 text-rose-500/90 dark:text-rose-400/80">
+              {message}
+            </p>
+          </div>
+        )}
       </main>
     );
   }

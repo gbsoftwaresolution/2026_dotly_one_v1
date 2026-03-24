@@ -152,22 +152,85 @@ describe("RequestAccessPanel", () => {
       ),
     );
 
-    await user.click(screen.getByRole("button", { name: /request access/i }));
+    await user.click(
+      screen.getByRole("button", { name: /request to connect/i }),
+    );
 
     await waitFor(() => {
-      expect(mocks.sendRequest).toHaveBeenCalledWith({
-        fromPersonaId: "persona-1",
-        reason: undefined,
-        sourceId: null,
-        sourceType: "profile",
-        toUsername: "target",
-      });
+      expect(mocks.sendRequest).toHaveBeenCalledWith(
+        {
+          fromPersonaId: "persona-1",
+          reason: undefined,
+          sourceId: null,
+          sourceType: "profile",
+          toUsername: "target",
+        },
+        expect.objectContaining({
+          requestKey: expect.stringContaining(
+            "request-access:target:persona-1",
+          ),
+        }),
+      );
     });
 
     expect(
       screen.getByRole("button", { name: /request sent/i }),
     ).toBeDisabled();
-    expect(await screen.findByRole("status")).toHaveTextContent(/request sent/i);
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      /request sent/i,
+    );
+  });
+
+  it("blocks sending while offline", async () => {
+    const user = userEvent.setup();
+    const onlineGetter = vi.spyOn(window.navigator, "onLine", "get");
+    onlineGetter.mockReturnValue(false);
+
+    render(
+      React.createElement(RequestAccessPanel, {
+        profile: profileFixture,
+        initialPersonas: [personaFixture],
+        isAuthenticated: true,
+        currentUser: {
+          id: "user-1",
+          email: "user@dotly.one",
+          isVerified: true,
+          security: {
+            trustBadge: "verified",
+            maskedEmail: "us**@dotly.one",
+            mailDeliveryAvailable: true,
+            passwordResetAvailable: true,
+            smsDeliveryAvailable: true,
+            maskedPhoneNumber: null,
+            phoneVerificationStatus: "not_enrolled",
+            mobileOtpEnrollment: null,
+            explanation: "",
+            unlockedActions: ["Send contact requests"],
+            restrictedActions: [],
+            requirements: [
+              {
+                key: "send_contact_request",
+                label: "Send contact requests",
+                unlocked: true,
+              },
+            ],
+            trustFactors: [],
+          },
+        },
+      }),
+    );
+
+    window.dispatchEvent(new Event("offline"));
+    await user.click(
+      screen.getByRole("button", { name: /request to connect/i }),
+    );
+
+    expect(mocks.sendRequest).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/reconnect to send this request/i),
+    ).toBeInTheDocument();
+
+    onlineGetter.mockRestore();
   });
 
   it("keeps persona and note customization out of the default request flow", async () => {
@@ -219,13 +282,17 @@ describe("RequestAccessPanel", () => {
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/add a note/i)).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /customize/i }));
+    await user.click(
+      screen.getByRole("button", {
+        name: /use another dotly|keep this dotly|use another profile|choose profile/i,
+      }),
+    );
 
     expect(screen.getByRole("combobox")).toBeInTheDocument();
     expect(screen.getByLabelText(/add a note/i)).toBeInTheDocument();
   });
 
-  it("keeps request access available when smart card mode uses request_access", async () => {
+  it("keeps request-to-connect available when smart card mode uses request_access", async () => {
     mocks.getRequestTarget.mockResolvedValue({ username: "target" });
     mocks.sendRequest.mockResolvedValue({ id: "request-1" });
 
@@ -284,10 +351,12 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /^request access$/i }),
+      screen.getByRole("heading", { name: /^request to connect$/i }),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /request access/i }));
+    await user.click(
+      screen.getByRole("button", { name: /request to connect/i }),
+    );
 
     await waitFor(() => {
       expect(mocks.sendRequest).toHaveBeenCalled();
@@ -321,11 +390,9 @@ describe("RequestAccessPanel", () => {
       }),
     );
 
+    expect(screen.getByText(/^connect is the next step$/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/^connect is the next step$/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /request access/i }),
+      screen.queryByRole("button", { name: /request to connect/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -383,9 +450,11 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /^request access$/i }),
+      screen.getByRole("heading", { name: /^request to connect$/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /request access/i })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: /request to connect/i }),
+    ).toBeEnabled();
   });
 
   it("shows a clear unavailable state when smart card config is missing", () => {
@@ -405,7 +474,7 @@ describe("RequestAccessPanel", () => {
       screen.getByText(/this profile isn't ready right now/i),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /request access/i }),
+      screen.queryByRole("button", { name: /request to connect/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -443,7 +512,7 @@ describe("RequestAccessPanel", () => {
       screen.getByText(/verify your account before sending a request/i),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /request access/i }),
+      screen.queryByRole("button", { name: /request to connect/i }),
     ).not.toBeInTheDocument();
   });
 });
