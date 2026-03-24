@@ -10,6 +10,7 @@ import {
   ContactRelationshipState as PrismaContactRelationshipState,
   ContactRequestSourceType as PrismaContactRequestSourceType,
   FollowUpStatus as PrismaFollowUpStatus,
+  FollowUpType as PrismaFollowUpType,
 } from "@prisma/client";
 
 import { resolveFollowUpPreset } from "../src/modules/follow-ups/follow-up-preset.util";
@@ -26,6 +27,8 @@ function createFollowUpRecord(overrides: Record<string, unknown> = {}) {
     remindAt: baseRemindAt,
     triggeredAt: null,
     status: PrismaFollowUpStatus.PENDING,
+    isSystemGenerated: false,
+    type: PrismaFollowUpType.MANUAL,
     note: "Follow up on partnership discussion",
     createdAt: new Date("2099-04-01T09:00:00.000Z"),
     updatedAt: baseUpdatedAt,
@@ -139,7 +142,6 @@ describe("FollowUpsService", () => {
 
   it("creates a follow-up from a preset with minimal input", async () => {
     let createPayload: Record<string, unknown> | null = null;
-    let touchedAt: Date | null = null;
 
     const service = new FollowUpsService(
       {
@@ -166,14 +168,6 @@ describe("FollowUpsService", () => {
           _tx: unknown,
           relationship: unknown,
         ) => relationship,
-        updateLastInteractionAt: async (
-          _tx: unknown,
-          _relationshipId: string,
-          interactionAt: Date,
-        ) => {
-          touchedAt = interactionAt;
-          return null;
-        },
       } as any,
     );
 
@@ -184,19 +178,14 @@ describe("FollowUpsService", () => {
 
     const createdAt = (createPayload as any)?.data.createdAt as Date;
     const remindAt = (createPayload as any)?.data.remindAt as Date;
-    const touchedAtValue = touchedAt as Date | null;
 
     assert.ok(createdAt instanceof Date);
     assert.ok(remindAt instanceof Date);
-    if (touchedAtValue === null) {
-      assert.fail("Expected relationship activity timestamp to be recorded");
-    }
     assert.equal(remindAt.getTime() - createdAt.getTime(), 24 * 60 * 60 * 1000);
-    assert.equal(touchedAtValue.getTime(), createdAt.getTime());
   });
 
-  it("touches relationship activity when a follow-up is created", async () => {
-    const touchedRelationships: string[] = [];
+  it("does not touch relationship activity when a follow-up is created", async () => {
+    let updateLastInteractionAtCalled = false;
 
     const service = new FollowUpsService(
       {
@@ -220,8 +209,8 @@ describe("FollowUpsService", () => {
           _tx: unknown,
           relationship: unknown,
         ) => relationship,
-        updateLastInteractionAt: async (_tx: unknown, relationshipId: string) => {
-          touchedRelationships.push(relationshipId);
+        updateLastInteractionAt: async () => {
+          updateLastInteractionAtCalled = true;
           return null;
         },
       } as any,
@@ -232,7 +221,7 @@ describe("FollowUpsService", () => {
       remindAt: "2099-04-10T10:00:00.000Z",
     });
 
-    assert.deepEqual(touchedRelationships, ["relationship-1"]);
+    assert.equal(updateLastInteractionAtCalled, false);
   });
 
   it("returns the same not found for a relationship owned by another user", async () => {
@@ -486,6 +475,8 @@ describe("FollowUpsService", () => {
     );
     assert.equal(result[0]?.metadata.isTriggered, false);
     assert.equal(result[1]?.metadata.isTriggered, true);
+    assert.equal(result[0]?.isSystemGenerated, false);
+    assert.equal(result[0]?.type, "manual");
   });
 
   it("marks a due pending follow-up as triggered exactly once", async () => {
@@ -620,6 +611,205 @@ describe("FollowUpsService", () => {
     });
   });
 
+  it("generates a passive inactivity follow-up when a relationship is stale and has no pending follow-up", async () => {
+    const createdPayloads: Array<Record<string, unknown>> = [];
+
+    const service = new FollowUpsService(
+      {
+        contactRelationship: {
+          findMany: async () => [
+            {
+              id: "relationship-1",
+              ownerUserId: "user-1",
+              targetUserId: "user-2",
+              lastInteractionAt: new Date("2026-03-01T10:00:00.000Z"),
+              state: PrismaContactRelationshipState.APPROVED,
+              accessEndAt: null,
+            },
+          ],
+        },
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            contactRelationship: {
+              findUnique: async () => ({
+                id: "relationship-1",
+                ownerUserId: "user-1",
+                targetUserId: "user-2",
+                lastInteractionAt: new Date("2026-03-01T10:00:00.000Z"),
+                state: PrismaContactRelationshipState.APPROVED,
+                accessEndAt: null,
+              }),
+            },
+            followUp: {
+              count: async (args: Record<string, unknown>) => {
+                if ((args.where as any)?.status === PrismaFollowUpStatus.PENDING) {
+                  return 0;
+                }
+
+                return 0;
+              },
+              findFirst: async () => null,
+              create: async (args: Record<string, unknown>) => {
+                createdPayloads.push(args);
+                return createFollowUpRecord({
+                  id: "system-follow-up-1",
+                  isSystemGenerated: true,
+                  type: PrismaFollowUpType.INACTIVITY,
+                });
+              },
+            },
+          }),
+      } as any,
+      {
+        ...noopRelationshipExpiryService,
+        expireRelationshipIfNeeded: async (
+          _tx: unknown,
+          relationship: unknown,
+        ) => relationship,
+      } as any,
+    );
+
+    const result = await service.generatePassiveFollowUps(undefined, {
+      now: new Date("2026-03-24T10:00:00.000Z"),
+      limit: 5,
+    });
+
+    assert.equal(createdPayloads.length, 1);
+    const createdData = createdPayloads[0]?.data as Record<string, unknown>;
+
+    assert.equal(createdData.isSystemGenerated, true);
+    assert.equal(createdData.type, PrismaFollowUpType.INACTIVITY);
+    assert.equal(createdData.note, null);
+    assert.deepEqual(result, {
+      generatedCount: 1,
+      evaluatedRelationshipCount: 1,
+    });
+  });
+
+  it("skips passive follow-up generation when a pending follow-up already exists", async () => {
+    const service = new FollowUpsService(
+      {
+        contactRelationship: {
+          findMany: async () => [
+            {
+              id: "relationship-1",
+              ownerUserId: "user-1",
+              targetUserId: "user-2",
+              lastInteractionAt: new Date("2026-03-01T10:00:00.000Z"),
+              state: PrismaContactRelationshipState.APPROVED,
+              accessEndAt: null,
+            },
+          ],
+        },
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            contactRelationship: {
+              findUnique: async () => ({
+                id: "relationship-1",
+                ownerUserId: "user-1",
+                targetUserId: "user-2",
+                lastInteractionAt: new Date("2026-03-01T10:00:00.000Z"),
+                state: PrismaContactRelationshipState.APPROVED,
+                accessEndAt: null,
+              }),
+            },
+            followUp: {
+              count: async (args: Record<string, unknown>) => {
+                if ((args.where as any)?.status === PrismaFollowUpStatus.PENDING) {
+                  return 1;
+                }
+
+                return 0;
+              },
+              findFirst: async () => null,
+              create: async () => {
+                assert.fail("Expected passive follow-up creation to be skipped");
+              },
+            },
+          }),
+      } as any,
+      {
+        ...noopRelationshipExpiryService,
+        expireRelationshipIfNeeded: async (
+          _tx: unknown,
+          relationship: unknown,
+        ) => relationship,
+      } as any,
+    );
+
+    const result = await service.generatePassiveFollowUps(undefined, {
+      now: new Date("2026-03-24T10:00:00.000Z"),
+    });
+
+    assert.deepEqual(result, {
+      generatedCount: 0,
+      evaluatedRelationshipCount: 1,
+    });
+  });
+
+  it("keeps passive follow-up generation idempotent until a new interaction happens", async () => {
+    const service = new FollowUpsService(
+      {
+        contactRelationship: {
+          findMany: async () => [
+            {
+              id: "relationship-1",
+              ownerUserId: "user-1",
+              targetUserId: "user-2",
+              lastInteractionAt: new Date("2026-03-01T10:00:00.000Z"),
+              state: PrismaContactRelationshipState.APPROVED,
+              accessEndAt: null,
+            },
+          ],
+        },
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            contactRelationship: {
+              findUnique: async () => ({
+                id: "relationship-1",
+                ownerUserId: "user-1",
+                targetUserId: "user-2",
+                lastInteractionAt: new Date("2026-03-01T10:00:00.000Z"),
+                state: PrismaContactRelationshipState.APPROVED,
+                accessEndAt: null,
+              }),
+            },
+            followUp: {
+              count: async (args: Record<string, unknown>) => {
+                if ((args.where as any)?.status === PrismaFollowUpStatus.PENDING) {
+                  return 0;
+                }
+
+                return 1;
+              },
+              findFirst: async () => ({
+                createdAt: new Date("2026-03-20T10:00:00.000Z"),
+              }),
+              create: async () => {
+                assert.fail("Expected passive follow-up creation to be idempotent");
+              },
+            },
+          }),
+      } as any,
+      {
+        ...noopRelationshipExpiryService,
+        expireRelationshipIfNeeded: async (
+          _tx: unknown,
+          relationship: unknown,
+        ) => relationship,
+      } as any,
+    );
+
+    const result = await service.generatePassiveFollowUps(undefined, {
+      now: new Date("2026-03-24T10:00:00.000Z"),
+    });
+
+    assert.deepEqual(result, {
+      generatedCount: 0,
+      evaluatedRelationshipCount: 1,
+    });
+  });
+
   it("returns an empty result for foreign relationship filters without leaking presence", async () => {
     let findManyArgs: Record<string, unknown> | null = null;
 
@@ -738,7 +928,7 @@ describe("FollowUpsService", () => {
 
   it("completes a pending follow-up and records completion time", async () => {
     let updateArgs: Record<string, unknown> | null = null;
-    const touchedRelationships: string[] = [];
+    let updateLastInteractionAtCalled = false;
 
     const service = new FollowUpsService(
       {
@@ -758,11 +948,8 @@ describe("FollowUpsService", () => {
       } as any,
       {
         ...noopRelationshipExpiryService,
-        updateLastInteractionAt: async (
-          _tx: unknown,
-          relationshipId: string,
-        ) => {
-          touchedRelationships.push(relationshipId);
+        updateLastInteractionAt: async () => {
+          updateLastInteractionAtCalled = true;
           return null;
         },
       } as any,
@@ -777,7 +964,7 @@ describe("FollowUpsService", () => {
     assert.ok((updateArgs as any)?.data.completedAt instanceof Date);
     assert.equal(result.status, "completed");
     assert.ok(result.completedAt instanceof Date);
-    assert.deepEqual(touchedRelationships, ["relationship-1"]);
+    assert.equal(updateLastInteractionAtCalled, false);
   });
 
   it("rejects follow-up completion when the relationship is no longer active", async () => {

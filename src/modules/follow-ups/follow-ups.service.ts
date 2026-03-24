@@ -8,11 +8,13 @@ import {
   ContactRelationshipState as PrismaContactRelationshipState,
   ContactRequestSourceType as PrismaContactRequestSourceType,
   FollowUpStatus as PrismaFollowUpStatus,
+  FollowUpType as PrismaFollowUpType,
   Prisma,
 } from "@prisma/client";
 
 import { ContactRequestSourceType } from "../../common/enums/contact-request-source-type.enum";
 import { FollowUpStatus } from "../../common/enums/follow-up-status.enum";
+import { FollowUpType } from "../../common/enums/follow-up-type.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { RelationshipsService } from "../relationships/relationships.service";
 
@@ -22,6 +24,21 @@ import { UpdateFollowUpDto } from "./dto/update-follow-up.dto";
 import { resolveFollowUpPreset } from "./follow-up-preset.util";
 
 const UPCOMING_SOON_WINDOW_MS = 24 * 60 * 60 * 1000;
+const INACTIVITY_RULE_WINDOW_DAYS = 14;
+const PASSIVE_FOLLOW_UP_BATCH_SIZE = 100;
+const MAX_SYSTEM_FOLLOW_UPS_PER_RELATIONSHIP = 3;
+
+type PassiveFollowUpRule = {
+  inactivityDays: number;
+  type: PrismaFollowUpType;
+};
+
+const PASSIVE_FOLLOW_UP_RULES: PassiveFollowUpRule[] = [
+  {
+    inactivityDays: INACTIVITY_RULE_WINDOW_DAYS,
+    type: PrismaFollowUpType.INACTIVITY,
+  },
+];
 
 const followUpTargetPersonaSelect = {
   id: true,
@@ -61,6 +78,8 @@ const followUpListSelect = {
   remindAt: true,
   triggeredAt: true,
   status: true,
+  isSystemGenerated: true,
+  type: true,
   note: true,
   createdAt: true,
   updatedAt: true,
@@ -77,6 +96,8 @@ const followUpDetailSelect = {
   remindAt: true,
   triggeredAt: true,
   status: true,
+  isSystemGenerated: true,
+  type: true,
   note: true,
   createdAt: true,
   updatedAt: true,
@@ -107,6 +128,15 @@ type FollowUpCreateRecord = Prisma.FollowUpGetPayload<{
   select: typeof followUpCreateSelect;
 }>;
 
+type PassiveFollowUpCandidate = {
+  id: string;
+  ownerUserId: string;
+  targetUserId: string;
+  lastInteractionAt: Date | null;
+  state: PrismaContactRelationshipState;
+  accessEndAt: Date | null;
+};
+
 @Injectable()
 export class FollowUpsService {
   constructor(
@@ -132,18 +162,14 @@ export class FollowUpsService {
           remindAt,
           note: dto.note ?? null,
           status: PrismaFollowUpStatus.PENDING,
+          isSystemGenerated: false,
+          type: PrismaFollowUpType.MANUAL,
           createdAt: now,
           triggeredAt: null,
           completedAt: null,
         },
         select: followUpCreateSelect,
       });
-
-      await this.relationshipsService.updateLastInteractionAt?.(
-        tx,
-        relationship.id,
-        now,
-      );
 
       return this.toCreateFollowUpResponse(createdFollowUp);
     });
@@ -342,6 +368,71 @@ export class FollowUpsService {
     };
   }
 
+  async generatePassiveFollowUps(
+    userId?: string,
+    options?: {
+      limit?: number;
+      now?: Date;
+      maxSystemFollowUpsPerRelationship?: number;
+    },
+  ) {
+    const now = options?.now ?? new Date();
+    const limit = this.resolvePassiveFollowUpBatchSize(options?.limit);
+    const maxSystemFollowUpsPerRelationship =
+      this.resolveMaxSystemFollowUpsPerRelationship(
+        options?.maxSystemFollowUpsPerRelationship,
+      );
+    const oldestInactivityRule = PASSIVE_FOLLOW_UP_RULES.reduce(
+      (oldestRule, rule) =>
+        Math.max(oldestRule, this.toMilliseconds(rule.inactivityDays)),
+      0,
+    );
+
+    await this.relationshipsService.expireExpiredRelationships(userId);
+
+    const relationships = await this.prismaService.contactRelationship.findMany({
+      where: {
+        ...buildActiveRelationshipWhere(now, userId),
+        lastInteractionAt: {
+          lte: new Date(now.getTime() - oldestInactivityRule),
+        },
+      },
+      orderBy: [
+        { lastInteractionAt: "asc" },
+        { createdAt: "asc" },
+        { id: "asc" },
+      ],
+      take: limit,
+      select: {
+        id: true,
+        ownerUserId: true,
+        targetUserId: true,
+        lastInteractionAt: true,
+        state: true,
+        accessEndAt: true,
+      },
+    });
+
+    let generatedCount = 0;
+
+    for (const relationship of relationships) {
+      const wasCreated = await this.createPassiveFollowUpForRelationship(
+        relationship,
+        now,
+        maxSystemFollowUpsPerRelationship,
+      );
+
+      if (wasCreated) {
+        generatedCount += 1;
+      }
+    }
+
+    return {
+      generatedCount,
+      evaluatedRelationshipCount: relationships.length,
+    };
+  }
+
   async getFollowUpSummaryForRelationship(
     userId: string,
     relationshipId: string,
@@ -373,6 +464,8 @@ export class FollowUpsService {
           remindAt: true,
           triggeredAt: true,
           status: true,
+          isSystemGenerated: true,
+          type: true,
         },
       }),
     ]);
@@ -386,6 +479,10 @@ export class FollowUpsService {
       hasPendingFollowUp: pendingFollowUpCount > 0,
       nextFollowUpAt: aggregate._min.remindAt ?? null,
       pendingFollowUpCount,
+      hasPassiveInactivityFollowUp: Boolean(
+        nextFollowUp?.isSystemGenerated &&
+          nextFollowUp.type === PrismaFollowUpType.INACTIVITY,
+      ),
       ...metadata,
     };
   }
@@ -417,11 +514,6 @@ export class FollowUpsService {
         data,
         select: followUpDetailSelect,
       });
-
-      await this.relationshipsService.updateLastInteractionAt?.(
-        tx,
-        followUp.relationshipId,
-      );
 
       return this.toFollowUpView(updatedFollowUp);
     });
@@ -466,11 +558,6 @@ export class FollowUpsService {
         },
         select: followUpDetailSelect,
       });
-
-      await this.relationshipsService.updateLastInteractionAt?.(
-        tx,
-        followUp.relationshipId,
-      );
 
       return this.toFollowUpView(updatedFollowUp);
     });
@@ -647,6 +734,8 @@ export class FollowUpsService {
       remindAt: followUp.remindAt,
       triggeredAt: followUp.triggeredAt,
       status: toApiFollowUpStatus(followUp.status),
+      isSystemGenerated: followUp.isSystemGenerated,
+      type: toApiFollowUpType(followUp.type),
       note: followUp.note,
       createdAt: followUp.createdAt,
       updatedAt: followUp.updatedAt,
@@ -680,6 +769,157 @@ export class FollowUpsService {
       remindAt: followUp.remindAt,
       status: toApiFollowUpStatus(followUp.status),
     };
+  }
+
+  private async createPassiveFollowUpForRelationship(
+    relationship: PassiveFollowUpCandidate,
+    now: Date,
+    maxSystemFollowUpsPerRelationship: number,
+  ) {
+    return this.prismaService.$transaction(async (tx) => {
+      const currentRelationship = await tx.contactRelationship.findUnique({
+        where: {
+          id: relationship.id,
+        },
+        select: {
+          id: true,
+          ownerUserId: true,
+          targetUserId: true,
+          lastInteractionAt: true,
+          state: true,
+          accessEndAt: true,
+        },
+      });
+
+      if (!currentRelationship) {
+        return false;
+      }
+
+      const normalizedRelationship =
+        await this.relationshipsService.expireRelationshipIfNeeded(
+          tx,
+          currentRelationship,
+        );
+
+      if (
+        normalizedRelationship.state === PrismaContactRelationshipState.EXPIRED ||
+        normalizedRelationship.lastInteractionAt === null
+      ) {
+        return false;
+      }
+
+      const matchingRule = this.resolvePassiveRule(
+        normalizedRelationship.lastInteractionAt,
+        now,
+      );
+
+      if (!matchingRule) {
+        return false;
+      }
+
+      const [pendingFollowUpCount, systemFollowUpCount, latestSystemFollowUp] =
+        await Promise.all([
+          tx.followUp.count({
+            where: {
+              ownerUserId: normalizedRelationship.ownerUserId,
+              relationshipId: normalizedRelationship.id,
+              status: PrismaFollowUpStatus.PENDING,
+            },
+          }),
+          tx.followUp.count({
+            where: {
+              ownerUserId: normalizedRelationship.ownerUserId,
+              relationshipId: normalizedRelationship.id,
+              isSystemGenerated: true,
+            },
+          }),
+          tx.followUp.findFirst({
+            where: {
+              ownerUserId: normalizedRelationship.ownerUserId,
+              relationshipId: normalizedRelationship.id,
+              isSystemGenerated: true,
+              type: matchingRule.type,
+            },
+            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+            select: {
+              createdAt: true,
+            },
+          }),
+        ]);
+
+      if (pendingFollowUpCount > 0) {
+        return false;
+      }
+
+      if (systemFollowUpCount >= maxSystemFollowUpsPerRelationship) {
+        return false;
+      }
+
+      if (
+        latestSystemFollowUp &&
+        latestSystemFollowUp.createdAt.getTime() >=
+          normalizedRelationship.lastInteractionAt.getTime()
+      ) {
+        return false;
+      }
+
+      await tx.followUp.create({
+        data: {
+          ownerUserId: normalizedRelationship.ownerUserId,
+          relationshipId: normalizedRelationship.id,
+          remindAt: now,
+          status: PrismaFollowUpStatus.PENDING,
+          isSystemGenerated: true,
+          type: matchingRule.type,
+          note: null,
+          createdAt: now,
+          triggeredAt: null,
+          completedAt: null,
+        },
+      });
+
+      return true;
+    });
+  }
+
+  private resolvePassiveRule(lastInteractionAt: Date, now: Date) {
+    const inactivityMs = now.getTime() - lastInteractionAt.getTime();
+
+    for (const rule of PASSIVE_FOLLOW_UP_RULES) {
+      if (inactivityMs >= this.toMilliseconds(rule.inactivityDays)) {
+        return rule;
+      }
+    }
+
+    return null;
+  }
+
+  private resolvePassiveFollowUpBatchSize(limit?: number) {
+    if (
+      typeof limit !== "number" ||
+      !Number.isFinite(limit) ||
+      limit < 1
+    ) {
+      return PASSIVE_FOLLOW_UP_BATCH_SIZE;
+    }
+
+    return Math.floor(limit);
+  }
+
+  private resolveMaxSystemFollowUpsPerRelationship(limit?: number) {
+    if (
+      typeof limit !== "number" ||
+      !Number.isFinite(limit) ||
+      limit < 1
+    ) {
+      return MAX_SYSTEM_FOLLOW_UPS_PER_RELATIONSHIP;
+    }
+
+    return Math.floor(limit);
+  }
+
+  private toMilliseconds(days: number) {
+    return days * 24 * 60 * 60 * 1000;
   }
 
   private buildFollowUpMetadata(
@@ -838,26 +1078,33 @@ function buildActiveRelationshipFollowUpWhere(
 ): Prisma.FollowUpWhereInput {
   return {
     relationship: {
-      is: {
-        ...(ownerUserId
-          ? {
-              ownerUserId,
-            }
-          : {}),
-        OR: [
-          {
-            state: PrismaContactRelationshipState.APPROVED,
-          },
-          {
-            state: PrismaContactRelationshipState.INSTANT_ACCESS,
-            accessEndAt: {
-              gte: now,
-            },
-          },
-        ],
-      },
+      is: buildActiveRelationshipWhere(now, ownerUserId),
     },
   } satisfies Prisma.FollowUpWhereInput;
+}
+
+function buildActiveRelationshipWhere(
+  now: Date,
+  ownerUserId?: string,
+): Prisma.ContactRelationshipWhereInput {
+  return {
+    ...(ownerUserId
+      ? {
+          ownerUserId,
+        }
+      : {}),
+    OR: [
+      {
+        state: PrismaContactRelationshipState.APPROVED,
+      },
+      {
+        state: PrismaContactRelationshipState.INSTANT_ACCESS,
+        accessEndAt: {
+          gte: now,
+        },
+      },
+    ],
+  } satisfies Prisma.ContactRelationshipWhereInput;
 }
 
 function toPrismaFollowUpStatus(status: FollowUpStatus): PrismaFollowUpStatus {
@@ -884,6 +1131,19 @@ function toApiFollowUpStatus(status: PrismaFollowUpStatus): FollowUpStatus {
   }
 
   throw new Error("Unsupported follow-up status");
+}
+
+function toApiFollowUpType(type: PrismaFollowUpType): FollowUpType {
+  switch (type) {
+    case PrismaFollowUpType.MANUAL:
+      return FollowUpType.Manual;
+    case PrismaFollowUpType.INACTIVITY:
+      return FollowUpType.Inactivity;
+    case PrismaFollowUpType.EVENT_FOLLOWUP:
+      return FollowUpType.EventFollowUp;
+  }
+
+  throw new Error("Unsupported follow-up type");
 }
 
 function toApiRelationshipState(

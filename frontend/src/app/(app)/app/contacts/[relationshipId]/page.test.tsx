@@ -134,6 +134,7 @@ function createContactDetail(
       hasPendingFollowUp: false,
       nextFollowUpAt: null,
       pendingFollowUpCount: 0,
+      hasPassiveInactivityFollowUp: false,
     },
     metadata: {
       lastInteractionAt: "2026-03-21T12:00:00.000Z",
@@ -286,6 +287,7 @@ describe("ContactDetailPage", () => {
           hasPendingFollowUp: true,
           nextFollowUpAt: "2026-03-24T09:30:00.000Z",
           pendingFollowUpCount: 2,
+          hasPassiveInactivityFollowUp: false,
           isTriggered: true,
           isOverdue: false,
           isUpcomingSoon: false,

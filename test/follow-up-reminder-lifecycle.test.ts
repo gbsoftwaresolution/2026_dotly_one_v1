@@ -150,4 +150,107 @@ describe("FollowUpReminderLifecycleService", () => {
       "database unavailable",
     );
   });
+
+  it("generates passive follow-ups in bounded batches", async () => {
+    let generationArgs: Array<unknown> | null = null;
+    const logCalls: Array<Record<string, unknown>> = [];
+
+    const service = new FollowUpReminderLifecycleService(
+      {
+        processDueFollowUps: async () => ({ processedCount: 0 }),
+        generatePassiveFollowUps: async (...args: Array<unknown>) => {
+          generationArgs = args;
+          return {
+            generatedCount: 3,
+            evaluatedRelationshipCount: 7,
+          };
+        },
+      } as any,
+      {
+        get: (key: string, fallback?: unknown) => {
+          switch (key) {
+            case "followUps.passiveProcessing.enabled":
+              return true;
+            case "followUps.passiveProcessing.batchSize":
+              return 12;
+            default:
+              return fallback;
+          }
+        },
+      } as any,
+      {
+        logWithMeta: (
+          _level: string,
+          message: string,
+          metadata: Record<string, unknown>,
+        ) => {
+          logCalls.push({ message, metadata });
+        },
+      } as any,
+    );
+
+    const result = await service.processPassiveFollowUps({
+      trigger: "test",
+    });
+
+    assert.deepEqual(generationArgs, [undefined, { limit: 12 }]);
+    assert.deepEqual(result, {
+      generatedCount: 3,
+      evaluatedRelationshipCount: 7,
+      batchSize: 12,
+      trigger: "test",
+      skipped: false,
+    });
+    assert.equal(logCalls[0]?.message, "Passive follow-up generation completed");
+    assert.equal(
+      (logCalls[0]?.metadata as Record<string, unknown> | undefined)
+        ?.generatedCount,
+      3,
+    );
+  });
+
+  it("skips passive generation when disabled", async () => {
+    let generationCalled = false;
+
+    const service = new FollowUpReminderLifecycleService(
+      {
+        processDueFollowUps: async () => ({ processedCount: 0 }),
+        generatePassiveFollowUps: async () => {
+          generationCalled = true;
+          return {
+            generatedCount: 1,
+            evaluatedRelationshipCount: 1,
+          };
+        },
+      } as any,
+      {
+        get: (key: string, fallback?: unknown) => {
+          switch (key) {
+            case "followUps.passiveProcessing.enabled":
+              return false;
+            case "followUps.passiveProcessing.batchSize":
+              return 9;
+            default:
+              return fallback;
+          }
+        },
+      } as any,
+      {
+        logWithMeta: () => undefined,
+      } as any,
+    );
+
+    const result = await service.processPassiveFollowUps({
+      trigger: "scheduled",
+    });
+
+    assert.equal(generationCalled, false);
+    assert.deepEqual(result, {
+      generatedCount: 0,
+      evaluatedRelationshipCount: 0,
+      batchSize: 9,
+      trigger: "scheduled",
+      skipped: true,
+    });
+  });
 });

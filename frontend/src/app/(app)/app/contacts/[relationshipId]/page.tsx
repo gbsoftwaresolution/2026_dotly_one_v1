@@ -343,7 +343,6 @@ export default async function ContactDetailPage({
             initialFollowUpSummary={contact.followUpSummary}
             disabled={isExpired}
           />
-
           {isExpired ? (
             <p className="font-sans text-xs text-muted">
               Follow-ups are unavailable because this connection window has

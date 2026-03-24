@@ -2102,14 +2102,14 @@ describe("ContactsService", () => {
       hasPendingFollowUp: false,
       nextFollowUpAt: null,
       pendingFollowUpCount: 0,
+      hasPassiveInactivityFollowUp: false,
       isTriggered: false,
       isOverdue: false,
       isUpcomingSoon: false,
     });
   });
 
-  it("updates interaction metadata when a contact note changes", async () => {
-    const interactionAt = new Date("2026-03-22T11:00:00.000Z");
+  it("preserves empty interaction metadata when a contact note changes", async () => {
     const interactionCalls: Array<{ tx: unknown; relationshipId: string }> = [];
 
     const service = new ContactsService(
@@ -2153,16 +2153,9 @@ describe("ContactsService", () => {
           _tx: unknown,
           relationship: Record<string, unknown>,
         ) => relationship,
-        updateInteractionMetadata: async (
-          tx: unknown,
-          relationshipId: string,
-        ) => {
+        updateInteractionMetadata: async (tx: unknown, relationshipId: string) => {
           interactionCalls.push({ tx, relationshipId });
-          return {
-            id: relationshipId,
-            lastInteractionAt: interactionAt,
-            interactionCount: 1,
-          };
+          return null;
         },
       } as any,
     );
@@ -2171,16 +2164,12 @@ describe("ContactsService", () => {
       note: "New note",
     });
 
-    assert.equal(interactionCalls.length, 1);
-    assert.equal(interactionCalls[0]?.relationshipId, "relationship-id");
-    assert.equal(
-      result.lastInteractionAt?.toISOString(),
-      interactionAt.toISOString(),
-    );
-    assert.equal(result.interactionCount, 1);
+    assert.equal(interactionCalls.length, 0);
+    assert.equal(result.lastInteractionAt, null);
+    assert.equal(result.interactionCount, 0);
   });
 
-  it("does not increment interaction metadata when the note is unchanged", async () => {
+  it("does not change interaction metadata when a note is updated", async () => {
     const interactionCalls: Array<{ tx: unknown; relationshipId: string }> = [];
 
     const service = new ContactsService(
@@ -2222,9 +2211,9 @@ describe("ContactsService", () => {
           }),
       } as any,
       {
-        updateNote: async () => {
-          throw new Error("updateNote should not be called for no-op saves");
-        },
+        updateNote: async () => ({
+          note: "Updated note",
+        }),
       } as any,
       {
         expireRelationshipIfNeeded: async (
@@ -2242,11 +2231,11 @@ describe("ContactsService", () => {
     );
 
     const result = await service.updateNote("owner-user", "relationship-id", {
-      note: "Unchanged note",
+      note: "Updated note",
     });
 
     assert.equal(interactionCalls.length, 0);
-    assert.equal(result.note, "Unchanged note");
+    assert.equal(result.note, "Updated note");
     assert.equal(result.interactionCount, 4);
     assert.equal(
       result.lastInteractionAt?.toISOString(),

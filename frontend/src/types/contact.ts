@@ -40,6 +40,7 @@ export interface ContactFollowUpSummary {
   hasPendingFollowUp: boolean;
   nextFollowUpAt: string | null;
   pendingFollowUpCount: number;
+  hasPassiveInactivityFollowUp?: boolean;
   isTriggered?: boolean;
   isOverdue?: boolean;
   isUpcomingSoon?: boolean;

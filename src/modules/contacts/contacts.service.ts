@@ -287,22 +287,13 @@ export class ContactsService {
         note,
       });
 
-      const interactionMetadata =
-        await this.relationshipsService.updateInteractionMetadata(
-          tx,
-          normalizedRelationship.id,
-        );
-
       return {
         relationshipId: normalizedRelationship.id,
         note,
-        lastInteractionAt:
-          interactionMetadata?.lastInteractionAt ??
-          normalizedRelationship.lastInteractionAt ??
-          null,
-        interactionCount:
-          interactionMetadata?.interactionCount ??
-          toSafeInteractionCount(normalizedRelationship.interactionCount),
+        lastInteractionAt: normalizedRelationship.lastInteractionAt ?? null,
+        interactionCount: toSafeInteractionCount(
+          normalizedRelationship.interactionCount,
+        ),
       };
     });
   }
@@ -390,6 +381,7 @@ export class ContactsService {
       hasPendingFollowUp: boolean;
       nextFollowUpAt: Date | null;
       pendingFollowUpCount: number;
+      hasPassiveInactivityFollowUp: boolean;
       isTriggered: boolean;
       isOverdue: boolean;
       isUpcomingSoon: boolean;
@@ -813,6 +805,7 @@ function buildEmptyFollowUpSummary() {
     hasPendingFollowUp: false,
     nextFollowUpAt: null,
     pendingFollowUpCount: 0,
+    hasPassiveInactivityFollowUp: false,
     isTriggered: false,
     isOverdue: false,
     isUpcomingSoon: false,

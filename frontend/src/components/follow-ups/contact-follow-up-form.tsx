@@ -14,6 +14,11 @@ import {
 import { followUpsApi } from "@/lib/api/follow-ups-api";
 import { ApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
+import {
+  getPassiveReminderBadgeLabel,
+  getPassiveReminderBody,
+  getPassiveReminderHeadline,
+} from "@/lib/follow-ups/passive-reminder";
 import { cn } from "@/lib/utils/cn";
 import type {
   CreateFollowUpResponse,
@@ -141,6 +146,15 @@ function getFollowUpSummaryState(summary: ContactFollowUpSummary | null) {
     return null;
   }
 
+  if (summary.hasPassiveInactivityFollowUp) {
+    return {
+      eyebrow: getPassiveReminderBadgeLabel(),
+      title: getPassiveReminderHeadline(),
+      detail: getPassiveReminderBody(),
+      tone: "cyan" as const,
+    };
+  }
+
   if (summary.isOverdue) {
     return {
       eyebrow: "Pick this back up",
@@ -200,6 +214,9 @@ function mergeFollowUpSummary(
     hasPendingFollowUp: true,
     nextFollowUpAt,
     pendingFollowUpCount: (current?.pendingFollowUpCount ?? 0) + 1,
+    hasPassiveInactivityFollowUp:
+      preservesCurrentUrgency &&
+      Boolean(current?.hasPassiveInactivityFollowUp),
     ...flags,
   };
 }
@@ -231,6 +248,9 @@ function reconcileCreatedFollowUpSummary(
     hasPendingFollowUp: true,
     nextFollowUpAt,
     pendingFollowUpCount: current.pendingFollowUpCount,
+    hasPassiveInactivityFollowUp:
+      preservesCurrentUrgency &&
+      Boolean(current.hasPassiveInactivityFollowUp),
     ...flags,
   };
 }
@@ -269,6 +289,8 @@ export function ContactFollowUpForm({
       relationshipId,
       remindAt,
       status: "pending",
+      isSystemGenerated: false,
+      type: "manual",
       note: null,
       createdAt: optimisticTimestamp,
       updatedAt: optimisticTimestamp,
@@ -514,7 +536,9 @@ export function ContactFollowUpForm({
                 {followUpSummaryState?.tone ? (
                   <StatusBadge
                     label={
-                      followUpSummaryState.tone === "error"
+                      followUpSummaryState.tone === "cyan"
+                        ? "Gentle"
+                        : followUpSummaryState.tone === "error"
                         ? "Overdue"
                         : "Ready"
                     }

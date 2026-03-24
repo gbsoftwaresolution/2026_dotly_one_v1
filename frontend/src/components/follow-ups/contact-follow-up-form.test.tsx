@@ -25,6 +25,7 @@ function createFollowUpSummary(
     hasPendingFollowUp: true,
     nextFollowUpAt: createRelativeIsoDate(1),
     pendingFollowUpCount: 1,
+    hasPassiveInactivityFollowUp: false,
     isTriggered: false,
     isOverdue: false,
     isUpcomingSoon: true,
@@ -198,5 +199,24 @@ describe("ContactFollowUpForm", () => {
 
     expect(screen.getByText(/this conversation is waiting on you/i)).toBeInTheDocument();
     expect(screen.getByText(/^overdue$/i)).toBeInTheDocument();
+  });
+
+  it("uses softer passive reminder copy when the pending follow-up is system generated", () => {
+    render(
+      React.createElement(ContactFollowUpForm, {
+        relationshipId: "relationship-id",
+        contactName: "Alex Parker",
+        initialFollowUpSummary: createFollowUpSummary({
+          hasPassiveInactivityFollowUp: true,
+          isTriggered: true,
+          isOverdue: false,
+          isUpcomingSoon: false,
+        }),
+      }),
+    );
+
+    expect(screen.getByText(/reach out again/i)).toBeInTheDocument();
+    expect(screen.getByText(/you haven't interacted in a while/i)).toBeInTheDocument();
+    expect(screen.getByText(/^gentle$/i)).toBeInTheDocument();
   });
 });
