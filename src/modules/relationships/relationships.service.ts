@@ -14,6 +14,7 @@ import {
   ContactRequestSourceType as PrismaContactRequestSourceType,
   EventStatus as PrismaEventStatus,
   ContactRelationshipState as PrismaContactRelationshipState,
+  FollowUpStatus as PrismaFollowUpStatus,
   PersonaAccessMode as PrismaPersonaAccessMode,
   PersonaSharingMode as PrismaPersonaSharingMode,
   Prisma,
@@ -39,7 +40,9 @@ import { CreatePublicInstantConnectDto } from "./dto/create-public-instant-conne
 import { InstantConnectSourcePolicyService } from "./instant-connect-source-policy.service";
 import { RelationshipInteractionType } from "./relationship-interaction-type.enum";
 
-const RECENT_INTERACTIONS_LIMIT = 5;
+const ACTIVITY_TIMELINE_LIMIT = 10;
+const RECENT_INTERACTIONS_LIMIT = ACTIVITY_TIMELINE_LIMIT;
+const RECENT_FOLLOW_UPS_LIMIT = ACTIVITY_TIMELINE_LIMIT * 2;
 const INTERACTION_RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const INTERACTION_RATE_LIMIT_MAX = 5;
 
@@ -155,6 +158,26 @@ export type RecentRelationshipInteraction = {
   type: RelationshipInteractionType;
   payload: Prisma.JsonValue | null;
   createdAt: Date;
+};
+
+type RecentRelationshipFollowUp = {
+  id: string;
+  createdAt: Date;
+  completedAt: Date | null;
+  status: PrismaFollowUpStatus;
+};
+
+export type RelationshipActivityTimelineEventType =
+  | "CONNECTED"
+  | "INTERACTION"
+  | "FOLLOW_UP_CREATED"
+  | "FOLLOW_UP_COMPLETED";
+
+export type RelationshipActivityTimelineEvent = {
+  id: string;
+  type: RelationshipActivityTimelineEventType;
+  label: string;
+  timestamp: Date;
 };
 
 @Injectable()
@@ -593,6 +616,96 @@ export class RelationshipsService {
     };
   }
 
+  async getRelationshipActivityTimeline(
+    userId: string,
+    relationshipId: string,
+    prisma: Prisma.TransactionClient | PrismaService = this.prismaService,
+  ): Promise<RelationshipActivityTimelineEvent[]> {
+    const relationship = await prisma.contactRelationship.findFirst({
+      where: {
+        id: relationshipId,
+        ownerUserId: userId,
+      },
+      select: {
+        createdAt: true,
+        connectedAt: true,
+      },
+    });
+
+    if (!relationship) {
+      throw new NotFoundException("Relationship not found");
+    }
+
+    const [interactions, followUps] = await Promise.all([
+      this.getRecentInteractions(
+        relationshipId,
+        ACTIVITY_TIMELINE_LIMIT,
+        prisma,
+      ),
+      this.getRecentFollowUpsForTimeline(
+        prisma,
+        userId,
+        relationshipId,
+        RECENT_FOLLOW_UPS_LIMIT,
+      ),
+    ]);
+
+    const events: RelationshipActivityTimelineEvent[] = [
+      {
+        id: `connected-${relationshipId}`,
+        type: "CONNECTED",
+        label: "Connected",
+        timestamp: relationship.connectedAt ?? relationship.createdAt,
+      },
+      ...interactions.map((interaction) => ({
+        id: `interaction-${interaction.id}`,
+        type: "INTERACTION" as const,
+        label: toRelationshipInteractionTimelineLabel(
+          interaction.type,
+          interaction.senderUserId === userId ? "sent" : "received",
+        ),
+        timestamp: interaction.createdAt,
+      })),
+      ...followUps.flatMap((followUp) => {
+        const followUpEvents: RelationshipActivityTimelineEvent[] = [
+          {
+            id: `follow-up-created-${followUp.id}`,
+            type: "FOLLOW_UP_CREATED",
+            label: "Set a reminder",
+            timestamp: followUp.createdAt,
+          },
+        ];
+
+        if (
+          followUp.status === PrismaFollowUpStatus.COMPLETED &&
+          followUp.completedAt
+        ) {
+          followUpEvents.push({
+            id: `follow-up-completed-${followUp.id}`,
+            type: "FOLLOW_UP_COMPLETED",
+            label: "Completed a follow-up",
+            timestamp: followUp.completedAt,
+          });
+        }
+
+        return followUpEvents;
+      }),
+    ];
+
+    return events
+      .sort((left, right) => {
+        const timestampDifference =
+          right.timestamp.getTime() - left.timestamp.getTime();
+
+        if (timestampDifference !== 0) {
+          return timestampDifference;
+        }
+
+        return right.id.localeCompare(left.id);
+      })
+      .slice(0, ACTIVITY_TIMELINE_LIMIT);
+  }
+
   async updateOwnedRelationshipNotes(
     userId: string,
     relationshipId: string,
@@ -737,6 +850,30 @@ export class RelationshipsService {
       ORDER BY "createdAt" DESC, "id" DESC
       LIMIT ${safeLimit}
     `);
+  }
+
+  private async getRecentFollowUpsForTimeline(
+    prisma: Prisma.TransactionClient | PrismaService,
+    userId: string,
+    relationshipId: string,
+    limit = RECENT_FOLLOW_UPS_LIMIT,
+  ): Promise<RecentRelationshipFollowUp[]> {
+    const safeLimit = Math.max(1, Math.min(limit, RECENT_FOLLOW_UPS_LIMIT));
+
+    return prisma.followUp.findMany({
+      where: {
+        ownerUserId: userId,
+        relationshipId,
+      },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+      take: safeLimit,
+      select: {
+        id: true,
+        createdAt: true,
+        completedAt: true,
+        status: true,
+      },
+    });
   }
 
   private async createOrPromoteApprovedRelationship(
@@ -1618,6 +1755,20 @@ function normalizeTimelineContextLabel(value: string | null | undefined) {
 
   const trimmedValue = value.trim();
   return trimmedValue.length > 0 ? trimmedValue : null;
+}
+
+function toRelationshipInteractionTimelineLabel(
+  type: RelationshipInteractionType,
+  direction: "sent" | "received",
+) {
+  switch (type) {
+    case RelationshipInteractionType.GREETING:
+      return direction === "sent" ? "You said hi" : "They said hi";
+    case RelationshipInteractionType.FOLLOW_UP:
+      return direction === "sent" ? "You followed up" : "They followed up";
+    case RelationshipInteractionType.THANK_YOU:
+      return direction === "sent" ? "You sent thanks" : "They sent thanks";
+  }
 }
 
 function toInstantConnectSourceLabel(

@@ -6,6 +6,7 @@ import {
   HttpException,
   NotFoundException,
 } from "@nestjs/common";
+import { FollowUpStatus as PrismaFollowUpStatus } from "../src/generated/prisma/client";
 import { plainToInstance } from "class-transformer";
 import { validateSync } from "class-validator";
 
@@ -261,5 +262,243 @@ describe("RelationshipsService interactions", () => {
     const result = await service.getRecentInteractions("relationship-id", 99);
 
     assert.deepEqual(result, expectedRows);
+  });
+
+  it("builds a unified relationship activity timeline sorted newest first", async () => {
+    const service = new RelationshipsService({
+      contactRelationship: {
+        findFirst: async () => ({
+          createdAt: new Date("2026-03-20T10:00:00.000Z"),
+          connectedAt: new Date("2026-03-21T09:00:00.000Z"),
+        }),
+      },
+      followUp: {
+        findMany: async () => [
+          {
+            id: "follow-up-1",
+            createdAt: new Date("2026-03-24T08:00:00.000Z"),
+            completedAt: new Date("2026-03-24T11:30:00.000Z"),
+            status: PrismaFollowUpStatus.COMPLETED,
+          },
+          {
+            id: "follow-up-2",
+            createdAt: new Date("2026-03-24T07:00:00.000Z"),
+            completedAt: null,
+            status: PrismaFollowUpStatus.PENDING,
+          },
+        ],
+      },
+      $queryRaw: async () => [
+        {
+          id: "interaction-1",
+          relationshipId: "relationship-id",
+          senderUserId: "owner-user",
+          type: RelationshipInteractionType.THANK_YOU,
+          payload: null,
+          createdAt: new Date("2026-03-24T12:00:00.000Z"),
+        },
+        {
+          id: "interaction-2",
+          relationshipId: "relationship-id",
+          senderUserId: "owner-user",
+          type: RelationshipInteractionType.FOLLOW_UP,
+          payload: null,
+          createdAt: new Date("2026-03-24T09:30:00.000Z"),
+        },
+        {
+          id: "interaction-3",
+          relationshipId: "relationship-id",
+          senderUserId: "owner-user",
+          type: RelationshipInteractionType.GREETING,
+          payload: null,
+          createdAt: new Date("2026-03-22T09:00:00.000Z"),
+        },
+      ],
+    } as any);
+
+    const result = await service.getRelationshipActivityTimeline(
+      "owner-user",
+      "relationship-id",
+    );
+
+    assert.deepEqual(
+      result.map((event) => ({
+        ...event,
+        timestamp: event.timestamp.toISOString(),
+      })),
+      [
+        {
+          id: "interaction-interaction-1",
+          type: "INTERACTION",
+          label: "You sent thanks",
+          timestamp: "2026-03-24T12:00:00.000Z",
+        },
+        {
+          id: "follow-up-completed-follow-up-1",
+          type: "FOLLOW_UP_COMPLETED",
+          label: "Completed a follow-up",
+          timestamp: "2026-03-24T11:30:00.000Z",
+        },
+        {
+          id: "interaction-interaction-2",
+          type: "INTERACTION",
+          label: "You followed up",
+          timestamp: "2026-03-24T09:30:00.000Z",
+        },
+        {
+          id: "follow-up-created-follow-up-1",
+          type: "FOLLOW_UP_CREATED",
+          label: "Set a reminder",
+          timestamp: "2026-03-24T08:00:00.000Z",
+        },
+        {
+          id: "follow-up-created-follow-up-2",
+          type: "FOLLOW_UP_CREATED",
+          label: "Set a reminder",
+          timestamp: "2026-03-24T07:00:00.000Z",
+        },
+        {
+          id: "interaction-interaction-3",
+          type: "INTERACTION",
+          label: "You said hi",
+          timestamp: "2026-03-22T09:00:00.000Z",
+        },
+        {
+          id: "connected-relationship-id",
+          type: "CONNECTED",
+          label: "Connected",
+          timestamp: "2026-03-21T09:00:00.000Z",
+        },
+      ],
+    );
+  });
+
+  it("keeps distinct aggregated timeline events even when labels and timestamps match", async () => {
+    const duplicatedTimestamp = new Date("2026-03-24T08:00:00.000Z");
+    const service = new RelationshipsService({
+      contactRelationship: {
+        findFirst: async () => ({
+          createdAt: new Date("2026-03-20T10:00:00.000Z"),
+          connectedAt: new Date("2026-03-21T09:00:00.000Z"),
+        }),
+      },
+      followUp: {
+        findMany: async () => [
+          {
+            id: "follow-up-1",
+            createdAt: duplicatedTimestamp,
+            completedAt: null,
+            status: PrismaFollowUpStatus.PENDING,
+          },
+          {
+            id: "follow-up-2",
+            createdAt: duplicatedTimestamp,
+            completedAt: null,
+            status: PrismaFollowUpStatus.PENDING,
+          },
+        ],
+      },
+      $queryRaw: async () => [],
+    } as any);
+
+    const result = await service.getRelationshipActivityTimeline(
+      "owner-user",
+      "relationship-id",
+    );
+
+    assert.equal(
+      result.filter(
+        (event) =>
+          event.type === "FOLLOW_UP_CREATED" &&
+          event.timestamp.toISOString() === duplicatedTimestamp.toISOString(),
+      ).length,
+      2,
+    );
+    assert.deepEqual(
+      result
+        .filter(
+          (event) =>
+            event.type === "FOLLOW_UP_CREATED" &&
+            event.timestamp.toISOString() === duplicatedTimestamp.toISOString(),
+        )
+        .map((event) => event.id)
+        .sort(),
+      [
+        "follow-up-created-follow-up-1",
+        "follow-up-created-follow-up-2",
+      ],
+    );
+  });
+
+  it("labels received interaction events from the other side clearly", async () => {
+    const service = new RelationshipsService({
+      contactRelationship: {
+        findFirst: async () => ({
+          createdAt: new Date("2026-03-20T10:00:00.000Z"),
+          connectedAt: new Date("2026-03-21T09:00:00.000Z"),
+        }),
+      },
+      followUp: {
+        findMany: async () => [],
+      },
+      $queryRaw: async () => [
+        {
+          id: "interaction-1",
+          relationshipId: "relationship-id",
+          senderUserId: "other-user",
+          type: RelationshipInteractionType.GREETING,
+          payload: null,
+          createdAt: new Date("2026-03-24T12:00:00.000Z"),
+        },
+      ],
+    } as any);
+
+    const result = await service.getRelationshipActivityTimeline(
+      "owner-user",
+      "relationship-id",
+    );
+
+    assert.equal(result[0]?.label, "They said hi");
+  });
+
+  it("returns the same not found for missing and foreign activity timeline lookups", async () => {
+    const createService = (findFirst: (args: {
+      where: { id: string; ownerUserId: string };
+    }) => Promise<unknown>) =>
+      new RelationshipsService({
+        contactRelationship: {
+          findFirst,
+        },
+        followUp: {
+          findMany: async () => [],
+        },
+        $queryRaw: async () => [],
+      } as any);
+
+    await assert.rejects(
+      createService(async () => null).getRelationshipActivityTimeline(
+        "owner-user",
+        "relationship-id",
+      ),
+      (error: unknown) => {
+        assert.ok(error instanceof NotFoundException);
+        assert.equal(error.message, "Relationship not found");
+        return true;
+      },
+    );
+
+    await assert.rejects(
+      createService(async ({ where }) => {
+        assert.equal(where.id, "relationship-id");
+        assert.equal(where.ownerUserId, "owner-user");
+
+        return null;
+      }).getRelationshipActivityTimeline("owner-user", "relationship-id"),
+      (error: unknown) => {
+        assert.ok(error instanceof NotFoundException);
+        assert.equal(error.message, "Relationship not found");
+        return true;
+      },
+    );
   });
 });

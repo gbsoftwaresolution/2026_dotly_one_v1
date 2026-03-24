@@ -1243,33 +1243,37 @@ describe("FollowUpsService", () => {
   });
 
   it("returns pending follow-up summary for a relationship", async () => {
-    let aggregateArgs: Record<string, unknown> | null = null;
-    let findFirstArgs: Record<string, unknown> | null = null;
+    let findManyArgs: Record<string, unknown> | null = null;
     const triggeredAt = new Date("2099-04-09T10:05:00.000Z");
 
     const service = new FollowUpsService(
       {
         followUp: {
-          aggregate: async (args: Record<string, unknown>) => {
-            aggregateArgs = args;
+          findMany: async (args: Record<string, unknown>) => {
+            findManyArgs = args;
 
-            return {
-              _count: {
-                id: 2,
-              },
-              _min: {
-                remindAt: new Date("2099-04-09T10:00:00.000Z"),
-              },
-            };
-          },
-          findFirst: async (args: Record<string, unknown>) => {
-            findFirstArgs = args;
-
-            return {
+            return [
+              {
+                id: "follow-up-1",
+                relationshipId: "relationship-1",
               remindAt: new Date("2099-04-09T10:00:00.000Z"),
               triggeredAt,
               status: PrismaFollowUpStatus.PENDING,
-            };
+                isSystemGenerated: false,
+                type: PrismaFollowUpType.MANUAL,
+                createdAt: new Date("2099-04-09T09:00:00.000Z"),
+              },
+              {
+                id: "follow-up-2",
+                relationshipId: "relationship-1",
+                remindAt: new Date("2099-04-10T10:00:00.000Z"),
+                triggeredAt: null,
+                status: PrismaFollowUpStatus.PENDING,
+                isSystemGenerated: false,
+                type: PrismaFollowUpType.MANUAL,
+                createdAt: new Date("2099-04-09T09:30:00.000Z"),
+              },
+            ];
           },
         },
       } as any,
@@ -1281,31 +1285,22 @@ describe("FollowUpsService", () => {
       "relationship-1",
     );
 
-    assert.equal((aggregateArgs as any)?.where.ownerUserId, "user-1");
+    assert.equal((findManyArgs as any)?.where.ownerUserId, "user-1");
     assert.equal(
-      (aggregateArgs as any)?.where.relationshipId,
+      (findManyArgs as any)?.where.relationshipId.in[0],
       "relationship-1",
     );
     assert.equal(
-      (aggregateArgs as any)?.where.relationship.is.ownerUserId,
+      (findManyArgs as any)?.where.relationship.is.ownerUserId,
       "user-1",
     );
     assert.equal(
-      (aggregateArgs as any)?.where.status,
+      (findManyArgs as any)?.where.status,
       PrismaFollowUpStatus.PENDING,
     );
-    assert.equal((findFirstArgs as any)?.where.ownerUserId, "user-1");
     assert.equal(
-      (findFirstArgs as any)?.where.relationshipId,
-      "relationship-1",
-    );
-    assert.equal(
-      (findFirstArgs as any)?.where.relationship.is.ownerUserId,
-      "user-1",
-    );
-    assert.equal(
-      (findFirstArgs as any)?.where.status,
-      PrismaFollowUpStatus.PENDING,
+      Array.isArray((findManyArgs as any)?.orderBy),
+      true,
     );
     assert.equal(result.hasPendingFollowUp, true);
     assert.equal(result.pendingFollowUpCount, 2);

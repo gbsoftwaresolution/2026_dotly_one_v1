@@ -11,9 +11,20 @@ import { ApiError, apiRequest } from "@/lib/api/client";
 import { requireServerSession } from "@/lib/auth/protected-route";
 import { routes } from "@/lib/constants/routes";
 import { formatConnectionContext } from "@/lib/utils/format-contact-relationship";
-import type { ContactDetail } from "@/types/contact";
+import type {
+  ContactDetail,
+  RelationshipActivityTimelineEvent,
+} from "@/types/contact";
 
 const DAY = 1000 * 60 * 60 * 24;
+const ACTIVITY_EVENT_LIMIT = 5;
+
+interface ActivityEvent {
+  id: string;
+  label: string;
+  timeLabel: string;
+  timestamp: number;
+}
 
 function formatTimestamp(value: string): string {
   return new Intl.DateTimeFormat("en", {
@@ -86,6 +97,32 @@ function formatConnectionLine(connectedAt: string | null | undefined): string {
   return relativeLabel ? `Connected ${relativeLabel}` : "Connected";
 }
 
+function formatActivityTime(value: string | null | undefined): string | null {
+  const timestamp = parseTimestamp(value);
+
+  if (timestamp === null) {
+    return null;
+  }
+
+  const dayDifference = Math.floor(
+    (startOfDay(Date.now()) - startOfDay(timestamp)) / DAY,
+  );
+
+  if (dayDifference <= 0) {
+    return "today";
+  }
+
+  if (dayDifference === 1) {
+    return "yesterday";
+  }
+
+  if (dayDifference < 7) {
+    return `${dayDifference} days ago`;
+  }
+
+  return formatConnectionDate(value!);
+}
+
 function formatLastInteractionLine(
   lastInteractionAt: string | null | undefined,
 ): string | null {
@@ -108,6 +145,31 @@ function formatTitleLine(jobTitle: string, companyName: string): string | null {
   }
 
   return `${parts[0]} at ${parts[1]}`;
+}
+
+function buildActivityEvents(
+  timeline: RelationshipActivityTimelineEvent[],
+): ActivityEvent[] {
+  return timeline
+    .flatMap((event) => {
+      const timeLabel = formatActivityTime(event.timestamp);
+      const timestamp = parseTimestamp(event.timestamp);
+
+      if (!timeLabel || timestamp === null) {
+        return [];
+      }
+
+      return [
+        {
+          id: event.id,
+          label: event.label,
+          timeLabel,
+          timestamp,
+        },
+      ];
+    })
+    .sort((left, right) => right.timestamp - left.timestamp)
+    .slice(0, ACTIVITY_EVENT_LIMIT);
 }
 
 function getStateBadge(state: ContactDetail["state"]) {
@@ -162,6 +224,51 @@ function ConnectionSection({
   );
 }
 
+function ActivitySection({
+  events,
+  loadError,
+}: {
+  events: ActivityEvent[];
+  loadError: string | null;
+}) {
+  return (
+    <Card>
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <h2 className="font-sans text-lg font-semibold text-foreground">
+            Activity
+          </h2>
+          <p className="font-sans text-sm text-muted">
+            The latest moments that matter in this connection.
+          </p>
+        </div>
+
+        {loadError ? (
+          <p className="font-sans text-sm text-muted">{loadError}</p>
+        ) : events.length === 0 ? (
+          <p className="font-sans text-sm text-muted">No activity yet</p>
+        ) : (
+          <ul className="divide-y divide-border/70 rounded-2xl border border-border/80 bg-surface/40 px-4">
+            {events.map((event) => (
+              <li
+                key={event.id}
+                className="flex items-center justify-between gap-4 py-3"
+              >
+                <span className="font-sans text-sm leading-6 text-foreground/85">
+                  {event.label}
+                </span>
+                <span className="shrink-0 font-sans text-xs text-muted">
+                  {event.timeLabel}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export default async function ContactDetailPage({
   params,
 }: {
@@ -173,12 +280,43 @@ export default async function ContactDetailPage({
   );
 
   let contact: ContactDetail | null = null;
+  let timeline: RelationshipActivityTimelineEvent[] = [];
   let loadError: string | null = null;
+  let activityLoadError: string | null = null;
 
   try {
-    contact = await apiRequest<ContactDetail>(`/contacts/${relationshipId}`, {
-      token: accessToken,
-    });
+    const [contactResult, timelineResult] = await Promise.allSettled([
+      apiRequest<ContactDetail>(`/contacts/${relationshipId}`, {
+        token: accessToken,
+      }),
+      apiRequest<RelationshipActivityTimelineEvent[]>(
+        `/relationships/${relationshipId}/timeline`,
+        {
+          token: accessToken,
+        },
+      ),
+    ]);
+
+    if (contactResult.status === "rejected") {
+      throw contactResult.reason;
+    }
+
+    contact = contactResult.value;
+
+    if (timelineResult.status === "fulfilled") {
+      timeline = timelineResult.value;
+    } else {
+      const error = timelineResult.reason;
+
+      if (
+        error instanceof ApiError &&
+        (error.status === 403 || error.status === 404)
+      ) {
+        notFound();
+      }
+
+      activityLoadError = "We could not load the latest story right now.";
+    }
   } catch (error) {
     if (
       error instanceof ApiError &&
@@ -244,6 +382,7 @@ export default async function ContactDetailPage({
     targetPersona.jobTitle,
     targetPersona.companyName,
   );
+  const activityEvents = buildActivityEvents(timeline);
 
   return (
     <section className="space-y-4">
@@ -349,7 +488,6 @@ export default async function ContactDetailPage({
         <QuickInteractionPanel
           relationshipId={relationshipId}
           disabled={isExpired}
-          recentInteractions={contact.recentInteractions}
         />
       </Card>
 
@@ -378,6 +516,11 @@ export default async function ContactDetailPage({
           ) : null}
         </div>
       </Card>
+
+      <ActivitySection
+        events={activityEvents}
+        loadError={activityLoadError}
+      />
 
       <RelationshipActions
         relationshipId={relationshipId}

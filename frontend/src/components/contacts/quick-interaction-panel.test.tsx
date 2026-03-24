@@ -40,7 +40,7 @@ describe("QuickInteractionPanel", () => {
     mocks.showToast.mockReset();
   });
 
-  it("sends a greeting in one tap and shows recent activity", async () => {
+  it("sends a greeting in one tap and confirms the action", async () => {
     mocks.sendQuickInteraction.mockResolvedValue({ success: true });
 
     const user = userEvent.setup();
@@ -48,14 +48,6 @@ describe("QuickInteractionPanel", () => {
     render(
       React.createElement(QuickInteractionPanel, {
         relationshipId: "relationship-id",
-        recentInteractions: [
-          {
-            id: "interaction-1",
-            type: "THANK_YOU",
-            direction: "received",
-            createdAt: "2026-03-24T10:00:00.000Z",
-          },
-        ],
       }),
     );
 
@@ -69,12 +61,10 @@ describe("QuickInteractionPanel", () => {
     });
 
     expect(await screen.findByRole("status")).toHaveTextContent(
-      /hi logged to this connection/i,
+      /marked that you said hi/i,
     );
-    expect(screen.getByText("Recent signals")).toBeInTheDocument();
-    expect(screen.getByText("They sent thanks")).toBeInTheDocument();
     expect(mocks.showToast).toHaveBeenCalledWith(
-      "Hi logged to this connection.",
+      "Marked that you said hi.",
     );
     expect(mocks.refresh).toHaveBeenCalledTimes(1);
   });
@@ -121,7 +111,7 @@ describe("QuickInteractionPanel", () => {
     );
 
     expect(
-      screen.getByText(/without starting a chat/i),
+      screen.getByText(/updates the story without starting a chat/i),
     ).toBeInTheDocument();
   });
 });

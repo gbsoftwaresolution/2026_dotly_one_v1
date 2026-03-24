@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -61,6 +62,17 @@ export class RelationshipsController {
       user.id,
       id,
       updateRelationshipDto,
+    );
+  }
+
+  @Get(":id/timeline")
+  getRelationshipActivityTimeline(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id", new ParseUUIDPipe()) id: string,
+  ) {
+    return this.relationshipsService.getRelationshipActivityTimeline(
+      user.id,
+      id,
     );
   }
 

@@ -8,16 +8,11 @@ import { SecondaryButton } from "@/components/shared/secondary-button";
 import { showToast } from "@/components/shared/toast-viewport";
 import { contactsApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
-import { formatTimeAgoShort } from "@/lib/utils/format-time-ago";
-import type {
-  ContactRecentInteraction,
-  QuickInteractionType,
-} from "@/types/contact";
+import type { QuickInteractionType } from "@/types/contact";
 
 interface QuickInteractionPanelProps {
   relationshipId: string;
   disabled?: boolean;
-  recentInteractions?: ContactRecentInteraction[];
 }
 
 interface QuickInteractionOption {
@@ -30,43 +25,23 @@ const QUICK_INTERACTION_OPTIONS: QuickInteractionOption[] = [
   {
     type: "GREETING",
     label: "Say hi",
-    successMessage: "Hi logged to this connection.",
+    successMessage: "Marked that you said hi.",
   },
   {
     type: "FOLLOW_UP",
     label: "Follow up",
-    successMessage: "Follow-up signal logged to this connection.",
+    successMessage: "Marked that you followed up.",
   },
   {
     type: "THANK_YOU",
     label: "Thank them",
-    successMessage: "Thank-you logged to this connection.",
+    successMessage: "Marked that you sent thanks.",
   },
 ];
-
-function getInteractionLabel(interaction: ContactRecentInteraction) {
-  switch (interaction.type) {
-    case "GREETING":
-      return interaction.direction === "sent" ? "You said hi" : "They said hi";
-    case "FOLLOW_UP":
-      return interaction.direction === "sent"
-        ? "You sent a follow-up signal"
-        : "They sent a follow-up signal";
-    case "THANK_YOU":
-      return interaction.direction === "sent"
-        ? "You sent thanks"
-        : "They sent thanks";
-  }
-}
-
-function getInteractionTimeLabel(createdAt: string) {
-  return formatTimeAgoShort(createdAt) ?? "now";
-}
 
 export function QuickInteractionPanel({
   relationshipId,
   disabled = false,
-  recentInteractions = [],
 }: QuickInteractionPanelProps) {
   const router = useRouter();
   const [activeType, setActiveType] = useState<QuickInteractionType | null>(null);
@@ -113,7 +88,7 @@ export function QuickInteractionPanel({
           Quick reconnect
         </h2>
         <p className="font-sans text-sm text-muted">
-          Log a one-tap signal on this connection. It updates activity history
+          Capture a small moment on this connection. It updates the story
           without starting a chat.
         </p>
       </div>
@@ -167,26 +142,6 @@ export function QuickInteractionPanel({
         </p>
       ) : null}
 
-      {recentInteractions.length > 0 ? (
-        <div className="space-y-2 rounded-2xl border border-border/80 bg-surface/40 px-4 py-4">
-          <h3 className="font-sans text-sm font-semibold text-foreground">
-            Recent signals
-          </h3>
-          <ul className="space-y-1.5">
-            {recentInteractions.map((interaction) => (
-              <li
-                key={interaction.id}
-                className="flex items-center justify-between gap-3 font-sans text-sm leading-6 text-foreground/85"
-              >
-                <span>{getInteractionLabel(interaction)}</span>
-                <span className="shrink-0 text-xs uppercase tracking-wide text-muted">
-                  {getInteractionTimeLabel(interaction.createdAt)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
     </div>
   );
 }

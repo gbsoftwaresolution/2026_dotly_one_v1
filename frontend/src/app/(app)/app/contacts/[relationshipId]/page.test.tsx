@@ -3,7 +3,10 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ContactDetail } from "@/types/contact";
+import type {
+  ContactDetail,
+  RelationshipActivityTimelineEvent,
+} from "@/types/contact";
 
 const mocks = vi.hoisted(() => ({
   apiRequest: vi.fn(),
@@ -164,6 +167,55 @@ function createContactDetail(
   };
 }
 
+function createTimelineEvent(
+  overrides: Partial<RelationshipActivityTimelineEvent> = {},
+): RelationshipActivityTimelineEvent {
+  return {
+    id: "interaction-1",
+    type: "INTERACTION",
+    label: "You said hi",
+    timestamp: "2026-03-21T12:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function createActivityTimeline(
+  overrides: RelationshipActivityTimelineEvent[] = [],
+): RelationshipActivityTimelineEvent[] {
+  if (overrides.length > 0) {
+    return overrides;
+  }
+
+  return [
+    createTimelineEvent(),
+    createTimelineEvent({
+      id: "connected-relationship-id",
+      type: "CONNECTED",
+      label: "Connected",
+      timestamp: "2026-03-08T12:00:00.000Z",
+    }),
+  ];
+}
+
+function mockPageRequests({
+  contact = createContactDetail(),
+  timeline = createActivityTimeline(),
+  timelineError,
+}: {
+  contact?: ContactDetail;
+  timeline?: RelationshipActivityTimelineEvent[];
+  timelineError?: Error;
+} = {}) {
+  mocks.apiRequest.mockResolvedValueOnce(contact);
+
+  if (timelineError) {
+    mocks.apiRequest.mockRejectedValueOnce(timelineError);
+    return;
+  }
+
+  mocks.apiRequest.mockResolvedValueOnce(timeline);
+}
+
 describe("ContactDetailPage", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -179,7 +231,7 @@ describe("ContactDetailPage", () => {
   });
 
   it("renders relationship metadata clearly for an active contact", async () => {
-    mocks.apiRequest.mockResolvedValue(createContactDetail());
+    mockPageRequests();
 
     const element = await ContactDetailPage({
       params: Promise.resolve({ relationshipId: "relationship-id" }),
@@ -202,17 +254,107 @@ describe("ContactDetailPage", () => {
     expect(screen.getByTestId("quick-interaction-panel")).toHaveTextContent(
       "quick-interactions-active",
     );
+    expect(mocks.apiRequest).toHaveBeenNthCalledWith(1, "/contacts/relationship-id", {
+      token: "token",
+    });
+    expect(mocks.apiRequest).toHaveBeenNthCalledWith(
+      2,
+      "/relationships/relationship-id/timeline",
+      {
+        token: "token",
+      },
+    );
     expect(screen.getByText("Recently active")).toBeInTheDocument();
     expect(screen.getByText("Last interaction 1 day ago")).toBeInTheDocument();
     expect(screen.getByText("Connected on Mar 8")).toBeInTheDocument();
     expect(screen.getByText("Met at Launch Week")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /^activity$/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("You said hi")).toBeInTheDocument();
+    expect(screen.getByText("yesterday")).toBeInTheDocument();
+    expect(screen.getByText(/^Connected$/)).toBeInTheDocument();
     expect(screen.queryByText("Touchpoints")).not.toBeInTheDocument();
     expect(screen.queryByText("Source")).not.toBeInTheDocument();
   });
 
+  it("limits the activity list to the five most recent events", async () => {
+    mockPageRequests({
+      timeline: createActivityTimeline([
+        createTimelineEvent({
+          id: "interaction-1",
+          label: "You said hi",
+          timestamp: "2026-03-22T11:00:00.000Z",
+        }),
+        createTimelineEvent({
+          id: "interaction-2",
+          label: "They said hi",
+          timestamp: "2026-03-22T10:00:00.000Z",
+        }),
+        createTimelineEvent({
+          id: "interaction-3",
+          label: "You followed up",
+          timestamp: "2026-03-22T09:00:00.000Z",
+        }),
+        createTimelineEvent({
+          id: "interaction-4",
+          label: "They followed up",
+          timestamp: "2026-03-22T08:00:00.000Z",
+        }),
+        createTimelineEvent({
+          id: "interaction-5",
+          label: "You sent thanks",
+          timestamp: "2026-03-22T07:00:00.000Z",
+        }),
+        createTimelineEvent({
+          id: "connected-relationship-id",
+          type: "CONNECTED",
+          label: "Connected",
+          timestamp: "2026-03-10T12:00:00.000Z",
+        }),
+      ]),
+    });
+
+    const element = await ContactDetailPage({
+      params: Promise.resolve({ relationshipId: "relationship-id" }),
+    });
+
+    render(element);
+
+    expect(screen.getByText("You said hi")).toBeInTheDocument();
+    expect(screen.getByText("They said hi")).toBeInTheDocument();
+    expect(screen.getByText("You followed up")).toBeInTheDocument();
+    expect(screen.getByText("They followed up")).toBeInTheDocument();
+    expect(screen.getByText("You sent thanks")).toBeInTheDocument();
+    expect(screen.queryByText(/^Connected$/)).not.toBeInTheDocument();
+  });
+
+  it("renders an empty activity state when no valid events are available", async () => {
+    mockPageRequests({
+      contact: createContactDetail({
+        connectedAt: "not-a-date",
+        recentInteractions: [],
+      }),
+      timeline: createActivityTimeline([
+        createTimelineEvent({
+          id: "invalid-event",
+          timestamp: "not-a-date",
+        }),
+      ]),
+    });
+
+    const element = await ContactDetailPage({
+      params: Promise.resolve({ relationshipId: "relationship-id" }),
+    });
+
+    render(element);
+
+    expect(screen.getByText("No activity yet")).toBeInTheDocument();
+  });
+
   it("handles sparse interaction metadata without showing the empty state incorrectly", async () => {
-    mocks.apiRequest.mockResolvedValue(
-      createContactDetail({
+    mockPageRequests({
+      contact: createContactDetail({
         sourceType: "profile",
         connectionSource: "manual",
         contextLabel: null,
@@ -231,7 +373,7 @@ describe("ContactDetailPage", () => {
           relationshipAgeDays: 120,
         },
       }),
-    );
+    });
 
     const element = await ContactDetailPage({
       params: Promise.resolve({ relationshipId: "relationship-id" }),
@@ -246,8 +388,8 @@ describe("ContactDetailPage", () => {
   });
 
   it("hides the last interaction line when no interaction timestamp is available", async () => {
-    mocks.apiRequest.mockResolvedValue(
-      createContactDetail({
+    mockPageRequests({
+      contact: createContactDetail({
         sourceType: "event",
         connectionSource: "event",
         contextLabel: null,
@@ -265,7 +407,7 @@ describe("ContactDetailPage", () => {
           relationshipAgeDays: 14,
         },
       }),
-    );
+    });
 
     const element = await ContactDetailPage({
       params: Promise.resolve({ relationshipId: "relationship-id" }),
@@ -279,8 +421,8 @@ describe("ContactDetailPage", () => {
   });
 
   it("falls back to a neutral connection label for unknown sources", async () => {
-    mocks.apiRequest.mockResolvedValue(
-      createContactDetail({
+    mockPageRequests({
+      contact: createContactDetail({
         connectionSource: "unknown",
         contextLabel: null,
         memory: {
@@ -289,7 +431,7 @@ describe("ContactDetailPage", () => {
           note: null,
         },
       }),
-    );
+    });
 
     const element = await ContactDetailPage({
       params: Promise.resolve({ relationshipId: "relationship-id" }),
@@ -297,12 +439,12 @@ describe("ContactDetailPage", () => {
 
     render(element);
 
-    expect(screen.getByText("Connected")).toBeInTheDocument();
+    expect(screen.getAllByText("Connected")).toHaveLength(2);
   });
 
   it("passes follow-up summary context to the reminder block", async () => {
-    mocks.apiRequest.mockResolvedValue(
-      createContactDetail({
+    mockPageRequests({
+      contact: createContactDetail({
         followUpSummary: {
           hasPendingFollowUp: true,
           nextFollowUpAt: "2026-03-24T09:30:00.000Z",
@@ -313,7 +455,7 @@ describe("ContactDetailPage", () => {
           isUpcomingSoon: false,
         },
       }),
-    );
+    });
 
     const element = await ContactDetailPage({
       params: Promise.resolve({ relationshipId: "relationship-id" }),
@@ -327,12 +469,12 @@ describe("ContactDetailPage", () => {
   });
 
   it("disables quick interactions when the connection is expired", async () => {
-    mocks.apiRequest.mockResolvedValue(
-      createContactDetail({
+    mockPageRequests({
+      contact: createContactDetail({
         state: "expired",
         isExpired: true,
       }),
-    );
+    });
 
     const element = await ContactDetailPage({
       params: Promise.resolve({ relationshipId: "relationship-id" }),
@@ -343,5 +485,20 @@ describe("ContactDetailPage", () => {
     expect(screen.getByTestId("quick-interaction-panel")).toHaveTextContent(
       "quick-interactions-disabled",
     );
+  });
+
+  it("keeps the contact detail page usable when the timeline cannot be loaded", async () => {
+    mockPageRequests({
+      timelineError: new Error("timeline down"),
+    });
+
+    const element = await ContactDetailPage({
+      params: Promise.resolve({ relationshipId: "relationship-id" }),
+    });
+
+    render(element);
+
+    expect(screen.getByText("We could not load the latest story right now.")).toBeInTheDocument();
+    expect(screen.getByText("Connected on Mar 8")).toBeInTheDocument();
   });
 });

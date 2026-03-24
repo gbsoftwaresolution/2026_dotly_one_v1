@@ -57,6 +57,19 @@ export interface ContactRecentInteraction {
   direction: ContactRecentInteractionDirection;
 }
 
+export type RelationshipActivityTimelineEventType =
+  | "CONNECTED"
+  | "INTERACTION"
+  | "FOLLOW_UP_CREATED"
+  | "FOLLOW_UP_COMPLETED";
+
+export interface RelationshipActivityTimelineEvent {
+  id: string;
+  type: RelationshipActivityTimelineEventType;
+  label: string;
+  timestamp: string;
+}
+
 export interface Contact {
   id?: string;
   relationshipId: string;
