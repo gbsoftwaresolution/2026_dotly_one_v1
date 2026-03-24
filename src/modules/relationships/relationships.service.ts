@@ -1,7 +1,11 @@
+import { randomUUID } from "node:crypto";
+
 import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
   NotFoundException,
   Optional,
@@ -30,8 +34,14 @@ import {
 } from "../auth/verification-policy.service";
 
 import { CreateInstantConnectDto } from "./dto/create-instant-connect.dto";
+import { CreateRelationshipInteractionDto } from "./dto/create-relationship-interaction.dto";
 import { CreatePublicInstantConnectDto } from "./dto/create-public-instant-connect.dto";
 import { InstantConnectSourcePolicyService } from "./instant-connect-source-policy.service";
+import { RelationshipInteractionType } from "./relationship-interaction-type.enum";
+
+const RECENT_INTERACTIONS_LIMIT = 5;
+const INTERACTION_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const INTERACTION_RATE_LIMIT_MAX = 5;
 
 const failClosedBlocksService: Pick<
   BlocksService,
@@ -118,6 +128,33 @@ type UpdatedRelationshipNotesRow = {
   id: string;
   notes: string | null;
   updatedAt: Date;
+};
+
+type OwnedRelationshipInteractionRow = {
+  id: string;
+  ownerUserId: string;
+  targetUserId: string;
+  ownerPersonaId: string;
+  targetPersonaId: string;
+  state: PrismaContactRelationshipState;
+  accessEndAt: Date | null;
+};
+
+type ReciprocalRelationshipRow = {
+  id: string;
+};
+
+type InteractionCountRow = {
+  count: number;
+};
+
+export type RecentRelationshipInteraction = {
+  id: string;
+  relationshipId: string;
+  senderUserId: string;
+  type: RelationshipInteractionType;
+  payload: Prisma.JsonValue | null;
+  createdAt: Date;
 };
 
 @Injectable()
@@ -599,6 +636,109 @@ export class RelationshipsService {
     });
   }
 
+  async createInteraction(
+    userId: string,
+    relationshipId: string,
+    input: CreateRelationshipInteractionDto,
+  ) {
+    return this.prismaService.$transaction(async (tx) => {
+      const relationship = await this.getOwnedRelationshipForInteraction(
+        tx,
+        userId,
+        relationshipId,
+      );
+      const normalizedRelationship = await this.expireRelationshipIfNeeded(
+        tx,
+        relationship,
+      );
+
+      if (
+        normalizedRelationship.state === PrismaContactRelationshipState.EXPIRED
+      ) {
+        throw new ConflictException(
+          "Expired relationships cannot receive interactions",
+        );
+      }
+
+      await this.blocksService.assertNoInteractionBlockInTransaction(
+        tx,
+        userId,
+        normalizedRelationship.targetUserId,
+      );
+
+      const interactionAt = new Date();
+
+      await this.assertInteractionRateLimit(
+        tx,
+        normalizedRelationship.id,
+        userId,
+        interactionAt,
+      );
+
+      const reciprocalRelationship = await this.getReciprocalRelationship(
+        tx,
+        normalizedRelationship,
+      );
+
+      await Promise.all([
+        this.insertInteraction(tx, {
+          relationshipId: normalizedRelationship.id,
+          senderUserId: userId,
+          type: input.type,
+          payload: null,
+          createdAt: interactionAt,
+        }),
+        reciprocalRelationship
+          ? this.insertInteraction(tx, {
+              relationshipId: reciprocalRelationship.id,
+              senderUserId: userId,
+              type: input.type,
+              payload: null,
+              createdAt: interactionAt,
+            })
+          : Promise.resolve(),
+        this.updateInteractionMetadata(
+          tx,
+          normalizedRelationship.id,
+          interactionAt,
+        ),
+        reciprocalRelationship
+          ? this.updateInteractionMetadata(
+              tx,
+              reciprocalRelationship.id,
+              interactionAt,
+            )
+          : Promise.resolve(null),
+      ]);
+
+      return {
+        success: true,
+      };
+    });
+  }
+
+  async getRecentInteractions(
+    relationshipId: string,
+    limit = RECENT_INTERACTIONS_LIMIT,
+    prisma: Prisma.TransactionClient | PrismaService = this.prismaService,
+  ) {
+    const safeLimit = Math.max(1, Math.min(limit, RECENT_INTERACTIONS_LIMIT));
+
+    return prisma.$queryRaw<RecentRelationshipInteraction[]>(Prisma.sql`
+      SELECT
+        "id",
+        "relationshipId",
+        "senderUserId",
+        "type",
+        "payload",
+        "createdAt"
+      FROM "Interaction"
+      WHERE "relationshipId" = ${relationshipId}::uuid
+      ORDER BY "createdAt" DESC, "id" DESC
+      LIMIT ${safeLimit}
+    `);
+  }
+
   private async createOrPromoteApprovedRelationship(
     tx: Prisma.TransactionClient,
     data: {
@@ -933,6 +1073,33 @@ export class RelationshipsService {
     };
   }
 
+  private async assertInteractionRateLimit(
+    tx: Prisma.TransactionClient,
+    relationshipId: string,
+    senderUserId: string,
+    interactionAt: Date,
+  ) {
+    const windowStart = new Date(
+      interactionAt.getTime() - INTERACTION_RATE_LIMIT_WINDOW_MS,
+    );
+    const [interactionCount] = await tx.$queryRaw<InteractionCountRow[]>(
+      Prisma.sql`
+        SELECT COUNT(*)::int AS "count"
+        FROM "Interaction"
+        WHERE "relationshipId" = ${relationshipId}::uuid
+          AND "senderUserId" = ${senderUserId}::uuid
+          AND "createdAt" >= ${windowStart}
+      `,
+    );
+
+    if ((interactionCount?.count ?? 0) >= INTERACTION_RATE_LIMIT_MAX) {
+      throw new HttpException(
+        "Too many interactions right now. Please wait before sending another signal.",
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
+
   private async getOwnedRelationshipForMutation(
     tx: Prisma.TransactionClient,
     userId: string,
@@ -1002,6 +1169,34 @@ export class RelationshipsService {
     return relationship;
   }
 
+  private async getOwnedRelationshipForInteraction(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    relationshipId: string,
+  ) {
+    const [relationship] = await tx.$queryRaw<OwnedRelationshipInteractionRow[]>(
+      Prisma.sql`
+        SELECT
+          "id",
+          "ownerUserId",
+          "targetUserId",
+          "ownerPersonaId",
+          "targetPersonaId",
+          "state",
+          "accessEndAt"
+        FROM "ContactRelationship"
+        WHERE "id" = ${relationshipId}::uuid
+        LIMIT 1
+      `,
+    );
+
+    if (!relationship || relationship.ownerUserId !== userId) {
+      throw new NotFoundException("Relationship not found");
+    }
+
+    return relationship;
+  }
+
   private async getOwnedRelationshipNotesForUpdate(
     tx: Prisma.TransactionClient,
     userId: string,
@@ -1021,6 +1216,59 @@ export class RelationshipsService {
     }
 
     return relationship;
+  }
+
+  private async getReciprocalRelationship(
+    tx: Prisma.TransactionClient,
+    relationship: OwnedRelationshipInteractionRow,
+  ) {
+    const [reciprocalRelationship] =
+      await tx.$queryRaw<ReciprocalRelationshipRow[]>(Prisma.sql`
+        SELECT "id"
+        FROM "ContactRelationship"
+        WHERE "ownerUserId" = ${relationship.targetUserId}::uuid
+          AND "targetUserId" = ${relationship.ownerUserId}::uuid
+          AND "ownerPersonaId" = ${relationship.targetPersonaId}::uuid
+          AND "targetPersonaId" = ${relationship.ownerPersonaId}::uuid
+        ORDER BY "createdAt" DESC, "id" DESC
+        LIMIT 1
+      `);
+
+    return reciprocalRelationship ?? null;
+  }
+
+  private async insertInteraction(
+    tx: Prisma.TransactionClient,
+    data: {
+      relationshipId: string;
+      senderUserId: string;
+      type: RelationshipInteractionType;
+      payload: Prisma.JsonValue | null;
+      createdAt: Date;
+    },
+  ) {
+    const serializedPayload =
+      data.payload === null ? null : JSON.stringify(data.payload);
+    const interactionId = randomUUID();
+
+    await tx.$executeRaw(Prisma.sql`
+      INSERT INTO "Interaction" (
+        "id",
+        "relationshipId",
+        "senderUserId",
+        "type",
+        "payload",
+        "createdAt"
+      )
+      VALUES (
+        ${interactionId}::uuid,
+        ${data.relationshipId}::uuid,
+        ${data.senderUserId}::uuid,
+        CAST(${data.type} AS "InteractionType"),
+        CAST(${serializedPayload} AS jsonb),
+        ${data.createdAt}
+      )
+    `);
   }
 
   private async upsertApprovedRelationship(

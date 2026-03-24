@@ -95,6 +95,15 @@ vi.mock("@/components/contacts/relationship-actions", () => ({
     ),
 }));
 
+vi.mock("@/components/contacts/quick-interaction-panel", () => ({
+  QuickInteractionPanel: ({ disabled }: { disabled?: boolean }) =>
+    React.createElement(
+      "div",
+      { "data-testid": "quick-interaction-panel" },
+      disabled ? "quick-interactions-disabled" : "quick-interactions-active",
+    ),
+}));
+
 import ContactDetailPage from "./page";
 
 function createContactDetail(
@@ -143,6 +152,14 @@ function createContactDetail(
       isRecentlyActive: true,
       relationshipAgeDays: 14,
     },
+    recentInteractions: [
+      {
+        id: "interaction-1",
+        type: "GREETING",
+        createdAt: "2026-03-21T12:00:00.000Z",
+        direction: "sent",
+      },
+    ],
     ...overrides,
   };
 }
@@ -181,6 +198,9 @@ describe("ContactDetailPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId("follow-up-form")).toHaveTextContent(
       "Remind Alex Parker",
+    );
+    expect(screen.getByTestId("quick-interaction-panel")).toHaveTextContent(
+      "quick-interactions-active",
     );
     expect(screen.getByText("Recently active")).toBeInTheDocument();
     expect(screen.getByText("Last interaction 1 day ago")).toBeInTheDocument();
@@ -303,6 +323,25 @@ describe("ContactDetailPage", () => {
 
     expect(screen.getByTestId("follow-up-form")).toHaveTextContent(
       "Pending 2 Due",
+    );
+  });
+
+  it("disables quick interactions when the connection is expired", async () => {
+    mocks.apiRequest.mockResolvedValue(
+      createContactDetail({
+        state: "expired",
+        isExpired: true,
+      }),
+    );
+
+    const element = await ContactDetailPage({
+      params: Promise.resolve({ relationshipId: "relationship-id" }),
+    });
+
+    render(element);
+
+    expect(screen.getByTestId("quick-interaction-panel")).toHaveTextContent(
+      "quick-interactions-disabled",
     );
   });
 });

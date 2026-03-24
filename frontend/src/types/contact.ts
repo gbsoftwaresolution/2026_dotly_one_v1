@@ -46,6 +46,17 @@ export interface ContactFollowUpSummary {
   isUpcomingSoon?: boolean;
 }
 
+export type QuickInteractionType = "GREETING" | "FOLLOW_UP" | "THANK_YOU";
+
+export type ContactRecentInteractionDirection = "sent" | "received";
+
+export interface ContactRecentInteraction {
+  id: string;
+  type: QuickInteractionType;
+  createdAt: string;
+  direction: ContactRecentInteractionDirection;
+}
+
 export interface Contact {
   id?: string;
   relationshipId: string;
@@ -83,6 +94,7 @@ export interface ContactDetail {
   memory: ContactMemory;
   followUpSummary: ContactFollowUpSummary;
   metadata: ContactRelationshipMetadata;
+  recentInteractions: ContactRecentInteraction[];
 }
 
 export interface UpdateContactNoteInput {
@@ -99,4 +111,12 @@ export interface UpdateContactNoteResult {
 export interface UpdateRelationshipStateResult {
   relationshipId: string;
   state: ContactRelationshipState;
+}
+
+export interface CreateQuickInteractionInput {
+  type: QuickInteractionType;
+}
+
+export interface CreateQuickInteractionResult {
+  success: boolean;
 }

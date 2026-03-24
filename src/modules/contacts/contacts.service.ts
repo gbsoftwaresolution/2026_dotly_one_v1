@@ -17,6 +17,8 @@ import { PersonaAccessMode } from "../../common/enums/persona-access-mode.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { ContactMemoryService } from "../contact-memory/contact-memory.service";
 import { FollowUpsService } from "../follow-ups/follow-ups.service";
+import { RelationshipInteractionType } from "../relationships/relationship-interaction-type.enum";
+import type { RecentRelationshipInteraction } from "../relationships/relationships.service";
 import { RelationshipsService } from "../relationships/relationships.service";
 
 import { ListContactsQueryDto } from "./dto/list-contacts-query.dto";
@@ -25,6 +27,7 @@ import { UpdateContactNoteDto } from "./dto/update-contact-note.dto";
 
 const RECENT_ACTIVITY_WINDOW_DAYS = 7;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+const CONTACT_DETAIL_RECENT_INTERACTIONS_LIMIT = 3;
 
 const contactTargetPersonaSelect = {
   id: true,
@@ -128,6 +131,13 @@ type RelationshipFollowUpSummary = {
   isTriggered: boolean;
   isOverdue: boolean;
   isUpcomingSoon: boolean;
+};
+
+type ContactDetailRecentInteraction = {
+  id: string;
+  type: RelationshipInteractionType;
+  createdAt: Date;
+  direction: "sent" | "received";
 };
 
 @Injectable()
@@ -245,10 +255,18 @@ export class ContactsService {
       throw new NotFoundException("Contact not found");
     }
 
+    const now = new Date();
+    const recentInteractions = await this.getRecentInteractionsForDetail(
+      userId,
+      normalizedRelationship.id,
+      now,
+    );
+
     return this.toContactDetail(
       normalizedRelationship,
-      new Date(),
+      now,
       await this.getFollowUpSummary(userId, normalizedRelationship.id),
+      recentInteractions,
     );
   }
 
@@ -415,6 +433,7 @@ export class ContactsService {
       isOverdue: boolean;
       isUpcomingSoon: boolean;
     },
+    recentInteractions: ContactDetailRecentInteraction[],
   ) {
     const memory = relationship.memories[0];
     const timeline = this.buildRelationshipTimeline(relationship);
@@ -455,6 +474,7 @@ export class ContactsService {
       },
       followUpSummary,
       metadata,
+      recentInteractions,
     };
   }
 
@@ -496,6 +516,43 @@ export class ContactsService {
     );
 
     return new Map(summaries);
+  }
+
+  private async getRecentInteractionsForDetail(
+    userId: string,
+    relationshipId: string,
+    now: Date,
+  ): Promise<ContactDetailRecentInteraction[]> {
+    if (typeof this.relationshipsService.getRecentInteractions !== "function") {
+      return [];
+    }
+
+    const recentInteractions = await this.relationshipsService.getRecentInteractions(
+      relationshipId,
+      CONTACT_DETAIL_RECENT_INTERACTIONS_LIMIT,
+      this.prismaService,
+    );
+
+    return recentInteractions.flatMap((interaction: RecentRelationshipInteraction) => {
+      const safeCreatedAt = this.getSafeLastInteractionAt(
+        interaction.createdAt,
+        now,
+      );
+
+      if (!safeCreatedAt) {
+        return [];
+      }
+
+      return [
+        {
+          id: interaction.id,
+          type: interaction.type,
+          createdAt: safeCreatedAt,
+          direction:
+            interaction.senderUserId === userId ? "sent" : "received",
+        },
+      ];
+    });
   }
 
   private buildRelationshipMetadata(

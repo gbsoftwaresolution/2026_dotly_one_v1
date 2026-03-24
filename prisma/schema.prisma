@@ -77,6 +77,12 @@ enum RelationshipConnectionSource {
   UNKNOWN @map("unknown")
 }
 
+enum InteractionType {
+  GREETING
+  FOLLOW_UP
+  THANK_YOU
+}
+
 enum FollowUpStatus {
   PENDING   @map("pending")
   COMPLETED @map("completed")
@@ -149,6 +155,7 @@ model User {
   analyticsEvents         AnalyticsEvent[]
   createdEvents           Event[]
   eventParticipants       EventParticipant[]
+  sentInteractions        Interaction[]
   outgoingContactRequests ContactRequest[]      @relation("ContactRequestFromUser")
   incomingContactRequests ContactRequest[]      @relation("ContactRequestToUser")
   ownedRelationships      ContactRelationship[] @relation("ContactRelationshipOwnerUser")
@@ -411,6 +418,7 @@ model ContactRelationship {
   ownerPersona       Persona                      @relation("ContactRelationshipOwnerPersona", fields: [ownerPersonaId, ownerUserId], references: [id, userId], onDelete: Cascade)
   targetPersona      Persona                      @relation("ContactRelationshipTargetPersona", fields: [targetPersonaId, targetUserId], references: [id, userId], onDelete: Cascade)
   memories           ContactMemory[]
+  interactions       Interaction[]
   followUps          FollowUp[]
 
   @@unique([ownerUserId, targetUserId, ownerPersonaId, targetPersonaId])
@@ -418,6 +426,21 @@ model ContactRelationship {
   @@index([ownerUserId, state, accessEndAt, createdAt])
   @@index([ownerUserId, lastInteractionAt, createdAt])
   @@index([targetUserId, createdAt])
+}
+
+model Interaction {
+  id             String              @id @default(uuid()) @db.Uuid
+  relationshipId String              @db.Uuid
+  senderUserId   String              @db.Uuid
+  type           InteractionType
+  payload        Json?
+  createdAt      DateTime            @default(now())
+  relationship   ContactRelationship @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
+  senderUser     User                @relation(fields: [senderUserId], references: [id], onDelete: Cascade)
+
+  @@index([relationshipId, createdAt])
+  @@index([senderUserId, createdAt])
+  @@index([relationshipId, senderUserId, createdAt])
 }
 
 model FollowUp {

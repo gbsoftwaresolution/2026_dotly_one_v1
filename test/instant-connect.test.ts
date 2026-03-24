@@ -19,6 +19,7 @@ import {
 
 import { ContactsService } from "../src/modules/contacts/contacts.service";
 import { QrService } from "../src/modules/qr/qr.service";
+import { RelationshipInteractionType } from "../src/modules/relationships/relationship-interaction-type.enum";
 import { RelationshipsService } from "../src/modules/relationships/relationships.service";
 import { ContactRequestSourceType } from "../src/common/enums/contact-request-source-type.enum";
 
@@ -2005,6 +2006,24 @@ describe("ContactsService", () => {
           _tx: unknown,
           relationship: Record<string, unknown>,
         ) => relationship,
+        getRecentInteractions: async () => [
+          {
+            id: "interaction-1",
+            relationshipId: "relationship-id",
+            senderUserId: "owner-user",
+            type: RelationshipInteractionType.GREETING,
+            payload: null,
+            createdAt: lastInteractionAt,
+          },
+          {
+            id: "interaction-2",
+            relationshipId: "relationship-id",
+            senderUserId: "target-user",
+            type: RelationshipInteractionType.THANK_YOU,
+            payload: null,
+            createdAt: new Date(lastInteractionAt.getTime() - 60 * 60 * 1000),
+          },
+        ],
       } as any,
       {
         getFollowUpSummaryForRelationship: async () => ({
@@ -2045,6 +2064,20 @@ describe("ContactsService", () => {
     assert.equal(result.followUpSummary.isTriggered, true);
     assert.equal(result.followUpSummary.isOverdue, false);
     assert.equal(result.followUpSummary.isUpcomingSoon, false);
+    assert.deepEqual(result.recentInteractions, [
+      {
+        id: "interaction-1",
+        type: RelationshipInteractionType.GREETING,
+        createdAt: lastInteractionAt,
+        direction: "sent",
+      },
+      {
+        id: "interaction-2",
+        type: RelationshipInteractionType.THANK_YOU,
+        createdAt: new Date(lastInteractionAt.getTime() - 60 * 60 * 1000),
+        direction: "received",
+      },
+    ]);
   });
 
   it("returns null-safe detail metadata for sparse or future interaction values", async () => {
@@ -2107,6 +2140,7 @@ describe("ContactsService", () => {
       isOverdue: false,
       isUpcomingSoon: false,
     });
+    assert.deepEqual(result.recentInteractions, []);
   });
 
   it("preserves empty interaction metadata when a contact note changes", async () => {

@@ -63,6 +63,7 @@ export const ModelName = {
   EventParticipant: 'EventParticipant',
   ContactRequest: 'ContactRequest',
   ContactRelationship: 'ContactRelationship',
+  Interaction: 'Interaction',
   FollowUp: 'FollowUp',
   ContactMemory: 'ContactMemory',
   Block: 'Block',
@@ -301,6 +302,18 @@ export const ContactRelationshipScalarFieldEnum = {
 } as const
 
 export type ContactRelationshipScalarFieldEnum = (typeof ContactRelationshipScalarFieldEnum)[keyof typeof ContactRelationshipScalarFieldEnum]
+
+
+export const InteractionScalarFieldEnum = {
+  id: 'id',
+  relationshipId: 'relationshipId',
+  senderUserId: 'senderUserId',
+  type: 'type',
+  payload: 'payload',
+  createdAt: 'createdAt'
+} as const
+
+export type InteractionScalarFieldEnum = (typeof InteractionScalarFieldEnum)[keyof typeof InteractionScalarFieldEnum]
 
 
 export const FollowUpScalarFieldEnum = {

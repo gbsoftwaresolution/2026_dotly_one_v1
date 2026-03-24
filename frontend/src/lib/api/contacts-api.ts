@@ -1,4 +1,6 @@
 import type {
+  CreateQuickInteractionInput,
+  CreateQuickInteractionResult,
   Contact,
   ContactDetail,
   UpdateContactNoteInput,
@@ -61,6 +63,20 @@ export const contactsApi = {
       `/api/contacts/${relationshipId}/expire`,
       {
         method: "POST",
+        baseUrl: "",
+        credentials: "same-origin",
+      },
+    ),
+
+  sendQuickInteraction: (
+    relationshipId: string,
+    input: CreateQuickInteractionInput,
+  ) =>
+    apiRequest<CreateQuickInteractionResult>(
+      `/api/contacts/${relationshipId}/interactions`,
+      {
+        method: "POST",
+        body: input,
         baseUrl: "",
         credentials: "same-origin",
       },

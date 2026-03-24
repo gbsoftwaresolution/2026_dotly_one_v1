@@ -396,6 +396,7 @@ export const ModelName = {
   EventParticipant: 'EventParticipant',
   ContactRequest: 'ContactRequest',
   ContactRelationship: 'ContactRelationship',
+  Interaction: 'Interaction',
   FollowUp: 'FollowUp',
   ContactMemory: 'ContactMemory',
   Block: 'Block',
@@ -418,7 +419,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "agencyProfile" | "emailVerificationToken" | "passwordResetToken" | "mobileOtpChallenge" | "authSession" | "persona" | "qRAccessToken" | "event" | "eventParticipant" | "contactRequest" | "contactRelationship" | "followUp" | "contactMemory" | "block" | "notification" | "supportRequest" | "analyticsEvent" | "personaAnalytics"
+    modelProps: "user" | "agencyProfile" | "emailVerificationToken" | "passwordResetToken" | "mobileOtpChallenge" | "authSession" | "persona" | "qRAccessToken" | "event" | "eventParticipant" | "contactRequest" | "contactRelationship" | "interaction" | "followUp" | "contactMemory" | "block" | "notification" | "supportRequest" | "analyticsEvent" | "personaAnalytics"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1310,6 +1311,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Interaction: {
+      payload: Prisma.$InteractionPayload<ExtArgs>
+      fields: Prisma.InteractionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.InteractionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InteractionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.InteractionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InteractionPayload>
+        }
+        findFirst: {
+          args: Prisma.InteractionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InteractionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.InteractionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InteractionPayload>
+        }
+        findMany: {
+          args: Prisma.InteractionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InteractionPayload>[]
+        }
+        create: {
+          args: Prisma.InteractionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InteractionPayload>
+        }
+        createMany: {
+          args: Prisma.InteractionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.InteractionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InteractionPayload>[]
+        }
+        delete: {
+          args: Prisma.InteractionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InteractionPayload>
+        }
+        update: {
+          args: Prisma.InteractionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InteractionPayload>
+        }
+        deleteMany: {
+          args: Prisma.InteractionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.InteractionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.InteractionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InteractionPayload>[]
+        }
+        upsert: {
+          args: Prisma.InteractionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$InteractionPayload>
+        }
+        aggregate: {
+          args: Prisma.InteractionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateInteraction>
+        }
+        groupBy: {
+          args: Prisma.InteractionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InteractionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.InteractionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.InteractionCountAggregateOutputType> | number
+        }
+      }
+    }
     FollowUp: {
       payload: Prisma.$FollowUpPayload<ExtArgs>
       fields: Prisma.FollowUpFieldRefs
@@ -2082,6 +2157,18 @@ export const ContactRelationshipScalarFieldEnum = {
 export type ContactRelationshipScalarFieldEnum = (typeof ContactRelationshipScalarFieldEnum)[keyof typeof ContactRelationshipScalarFieldEnum]
 
 
+export const InteractionScalarFieldEnum = {
+  id: 'id',
+  relationshipId: 'relationshipId',
+  senderUserId: 'senderUserId',
+  type: 'type',
+  payload: 'payload',
+  createdAt: 'createdAt'
+} as const
+
+export type InteractionScalarFieldEnum = (typeof InteractionScalarFieldEnum)[keyof typeof InteractionScalarFieldEnum]
+
+
 export const FollowUpScalarFieldEnum = {
   id: 'id',
   ownerUserId: 'ownerUserId',
@@ -2484,6 +2571,20 @@ export type ListEnumRelationshipConnectionSourceFieldRefInput<$PrismaModel> = Fi
 
 
 /**
+ * Reference to a field of type 'InteractionType'
+ */
+export type EnumInteractionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InteractionType'>
+    
+
+
+/**
+ * Reference to a field of type 'InteractionType[]'
+ */
+export type ListEnumInteractionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InteractionType[]'>
+    
+
+
+/**
  * Reference to a field of type 'FollowUpStatus'
  */
 export type EnumFollowUpStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FollowUpStatus'>
@@ -2687,6 +2788,7 @@ export type GlobalOmitConfig = {
   eventParticipant?: Prisma.EventParticipantOmit
   contactRequest?: Prisma.ContactRequestOmit
   contactRelationship?: Prisma.ContactRelationshipOmit
+  interaction?: Prisma.InteractionOmit
   followUp?: Prisma.FollowUpOmit
   contactMemory?: Prisma.ContactMemoryOmit
   block?: Prisma.BlockOmit

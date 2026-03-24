@@ -78,6 +78,11 @@ export type ContactRequest = Prisma.ContactRequestModel
  */
 export type ContactRelationship = Prisma.ContactRelationshipModel
 /**
+ * Model Interaction
+ * 
+ */
+export type Interaction = Prisma.InteractionModel
+/**
  * Model FollowUp
  * 
  */

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { ContactFollowUpForm } from "@/components/follow-ups/contact-follow-up-form";
 import { NoteEditor } from "@/components/contacts/note-editor";
+import { QuickInteractionPanel } from "@/components/contacts/quick-interaction-panel";
 import { RelationshipActions } from "@/components/contacts/relationship-actions";
 import { Card } from "@/components/shared/card";
 import { PageHeader } from "@/components/shared/page-header";
@@ -343,6 +344,14 @@ export default async function ContactDetailPage({
         connectedLine={connectedLine}
         lastInteractionLine={lastInteractionLine}
       />
+
+      <Card>
+        <QuickInteractionPanel
+          relationshipId={relationshipId}
+          disabled={isExpired}
+          recentInteractions={contact.recentInteractions}
+        />
+      </Card>
 
       <Card>
         <div className="space-y-4">

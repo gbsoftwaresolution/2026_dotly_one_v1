@@ -337,6 +337,7 @@ export type ContactRelationshipWhereInput = {
   ownerPersona?: Prisma.XOR<Prisma.PersonaScalarRelationFilter, Prisma.PersonaWhereInput>
   targetPersona?: Prisma.XOR<Prisma.PersonaScalarRelationFilter, Prisma.PersonaWhereInput>
   memories?: Prisma.ContactMemoryListRelationFilter
+  interactions?: Prisma.InteractionListRelationFilter
   followUps?: Prisma.FollowUpListRelationFilter
 }
 
@@ -366,6 +367,7 @@ export type ContactRelationshipOrderByWithRelationInput = {
   ownerPersona?: Prisma.PersonaOrderByWithRelationInput
   targetPersona?: Prisma.PersonaOrderByWithRelationInput
   memories?: Prisma.ContactMemoryOrderByRelationAggregateInput
+  interactions?: Prisma.InteractionOrderByRelationAggregateInput
   followUps?: Prisma.FollowUpOrderByRelationAggregateInput
 }
 
@@ -400,6 +402,7 @@ export type ContactRelationshipWhereUniqueInput = Prisma.AtLeast<{
   ownerPersona?: Prisma.XOR<Prisma.PersonaScalarRelationFilter, Prisma.PersonaWhereInput>
   targetPersona?: Prisma.XOR<Prisma.PersonaScalarRelationFilter, Prisma.PersonaWhereInput>
   memories?: Prisma.ContactMemoryListRelationFilter
+  interactions?: Prisma.InteractionListRelationFilter
   followUps?: Prisma.FollowUpListRelationFilter
 }, "id" | "ownerUserId_targetUserId_ownerPersonaId_targetPersonaId" | "id_ownerUserId">
 
@@ -479,6 +482,7 @@ export type ContactRelationshipCreateInput = {
   ownerPersona: Prisma.PersonaCreateNestedOneWithoutOwnedRelationshipsInput
   targetPersona: Prisma.PersonaCreateNestedOneWithoutTargetRelationshipsInput
   memories?: Prisma.ContactMemoryCreateNestedManyWithoutRelationshipInput
+  interactions?: Prisma.InteractionCreateNestedManyWithoutRelationshipInput
   followUps?: Prisma.FollowUpCreateNestedManyWithoutRelationshipInput
 }
 
@@ -504,6 +508,7 @@ export type ContactRelationshipUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   memories?: Prisma.ContactMemoryUncheckedCreateNestedManyWithoutRelationshipInput
+  interactions?: Prisma.InteractionUncheckedCreateNestedManyWithoutRelationshipInput
   followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutRelationshipInput
 }
 
@@ -529,6 +534,7 @@ export type ContactRelationshipUpdateInput = {
   ownerPersona?: Prisma.PersonaUpdateOneRequiredWithoutOwnedRelationshipsNestedInput
   targetPersona?: Prisma.PersonaUpdateOneRequiredWithoutTargetRelationshipsNestedInput
   memories?: Prisma.ContactMemoryUpdateManyWithoutRelationshipNestedInput
+  interactions?: Prisma.InteractionUpdateManyWithoutRelationshipNestedInput
   followUps?: Prisma.FollowUpUpdateManyWithoutRelationshipNestedInput
 }
 
@@ -554,6 +560,7 @@ export type ContactRelationshipUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   memories?: Prisma.ContactMemoryUncheckedUpdateManyWithoutRelationshipNestedInput
+  interactions?: Prisma.InteractionUncheckedUpdateManyWithoutRelationshipNestedInput
   followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutRelationshipNestedInput
 }
 
@@ -900,6 +907,20 @@ export type EnumRelationshipConnectionSourceFieldUpdateOperationsInput = {
   set?: $Enums.RelationshipConnectionSource
 }
 
+export type ContactRelationshipCreateNestedOneWithoutInteractionsInput = {
+  create?: Prisma.XOR<Prisma.ContactRelationshipCreateWithoutInteractionsInput, Prisma.ContactRelationshipUncheckedCreateWithoutInteractionsInput>
+  connectOrCreate?: Prisma.ContactRelationshipCreateOrConnectWithoutInteractionsInput
+  connect?: Prisma.ContactRelationshipWhereUniqueInput
+}
+
+export type ContactRelationshipUpdateOneRequiredWithoutInteractionsNestedInput = {
+  create?: Prisma.XOR<Prisma.ContactRelationshipCreateWithoutInteractionsInput, Prisma.ContactRelationshipUncheckedCreateWithoutInteractionsInput>
+  connectOrCreate?: Prisma.ContactRelationshipCreateOrConnectWithoutInteractionsInput
+  upsert?: Prisma.ContactRelationshipUpsertWithoutInteractionsInput
+  connect?: Prisma.ContactRelationshipWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ContactRelationshipUpdateToOneWithWhereWithoutInteractionsInput, Prisma.ContactRelationshipUpdateWithoutInteractionsInput>, Prisma.ContactRelationshipUncheckedUpdateWithoutInteractionsInput>
+}
+
 export type ContactRelationshipCreateNestedOneWithoutFollowUpsInput = {
   create?: Prisma.XOR<Prisma.ContactRelationshipCreateWithoutFollowUpsInput, Prisma.ContactRelationshipUncheckedCreateWithoutFollowUpsInput>
   connectOrCreate?: Prisma.ContactRelationshipCreateOrConnectWithoutFollowUpsInput
@@ -949,6 +970,7 @@ export type ContactRelationshipCreateWithoutOwnerUserInput = {
   ownerPersona: Prisma.PersonaCreateNestedOneWithoutOwnedRelationshipsInput
   targetPersona: Prisma.PersonaCreateNestedOneWithoutTargetRelationshipsInput
   memories?: Prisma.ContactMemoryCreateNestedManyWithoutRelationshipInput
+  interactions?: Prisma.InteractionCreateNestedManyWithoutRelationshipInput
   followUps?: Prisma.FollowUpCreateNestedManyWithoutRelationshipInput
 }
 
@@ -973,6 +995,7 @@ export type ContactRelationshipUncheckedCreateWithoutOwnerUserInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   memories?: Prisma.ContactMemoryUncheckedCreateNestedManyWithoutRelationshipInput
+  interactions?: Prisma.InteractionUncheckedCreateNestedManyWithoutRelationshipInput
   followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutRelationshipInput
 }
 
@@ -1007,6 +1030,7 @@ export type ContactRelationshipCreateWithoutTargetUserInput = {
   ownerPersona: Prisma.PersonaCreateNestedOneWithoutOwnedRelationshipsInput
   targetPersona: Prisma.PersonaCreateNestedOneWithoutTargetRelationshipsInput
   memories?: Prisma.ContactMemoryCreateNestedManyWithoutRelationshipInput
+  interactions?: Prisma.InteractionCreateNestedManyWithoutRelationshipInput
   followUps?: Prisma.FollowUpCreateNestedManyWithoutRelationshipInput
 }
 
@@ -1031,6 +1055,7 @@ export type ContactRelationshipUncheckedCreateWithoutTargetUserInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   memories?: Prisma.ContactMemoryUncheckedCreateNestedManyWithoutRelationshipInput
+  interactions?: Prisma.InteractionUncheckedCreateNestedManyWithoutRelationshipInput
   followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutRelationshipInput
 }
 
@@ -1123,6 +1148,7 @@ export type ContactRelationshipCreateWithoutOwnerPersonaInput = {
   targetUser: Prisma.UserCreateNestedOneWithoutTargetRelationshipsInput
   targetPersona: Prisma.PersonaCreateNestedOneWithoutTargetRelationshipsInput
   memories?: Prisma.ContactMemoryCreateNestedManyWithoutRelationshipInput
+  interactions?: Prisma.InteractionCreateNestedManyWithoutRelationshipInput
   followUps?: Prisma.FollowUpCreateNestedManyWithoutRelationshipInput
 }
 
@@ -1146,6 +1172,7 @@ export type ContactRelationshipUncheckedCreateWithoutOwnerPersonaInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   memories?: Prisma.ContactMemoryUncheckedCreateNestedManyWithoutRelationshipInput
+  interactions?: Prisma.InteractionUncheckedCreateNestedManyWithoutRelationshipInput
   followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutRelationshipInput
 }
 
@@ -1180,6 +1207,7 @@ export type ContactRelationshipCreateWithoutTargetPersonaInput = {
   targetUser: Prisma.UserCreateNestedOneWithoutTargetRelationshipsInput
   ownerPersona: Prisma.PersonaCreateNestedOneWithoutOwnedRelationshipsInput
   memories?: Prisma.ContactMemoryCreateNestedManyWithoutRelationshipInput
+  interactions?: Prisma.InteractionCreateNestedManyWithoutRelationshipInput
   followUps?: Prisma.FollowUpCreateNestedManyWithoutRelationshipInput
 }
 
@@ -1203,6 +1231,7 @@ export type ContactRelationshipUncheckedCreateWithoutTargetPersonaInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   memories?: Prisma.ContactMemoryUncheckedCreateNestedManyWithoutRelationshipInput
+  interactions?: Prisma.InteractionUncheckedCreateNestedManyWithoutRelationshipInput
   followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutRelationshipInput
 }
 
@@ -1248,6 +1277,122 @@ export type ContactRelationshipUpdateManyWithWhereWithoutTargetPersonaInput = {
   data: Prisma.XOR<Prisma.ContactRelationshipUpdateManyMutationInput, Prisma.ContactRelationshipUncheckedUpdateManyWithoutTargetPersonaInput>
 }
 
+export type ContactRelationshipCreateWithoutInteractionsInput = {
+  id?: string
+  state?: $Enums.ContactRelationshipState
+  sourceType: $Enums.ContactRequestSourceType
+  sourceId?: string | null
+  connectionContext?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  connectedAt?: Date | string
+  metAt?: Date | string | null
+  connectionSource?: $Enums.RelationshipConnectionSource
+  contextLabel?: string | null
+  accessStartAt?: Date | string | null
+  accessEndAt?: Date | string | null
+  lastInteractionAt?: Date | string | null
+  interactionCount?: number
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  ownerUser: Prisma.UserCreateNestedOneWithoutOwnedRelationshipsInput
+  targetUser: Prisma.UserCreateNestedOneWithoutTargetRelationshipsInput
+  ownerPersona: Prisma.PersonaCreateNestedOneWithoutOwnedRelationshipsInput
+  targetPersona: Prisma.PersonaCreateNestedOneWithoutTargetRelationshipsInput
+  memories?: Prisma.ContactMemoryCreateNestedManyWithoutRelationshipInput
+  followUps?: Prisma.FollowUpCreateNestedManyWithoutRelationshipInput
+}
+
+export type ContactRelationshipUncheckedCreateWithoutInteractionsInput = {
+  id?: string
+  ownerUserId: string
+  targetUserId: string
+  ownerPersonaId: string
+  targetPersonaId: string
+  state?: $Enums.ContactRelationshipState
+  sourceType: $Enums.ContactRequestSourceType
+  sourceId?: string | null
+  connectionContext?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  connectedAt?: Date | string
+  metAt?: Date | string | null
+  connectionSource?: $Enums.RelationshipConnectionSource
+  contextLabel?: string | null
+  accessStartAt?: Date | string | null
+  accessEndAt?: Date | string | null
+  lastInteractionAt?: Date | string | null
+  interactionCount?: number
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  memories?: Prisma.ContactMemoryUncheckedCreateNestedManyWithoutRelationshipInput
+  followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutRelationshipInput
+}
+
+export type ContactRelationshipCreateOrConnectWithoutInteractionsInput = {
+  where: Prisma.ContactRelationshipWhereUniqueInput
+  create: Prisma.XOR<Prisma.ContactRelationshipCreateWithoutInteractionsInput, Prisma.ContactRelationshipUncheckedCreateWithoutInteractionsInput>
+}
+
+export type ContactRelationshipUpsertWithoutInteractionsInput = {
+  update: Prisma.XOR<Prisma.ContactRelationshipUpdateWithoutInteractionsInput, Prisma.ContactRelationshipUncheckedUpdateWithoutInteractionsInput>
+  create: Prisma.XOR<Prisma.ContactRelationshipCreateWithoutInteractionsInput, Prisma.ContactRelationshipUncheckedCreateWithoutInteractionsInput>
+  where?: Prisma.ContactRelationshipWhereInput
+}
+
+export type ContactRelationshipUpdateToOneWithWhereWithoutInteractionsInput = {
+  where?: Prisma.ContactRelationshipWhereInput
+  data: Prisma.XOR<Prisma.ContactRelationshipUpdateWithoutInteractionsInput, Prisma.ContactRelationshipUncheckedUpdateWithoutInteractionsInput>
+}
+
+export type ContactRelationshipUpdateWithoutInteractionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.EnumContactRelationshipStateFieldUpdateOperationsInput | $Enums.ContactRelationshipState
+  sourceType?: Prisma.EnumContactRequestSourceTypeFieldUpdateOperationsInput | $Enums.ContactRequestSourceType
+  sourceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  connectionContext?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionSource?: Prisma.EnumRelationshipConnectionSourceFieldUpdateOperationsInput | $Enums.RelationshipConnectionSource
+  contextLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastInteractionAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  interactionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  ownerUser?: Prisma.UserUpdateOneRequiredWithoutOwnedRelationshipsNestedInput
+  targetUser?: Prisma.UserUpdateOneRequiredWithoutTargetRelationshipsNestedInput
+  ownerPersona?: Prisma.PersonaUpdateOneRequiredWithoutOwnedRelationshipsNestedInput
+  targetPersona?: Prisma.PersonaUpdateOneRequiredWithoutTargetRelationshipsNestedInput
+  memories?: Prisma.ContactMemoryUpdateManyWithoutRelationshipNestedInput
+  followUps?: Prisma.FollowUpUpdateManyWithoutRelationshipNestedInput
+}
+
+export type ContactRelationshipUncheckedUpdateWithoutInteractionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  targetUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerPersonaId?: Prisma.StringFieldUpdateOperationsInput | string
+  targetPersonaId?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.EnumContactRelationshipStateFieldUpdateOperationsInput | $Enums.ContactRelationshipState
+  sourceType?: Prisma.EnumContactRequestSourceTypeFieldUpdateOperationsInput | $Enums.ContactRequestSourceType
+  sourceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  connectionContext?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  connectedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  metAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionSource?: Prisma.EnumRelationshipConnectionSourceFieldUpdateOperationsInput | $Enums.RelationshipConnectionSource
+  contextLabel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastInteractionAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  interactionCount?: Prisma.IntFieldUpdateOperationsInput | number
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  memories?: Prisma.ContactMemoryUncheckedUpdateManyWithoutRelationshipNestedInput
+  followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutRelationshipNestedInput
+}
+
 export type ContactRelationshipCreateWithoutFollowUpsInput = {
   id?: string
   state?: $Enums.ContactRelationshipState
@@ -1270,6 +1415,7 @@ export type ContactRelationshipCreateWithoutFollowUpsInput = {
   ownerPersona: Prisma.PersonaCreateNestedOneWithoutOwnedRelationshipsInput
   targetPersona: Prisma.PersonaCreateNestedOneWithoutTargetRelationshipsInput
   memories?: Prisma.ContactMemoryCreateNestedManyWithoutRelationshipInput
+  interactions?: Prisma.InteractionCreateNestedManyWithoutRelationshipInput
 }
 
 export type ContactRelationshipUncheckedCreateWithoutFollowUpsInput = {
@@ -1294,6 +1440,7 @@ export type ContactRelationshipUncheckedCreateWithoutFollowUpsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   memories?: Prisma.ContactMemoryUncheckedCreateNestedManyWithoutRelationshipInput
+  interactions?: Prisma.InteractionUncheckedCreateNestedManyWithoutRelationshipInput
 }
 
 export type ContactRelationshipCreateOrConnectWithoutFollowUpsInput = {
@@ -1334,6 +1481,7 @@ export type ContactRelationshipUpdateWithoutFollowUpsInput = {
   ownerPersona?: Prisma.PersonaUpdateOneRequiredWithoutOwnedRelationshipsNestedInput
   targetPersona?: Prisma.PersonaUpdateOneRequiredWithoutTargetRelationshipsNestedInput
   memories?: Prisma.ContactMemoryUpdateManyWithoutRelationshipNestedInput
+  interactions?: Prisma.InteractionUpdateManyWithoutRelationshipNestedInput
 }
 
 export type ContactRelationshipUncheckedUpdateWithoutFollowUpsInput = {
@@ -1358,6 +1506,7 @@ export type ContactRelationshipUncheckedUpdateWithoutFollowUpsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   memories?: Prisma.ContactMemoryUncheckedUpdateManyWithoutRelationshipNestedInput
+  interactions?: Prisma.InteractionUncheckedUpdateManyWithoutRelationshipNestedInput
 }
 
 export type ContactRelationshipCreateWithoutMemoriesInput = {
@@ -1381,6 +1530,7 @@ export type ContactRelationshipCreateWithoutMemoriesInput = {
   targetUser: Prisma.UserCreateNestedOneWithoutTargetRelationshipsInput
   ownerPersona: Prisma.PersonaCreateNestedOneWithoutOwnedRelationshipsInput
   targetPersona: Prisma.PersonaCreateNestedOneWithoutTargetRelationshipsInput
+  interactions?: Prisma.InteractionCreateNestedManyWithoutRelationshipInput
   followUps?: Prisma.FollowUpCreateNestedManyWithoutRelationshipInput
 }
 
@@ -1405,6 +1555,7 @@ export type ContactRelationshipUncheckedCreateWithoutMemoriesInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  interactions?: Prisma.InteractionUncheckedCreateNestedManyWithoutRelationshipInput
   followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutRelationshipInput
 }
 
@@ -1445,6 +1596,7 @@ export type ContactRelationshipUpdateWithoutMemoriesInput = {
   targetUser?: Prisma.UserUpdateOneRequiredWithoutTargetRelationshipsNestedInput
   ownerPersona?: Prisma.PersonaUpdateOneRequiredWithoutOwnedRelationshipsNestedInput
   targetPersona?: Prisma.PersonaUpdateOneRequiredWithoutTargetRelationshipsNestedInput
+  interactions?: Prisma.InteractionUpdateManyWithoutRelationshipNestedInput
   followUps?: Prisma.FollowUpUpdateManyWithoutRelationshipNestedInput
 }
 
@@ -1469,6 +1621,7 @@ export type ContactRelationshipUncheckedUpdateWithoutMemoriesInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  interactions?: Prisma.InteractionUncheckedUpdateManyWithoutRelationshipNestedInput
   followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutRelationshipNestedInput
 }
 
@@ -1537,6 +1690,7 @@ export type ContactRelationshipUpdateWithoutOwnerUserInput = {
   ownerPersona?: Prisma.PersonaUpdateOneRequiredWithoutOwnedRelationshipsNestedInput
   targetPersona?: Prisma.PersonaUpdateOneRequiredWithoutTargetRelationshipsNestedInput
   memories?: Prisma.ContactMemoryUpdateManyWithoutRelationshipNestedInput
+  interactions?: Prisma.InteractionUpdateManyWithoutRelationshipNestedInput
   followUps?: Prisma.FollowUpUpdateManyWithoutRelationshipNestedInput
 }
 
@@ -1561,6 +1715,7 @@ export type ContactRelationshipUncheckedUpdateWithoutOwnerUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   memories?: Prisma.ContactMemoryUncheckedUpdateManyWithoutRelationshipNestedInput
+  interactions?: Prisma.InteractionUncheckedUpdateManyWithoutRelationshipNestedInput
   followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutRelationshipNestedInput
 }
 
@@ -1607,6 +1762,7 @@ export type ContactRelationshipUpdateWithoutTargetUserInput = {
   ownerPersona?: Prisma.PersonaUpdateOneRequiredWithoutOwnedRelationshipsNestedInput
   targetPersona?: Prisma.PersonaUpdateOneRequiredWithoutTargetRelationshipsNestedInput
   memories?: Prisma.ContactMemoryUpdateManyWithoutRelationshipNestedInput
+  interactions?: Prisma.InteractionUpdateManyWithoutRelationshipNestedInput
   followUps?: Prisma.FollowUpUpdateManyWithoutRelationshipNestedInput
 }
 
@@ -1631,6 +1787,7 @@ export type ContactRelationshipUncheckedUpdateWithoutTargetUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   memories?: Prisma.ContactMemoryUncheckedUpdateManyWithoutRelationshipNestedInput
+  interactions?: Prisma.InteractionUncheckedUpdateManyWithoutRelationshipNestedInput
   followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutRelationshipNestedInput
 }
 
@@ -1719,6 +1876,7 @@ export type ContactRelationshipUpdateWithoutOwnerPersonaInput = {
   targetUser?: Prisma.UserUpdateOneRequiredWithoutTargetRelationshipsNestedInput
   targetPersona?: Prisma.PersonaUpdateOneRequiredWithoutTargetRelationshipsNestedInput
   memories?: Prisma.ContactMemoryUpdateManyWithoutRelationshipNestedInput
+  interactions?: Prisma.InteractionUpdateManyWithoutRelationshipNestedInput
   followUps?: Prisma.FollowUpUpdateManyWithoutRelationshipNestedInput
 }
 
@@ -1742,6 +1900,7 @@ export type ContactRelationshipUncheckedUpdateWithoutOwnerPersonaInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   memories?: Prisma.ContactMemoryUncheckedUpdateManyWithoutRelationshipNestedInput
+  interactions?: Prisma.InteractionUncheckedUpdateManyWithoutRelationshipNestedInput
   followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutRelationshipNestedInput
 }
 
@@ -1787,6 +1946,7 @@ export type ContactRelationshipUpdateWithoutTargetPersonaInput = {
   targetUser?: Prisma.UserUpdateOneRequiredWithoutTargetRelationshipsNestedInput
   ownerPersona?: Prisma.PersonaUpdateOneRequiredWithoutOwnedRelationshipsNestedInput
   memories?: Prisma.ContactMemoryUpdateManyWithoutRelationshipNestedInput
+  interactions?: Prisma.InteractionUpdateManyWithoutRelationshipNestedInput
   followUps?: Prisma.FollowUpUpdateManyWithoutRelationshipNestedInput
 }
 
@@ -1810,6 +1970,7 @@ export type ContactRelationshipUncheckedUpdateWithoutTargetPersonaInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   memories?: Prisma.ContactMemoryUncheckedUpdateManyWithoutRelationshipNestedInput
+  interactions?: Prisma.InteractionUncheckedUpdateManyWithoutRelationshipNestedInput
   followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutRelationshipNestedInput
 }
 
@@ -1841,11 +2002,13 @@ export type ContactRelationshipUncheckedUpdateManyWithoutTargetPersonaInput = {
 
 export type ContactRelationshipCountOutputType = {
   memories: number
+  interactions: number
   followUps: number
 }
 
 export type ContactRelationshipCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   memories?: boolean | ContactRelationshipCountOutputTypeCountMemoriesArgs
+  interactions?: boolean | ContactRelationshipCountOutputTypeCountInteractionsArgs
   followUps?: boolean | ContactRelationshipCountOutputTypeCountFollowUpsArgs
 }
 
@@ -1864,6 +2027,13 @@ export type ContactRelationshipCountOutputTypeDefaultArgs<ExtArgs extends runtim
  */
 export type ContactRelationshipCountOutputTypeCountMemoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ContactMemoryWhereInput
+}
+
+/**
+ * ContactRelationshipCountOutputType without action
+ */
+export type ContactRelationshipCountOutputTypeCountInteractionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InteractionWhereInput
 }
 
 /**
@@ -1900,6 +2070,7 @@ export type ContactRelationshipSelect<ExtArgs extends runtime.Types.Extensions.I
   ownerPersona?: boolean | Prisma.PersonaDefaultArgs<ExtArgs>
   targetPersona?: boolean | Prisma.PersonaDefaultArgs<ExtArgs>
   memories?: boolean | Prisma.ContactRelationship$memoriesArgs<ExtArgs>
+  interactions?: boolean | Prisma.ContactRelationship$interactionsArgs<ExtArgs>
   followUps?: boolean | Prisma.ContactRelationship$followUpsArgs<ExtArgs>
   _count?: boolean | Prisma.ContactRelationshipCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["contactRelationship"]>
@@ -1988,6 +2159,7 @@ export type ContactRelationshipInclude<ExtArgs extends runtime.Types.Extensions.
   ownerPersona?: boolean | Prisma.PersonaDefaultArgs<ExtArgs>
   targetPersona?: boolean | Prisma.PersonaDefaultArgs<ExtArgs>
   memories?: boolean | Prisma.ContactRelationship$memoriesArgs<ExtArgs>
+  interactions?: boolean | Prisma.ContactRelationship$interactionsArgs<ExtArgs>
   followUps?: boolean | Prisma.ContactRelationship$followUpsArgs<ExtArgs>
   _count?: boolean | Prisma.ContactRelationshipCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -2012,6 +2184,7 @@ export type $ContactRelationshipPayload<ExtArgs extends runtime.Types.Extensions
     ownerPersona: Prisma.$PersonaPayload<ExtArgs>
     targetPersona: Prisma.$PersonaPayload<ExtArgs>
     memories: Prisma.$ContactMemoryPayload<ExtArgs>[]
+    interactions: Prisma.$InteractionPayload<ExtArgs>[]
     followUps: Prisma.$FollowUpPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -2434,6 +2607,7 @@ export interface Prisma__ContactRelationshipClient<T, Null = never, ExtArgs exte
   ownerPersona<T extends Prisma.PersonaDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PersonaDefaultArgs<ExtArgs>>): Prisma.Prisma__PersonaClient<runtime.Types.Result.GetResult<Prisma.$PersonaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   targetPersona<T extends Prisma.PersonaDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PersonaDefaultArgs<ExtArgs>>): Prisma.Prisma__PersonaClient<runtime.Types.Result.GetResult<Prisma.$PersonaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   memories<T extends Prisma.ContactRelationship$memoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ContactRelationship$memoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContactMemoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  interactions<T extends Prisma.ContactRelationship$interactionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ContactRelationship$interactionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InteractionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   followUps<T extends Prisma.ContactRelationship$followUpsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ContactRelationship$followUpsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FollowUpPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -2906,6 +3080,30 @@ export type ContactRelationship$memoriesArgs<ExtArgs extends runtime.Types.Exten
   take?: number
   skip?: number
   distinct?: Prisma.ContactMemoryScalarFieldEnum | Prisma.ContactMemoryScalarFieldEnum[]
+}
+
+/**
+ * ContactRelationship.interactions
+ */
+export type ContactRelationship$interactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Interaction
+   */
+  select?: Prisma.InteractionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Interaction
+   */
+  omit?: Prisma.InteractionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InteractionInclude<ExtArgs> | null
+  where?: Prisma.InteractionWhereInput
+  orderBy?: Prisma.InteractionOrderByWithRelationInput | Prisma.InteractionOrderByWithRelationInput[]
+  cursor?: Prisma.InteractionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InteractionScalarFieldEnum | Prisma.InteractionScalarFieldEnum[]
 }
 
 /**

@@ -15,6 +15,7 @@ import type { AuthenticatedUser } from "../../common/decorators/current-user.dec
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 
 import { CreateInstantConnectDto } from "./dto/create-instant-connect.dto";
+import { CreateRelationshipInteractionDto } from "./dto/create-relationship-interaction.dto";
 import { CreatePublicInstantConnectDto } from "./dto/create-public-instant-connect.dto";
 import { UpdateRelationshipDto } from "./dto/update-relationship.dto";
 import { RelationshipsService } from "./relationships.service";
@@ -60,6 +61,20 @@ export class RelationshipsController {
       user.id,
       id,
       updateRelationshipDto,
+    );
+  }
+
+  @Post(":id/interactions")
+  @HttpCode(HttpStatus.OK)
+  createInteraction(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id", new ParseUUIDPipe()) id: string,
+    @Body() createRelationshipInteractionDto: CreateRelationshipInteractionDto,
+  ) {
+    return this.relationshipsService.createInteraction(
+      user.id,
+      id,
+      createRelationshipInteractionDto,
     );
   }
 }

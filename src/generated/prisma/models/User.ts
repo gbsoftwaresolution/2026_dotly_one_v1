@@ -231,6 +231,7 @@ export type UserWhereInput = {
   analyticsEvents?: Prisma.AnalyticsEventListRelationFilter
   createdEvents?: Prisma.EventListRelationFilter
   eventParticipants?: Prisma.EventParticipantListRelationFilter
+  sentInteractions?: Prisma.InteractionListRelationFilter
   outgoingContactRequests?: Prisma.ContactRequestListRelationFilter
   incomingContactRequests?: Prisma.ContactRequestListRelationFilter
   ownedRelationships?: Prisma.ContactRelationshipListRelationFilter
@@ -262,6 +263,7 @@ export type UserOrderByWithRelationInput = {
   analyticsEvents?: Prisma.AnalyticsEventOrderByRelationAggregateInput
   createdEvents?: Prisma.EventOrderByRelationAggregateInput
   eventParticipants?: Prisma.EventParticipantOrderByRelationAggregateInput
+  sentInteractions?: Prisma.InteractionOrderByRelationAggregateInput
   outgoingContactRequests?: Prisma.ContactRequestOrderByRelationAggregateInput
   incomingContactRequests?: Prisma.ContactRequestOrderByRelationAggregateInput
   ownedRelationships?: Prisma.ContactRelationshipOrderByRelationAggregateInput
@@ -296,6 +298,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   analyticsEvents?: Prisma.AnalyticsEventListRelationFilter
   createdEvents?: Prisma.EventListRelationFilter
   eventParticipants?: Prisma.EventParticipantListRelationFilter
+  sentInteractions?: Prisma.InteractionListRelationFilter
   outgoingContactRequests?: Prisma.ContactRequestListRelationFilter
   incomingContactRequests?: Prisma.ContactRequestListRelationFilter
   ownedRelationships?: Prisma.ContactRelationshipListRelationFilter
@@ -359,6 +362,7 @@ export type UserCreateInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -390,6 +394,7 @@ export type UserUncheckedCreateInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -421,6 +426,7 @@ export type UserUpdateInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -452,6 +458,7 @@ export type UserUncheckedUpdateInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -739,6 +746,20 @@ export type UserUpdateOneRequiredWithoutTargetRelationshipsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTargetRelationshipsInput, Prisma.UserUpdateWithoutTargetRelationshipsInput>, Prisma.UserUncheckedUpdateWithoutTargetRelationshipsInput>
 }
 
+export type UserCreateNestedOneWithoutSentInteractionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSentInteractionsInput, Prisma.UserUncheckedCreateWithoutSentInteractionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSentInteractionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutSentInteractionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSentInteractionsInput, Prisma.UserUncheckedCreateWithoutSentInteractionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSentInteractionsInput
+  upsert?: Prisma.UserUpsertWithoutSentInteractionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSentInteractionsInput, Prisma.UserUpdateWithoutSentInteractionsInput>, Prisma.UserUncheckedUpdateWithoutSentInteractionsInput>
+}
+
 export type UserCreateNestedOneWithoutFollowUpsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutFollowUpsInput, Prisma.UserUncheckedCreateWithoutFollowUpsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutFollowUpsInput
@@ -846,6 +867,7 @@ export type UserCreateWithoutOwnedAgencyProfilesInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -876,6 +898,7 @@ export type UserUncheckedCreateWithoutOwnedAgencyProfilesInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -922,6 +945,7 @@ export type UserUpdateWithoutOwnedAgencyProfilesInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -952,6 +976,7 @@ export type UserUncheckedUpdateWithoutOwnedAgencyProfilesInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -982,6 +1007,7 @@ export type UserCreateWithoutEmailVerificationTokensInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -1012,6 +1038,7 @@ export type UserUncheckedCreateWithoutEmailVerificationTokensInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -1058,6 +1085,7 @@ export type UserUpdateWithoutEmailVerificationTokensInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -1088,6 +1116,7 @@ export type UserUncheckedUpdateWithoutEmailVerificationTokensInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -1118,6 +1147,7 @@ export type UserCreateWithoutPasswordResetTokensInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -1148,6 +1178,7 @@ export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -1194,6 +1225,7 @@ export type UserUpdateWithoutPasswordResetTokensInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -1224,6 +1256,7 @@ export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -1254,6 +1287,7 @@ export type UserCreateWithoutMobileOtpChallengesInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -1284,6 +1318,7 @@ export type UserUncheckedCreateWithoutMobileOtpChallengesInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -1330,6 +1365,7 @@ export type UserUpdateWithoutMobileOtpChallengesInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -1360,6 +1396,7 @@ export type UserUncheckedUpdateWithoutMobileOtpChallengesInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -1390,6 +1427,7 @@ export type UserCreateWithoutAuthSessionsInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -1420,6 +1458,7 @@ export type UserUncheckedCreateWithoutAuthSessionsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -1466,6 +1505,7 @@ export type UserUpdateWithoutAuthSessionsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -1496,6 +1536,7 @@ export type UserUncheckedUpdateWithoutAuthSessionsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -1526,6 +1567,7 @@ export type UserCreateWithoutPersonasInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -1556,6 +1598,7 @@ export type UserUncheckedCreateWithoutPersonasInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -1602,6 +1645,7 @@ export type UserUpdateWithoutPersonasInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -1632,6 +1676,7 @@ export type UserUncheckedUpdateWithoutPersonasInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -1662,6 +1707,7 @@ export type UserCreateWithoutCreatedEventsInput = {
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -1692,6 +1738,7 @@ export type UserUncheckedCreateWithoutCreatedEventsInput = {
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -1738,6 +1785,7 @@ export type UserUpdateWithoutCreatedEventsInput = {
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -1768,6 +1816,7 @@ export type UserUncheckedUpdateWithoutCreatedEventsInput = {
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -1798,6 +1847,7 @@ export type UserCreateWithoutEventParticipantsInput = {
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -1828,6 +1878,7 @@ export type UserUncheckedCreateWithoutEventParticipantsInput = {
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -1874,6 +1925,7 @@ export type UserUpdateWithoutEventParticipantsInput = {
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -1904,6 +1956,7 @@ export type UserUncheckedUpdateWithoutEventParticipantsInput = {
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -1935,6 +1988,7 @@ export type UserCreateWithoutOutgoingContactRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
   targetRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutTargetUserInput
@@ -1965,6 +2019,7 @@ export type UserUncheckedCreateWithoutOutgoingContactRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
   targetRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutTargetUserInput
@@ -2000,6 +2055,7 @@ export type UserCreateWithoutIncomingContactRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
   targetRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutTargetUserInput
@@ -2030,6 +2086,7 @@ export type UserUncheckedCreateWithoutIncomingContactRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
   targetRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutTargetUserInput
@@ -2076,6 +2133,7 @@ export type UserUpdateWithoutOutgoingContactRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
   targetRelationships?: Prisma.ContactRelationshipUpdateManyWithoutTargetUserNestedInput
@@ -2106,6 +2164,7 @@ export type UserUncheckedUpdateWithoutOutgoingContactRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
   targetRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutTargetUserNestedInput
@@ -2147,6 +2206,7 @@ export type UserUpdateWithoutIncomingContactRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
   targetRelationships?: Prisma.ContactRelationshipUpdateManyWithoutTargetUserNestedInput
@@ -2177,6 +2237,7 @@ export type UserUncheckedUpdateWithoutIncomingContactRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
   targetRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutTargetUserNestedInput
@@ -2207,6 +2268,7 @@ export type UserCreateWithoutOwnedRelationshipsInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   targetRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutTargetUserInput
@@ -2237,6 +2299,7 @@ export type UserUncheckedCreateWithoutOwnedRelationshipsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   targetRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutTargetUserInput
@@ -2272,6 +2335,7 @@ export type UserCreateWithoutTargetRelationshipsInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -2302,6 +2366,7 @@ export type UserUncheckedCreateWithoutTargetRelationshipsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -2348,6 +2413,7 @@ export type UserUpdateWithoutOwnedRelationshipsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   targetRelationships?: Prisma.ContactRelationshipUpdateManyWithoutTargetUserNestedInput
@@ -2378,6 +2444,7 @@ export type UserUncheckedUpdateWithoutOwnedRelationshipsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   targetRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutTargetUserNestedInput
@@ -2419,6 +2486,7 @@ export type UserUpdateWithoutTargetRelationshipsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -2449,9 +2517,150 @@ export type UserUncheckedUpdateWithoutTargetRelationshipsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
+  followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutOwnerUserNestedInput
+  initiatedBlocks?: Prisma.BlockUncheckedUpdateManyWithoutBlockerUserNestedInput
+  receivedBlocks?: Prisma.BlockUncheckedUpdateManyWithoutBlockedUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  resolvedSupportRequests?: Prisma.SupportRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+}
+
+export type UserCreateWithoutSentInteractionsInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  lastUsedPersonaId?: string | null
+  isVerified?: boolean
+  phoneNumber?: string | null
+  pendingPhoneNumber?: string | null
+  phoneVerifiedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  emailVerificationTokens?: Prisma.EmailVerificationTokenCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
+  authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
+  personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
+  analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
+  createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
+  eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
+  incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
+  ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
+  targetRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutTargetUserInput
+  followUps?: Prisma.FollowUpCreateNestedManyWithoutOwnerUserInput
+  initiatedBlocks?: Prisma.BlockCreateNestedManyWithoutBlockerUserInput
+  receivedBlocks?: Prisma.BlockCreateNestedManyWithoutBlockedUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  resolvedSupportRequests?: Prisma.SupportRequestCreateNestedManyWithoutResolvedByUserInput
+}
+
+export type UserUncheckedCreateWithoutSentInteractionsInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  lastUsedPersonaId?: string | null
+  isVerified?: boolean
+  phoneNumber?: string | null
+  pendingPhoneNumber?: string | null
+  phoneVerifiedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  emailVerificationTokens?: Prisma.EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
+  authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
+  personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
+  createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
+  eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutTargetUserInput
+  followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutOwnerUserInput
+  initiatedBlocks?: Prisma.BlockUncheckedCreateNestedManyWithoutBlockerUserInput
+  receivedBlocks?: Prisma.BlockUncheckedCreateNestedManyWithoutBlockedUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  resolvedSupportRequests?: Prisma.SupportRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
+}
+
+export type UserCreateOrConnectWithoutSentInteractionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutSentInteractionsInput, Prisma.UserUncheckedCreateWithoutSentInteractionsInput>
+}
+
+export type UserUpsertWithoutSentInteractionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutSentInteractionsInput, Prisma.UserUncheckedUpdateWithoutSentInteractionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutSentInteractionsInput, Prisma.UserUncheckedCreateWithoutSentInteractionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutSentInteractionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutSentInteractionsInput, Prisma.UserUncheckedUpdateWithoutSentInteractionsInput>
+}
+
+export type UserUpdateWithoutSentInteractionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  emailVerificationTokens?: Prisma.EmailVerificationTokenUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
+  authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
+  personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
+  createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
+  eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUpdateManyWithoutTargetUserNestedInput
+  followUps?: Prisma.FollowUpUpdateManyWithoutOwnerUserNestedInput
+  initiatedBlocks?: Prisma.BlockUpdateManyWithoutBlockerUserNestedInput
+  receivedBlocks?: Prisma.BlockUpdateManyWithoutBlockedUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  resolvedSupportRequests?: Prisma.SupportRequestUpdateManyWithoutResolvedByUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutSentInteractionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  emailVerificationTokens?: Prisma.EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
+  authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
+  personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
+  createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
+  eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutTargetUserNestedInput
   followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutOwnerUserNestedInput
   initiatedBlocks?: Prisma.BlockUncheckedUpdateManyWithoutBlockerUserNestedInput
   receivedBlocks?: Prisma.BlockUncheckedUpdateManyWithoutBlockedUserNestedInput
@@ -2479,6 +2688,7 @@ export type UserCreateWithoutFollowUpsInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -2509,6 +2719,7 @@ export type UserUncheckedCreateWithoutFollowUpsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -2555,6 +2766,7 @@ export type UserUpdateWithoutFollowUpsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -2585,6 +2797,7 @@ export type UserUncheckedUpdateWithoutFollowUpsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -2615,6 +2828,7 @@ export type UserCreateWithoutInitiatedBlocksInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -2645,6 +2859,7 @@ export type UserUncheckedCreateWithoutInitiatedBlocksInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -2680,6 +2895,7 @@ export type UserCreateWithoutReceivedBlocksInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -2710,6 +2926,7 @@ export type UserUncheckedCreateWithoutReceivedBlocksInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -2756,6 +2973,7 @@ export type UserUpdateWithoutInitiatedBlocksInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -2786,6 +3004,7 @@ export type UserUncheckedUpdateWithoutInitiatedBlocksInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -2827,6 +3046,7 @@ export type UserUpdateWithoutReceivedBlocksInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -2857,6 +3077,7 @@ export type UserUncheckedUpdateWithoutReceivedBlocksInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -2887,6 +3108,7 @@ export type UserCreateWithoutNotificationsInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -2917,6 +3139,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -2963,6 +3186,7 @@ export type UserUpdateWithoutNotificationsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -2993,6 +3217,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -3023,6 +3248,7 @@ export type UserCreateWithoutResolvedSupportRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -3053,6 +3279,7 @@ export type UserUncheckedCreateWithoutResolvedSupportRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -3099,6 +3326,7 @@ export type UserUpdateWithoutResolvedSupportRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -3129,6 +3357,7 @@ export type UserUncheckedUpdateWithoutResolvedSupportRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -3158,6 +3387,7 @@ export type UserCreateWithoutAnalyticsEventsInput = {
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
@@ -3188,6 +3418,7 @@ export type UserUncheckedCreateWithoutAnalyticsEventsInput = {
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
@@ -3234,6 +3465,7 @@ export type UserUpdateWithoutAnalyticsEventsInput = {
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
@@ -3264,6 +3496,7 @@ export type UserUncheckedUpdateWithoutAnalyticsEventsInput = {
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
@@ -3290,6 +3523,7 @@ export type UserCountOutputType = {
   analyticsEvents: number
   createdEvents: number
   eventParticipants: number
+  sentInteractions: number
   outgoingContactRequests: number
   incomingContactRequests: number
   ownedRelationships: number
@@ -3311,6 +3545,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   analyticsEvents?: boolean | UserCountOutputTypeCountAnalyticsEventsArgs
   createdEvents?: boolean | UserCountOutputTypeCountCreatedEventsArgs
   eventParticipants?: boolean | UserCountOutputTypeCountEventParticipantsArgs
+  sentInteractions?: boolean | UserCountOutputTypeCountSentInteractionsArgs
   outgoingContactRequests?: boolean | UserCountOutputTypeCountOutgoingContactRequestsArgs
   incomingContactRequests?: boolean | UserCountOutputTypeCountIncomingContactRequestsArgs
   ownedRelationships?: boolean | UserCountOutputTypeCountOwnedRelationshipsArgs
@@ -3398,6 +3633,13 @@ export type UserCountOutputTypeCountEventParticipantsArgs<ExtArgs extends runtim
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountSentInteractionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InteractionWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountOutgoingContactRequestsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ContactRequestWhereInput
 }
@@ -3479,6 +3721,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   analyticsEvents?: boolean | Prisma.User$analyticsEventsArgs<ExtArgs>
   createdEvents?: boolean | Prisma.User$createdEventsArgs<ExtArgs>
   eventParticipants?: boolean | Prisma.User$eventParticipantsArgs<ExtArgs>
+  sentInteractions?: boolean | Prisma.User$sentInteractionsArgs<ExtArgs>
   outgoingContactRequests?: boolean | Prisma.User$outgoingContactRequestsArgs<ExtArgs>
   incomingContactRequests?: boolean | Prisma.User$incomingContactRequestsArgs<ExtArgs>
   ownedRelationships?: boolean | Prisma.User$ownedRelationshipsArgs<ExtArgs>
@@ -3541,6 +3784,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   analyticsEvents?: boolean | Prisma.User$analyticsEventsArgs<ExtArgs>
   createdEvents?: boolean | Prisma.User$createdEventsArgs<ExtArgs>
   eventParticipants?: boolean | Prisma.User$eventParticipantsArgs<ExtArgs>
+  sentInteractions?: boolean | Prisma.User$sentInteractionsArgs<ExtArgs>
   outgoingContactRequests?: boolean | Prisma.User$outgoingContactRequestsArgs<ExtArgs>
   incomingContactRequests?: boolean | Prisma.User$incomingContactRequestsArgs<ExtArgs>
   ownedRelationships?: boolean | Prisma.User$ownedRelationshipsArgs<ExtArgs>
@@ -3567,6 +3811,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     analyticsEvents: Prisma.$AnalyticsEventPayload<ExtArgs>[]
     createdEvents: Prisma.$EventPayload<ExtArgs>[]
     eventParticipants: Prisma.$EventParticipantPayload<ExtArgs>[]
+    sentInteractions: Prisma.$InteractionPayload<ExtArgs>[]
     outgoingContactRequests: Prisma.$ContactRequestPayload<ExtArgs>[]
     incomingContactRequests: Prisma.$ContactRequestPayload<ExtArgs>[]
     ownedRelationships: Prisma.$ContactRelationshipPayload<ExtArgs>[]
@@ -3991,6 +4236,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   analyticsEvents<T extends Prisma.User$analyticsEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$analyticsEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AnalyticsEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdEvents<T extends Prisma.User$createdEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   eventParticipants<T extends Prisma.User$eventParticipantsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$eventParticipantsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  sentInteractions<T extends Prisma.User$sentInteractionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sentInteractionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InteractionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   outgoingContactRequests<T extends Prisma.User$outgoingContactRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$outgoingContactRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContactRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   incomingContactRequests<T extends Prisma.User$incomingContactRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$incomingContactRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContactRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ownedRelationships<T extends Prisma.User$ownedRelationshipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ownedRelationshipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContactRelationshipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -4645,6 +4891,30 @@ export type User$eventParticipantsArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.EventParticipantScalarFieldEnum | Prisma.EventParticipantScalarFieldEnum[]
+}
+
+/**
+ * User.sentInteractions
+ */
+export type User$sentInteractionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Interaction
+   */
+  select?: Prisma.InteractionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Interaction
+   */
+  omit?: Prisma.InteractionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InteractionInclude<ExtArgs> | null
+  where?: Prisma.InteractionWhereInput
+  orderBy?: Prisma.InteractionOrderByWithRelationInput | Prisma.InteractionOrderByWithRelationInput[]
+  cursor?: Prisma.InteractionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.InteractionScalarFieldEnum | Prisma.InteractionScalarFieldEnum[]
 }
 
 /**

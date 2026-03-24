@@ -110,6 +110,15 @@ export const RelationshipConnectionSource = {
 export type RelationshipConnectionSource = (typeof RelationshipConnectionSource)[keyof typeof RelationshipConnectionSource]
 
 
+export const InteractionType = {
+  GREETING: 'GREETING',
+  FOLLOW_UP: 'FOLLOW_UP',
+  THANK_YOU: 'THANK_YOU'
+} as const
+
+export type InteractionType = (typeof InteractionType)[keyof typeof InteractionType]
+
+
 export const FollowUpStatus = {
   PENDING: 'PENDING',
   COMPLETED: 'COMPLETED',

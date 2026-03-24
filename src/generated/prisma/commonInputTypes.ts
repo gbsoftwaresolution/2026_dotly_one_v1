@@ -579,6 +579,23 @@ export type EnumRelationshipConnectionSourceWithAggregatesFilter<$PrismaModel = 
   _max?: Prisma.NestedEnumRelationshipConnectionSourceFilter<$PrismaModel>
 }
 
+export type EnumInteractionTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.InteractionType | Prisma.EnumInteractionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InteractionType[] | Prisma.ListEnumInteractionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InteractionType[] | Prisma.ListEnumInteractionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInteractionTypeFilter<$PrismaModel> | $Enums.InteractionType
+}
+
+export type EnumInteractionTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.InteractionType | Prisma.EnumInteractionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InteractionType[] | Prisma.ListEnumInteractionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InteractionType[] | Prisma.ListEnumInteractionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInteractionTypeWithAggregatesFilter<$PrismaModel> | $Enums.InteractionType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumInteractionTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumInteractionTypeFilter<$PrismaModel>
+}
+
 export type EnumFollowUpStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.FollowUpStatus | Prisma.EnumFollowUpStatusFieldRefInput<$PrismaModel>
   in?: $Enums.FollowUpStatus[] | Prisma.ListEnumFollowUpStatusFieldRefInput<$PrismaModel>
@@ -1199,6 +1216,23 @@ export type NestedEnumRelationshipConnectionSourceWithAggregatesFilter<$PrismaMo
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumRelationshipConnectionSourceFilter<$PrismaModel>
   _max?: Prisma.NestedEnumRelationshipConnectionSourceFilter<$PrismaModel>
+}
+
+export type NestedEnumInteractionTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.InteractionType | Prisma.EnumInteractionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InteractionType[] | Prisma.ListEnumInteractionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InteractionType[] | Prisma.ListEnumInteractionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInteractionTypeFilter<$PrismaModel> | $Enums.InteractionType
+}
+
+export type NestedEnumInteractionTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.InteractionType | Prisma.EnumInteractionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.InteractionType[] | Prisma.ListEnumInteractionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.InteractionType[] | Prisma.ListEnumInteractionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumInteractionTypeWithAggregatesFilter<$PrismaModel> | $Enums.InteractionType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumInteractionTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumInteractionTypeFilter<$PrismaModel>
 }
 
 export type NestedEnumFollowUpStatusFilter<$PrismaModel = never> = {

@@ -14,6 +14,7 @@ describe("action response status codes", () => {
     const cases = [
       RelationshipsController.prototype.instantConnect,
       RelationshipsController.prototype.instantConnectByUsername,
+      RelationshipsController.prototype.createInteraction,
       QrController.prototype.connectQuickConnectQr,
       ContactRequestsController.prototype.approve,
       ContactRequestsController.prototype.reject,
