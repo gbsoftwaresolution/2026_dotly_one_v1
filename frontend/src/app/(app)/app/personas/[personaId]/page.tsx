@@ -70,7 +70,13 @@ export default async function PersonaDetailPage({
     <section className="space-y-4">
       <PageHeader
         title={persona.fullName}
-        description={`@${persona.username} · ${persona.jobTitle} at ${persona.companyName}`}
+        description={[
+          persona.jobTitle,
+          persona.companyName,
+          `@${persona.username}`,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
         action={
           <Link href={routes.app.personaSettings(persona.id)}>
             <SecondaryButton className="min-h-11 px-4 py-2 text-sm">
@@ -84,7 +90,28 @@ export default async function PersonaDetailPage({
       <Card className="flex items-center gap-3">
         <StatusBadge label={formatAccessMode(persona.accessMode)} />
         {persona.verifiedOnly ? <StatusBadge label="Verified only" /> : null}
+        {persona.isVerified ? <StatusBadge label="Verified badge on" /> : null}
       </Card>
+
+      {persona.tagline || persona.websiteUrl ? (
+        <Card className="space-y-3">
+          {persona.tagline ? (
+            <p className="text-base leading-7 text-foreground/88">
+              {persona.tagline}
+            </p>
+          ) : null}
+          {persona.websiteUrl ? (
+            <a
+              href={persona.websiteUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-foreground transition hover:text-brandRose dark:hover:text-brandCyan"
+            >
+              {persona.websiteUrl.replace(/^https?:\/\//, "")}
+            </a>
+          ) : null}
+        </Card>
+      ) : null}
 
       {/* Edit form */}
       <Card className="space-y-6">

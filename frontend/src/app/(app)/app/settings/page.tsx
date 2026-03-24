@@ -1,13 +1,16 @@
+import { ConnectionProgressNote } from "@/components/analytics/connection-progress-note";
 import Link from "next/link";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { AccountSecuritySettings } from "@/components/settings/account-security-settings";
 import { ThemeSwitcher } from "@/components/app-shell/theme-switcher";
+import { userApi } from "@/lib/api/user-api";
 import { requireServerSession } from "@/lib/auth/protected-route";
 import { routes } from "@/lib/constants/routes";
 
 export default async function SettingsPage() {
-  const { user } = await requireServerSession(routes.app.settings);
+  const { accessToken, user } = await requireServerSession(routes.app.settings);
+  const analytics = await userApi.meAnalytics(accessToken).catch(() => null);
 
   const shortcuts = [
     {
@@ -54,6 +57,8 @@ export default async function SettingsPage() {
         title="Settings"
         description="Manage account trust, appearance, and the controls behind how you share your identity."
       />
+
+      <ConnectionProgressNote analytics={analytics} />
 
       <div className="glass rounded-3xl border border-border bg-surface p-5">
         <div className="space-y-1.5">

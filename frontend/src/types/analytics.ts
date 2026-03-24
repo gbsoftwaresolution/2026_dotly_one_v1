@@ -11,6 +11,11 @@ export interface AnalyticsSummary {
   verificationConversionRate: number;
 }
 
+export interface CurrentUserAnalytics {
+  totalConnections: number;
+  connectionsThisMonth: number;
+}
+
 export interface PersonaAnalytics {
   personaId: string;
   profileViews: number;

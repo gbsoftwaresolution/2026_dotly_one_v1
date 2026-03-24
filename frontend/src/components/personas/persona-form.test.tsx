@@ -42,6 +42,8 @@ describe("PersonaForm", () => {
       jobTitle: "Founder",
       companyName: "Dotly",
       tagline: "Trusted identity",
+      websiteUrl: "https://dotly.one",
+      isVerified: true,
       profilePhotoUrl: null,
       accessMode: "request",
       verifiedOnly: false,
@@ -67,6 +69,8 @@ describe("PersonaForm", () => {
       screen.getByLabelText(/what should people remember\?/i),
       "Trusted identity",
     );
+    await user.type(screen.getByLabelText(/^website$/i), "https://dotly.one");
+    await user.click(screen.getByLabelText(/show verified badge/i));
     await user.click(screen.getByRole("button", { name: /create persona/i }));
 
     await waitFor(() => {
@@ -77,7 +81,9 @@ describe("PersonaForm", () => {
         jobTitle: "Founder",
         companyName: "Dotly",
         tagline: "Trusted identity",
+        websiteUrl: "https://dotly.one",
         accessMode: "request",
+        isVerified: true,
       });
     });
 

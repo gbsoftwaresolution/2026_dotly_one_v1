@@ -4,18 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   requireServerSession: vi.fn(),
-  getMyFastShare: vi.fn(),
   meAnalytics: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/protected-route", () => ({
   requireServerSession: mocks.requireServerSession,
-}));
-
-vi.mock("@/lib/api/persona-api", () => ({
-  personaApi: {
-    getMyFastShare: mocks.getMyFastShare,
-  },
 }));
 
 vi.mock("@/lib/api/user-api", () => ({
@@ -24,30 +17,40 @@ vi.mock("@/lib/api/user-api", () => ({
   },
 }));
 
-vi.mock("@/components/share/instant-share-experience", () => ({
-  InstantShareExperience: ({
-    initialUser,
-    initialAnalytics,
+vi.mock("@/components/shared/page-header", () => ({
+  PageHeader: ({ title }: { title: string }) =>
+    React.createElement("div", null, title),
+}));
+
+vi.mock("@/components/settings/account-security-settings", () => ({
+  AccountSecuritySettings: () =>
+    React.createElement("div", null, "security-settings"),
+}));
+
+vi.mock("@/components/app-shell/theme-switcher", () => ({
+  ThemeSwitcher: () => React.createElement("div", null, "theme-switcher"),
+}));
+
+vi.mock("@/components/analytics/connection-progress-note", () => ({
+  ConnectionProgressNote: ({
+    analytics,
   }: {
-    initialUser: { email: string };
-    initialAnalytics?: { totalConnections: number } | null;
+    analytics?: {
+      totalConnections: number;
+      connectionsThisMonth: number;
+    } | null;
   }) =>
     React.createElement(
       "div",
       null,
-      `${initialUser.email}:${initialAnalytics?.totalConnections ?? 0}`,
+      `connections:${analytics?.totalConnections ?? 0}:month:${analytics?.connectionsThisMonth ?? 0}`,
     ),
 }));
 
-import QrPage from "./page";
+import SettingsPage from "./page";
 
-describe("QrPage", () => {
-  it("requires the protected session and passes the current user to the client share experience", async () => {
-    mocks.getMyFastShare.mockResolvedValue(null);
-    mocks.meAnalytics.mockResolvedValue({
-      totalConnections: 24,
-      connectionsThisMonth: 5,
-    });
+describe("SettingsPage", () => {
+  it("loads connection progress for the settings surface", async () => {
     mocks.requireServerSession.mockResolvedValue({
       accessToken: "token",
       user: {
@@ -71,13 +74,16 @@ describe("QrPage", () => {
         },
       },
     });
+    mocks.meAnalytics.mockResolvedValue({
+      totalConnections: 24,
+      connectionsThisMonth: 5,
+    });
 
-    const element = await QrPage();
+    const element = await SettingsPage();
 
-    expect(mocks.requireServerSession).toHaveBeenCalledWith("/app/qr");
+    expect(mocks.requireServerSession).toHaveBeenCalledWith("/app/settings");
     expect(mocks.meAnalytics).toHaveBeenCalledWith("token");
-    expect(element).toBeTruthy();
-    expect(JSON.stringify(element)).toContain("user@dotly.one");
     expect(JSON.stringify(element)).toContain('"totalConnections":24');
+    expect(JSON.stringify(element)).toContain('"connectionsThisMonth":5');
   });
 });

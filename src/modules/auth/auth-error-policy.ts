@@ -13,6 +13,7 @@ export const AUTH_ERROR_MESSAGES = {
   loginTemporarilyLocked:
     "Too many failed sign-in attempts. Please try again later.",
   signupRateLimit: "Too many sign-up attempts. Please try again later.",
+  invalidReferralCode: "That referral code is invalid.",
   invalidAuthenticationToken: "Invalid authentication token",
   invalidVerificationLink: "Verification link is invalid or expired",
   verificationEmailCooldown:

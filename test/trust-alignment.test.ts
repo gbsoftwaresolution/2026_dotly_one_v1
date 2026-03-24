@@ -47,6 +47,8 @@ describe("Trust alignment", () => {
             jobTitle: "Founder",
             companyName: "Dotly",
             tagline: "Connect fast",
+            websiteUrl: "https://dotly.one",
+            isVerified: true,
             profilePhotoUrl: null,
             accessMode: "OPEN",
             verifiedOnly: true,
@@ -77,5 +79,7 @@ describe("Trust alignment", () => {
       isStrongVerified: true,
       isBusinessVerified: true,
     });
+    assert.equal(result.websiteUrl, "https://dotly.one");
+    assert.equal(result.isVerified, true);
   });
 });

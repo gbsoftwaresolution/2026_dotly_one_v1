@@ -27,6 +27,8 @@ export type AggregateUser = {
 export type UserMinAggregateOutputType = {
   id: string | null
   email: string | null
+  referralCode: string | null
+  referredBy: string | null
   passwordHash: string | null
   lastUsedPersonaId: string | null
   isVerified: boolean | null
@@ -40,6 +42,8 @@ export type UserMinAggregateOutputType = {
 export type UserMaxAggregateOutputType = {
   id: string | null
   email: string | null
+  referralCode: string | null
+  referredBy: string | null
   passwordHash: string | null
   lastUsedPersonaId: string | null
   isVerified: boolean | null
@@ -53,6 +57,8 @@ export type UserMaxAggregateOutputType = {
 export type UserCountAggregateOutputType = {
   id: number
   email: number
+  referralCode: number
+  referredBy: number
   passwordHash: number
   lastUsedPersonaId: number
   isVerified: number
@@ -68,6 +74,8 @@ export type UserCountAggregateOutputType = {
 export type UserMinAggregateInputType = {
   id?: true
   email?: true
+  referralCode?: true
+  referredBy?: true
   passwordHash?: true
   lastUsedPersonaId?: true
   isVerified?: true
@@ -81,6 +89,8 @@ export type UserMinAggregateInputType = {
 export type UserMaxAggregateInputType = {
   id?: true
   email?: true
+  referralCode?: true
+  referredBy?: true
   passwordHash?: true
   lastUsedPersonaId?: true
   isVerified?: true
@@ -94,6 +104,8 @@ export type UserMaxAggregateInputType = {
 export type UserCountAggregateInputType = {
   id?: true
   email?: true
+  referralCode?: true
+  referredBy?: true
   passwordHash?: true
   lastUsedPersonaId?: true
   isVerified?: true
@@ -180,6 +192,8 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type UserGroupByOutputType = {
   id: string
   email: string
+  referralCode: string
+  referredBy: string | null
   passwordHash: string
   lastUsedPersonaId: string | null
   isVerified: boolean
@@ -214,6 +228,8 @@ export type UserWhereInput = {
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.UuidFilter<"User"> | string
   email?: Prisma.StringFilter<"User"> | string
+  referralCode?: Prisma.StringFilter<"User"> | string
+  referredBy?: Prisma.UuidNullableFilter<"User"> | string | null
   passwordHash?: Prisma.StringFilter<"User"> | string
   lastUsedPersonaId?: Prisma.UuidNullableFilter<"User"> | string | null
   isVerified?: Prisma.BoolFilter<"User"> | boolean
@@ -227,6 +243,8 @@ export type UserWhereInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeListRelationFilter
   authSessions?: Prisma.AuthSessionListRelationFilter
   personas?: Prisma.PersonaListRelationFilter
+  referrer?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  referrals?: Prisma.UserListRelationFilter
   ownedAgencyProfiles?: Prisma.AgencyProfileListRelationFilter
   analyticsEvents?: Prisma.AnalyticsEventListRelationFilter
   createdEvents?: Prisma.EventListRelationFilter
@@ -246,6 +264,8 @@ export type UserWhereInput = {
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  referralCode?: Prisma.SortOrder
+  referredBy?: Prisma.SortOrderInput | Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   lastUsedPersonaId?: Prisma.SortOrderInput | Prisma.SortOrder
   isVerified?: Prisma.SortOrder
@@ -259,6 +279,8 @@ export type UserOrderByWithRelationInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeOrderByRelationAggregateInput
   authSessions?: Prisma.AuthSessionOrderByRelationAggregateInput
   personas?: Prisma.PersonaOrderByRelationAggregateInput
+  referrer?: Prisma.UserOrderByWithRelationInput
+  referrals?: Prisma.UserOrderByRelationAggregateInput
   ownedAgencyProfiles?: Prisma.AgencyProfileOrderByRelationAggregateInput
   analyticsEvents?: Prisma.AnalyticsEventOrderByRelationAggregateInput
   createdEvents?: Prisma.EventOrderByRelationAggregateInput
@@ -278,10 +300,12 @@ export type UserOrderByWithRelationInput = {
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   email?: string
+  referralCode?: string
   phoneNumber?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
+  referredBy?: Prisma.UuidNullableFilter<"User"> | string | null
   passwordHash?: Prisma.StringFilter<"User"> | string
   lastUsedPersonaId?: Prisma.UuidNullableFilter<"User"> | string | null
   isVerified?: Prisma.BoolFilter<"User"> | boolean
@@ -294,6 +318,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   mobileOtpChallenges?: Prisma.MobileOtpChallengeListRelationFilter
   authSessions?: Prisma.AuthSessionListRelationFilter
   personas?: Prisma.PersonaListRelationFilter
+  referrer?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  referrals?: Prisma.UserListRelationFilter
   ownedAgencyProfiles?: Prisma.AgencyProfileListRelationFilter
   analyticsEvents?: Prisma.AnalyticsEventListRelationFilter
   createdEvents?: Prisma.EventListRelationFilter
@@ -308,11 +334,13 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   receivedBlocks?: Prisma.BlockListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
   resolvedSupportRequests?: Prisma.SupportRequestListRelationFilter
-}, "id" | "email" | "phoneNumber">
+}, "id" | "email" | "referralCode" | "phoneNumber">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  referralCode?: Prisma.SortOrder
+  referredBy?: Prisma.SortOrderInput | Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   lastUsedPersonaId?: Prisma.SortOrderInput | Prisma.SortOrder
   isVerified?: Prisma.SortOrder
@@ -332,6 +360,8 @@ export type UserScalarWhereWithAggregatesInput = {
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"User"> | string
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
+  referralCode?: Prisma.StringWithAggregatesFilter<"User"> | string
+  referredBy?: Prisma.UuidNullableWithAggregatesFilter<"User"> | string | null
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
   lastUsedPersonaId?: Prisma.UuidNullableWithAggregatesFilter<"User"> | string | null
   isVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
@@ -345,6 +375,7 @@ export type UserScalarWhereWithAggregatesInput = {
 export type UserCreateInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -358,6 +389,8 @@ export type UserCreateInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -377,6 +410,8 @@ export type UserCreateInput = {
 export type UserUncheckedCreateInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -390,6 +425,7 @@ export type UserUncheckedCreateInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -409,6 +445,7 @@ export type UserUncheckedCreateInput = {
 export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -422,6 +459,8 @@ export type UserUpdateInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -441,6 +480,8 @@ export type UserUpdateInput = {
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -454,6 +495,7 @@ export type UserUncheckedUpdateInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -473,6 +515,8 @@ export type UserUncheckedUpdateInput = {
 export type UserCreateManyInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -486,6 +530,7 @@ export type UserCreateManyInput = {
 export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -499,6 +544,8 @@ export type UserUpdateManyMutationInput = {
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -509,9 +556,26 @@ export type UserUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
+}
+
+export type UserListRelationFilter = {
+  every?: Prisma.UserWhereInput
+  some?: Prisma.UserWhereInput
+  none?: Prisma.UserWhereInput
+}
+
+export type UserOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  referralCode?: Prisma.SortOrder
+  referredBy?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   lastUsedPersonaId?: Prisma.SortOrder
   isVerified?: Prisma.SortOrder
@@ -525,6 +589,8 @@ export type UserCountOrderByAggregateInput = {
 export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  referralCode?: Prisma.SortOrder
+  referredBy?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   lastUsedPersonaId?: Prisma.SortOrder
   isVerified?: Prisma.SortOrder
@@ -538,6 +604,8 @@ export type UserMaxOrderByAggregateInput = {
 export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  referralCode?: Prisma.SortOrder
+  referredBy?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   lastUsedPersonaId?: Prisma.SortOrder
   isVerified?: Prisma.SortOrder
@@ -553,9 +621,24 @@ export type UserScalarRelationFilter = {
   isNot?: Prisma.UserWhereInput
 }
 
-export type UserNullableScalarRelationFilter = {
-  is?: Prisma.UserWhereInput | null
-  isNot?: Prisma.UserWhereInput | null
+export type UserCreateNestedOneWithoutReferralsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReferralsInput, Prisma.UserUncheckedCreateWithoutReferralsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReferralsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedManyWithoutReferrerInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReferrerInput, Prisma.UserUncheckedCreateWithoutReferrerInput> | Prisma.UserCreateWithoutReferrerInput[] | Prisma.UserUncheckedCreateWithoutReferrerInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReferrerInput | Prisma.UserCreateOrConnectWithoutReferrerInput[]
+  createMany?: Prisma.UserCreateManyReferrerInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type UserUncheckedCreateNestedManyWithoutReferrerInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReferrerInput, Prisma.UserUncheckedCreateWithoutReferrerInput> | Prisma.UserCreateWithoutReferrerInput[] | Prisma.UserUncheckedCreateWithoutReferrerInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReferrerInput | Prisma.UserCreateOrConnectWithoutReferrerInput[]
+  createMany?: Prisma.UserCreateManyReferrerInputEnvelope
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -576,6 +659,44 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
 
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
+}
+
+export type UserUpdateOneWithoutReferralsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReferralsInput, Prisma.UserUncheckedCreateWithoutReferralsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReferralsInput
+  upsert?: Prisma.UserUpsertWithoutReferralsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReferralsInput, Prisma.UserUpdateWithoutReferralsInput>, Prisma.UserUncheckedUpdateWithoutReferralsInput>
+}
+
+export type UserUpdateManyWithoutReferrerNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReferrerInput, Prisma.UserUncheckedCreateWithoutReferrerInput> | Prisma.UserCreateWithoutReferrerInput[] | Prisma.UserUncheckedCreateWithoutReferrerInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReferrerInput | Prisma.UserCreateOrConnectWithoutReferrerInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutReferrerInput | Prisma.UserUpsertWithWhereUniqueWithoutReferrerInput[]
+  createMany?: Prisma.UserCreateManyReferrerInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutReferrerInput | Prisma.UserUpdateWithWhereUniqueWithoutReferrerInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutReferrerInput | Prisma.UserUpdateManyWithWhereWithoutReferrerInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+}
+
+export type UserUncheckedUpdateManyWithoutReferrerNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReferrerInput, Prisma.UserUncheckedCreateWithoutReferrerInput> | Prisma.UserCreateWithoutReferrerInput[] | Prisma.UserUncheckedCreateWithoutReferrerInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReferrerInput | Prisma.UserCreateOrConnectWithoutReferrerInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutReferrerInput | Prisma.UserUpsertWithWhereUniqueWithoutReferrerInput[]
+  createMany?: Prisma.UserCreateManyReferrerInputEnvelope
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutReferrerInput | Prisma.UserUpdateWithWhereUniqueWithoutReferrerInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutReferrerInput | Prisma.UserUpdateManyWithWhereWithoutReferrerInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
 }
 
 export type UserCreateNestedOneWithoutOwnedAgencyProfilesInput = {
@@ -848,9 +969,10 @@ export type UserUpdateOneWithoutAnalyticsEventsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAnalyticsEventsInput, Prisma.UserUpdateWithoutAnalyticsEventsInput>, Prisma.UserUncheckedUpdateWithoutAnalyticsEventsInput>
 }
 
-export type UserCreateWithoutOwnedAgencyProfilesInput = {
+export type UserCreateWithoutReferralsInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -864,6 +986,272 @@ export type UserCreateWithoutOwnedAgencyProfilesInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
+  analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
+  createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
+  eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
+  outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
+  incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
+  ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
+  targetRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutTargetUserInput
+  followUps?: Prisma.FollowUpCreateNestedManyWithoutOwnerUserInput
+  initiatedBlocks?: Prisma.BlockCreateNestedManyWithoutBlockerUserInput
+  receivedBlocks?: Prisma.BlockCreateNestedManyWithoutBlockedUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  resolvedSupportRequests?: Prisma.SupportRequestCreateNestedManyWithoutResolvedByUserInput
+}
+
+export type UserUncheckedCreateWithoutReferralsInput = {
+  id?: string
+  email: string
+  referralCode: string
+  referredBy?: string | null
+  passwordHash: string
+  lastUsedPersonaId?: string | null
+  isVerified?: boolean
+  phoneNumber?: string | null
+  pendingPhoneNumber?: string | null
+  phoneVerifiedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  emailVerificationTokens?: Prisma.EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
+  authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
+  personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
+  createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
+  eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutTargetUserInput
+  followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutOwnerUserInput
+  initiatedBlocks?: Prisma.BlockUncheckedCreateNestedManyWithoutBlockerUserInput
+  receivedBlocks?: Prisma.BlockUncheckedCreateNestedManyWithoutBlockedUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  resolvedSupportRequests?: Prisma.SupportRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
+}
+
+export type UserCreateOrConnectWithoutReferralsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutReferralsInput, Prisma.UserUncheckedCreateWithoutReferralsInput>
+}
+
+export type UserCreateWithoutReferrerInput = {
+  id?: string
+  email: string
+  referralCode: string
+  passwordHash: string
+  lastUsedPersonaId?: string | null
+  isVerified?: boolean
+  phoneNumber?: string | null
+  pendingPhoneNumber?: string | null
+  phoneVerifiedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  emailVerificationTokens?: Prisma.EmailVerificationTokenCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
+  authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
+  personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
+  ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
+  analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
+  createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
+  eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionCreateNestedManyWithoutSenderUserInput
+  outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromUserInput
+  incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToUserInput
+  ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerUserInput
+  targetRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutTargetUserInput
+  followUps?: Prisma.FollowUpCreateNestedManyWithoutOwnerUserInput
+  initiatedBlocks?: Prisma.BlockCreateNestedManyWithoutBlockerUserInput
+  receivedBlocks?: Prisma.BlockCreateNestedManyWithoutBlockedUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  resolvedSupportRequests?: Prisma.SupportRequestCreateNestedManyWithoutResolvedByUserInput
+}
+
+export type UserUncheckedCreateWithoutReferrerInput = {
+  id?: string
+  email: string
+  referralCode: string
+  passwordHash: string
+  lastUsedPersonaId?: string | null
+  isVerified?: boolean
+  phoneNumber?: string | null
+  pendingPhoneNumber?: string | null
+  phoneVerifiedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  emailVerificationTokens?: Prisma.EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
+  authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
+  personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
+  ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
+  createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
+  eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
+  sentInteractions?: Prisma.InteractionUncheckedCreateNestedManyWithoutSenderUserInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromUserInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToUserInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerUserInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutTargetUserInput
+  followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutOwnerUserInput
+  initiatedBlocks?: Prisma.BlockUncheckedCreateNestedManyWithoutBlockerUserInput
+  receivedBlocks?: Prisma.BlockUncheckedCreateNestedManyWithoutBlockedUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  resolvedSupportRequests?: Prisma.SupportRequestUncheckedCreateNestedManyWithoutResolvedByUserInput
+}
+
+export type UserCreateOrConnectWithoutReferrerInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutReferrerInput, Prisma.UserUncheckedCreateWithoutReferrerInput>
+}
+
+export type UserCreateManyReferrerInputEnvelope = {
+  data: Prisma.UserCreateManyReferrerInput | Prisma.UserCreateManyReferrerInput[]
+  skipDuplicates?: boolean
+}
+
+export type UserUpsertWithoutReferralsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutReferralsInput, Prisma.UserUncheckedUpdateWithoutReferralsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutReferralsInput, Prisma.UserUncheckedCreateWithoutReferralsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutReferralsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutReferralsInput, Prisma.UserUncheckedUpdateWithoutReferralsInput>
+}
+
+export type UserUpdateWithoutReferralsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  emailVerificationTokens?: Prisma.EmailVerificationTokenUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
+  authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
+  personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
+  createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
+  eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUpdateManyWithoutTargetUserNestedInput
+  followUps?: Prisma.FollowUpUpdateManyWithoutOwnerUserNestedInput
+  initiatedBlocks?: Prisma.BlockUpdateManyWithoutBlockerUserNestedInput
+  receivedBlocks?: Prisma.BlockUpdateManyWithoutBlockedUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  resolvedSupportRequests?: Prisma.SupportRequestUpdateManyWithoutResolvedByUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutReferralsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  emailVerificationTokens?: Prisma.EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
+  authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
+  personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
+  createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
+  eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutTargetUserNestedInput
+  followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutOwnerUserNestedInput
+  initiatedBlocks?: Prisma.BlockUncheckedUpdateManyWithoutBlockerUserNestedInput
+  receivedBlocks?: Prisma.BlockUncheckedUpdateManyWithoutBlockedUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  resolvedSupportRequests?: Prisma.SupportRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+}
+
+export type UserUpsertWithWhereUniqueWithoutReferrerInput = {
+  where: Prisma.UserWhereUniqueInput
+  update: Prisma.XOR<Prisma.UserUpdateWithoutReferrerInput, Prisma.UserUncheckedUpdateWithoutReferrerInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutReferrerInput, Prisma.UserUncheckedCreateWithoutReferrerInput>
+}
+
+export type UserUpdateWithWhereUniqueWithoutReferrerInput = {
+  where: Prisma.UserWhereUniqueInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutReferrerInput, Prisma.UserUncheckedUpdateWithoutReferrerInput>
+}
+
+export type UserUpdateManyWithWhereWithoutReferrerInput = {
+  where: Prisma.UserScalarWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateManyMutationInput, Prisma.UserUncheckedUpdateManyWithoutReferrerInput>
+}
+
+export type UserScalarWhereInput = {
+  AND?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  OR?: Prisma.UserScalarWhereInput[]
+  NOT?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  id?: Prisma.UuidFilter<"User"> | string
+  email?: Prisma.StringFilter<"User"> | string
+  referralCode?: Prisma.StringFilter<"User"> | string
+  referredBy?: Prisma.UuidNullableFilter<"User"> | string | null
+  passwordHash?: Prisma.StringFilter<"User"> | string
+  lastUsedPersonaId?: Prisma.UuidNullableFilter<"User"> | string | null
+  isVerified?: Prisma.BoolFilter<"User"> | boolean
+  phoneNumber?: Prisma.StringNullableFilter<"User"> | string | null
+  pendingPhoneNumber?: Prisma.StringNullableFilter<"User"> | string | null
+  phoneVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+}
+
+export type UserCreateWithoutOwnedAgencyProfilesInput = {
+  id?: string
+  email: string
+  referralCode: string
+  passwordHash: string
+  lastUsedPersonaId?: string | null
+  isVerified?: boolean
+  phoneNumber?: string | null
+  pendingPhoneNumber?: string | null
+  phoneVerifiedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  emailVerificationTokens?: Prisma.EmailVerificationTokenCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
+  authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
+  personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
@@ -882,6 +1270,8 @@ export type UserCreateWithoutOwnedAgencyProfilesInput = {
 export type UserUncheckedCreateWithoutOwnedAgencyProfilesInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -895,6 +1285,7 @@ export type UserUncheckedCreateWithoutOwnedAgencyProfilesInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
@@ -929,6 +1320,7 @@ export type UserUpdateToOneWithWhereWithoutOwnedAgencyProfilesInput = {
 export type UserUpdateWithoutOwnedAgencyProfilesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -942,6 +1334,8 @@ export type UserUpdateWithoutOwnedAgencyProfilesInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
@@ -960,6 +1354,8 @@ export type UserUpdateWithoutOwnedAgencyProfilesInput = {
 export type UserUncheckedUpdateWithoutOwnedAgencyProfilesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -973,6 +1369,7 @@ export type UserUncheckedUpdateWithoutOwnedAgencyProfilesInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
@@ -991,6 +1388,7 @@ export type UserUncheckedUpdateWithoutOwnedAgencyProfilesInput = {
 export type UserCreateWithoutEmailVerificationTokensInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1003,6 +1401,8 @@ export type UserCreateWithoutEmailVerificationTokensInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -1022,6 +1422,8 @@ export type UserCreateWithoutEmailVerificationTokensInput = {
 export type UserUncheckedCreateWithoutEmailVerificationTokensInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1034,6 +1436,7 @@ export type UserUncheckedCreateWithoutEmailVerificationTokensInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -1069,6 +1472,7 @@ export type UserUpdateToOneWithWhereWithoutEmailVerificationTokensInput = {
 export type UserUpdateWithoutEmailVerificationTokensInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1081,6 +1485,8 @@ export type UserUpdateWithoutEmailVerificationTokensInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -1100,6 +1506,8 @@ export type UserUpdateWithoutEmailVerificationTokensInput = {
 export type UserUncheckedUpdateWithoutEmailVerificationTokensInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1112,6 +1520,7 @@ export type UserUncheckedUpdateWithoutEmailVerificationTokensInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -1131,6 +1540,7 @@ export type UserUncheckedUpdateWithoutEmailVerificationTokensInput = {
 export type UserCreateWithoutPasswordResetTokensInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1143,6 +1553,8 @@ export type UserCreateWithoutPasswordResetTokensInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -1162,6 +1574,8 @@ export type UserCreateWithoutPasswordResetTokensInput = {
 export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1174,6 +1588,7 @@ export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -1209,6 +1624,7 @@ export type UserUpdateToOneWithWhereWithoutPasswordResetTokensInput = {
 export type UserUpdateWithoutPasswordResetTokensInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1221,6 +1637,8 @@ export type UserUpdateWithoutPasswordResetTokensInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -1240,6 +1658,8 @@ export type UserUpdateWithoutPasswordResetTokensInput = {
 export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1252,6 +1672,7 @@ export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -1271,6 +1692,7 @@ export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
 export type UserCreateWithoutMobileOtpChallengesInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1283,6 +1705,8 @@ export type UserCreateWithoutMobileOtpChallengesInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -1302,6 +1726,8 @@ export type UserCreateWithoutMobileOtpChallengesInput = {
 export type UserUncheckedCreateWithoutMobileOtpChallengesInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1314,6 +1740,7 @@ export type UserUncheckedCreateWithoutMobileOtpChallengesInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -1349,6 +1776,7 @@ export type UserUpdateToOneWithWhereWithoutMobileOtpChallengesInput = {
 export type UserUpdateWithoutMobileOtpChallengesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1361,6 +1789,8 @@ export type UserUpdateWithoutMobileOtpChallengesInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -1380,6 +1810,8 @@ export type UserUpdateWithoutMobileOtpChallengesInput = {
 export type UserUncheckedUpdateWithoutMobileOtpChallengesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1392,6 +1824,7 @@ export type UserUncheckedUpdateWithoutMobileOtpChallengesInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -1411,6 +1844,7 @@ export type UserUncheckedUpdateWithoutMobileOtpChallengesInput = {
 export type UserCreateWithoutAuthSessionsInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1423,6 +1857,8 @@ export type UserCreateWithoutAuthSessionsInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -1442,6 +1878,8 @@ export type UserCreateWithoutAuthSessionsInput = {
 export type UserUncheckedCreateWithoutAuthSessionsInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1454,6 +1892,7 @@ export type UserUncheckedCreateWithoutAuthSessionsInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -1489,6 +1928,7 @@ export type UserUpdateToOneWithWhereWithoutAuthSessionsInput = {
 export type UserUpdateWithoutAuthSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1501,6 +1941,8 @@ export type UserUpdateWithoutAuthSessionsInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -1520,6 +1962,8 @@ export type UserUpdateWithoutAuthSessionsInput = {
 export type UserUncheckedUpdateWithoutAuthSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1532,6 +1976,7 @@ export type UserUncheckedUpdateWithoutAuthSessionsInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -1551,6 +1996,7 @@ export type UserUncheckedUpdateWithoutAuthSessionsInput = {
 export type UserCreateWithoutPersonasInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1563,6 +2009,8 @@ export type UserCreateWithoutPersonasInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -1582,6 +2030,8 @@ export type UserCreateWithoutPersonasInput = {
 export type UserUncheckedCreateWithoutPersonasInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1594,6 +2044,7 @@ export type UserUncheckedCreateWithoutPersonasInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -1629,6 +2080,7 @@ export type UserUpdateToOneWithWhereWithoutPersonasInput = {
 export type UserUpdateWithoutPersonasInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1641,6 +2093,8 @@ export type UserUpdateWithoutPersonasInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -1660,6 +2114,8 @@ export type UserUpdateWithoutPersonasInput = {
 export type UserUncheckedUpdateWithoutPersonasInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1672,6 +2128,7 @@ export type UserUncheckedUpdateWithoutPersonasInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -1691,6 +2148,7 @@ export type UserUncheckedUpdateWithoutPersonasInput = {
 export type UserCreateWithoutCreatedEventsInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1704,6 +2162,8 @@ export type UserCreateWithoutCreatedEventsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
@@ -1722,6 +2182,8 @@ export type UserCreateWithoutCreatedEventsInput = {
 export type UserUncheckedCreateWithoutCreatedEventsInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1735,6 +2197,7 @@ export type UserUncheckedCreateWithoutCreatedEventsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
@@ -1769,6 +2232,7 @@ export type UserUpdateToOneWithWhereWithoutCreatedEventsInput = {
 export type UserUpdateWithoutCreatedEventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1782,6 +2246,8 @@ export type UserUpdateWithoutCreatedEventsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
@@ -1800,6 +2266,8 @@ export type UserUpdateWithoutCreatedEventsInput = {
 export type UserUncheckedUpdateWithoutCreatedEventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1813,6 +2281,7 @@ export type UserUncheckedUpdateWithoutCreatedEventsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
@@ -1831,6 +2300,7 @@ export type UserUncheckedUpdateWithoutCreatedEventsInput = {
 export type UserCreateWithoutEventParticipantsInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1844,6 +2314,8 @@ export type UserCreateWithoutEventParticipantsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -1862,6 +2334,8 @@ export type UserCreateWithoutEventParticipantsInput = {
 export type UserUncheckedCreateWithoutEventParticipantsInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1875,6 +2349,7 @@ export type UserUncheckedCreateWithoutEventParticipantsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -1909,6 +2384,7 @@ export type UserUpdateToOneWithWhereWithoutEventParticipantsInput = {
 export type UserUpdateWithoutEventParticipantsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1922,6 +2398,8 @@ export type UserUpdateWithoutEventParticipantsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -1940,6 +2418,8 @@ export type UserUpdateWithoutEventParticipantsInput = {
 export type UserUncheckedUpdateWithoutEventParticipantsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1953,6 +2433,7 @@ export type UserUncheckedUpdateWithoutEventParticipantsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -1971,6 +2452,7 @@ export type UserUncheckedUpdateWithoutEventParticipantsInput = {
 export type UserCreateWithoutOutgoingContactRequestsInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -1984,6 +2466,8 @@ export type UserCreateWithoutOutgoingContactRequestsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -2002,6 +2486,8 @@ export type UserCreateWithoutOutgoingContactRequestsInput = {
 export type UserUncheckedCreateWithoutOutgoingContactRequestsInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2015,6 +2501,7 @@ export type UserUncheckedCreateWithoutOutgoingContactRequestsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -2038,6 +2525,7 @@ export type UserCreateOrConnectWithoutOutgoingContactRequestsInput = {
 export type UserCreateWithoutIncomingContactRequestsInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2051,6 +2539,8 @@ export type UserCreateWithoutIncomingContactRequestsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -2069,6 +2559,8 @@ export type UserCreateWithoutIncomingContactRequestsInput = {
 export type UserUncheckedCreateWithoutIncomingContactRequestsInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2082,6 +2574,7 @@ export type UserUncheckedCreateWithoutIncomingContactRequestsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -2116,6 +2609,7 @@ export type UserUpdateToOneWithWhereWithoutOutgoingContactRequestsInput = {
 export type UserUpdateWithoutOutgoingContactRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2129,6 +2623,8 @@ export type UserUpdateWithoutOutgoingContactRequestsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -2147,6 +2643,8 @@ export type UserUpdateWithoutOutgoingContactRequestsInput = {
 export type UserUncheckedUpdateWithoutOutgoingContactRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2160,6 +2658,7 @@ export type UserUncheckedUpdateWithoutOutgoingContactRequestsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -2189,6 +2688,7 @@ export type UserUpdateToOneWithWhereWithoutIncomingContactRequestsInput = {
 export type UserUpdateWithoutIncomingContactRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2202,6 +2702,8 @@ export type UserUpdateWithoutIncomingContactRequestsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -2220,6 +2722,8 @@ export type UserUpdateWithoutIncomingContactRequestsInput = {
 export type UserUncheckedUpdateWithoutIncomingContactRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2233,6 +2737,7 @@ export type UserUncheckedUpdateWithoutIncomingContactRequestsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -2251,6 +2756,7 @@ export type UserUncheckedUpdateWithoutIncomingContactRequestsInput = {
 export type UserCreateWithoutOwnedRelationshipsInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2264,6 +2770,8 @@ export type UserCreateWithoutOwnedRelationshipsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -2282,6 +2790,8 @@ export type UserCreateWithoutOwnedRelationshipsInput = {
 export type UserUncheckedCreateWithoutOwnedRelationshipsInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2295,6 +2805,7 @@ export type UserUncheckedCreateWithoutOwnedRelationshipsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -2318,6 +2829,7 @@ export type UserCreateOrConnectWithoutOwnedRelationshipsInput = {
 export type UserCreateWithoutTargetRelationshipsInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2331,6 +2843,8 @@ export type UserCreateWithoutTargetRelationshipsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -2349,6 +2863,8 @@ export type UserCreateWithoutTargetRelationshipsInput = {
 export type UserUncheckedCreateWithoutTargetRelationshipsInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2362,6 +2878,7 @@ export type UserUncheckedCreateWithoutTargetRelationshipsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -2396,6 +2913,7 @@ export type UserUpdateToOneWithWhereWithoutOwnedRelationshipsInput = {
 export type UserUpdateWithoutOwnedRelationshipsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2409,6 +2927,8 @@ export type UserUpdateWithoutOwnedRelationshipsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -2427,6 +2947,8 @@ export type UserUpdateWithoutOwnedRelationshipsInput = {
 export type UserUncheckedUpdateWithoutOwnedRelationshipsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2440,6 +2962,7 @@ export type UserUncheckedUpdateWithoutOwnedRelationshipsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -2469,6 +2992,7 @@ export type UserUpdateToOneWithWhereWithoutTargetRelationshipsInput = {
 export type UserUpdateWithoutTargetRelationshipsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2482,6 +3006,8 @@ export type UserUpdateWithoutTargetRelationshipsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -2500,6 +3026,8 @@ export type UserUpdateWithoutTargetRelationshipsInput = {
 export type UserUncheckedUpdateWithoutTargetRelationshipsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2513,6 +3041,7 @@ export type UserUncheckedUpdateWithoutTargetRelationshipsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -2531,6 +3060,7 @@ export type UserUncheckedUpdateWithoutTargetRelationshipsInput = {
 export type UserCreateWithoutSentInteractionsInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2544,6 +3074,8 @@ export type UserCreateWithoutSentInteractionsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -2562,6 +3094,8 @@ export type UserCreateWithoutSentInteractionsInput = {
 export type UserUncheckedCreateWithoutSentInteractionsInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2575,6 +3109,7 @@ export type UserUncheckedCreateWithoutSentInteractionsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -2609,6 +3144,7 @@ export type UserUpdateToOneWithWhereWithoutSentInteractionsInput = {
 export type UserUpdateWithoutSentInteractionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2622,6 +3158,8 @@ export type UserUpdateWithoutSentInteractionsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -2640,6 +3178,8 @@ export type UserUpdateWithoutSentInteractionsInput = {
 export type UserUncheckedUpdateWithoutSentInteractionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2653,6 +3193,7 @@ export type UserUncheckedUpdateWithoutSentInteractionsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -2671,6 +3212,7 @@ export type UserUncheckedUpdateWithoutSentInteractionsInput = {
 export type UserCreateWithoutFollowUpsInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2684,6 +3226,8 @@ export type UserCreateWithoutFollowUpsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -2702,6 +3246,8 @@ export type UserCreateWithoutFollowUpsInput = {
 export type UserUncheckedCreateWithoutFollowUpsInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2715,6 +3261,7 @@ export type UserUncheckedCreateWithoutFollowUpsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -2749,6 +3296,7 @@ export type UserUpdateToOneWithWhereWithoutFollowUpsInput = {
 export type UserUpdateWithoutFollowUpsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2762,6 +3310,8 @@ export type UserUpdateWithoutFollowUpsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -2780,6 +3330,8 @@ export type UserUpdateWithoutFollowUpsInput = {
 export type UserUncheckedUpdateWithoutFollowUpsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2793,6 +3345,7 @@ export type UserUncheckedUpdateWithoutFollowUpsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -2811,6 +3364,7 @@ export type UserUncheckedUpdateWithoutFollowUpsInput = {
 export type UserCreateWithoutInitiatedBlocksInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2824,6 +3378,8 @@ export type UserCreateWithoutInitiatedBlocksInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -2842,6 +3398,8 @@ export type UserCreateWithoutInitiatedBlocksInput = {
 export type UserUncheckedCreateWithoutInitiatedBlocksInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2855,6 +3413,7 @@ export type UserUncheckedCreateWithoutInitiatedBlocksInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -2878,6 +3437,7 @@ export type UserCreateOrConnectWithoutInitiatedBlocksInput = {
 export type UserCreateWithoutReceivedBlocksInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2891,6 +3451,8 @@ export type UserCreateWithoutReceivedBlocksInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -2909,6 +3471,8 @@ export type UserCreateWithoutReceivedBlocksInput = {
 export type UserUncheckedCreateWithoutReceivedBlocksInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -2922,6 +3486,7 @@ export type UserUncheckedCreateWithoutReceivedBlocksInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -2956,6 +3521,7 @@ export type UserUpdateToOneWithWhereWithoutInitiatedBlocksInput = {
 export type UserUpdateWithoutInitiatedBlocksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2969,6 +3535,8 @@ export type UserUpdateWithoutInitiatedBlocksInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -2987,6 +3555,8 @@ export type UserUpdateWithoutInitiatedBlocksInput = {
 export type UserUncheckedUpdateWithoutInitiatedBlocksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3000,6 +3570,7 @@ export type UserUncheckedUpdateWithoutInitiatedBlocksInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -3029,6 +3600,7 @@ export type UserUpdateToOneWithWhereWithoutReceivedBlocksInput = {
 export type UserUpdateWithoutReceivedBlocksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3042,6 +3614,8 @@ export type UserUpdateWithoutReceivedBlocksInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -3060,6 +3634,8 @@ export type UserUpdateWithoutReceivedBlocksInput = {
 export type UserUncheckedUpdateWithoutReceivedBlocksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3073,6 +3649,7 @@ export type UserUncheckedUpdateWithoutReceivedBlocksInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -3091,6 +3668,7 @@ export type UserUncheckedUpdateWithoutReceivedBlocksInput = {
 export type UserCreateWithoutNotificationsInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -3104,6 +3682,8 @@ export type UserCreateWithoutNotificationsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -3122,6 +3702,8 @@ export type UserCreateWithoutNotificationsInput = {
 export type UserUncheckedCreateWithoutNotificationsInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -3135,6 +3717,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -3169,6 +3752,7 @@ export type UserUpdateToOneWithWhereWithoutNotificationsInput = {
 export type UserUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3182,6 +3766,8 @@ export type UserUpdateWithoutNotificationsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -3200,6 +3786,8 @@ export type UserUpdateWithoutNotificationsInput = {
 export type UserUncheckedUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3213,6 +3801,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -3231,6 +3820,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
 export type UserCreateWithoutResolvedSupportRequestsInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -3244,6 +3834,8 @@ export type UserCreateWithoutResolvedSupportRequestsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
@@ -3262,6 +3854,8 @@ export type UserCreateWithoutResolvedSupportRequestsInput = {
 export type UserUncheckedCreateWithoutResolvedSupportRequestsInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -3275,6 +3869,7 @@ export type UserUncheckedCreateWithoutResolvedSupportRequestsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
@@ -3309,6 +3904,7 @@ export type UserUpdateToOneWithWhereWithoutResolvedSupportRequestsInput = {
 export type UserUpdateWithoutResolvedSupportRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3322,6 +3918,8 @@ export type UserUpdateWithoutResolvedSupportRequestsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
@@ -3340,6 +3938,8 @@ export type UserUpdateWithoutResolvedSupportRequestsInput = {
 export type UserUncheckedUpdateWithoutResolvedSupportRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3353,6 +3953,7 @@ export type UserUncheckedUpdateWithoutResolvedSupportRequestsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
@@ -3371,6 +3972,7 @@ export type UserUncheckedUpdateWithoutResolvedSupportRequestsInput = {
 export type UserCreateWithoutAnalyticsEventsInput = {
   id?: string
   email: string
+  referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -3384,6 +3986,8 @@ export type UserCreateWithoutAnalyticsEventsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaCreateNestedManyWithoutUserInput
+  referrer?: Prisma.UserCreateNestedOneWithoutReferralsInput
+  referrals?: Prisma.UserCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileCreateNestedManyWithoutOwnerUserInput
   createdEvents?: Prisma.EventCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantCreateNestedManyWithoutUserInput
@@ -3402,6 +4006,8 @@ export type UserCreateWithoutAnalyticsEventsInput = {
 export type UserUncheckedCreateWithoutAnalyticsEventsInput = {
   id?: string
   email: string
+  referralCode: string
+  referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
   isVerified?: boolean
@@ -3415,6 +4021,7 @@ export type UserUncheckedCreateWithoutAnalyticsEventsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedCreateNestedManyWithoutUserInput
   authSessions?: Prisma.AuthSessionUncheckedCreateNestedManyWithoutUserInput
   personas?: Prisma.PersonaUncheckedCreateNestedManyWithoutUserInput
+  referrals?: Prisma.UserUncheckedCreateNestedManyWithoutReferrerInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedCreateNestedManyWithoutOwnerUserInput
   createdEvents?: Prisma.EventUncheckedCreateNestedManyWithoutCreatedByUserInput
   eventParticipants?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutUserInput
@@ -3449,6 +4056,7 @@ export type UserUpdateToOneWithWhereWithoutAnalyticsEventsInput = {
 export type UserUpdateWithoutAnalyticsEventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3462,6 +4070,8 @@ export type UserUpdateWithoutAnalyticsEventsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrer?: Prisma.UserUpdateOneWithoutReferralsNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
   createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
@@ -3480,6 +4090,8 @@ export type UserUpdateWithoutAnalyticsEventsInput = {
 export type UserUncheckedUpdateWithoutAnalyticsEventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3493,6 +4105,7 @@ export type UserUncheckedUpdateWithoutAnalyticsEventsInput = {
   mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
   authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
   personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
   ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
   createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
   eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
@@ -3508,6 +4121,102 @@ export type UserUncheckedUpdateWithoutAnalyticsEventsInput = {
   resolvedSupportRequests?: Prisma.SupportRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
 }
 
+export type UserCreateManyReferrerInput = {
+  id?: string
+  email: string
+  referralCode: string
+  passwordHash: string
+  lastUsedPersonaId?: string | null
+  isVerified?: boolean
+  phoneNumber?: string | null
+  pendingPhoneNumber?: string | null
+  phoneVerifiedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type UserUpdateWithoutReferrerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  emailVerificationTokens?: Prisma.EmailVerificationTokenUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  mobileOtpChallenges?: Prisma.MobileOtpChallengeUpdateManyWithoutUserNestedInput
+  authSessions?: Prisma.AuthSessionUpdateManyWithoutUserNestedInput
+  personas?: Prisma.PersonaUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUpdateManyWithoutReferrerNestedInput
+  ownedAgencyProfiles?: Prisma.AgencyProfileUpdateManyWithoutOwnerUserNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutUserNestedInput
+  createdEvents?: Prisma.EventUpdateManyWithoutCreatedByUserNestedInput
+  eventParticipants?: Prisma.EventParticipantUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUpdateManyWithoutSenderUserNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromUserNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToUserNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerUserNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUpdateManyWithoutTargetUserNestedInput
+  followUps?: Prisma.FollowUpUpdateManyWithoutOwnerUserNestedInput
+  initiatedBlocks?: Prisma.BlockUpdateManyWithoutBlockerUserNestedInput
+  receivedBlocks?: Prisma.BlockUpdateManyWithoutBlockedUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  resolvedSupportRequests?: Prisma.SupportRequestUpdateManyWithoutResolvedByUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutReferrerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  emailVerificationTokens?: Prisma.EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  mobileOtpChallenges?: Prisma.MobileOtpChallengeUncheckedUpdateManyWithoutUserNestedInput
+  authSessions?: Prisma.AuthSessionUncheckedUpdateManyWithoutUserNestedInput
+  personas?: Prisma.PersonaUncheckedUpdateManyWithoutUserNestedInput
+  referrals?: Prisma.UserUncheckedUpdateManyWithoutReferrerNestedInput
+  ownedAgencyProfiles?: Prisma.AgencyProfileUncheckedUpdateManyWithoutOwnerUserNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutUserNestedInput
+  createdEvents?: Prisma.EventUncheckedUpdateManyWithoutCreatedByUserNestedInput
+  eventParticipants?: Prisma.EventParticipantUncheckedUpdateManyWithoutUserNestedInput
+  sentInteractions?: Prisma.InteractionUncheckedUpdateManyWithoutSenderUserNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromUserNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToUserNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerUserNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutTargetUserNestedInput
+  followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutOwnerUserNestedInput
+  initiatedBlocks?: Prisma.BlockUncheckedUpdateManyWithoutBlockerUserNestedInput
+  receivedBlocks?: Prisma.BlockUncheckedUpdateManyWithoutBlockedUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  resolvedSupportRequests?: Prisma.SupportRequestUncheckedUpdateManyWithoutResolvedByUserNestedInput
+}
+
+export type UserUncheckedUpdateManyWithoutReferrerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  referralCode?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phoneVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 
 /**
  * Count Type UserCountOutputType
@@ -3519,6 +4228,7 @@ export type UserCountOutputType = {
   mobileOtpChallenges: number
   authSessions: number
   personas: number
+  referrals: number
   ownedAgencyProfiles: number
   analyticsEvents: number
   createdEvents: number
@@ -3541,6 +4251,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   mobileOtpChallenges?: boolean | UserCountOutputTypeCountMobileOtpChallengesArgs
   authSessions?: boolean | UserCountOutputTypeCountAuthSessionsArgs
   personas?: boolean | UserCountOutputTypeCountPersonasArgs
+  referrals?: boolean | UserCountOutputTypeCountReferralsArgs
   ownedAgencyProfiles?: boolean | UserCountOutputTypeCountOwnedAgencyProfilesArgs
   analyticsEvents?: boolean | UserCountOutputTypeCountAnalyticsEventsArgs
   createdEvents?: boolean | UserCountOutputTypeCountCreatedEventsArgs
@@ -3600,6 +4311,13 @@ export type UserCountOutputTypeCountAuthSessionsArgs<ExtArgs extends runtime.Typ
  */
 export type UserCountOutputTypeCountPersonasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.PersonaWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountReferralsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserWhereInput
 }
 
 /**
@@ -3704,6 +4422,8 @@ export type UserCountOutputTypeCountResolvedSupportRequestsArgs<ExtArgs extends 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
+  referralCode?: boolean
+  referredBy?: boolean
   passwordHash?: boolean
   lastUsedPersonaId?: boolean
   isVerified?: boolean
@@ -3717,6 +4437,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   mobileOtpChallenges?: boolean | Prisma.User$mobileOtpChallengesArgs<ExtArgs>
   authSessions?: boolean | Prisma.User$authSessionsArgs<ExtArgs>
   personas?: boolean | Prisma.User$personasArgs<ExtArgs>
+  referrer?: boolean | Prisma.User$referrerArgs<ExtArgs>
+  referrals?: boolean | Prisma.User$referralsArgs<ExtArgs>
   ownedAgencyProfiles?: boolean | Prisma.User$ownedAgencyProfilesArgs<ExtArgs>
   analyticsEvents?: boolean | Prisma.User$analyticsEventsArgs<ExtArgs>
   createdEvents?: boolean | Prisma.User$createdEventsArgs<ExtArgs>
@@ -3737,6 +4459,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
+  referralCode?: boolean
+  referredBy?: boolean
   passwordHash?: boolean
   lastUsedPersonaId?: boolean
   isVerified?: boolean
@@ -3745,11 +4469,14 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   phoneVerifiedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  referrer?: boolean | Prisma.User$referrerArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
+  referralCode?: boolean
+  referredBy?: boolean
   passwordHash?: boolean
   lastUsedPersonaId?: boolean
   isVerified?: boolean
@@ -3758,11 +4485,14 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   phoneVerifiedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  referrer?: boolean | Prisma.User$referrerArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
   id?: boolean
   email?: boolean
+  referralCode?: boolean
+  referredBy?: boolean
   passwordHash?: boolean
   lastUsedPersonaId?: boolean
   isVerified?: boolean
@@ -3773,13 +4503,15 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "lastUsedPersonaId" | "isVerified" | "phoneNumber" | "pendingPhoneNumber" | "phoneVerifiedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "referralCode" | "referredBy" | "passwordHash" | "lastUsedPersonaId" | "isVerified" | "phoneNumber" | "pendingPhoneNumber" | "phoneVerifiedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   emailVerificationTokens?: boolean | Prisma.User$emailVerificationTokensArgs<ExtArgs>
   passwordResetTokens?: boolean | Prisma.User$passwordResetTokensArgs<ExtArgs>
   mobileOtpChallenges?: boolean | Prisma.User$mobileOtpChallengesArgs<ExtArgs>
   authSessions?: boolean | Prisma.User$authSessionsArgs<ExtArgs>
   personas?: boolean | Prisma.User$personasArgs<ExtArgs>
+  referrer?: boolean | Prisma.User$referrerArgs<ExtArgs>
+  referrals?: boolean | Prisma.User$referralsArgs<ExtArgs>
   ownedAgencyProfiles?: boolean | Prisma.User$ownedAgencyProfilesArgs<ExtArgs>
   analyticsEvents?: boolean | Prisma.User$analyticsEventsArgs<ExtArgs>
   createdEvents?: boolean | Prisma.User$createdEventsArgs<ExtArgs>
@@ -3796,8 +4528,12 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   resolvedSupportRequests?: boolean | Prisma.User$resolvedSupportRequestsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  referrer?: boolean | Prisma.User$referrerArgs<ExtArgs>
+}
+export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  referrer?: boolean | Prisma.User$referrerArgs<ExtArgs>
+}
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
@@ -3807,6 +4543,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     mobileOtpChallenges: Prisma.$MobileOtpChallengePayload<ExtArgs>[]
     authSessions: Prisma.$AuthSessionPayload<ExtArgs>[]
     personas: Prisma.$PersonaPayload<ExtArgs>[]
+    referrer: Prisma.$UserPayload<ExtArgs> | null
+    referrals: Prisma.$UserPayload<ExtArgs>[]
     ownedAgencyProfiles: Prisma.$AgencyProfilePayload<ExtArgs>[]
     analyticsEvents: Prisma.$AnalyticsEventPayload<ExtArgs>[]
     createdEvents: Prisma.$EventPayload<ExtArgs>[]
@@ -3825,6 +4563,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     email: string
+    referralCode: string
+    referredBy: string | null
     passwordHash: string
     lastUsedPersonaId: string | null
     isVerified: boolean
@@ -4232,6 +4972,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   mobileOtpChallenges<T extends Prisma.User$mobileOtpChallengesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$mobileOtpChallengesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MobileOtpChallengePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   authSessions<T extends Prisma.User$authSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$authSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuthSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   personas<T extends Prisma.User$personasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$personasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PersonaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  referrer<T extends Prisma.User$referrerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$referrerArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  referrals<T extends Prisma.User$referralsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$referralsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ownedAgencyProfiles<T extends Prisma.User$ownedAgencyProfilesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ownedAgencyProfilesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AgencyProfilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   analyticsEvents<T extends Prisma.User$analyticsEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$analyticsEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AnalyticsEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdEvents<T extends Prisma.User$createdEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -4277,6 +5019,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
 export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'String'>
   readonly email: Prisma.FieldRef<"User", 'String'>
+  readonly referralCode: Prisma.FieldRef<"User", 'String'>
+  readonly referredBy: Prisma.FieldRef<"User", 'String'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly lastUsedPersonaId: Prisma.FieldRef<"User", 'String'>
   readonly isVerified: Prisma.FieldRef<"User", 'Boolean'>
@@ -4539,6 +5283,10 @@ export type UserCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    */
   data: Prisma.UserCreateManyInput | Prisma.UserCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -4609,6 +5357,10 @@ export type UserUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many Users to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -4795,6 +5547,49 @@ export type User$personasArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.PersonaScalarFieldEnum | Prisma.PersonaScalarFieldEnum[]
+}
+
+/**
+ * User.referrer
+ */
+export type User$referrerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+}
+
+/**
+ * User.referrals
+ */
+export type User$referralsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+  orderBy?: Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[]
+  cursor?: Prisma.UserWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
 }
 
 /**

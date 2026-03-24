@@ -24,8 +24,8 @@ export interface QrResolutionRecord {
     username: string;
     fullName: string;
     jobTitle: string;
-    companyName: string;
-    tagline: string;
+    companyName: string | null;
+    tagline: string | null;
     profilePhotoUrl: string | null;
   };
 }

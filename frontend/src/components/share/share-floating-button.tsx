@@ -49,13 +49,13 @@ export function ShareFloatingButton() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] right-4 z-[60] inline-flex min-h-14 items-center gap-2 rounded-full border border-black/10 bg-black px-5 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(15,23,42,0.25)] transition-transform duration-200 hover:scale-[1.01] active:scale-[0.98] dark:border-white/10 dark:bg-white dark:text-black sm:right-6"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] right-4 z-[60] inline-flex min-h-14 items-center gap-2 rounded-full border border-black/10 bg-black px-5 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(15,23,42,0.25)] transition-transform duration-200 hover:scale-[1.01] active:scale-[0.98] dark:border-white/10 dark:bg-white dark:text-black sm:right-6"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         aria-controls="instant-share-sheet"
       >
         <QrCode className="h-4 w-4" aria-hidden />
-        <span>Share</span>
+        <span>Show QR</span>
       </button>
 
       {isOpen ? (
@@ -77,7 +77,7 @@ export function ShareFloatingButton() {
                   Share
                 </p>
                 <h2 className="text-xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                  Instant share
+                  Show your QR
                 </h2>
               </div>
 

@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   listSessions: vi.fn(),
   revokeSession: vi.fn(),
   revokeOtherSessions: vi.fn(),
+  getCurrentReferral: vi.fn(),
+  clipboardWriteText: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
@@ -24,6 +26,9 @@ vi.mock("@/lib/api", () => ({
     listSessions: mocks.listSessions,
     revokeSession: mocks.revokeSession,
     revokeOtherSessions: mocks.revokeOtherSessions,
+  },
+  userApi: {
+    getCurrentReferral: mocks.getCurrentReferral,
   },
 }));
 
@@ -87,6 +92,14 @@ function createUser(
 
 describe("AccountSecuritySettings", () => {
   beforeEach(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: mocks.clipboardWriteText,
+      },
+    });
+    mocks.clipboardWriteText.mockReset();
+    mocks.clipboardWriteText.mockResolvedValue(undefined);
     mocks.resendCurrentUserVerificationEmail.mockReset();
     mocks.changePassword.mockReset();
     mocks.requestMobileOtp.mockReset();
@@ -94,6 +107,7 @@ describe("AccountSecuritySettings", () => {
     mocks.listSessions.mockReset();
     mocks.revokeSession.mockReset();
     mocks.revokeOtherSessions.mockReset();
+    mocks.getCurrentReferral.mockReset();
     mocks.listSessions.mockResolvedValue({
       sessions: [
         {
@@ -115,6 +129,10 @@ describe("AccountSecuritySettings", () => {
           isCurrent: false,
         },
       ],
+    });
+    mocks.getCurrentReferral.mockResolvedValue({
+      id: "user-1",
+      referralCode: "SHARECODE1",
     });
   });
 
@@ -141,8 +159,30 @@ describe("AccountSecuritySettings", () => {
     expect(screen.getByText(/email trust status/i)).toBeInTheDocument();
     expect(screen.getByText(/mobile otp status/i)).toBeInTheDocument();
     expect(
+      screen.getByText(/invite with your referral code/i),
+    ).toBeInTheDocument();
+    expect(
       screen.getAllByText(/verification requirements/i).length,
     ).toBeGreaterThan(0);
+  });
+
+  it("loads and copies the current user's referral code", async () => {
+    const user = userEvent.setup();
+    render(
+      React.createElement(AccountSecuritySettings, { user: createUser(false) }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("SHARECODE1")).toBeInTheDocument();
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: /copy referral code/i }),
+    );
+
+    expect(
+      await screen.findByText(/referral code copied\. share it with a friend/i),
+    ).toBeInTheDocument();
   });
 
   it("shows verified email and planned mobile otp states in the overview", async () => {

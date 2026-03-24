@@ -140,6 +140,8 @@ enum MobileOtpPurpose {
 model User {
   id                      String                @id @default(uuid()) @db.Uuid
   email                   String                @unique
+  referralCode            String                @unique @db.VarChar(24)
+  referredBy              String?               @db.Uuid
   passwordHash            String
   lastUsedPersonaId       String?               @db.Uuid
   isVerified              Boolean               @default(false)
@@ -151,6 +153,8 @@ model User {
   mobileOtpChallenges     MobileOtpChallenge[]
   authSessions            AuthSession[]
   personas                Persona[]
+  referrer                User?                 @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: SetNull)
+  referrals               User[]                @relation("UserReferrals")
   ownedAgencyProfiles     AgencyProfile[]
   analyticsEvents         AnalyticsEvent[]
   createdEvents           Event[]
@@ -168,6 +172,7 @@ model User {
   createdAt               DateTime              @default(now())
   updatedAt               DateTime              @updatedAt
 
+  @@index([referredBy])
   @@index([lastUsedPersonaId])
 }
 
@@ -278,8 +283,10 @@ model Persona {
   publicUrl                String                @unique
   fullName                 String
   jobTitle                 String
-  companyName              String
-  tagline                  String
+  companyName              String?
+  tagline                  String?
+  websiteUrl               String?               @db.VarChar(500)
+  isVerified               Boolean               @default(false)
   profilePhotoUrl          String?
   accessMode               PersonaAccessMode
   verifiedOnly             Boolean               @default(false)

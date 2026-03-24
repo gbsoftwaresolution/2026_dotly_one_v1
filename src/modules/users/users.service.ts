@@ -91,6 +91,8 @@ export class UsersService {
         id: true,
         email: true,
         isVerified: true,
+        referralCode: true,
+        referredBy: true,
         phoneNumber: true,
         pendingPhoneNumber: true,
         phoneVerifiedAt: true,
@@ -101,33 +103,35 @@ export class UsersService {
       throw new NotFoundException("User not found");
     }
 
-    const activeMobileOtpEnrollment = await this.prisma.mobileOtpChallenge.findFirst({
-      where: {
-        userId,
-        purpose: "ENROLLMENT",
-        consumedAt: null,
-        supersededAt: null,
-        expiresAt: {
-          gt: now,
+    const activeMobileOtpEnrollment =
+      await this.prisma.mobileOtpChallenge.findFirst({
+        where: {
+          userId,
+          purpose: "ENROLLMENT",
+          consumedAt: null,
+          supersededAt: null,
+          expiresAt: {
+            gt: now,
+          },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      select: {
-        id: true,
-        purpose: true,
-        phoneNumber: true,
-        resendAvailableAt: true,
-        expiresAt: true,
-      },
-    });
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          purpose: true,
+          phoneNumber: true,
+          resendAvailableAt: true,
+          expiresAt: true,
+        },
+      });
 
     const requirementCatalog =
       this.verificationPolicyService.getRequirementCatalog();
     const trustFactorCatalog =
       this.verificationPolicyService.getAvailableTrustFactors();
-    const userFactors: Record<TrustFactor, boolean> = buildUserTrustFactors(user);
+    const userFactors: Record<TrustFactor, boolean> =
+      buildUserTrustFactors(user);
     const hasActiveTrustFactor = userHasActiveTrustFactor(user);
 
     const requirements = Object.entries(requirementCatalog).map(
@@ -209,6 +213,24 @@ export class UsersService {
         trustFactors,
       },
     };
+  }
+
+  async getCurrentUserReferral(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        referralCode: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    return user;
   }
 
   async resendVerificationEmail(userId: string, context?: AuthActionContext) {

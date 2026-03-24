@@ -1945,6 +1945,8 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
+  referralCode: 'referralCode',
+  referredBy: 'referredBy',
   passwordHash: 'passwordHash',
   lastUsedPersonaId: 'lastUsedPersonaId',
   isVerified: 'isVerified',
@@ -2047,6 +2049,8 @@ export const PersonaScalarFieldEnum = {
   jobTitle: 'jobTitle',
   companyName: 'companyName',
   tagline: 'tagline',
+  websiteUrl: 'websiteUrl',
+  isVerified: 'isVerified',
   profilePhotoUrl: 'profilePhotoUrl',
   accessMode: 'accessMode',
   verifiedOnly: 'verifiedOnly',

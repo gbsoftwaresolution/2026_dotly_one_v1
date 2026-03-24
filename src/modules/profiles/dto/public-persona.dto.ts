@@ -20,8 +20,10 @@ interface PublicPersonaSource {
   publicUrl: string;
   fullName: string;
   jobTitle: string;
-  companyName: string;
-  tagline: string;
+  companyName: string | null;
+  tagline: string | null;
+  websiteUrl?: string | null;
+  isVerified?: boolean | null;
   profilePhotoUrl: string | null;
   accessMode: PrismaPersonaAccessMode;
   sharingMode: string;
@@ -125,11 +127,15 @@ export class PublicPersonaDto {
 
   jobTitle!: string;
 
-  companyName!: string;
+  companyName!: string | null;
 
   profilePhotoUrl!: string | null;
 
-  tagline!: string;
+  tagline!: string | null;
+
+  websiteUrl!: string | null;
+
+  isVerified!: boolean;
 
   sharingMode!: PersonaSharingMode;
 
@@ -185,6 +191,8 @@ export class PublicPersonaDto {
       companyName: persona.companyName,
       profilePhotoUrl: persona.profilePhotoUrl ?? null,
       tagline: persona.tagline,
+      websiteUrl: persona.websiteUrl ?? null,
+      isVerified: persona.isVerified ?? false,
       sharingMode,
       instantConnectUrl: options?.instantConnectUrl ?? null,
       smartCard,

@@ -33,12 +33,12 @@ function formatDate(value: string): string {
 function getStateBadge(contact: Contact) {
   switch (contact.state) {
     case "instant_access":
-      return <StatusBadge label="Instant Access" tone="warning" />;
+      return <StatusBadge label="Connected now" tone="warning" />;
     case "expired":
-      return <StatusBadge label="Expired" tone="neutral" />;
+      return <StatusBadge label="Connection closed" tone="neutral" />;
     case "approved":
     default:
-      return <StatusBadge label="Approved" tone="success" />;
+      return <StatusBadge label="Connected" tone="success" />;
   }
 }
 
@@ -96,10 +96,7 @@ export function ContactCard({
     .map((value) => value?.trim())
     .filter(Boolean)
     .join(" at ");
-  const sourceContext = formatConnectionContext(
-    connectionSource,
-    contextLabel,
-  );
+  const sourceContext = formatConnectionContext(connectionSource, contextLabel);
   const fallbackPriorityTone = hasPassiveReminder ? "attention" : undefined;
   const resolvedPriorityTone = priorityTone ?? fallbackPriorityTone;
 
@@ -157,7 +154,7 @@ export function ContactCard({
                     ? "text-rose-700 dark:text-rose-300"
                     : resolvedPriorityTone === "planned"
                       ? "text-sky-700 dark:text-sky-300"
-                    : "text-emerald-700 dark:text-emerald-300",
+                      : "text-emerald-700 dark:text-emerald-300",
                 )}
               >
                 {priorityLabel}

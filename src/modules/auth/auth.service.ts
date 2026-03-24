@@ -60,6 +60,7 @@ const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 const EMAIL_VERIFICATION_RESEND_COOLDOWN_MS = 60 * 1000;
 const EMAIL_VERIFICATION_RESEND_WINDOW_MS = 60 * 60 * 1000;
 const EMAIL_VERIFICATION_RESEND_LIMIT = 5;
+const REFERRAL_CODE_LENGTH = 10;
 
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
 const PASSWORD_RESET_COOLDOWN_MS = 60 * 1000;
@@ -144,6 +145,37 @@ export class AuthService {
     return this.prismaService as any;
   }
 
+  private generateReferralCode(): string {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "";
+
+    for (let index = 0; index < REFERRAL_CODE_LENGTH; index += 1) {
+      code += alphabet[randomInt(0, alphabet.length)];
+    }
+
+    return code;
+  }
+
+  private async createUniqueReferralCode(prismaClient: any): Promise<string> {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const referralCode = this.generateReferralCode();
+      const existingUser = await prismaClient.user.findUnique({
+        where: {
+          referralCode,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!existingUser) {
+        return referralCode;
+      }
+    }
+
+    throw new Error("Unable to generate a unique referral code");
+  }
+
   async signup(signupDto: SignupDto, auditContext?: AuditContext) {
     this.passwordPolicyService.validate(signupDto.password);
 
@@ -194,22 +226,50 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(signupDto.password, 10);
+    const normalizedReferralCode = signupDto.referralCode?.trim().toUpperCase();
 
     try {
-      const user = await this.prisma.user.create({
-        data: {
-          email: normalizedEmail,
-          passwordHash,
-          isVerified: false,
-        },
-        select: {
-          id: true,
-          email: true,
-          isVerified: true,
-          phoneNumber: true,
-          pendingPhoneNumber: true,
-          phoneVerifiedAt: true,
-        },
+      const user = await this.prismaService.$transaction(async (tx: any) => {
+        let referredBy: string | null = null;
+
+        if (normalizedReferralCode) {
+          const referrer = await tx.user.findUnique({
+            where: {
+              referralCode: normalizedReferralCode,
+            },
+            select: {
+              id: true,
+            },
+          });
+
+          if (!referrer) {
+            throw authBadRequest(AUTH_ERROR_MESSAGES.invalidReferralCode);
+          }
+
+          referredBy = referrer.id;
+        }
+
+        const referralCode = await this.createUniqueReferralCode(tx);
+
+        return tx.user.create({
+          data: {
+            email: normalizedEmail,
+            passwordHash,
+            isVerified: false,
+            referralCode,
+            referredBy,
+          },
+          select: {
+            id: true,
+            email: true,
+            isVerified: true,
+            phoneNumber: true,
+            pendingPhoneNumber: true,
+            phoneVerifiedAt: true,
+            referralCode: true,
+            referredBy: true,
+          },
+        });
       });
 
       const verification = await this.issueEmailVerificationToken(
@@ -232,6 +292,11 @@ export class AuthService {
           verificationPending: true,
           verificationEmailSent: verification.emailSent,
           mailDeliveryAvailable,
+          ...(user.referredBy
+            ? {
+                referred: true,
+              }
+            : {}),
         },
       });
 
@@ -258,6 +323,18 @@ export class AuthService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === "P2002"
       ) {
+        if (
+          Array.isArray(
+            (error.meta as { target?: string[] } | undefined)?.target,
+          ) &&
+          (error.meta as { target?: string[] }).target?.includes("referralCode")
+        ) {
+          this.authMetricsService.recordSignupFailure("system_error");
+          throw authConflict(
+            "Unable to create account right now. Please try again.",
+          );
+        }
+
         this.logAuthAuditEvent("auth.signup", "failure", {
           requestId: auditContext?.requestId,
           reason: "email_already_registered",

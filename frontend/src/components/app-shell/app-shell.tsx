@@ -9,7 +9,10 @@ import { BottomNav } from "@/components/navigation/bottom-nav";
 import { NotificationBadge } from "@/components/notifications/notification-badge";
 import { ShareFloatingButton } from "@/components/share/share-floating-button";
 import { AuthSessionProvider } from "@/context/AuthSessionContext";
-import { getAppSectionLabel } from "@/lib/constants/navigation";
+import {
+  getAppSectionDescription,
+  getAppSectionLabel,
+} from "@/lib/constants/navigation";
 import { routes } from "@/lib/constants/routes";
 import { cn } from "@/lib/utils/cn";
 import type { SessionSnapshot } from "@/types/auth";
@@ -24,6 +27,7 @@ interface AppShellProps extends PropsWithChildren {
 export function AppShell({ children, headerAction, session }: AppShellProps) {
   const pathname = usePathname();
   const sectionLabel = getAppSectionLabel(pathname);
+  const sectionDescription = getAppSectionDescription(pathname);
   const isShareRoute = pathname === routes.app.qr;
 
   return (
@@ -52,7 +56,7 @@ export function AppShell({ children, headerAction, session }: AppShellProps) {
                   <span>{sectionLabel}</span>
                 </div>
                 <p className="text-sm leading-5 text-muted">
-                  Manage how you share, connect, and follow up.
+                  {sectionDescription}
                 </p>
                 <div className="min-h-5">
                   <SessionStatus />

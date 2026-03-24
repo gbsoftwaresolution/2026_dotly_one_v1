@@ -51,6 +51,12 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get("me/referral")
+  getCurrentUserReferral(@CurrentUser() user: AuthenticatedUser) {
+    return this.usersService.getCurrentUserReferral(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post("me/verification/resend")
   @HttpCode(200)
   resendVerificationEmail(

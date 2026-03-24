@@ -1,14 +1,14 @@
 export const dotlyPositioning = {
   headline: "Don't share your number. Share your Dotly.",
   subheadline:
-    "A smarter way to share your contact — with control built in.",
+    "Open one screen, show your QR, and let people connect the right way.",
   shortExplainer:
-    "Share your Dotly so people can connect the right way.",
+    "Share once. Connect instantly. Keep control of what happens next.",
   category: "Share your Dotly",
   supportingPoints: [
-    "Connect.",
-    "Request Access.",
-    "Save Contact.",
+    "Show your QR.",
+    "Connect in seconds.",
+    "Stay in control.",
   ],
   seo: {
     title: "Dotly | Don't share your number. Share your Dotly.",
@@ -17,7 +17,7 @@ export const dotlyPositioning = {
   },
   cta: {
     primary: "Get your Dotly",
-    secondary: "How it works",
+    secondary: "See the flow",
   },
   auth: {
     signupTitle: "Get your Dotly",

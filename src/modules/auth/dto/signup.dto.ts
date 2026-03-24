@@ -2,6 +2,7 @@ import { Transform } from "class-transformer";
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
   MaxLength,
   MinLength,
@@ -20,4 +21,13 @@ export class SignupDto {
   @MinLength(6)
   @MaxLength(72)
   password!: string;
+
+  @Transform(({ value }) =>
+    typeof value === "string" ? value.trim().toUpperCase() : value,
+  )
+  @IsOptional()
+  @IsString()
+  @MinLength(4)
+  @MaxLength(24)
+  referralCode?: string;
 }

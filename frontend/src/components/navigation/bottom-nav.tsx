@@ -1,15 +1,10 @@
 "use client";
 
 import {
-  BarChart3,
-  Bell,
-  CalendarDays,
   Clock3,
-  House,
   MessageSquareMore,
   QrCode,
   Settings2,
-  UserRound,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -18,16 +13,11 @@ import { usePathname } from "next/navigation";
 import { appNavItems, type AppNavIconKey } from "@/lib/constants/navigation";
 import { cn } from "@/lib/utils/cn";
 
-const navIcons: Record<AppNavIconKey, typeof House> = {
-  home: House,
-  personas: UserRound,
+const navIcons: Record<AppNavIconKey, typeof QrCode> = {
   qr: QrCode,
   requests: MessageSquareMore,
   contacts: Users,
   followUps: Clock3,
-  events: CalendarDays,
-  notifications: Bell,
-  analytics: BarChart3,
   settings: Settings2,
 };
 
@@ -45,18 +35,18 @@ export function BottomNav() {
       )}
     >
       <div className="safe-pl safe-pr mx-auto max-w-app">
-        <ul className="scrollbar-none flex items-stretch gap-1 overflow-x-auto px-2 py-1.5">
+        <ul className="grid grid-cols-5 gap-1 px-2 py-1.5">
           {appNavItems.map((item) => {
             const isActive =
               pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = navIcons[item.icon];
 
             return (
-              <li key={item.href} className="shrink-0">
+              <li key={item.href} className="min-w-0">
                 <Link
                   href={item.href}
                   className={cn(
-                    "relative flex min-h-[60px] min-w-[74px] flex-col items-center justify-center gap-1.5 rounded-[1.25rem] px-2 py-2.5",
+                    "relative flex min-h-[60px] w-full flex-col items-center justify-center gap-1.5 rounded-[1.25rem] px-2 py-2.5",
                     "transition-all duration-200 ease-spring active:scale-[0.9]",
                     "no-select",
                     isActive

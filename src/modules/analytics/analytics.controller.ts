@@ -28,4 +28,9 @@ export class AnalyticsController {
   getSummary(@CurrentUser() user: AuthenticatedUser) {
     return this.analyticsService.getSummary(user.id);
   }
+
+  @Get("me")
+  getMyAnalytics(@CurrentUser() user: AuthenticatedUser) {
+    return this.analyticsService.getMyAnalytics(user.id);
+  }
 }

@@ -24,10 +24,12 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
   const [formState, setFormState] = useState<UpdatePersonaInput>({
     fullName: persona.fullName,
     jobTitle: persona.jobTitle,
-    companyName: persona.companyName,
-    tagline: persona.tagline,
+    companyName: persona.companyName ?? "",
+    tagline: persona.tagline ?? "",
+    websiteUrl: persona.websiteUrl ?? "",
     accessMode: persona.accessMode,
     verifiedOnly: persona.verifiedOnly,
+    isVerified: persona.isVerified ?? false,
   });
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -53,15 +55,18 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
         jobTitle: formState.jobTitle?.trim(),
         companyName: formState.companyName?.trim(),
         tagline: formState.tagline?.trim(),
+        websiteUrl: formState.websiteUrl?.trim(),
       });
 
       setFormState({
         fullName: updatedPersona.fullName,
         jobTitle: updatedPersona.jobTitle,
-        companyName: updatedPersona.companyName,
-        tagline: updatedPersona.tagline,
+        companyName: updatedPersona.companyName ?? "",
+        tagline: updatedPersona.tagline ?? "",
+        websiteUrl: updatedPersona.websiteUrl ?? "",
         accessMode: updatedPersona.accessMode,
         verifiedOnly: updatedPersona.verifiedOnly,
+        isVerified: updatedPersona.isVerified ?? false,
       });
       setSuccessMessage("Persona updated");
     } catch (submissionError) {
@@ -208,8 +213,6 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
             </label>
             <input
               id="edit-company"
-              required
-              minLength={1}
               maxLength={120}
               className={inputCls}
               value={formState.companyName ?? ""}
@@ -226,14 +229,50 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
           </label>
           <textarea
             id="edit-tagline"
-            required
-            minLength={1}
-            maxLength={160}
-            rows={4}
+            maxLength={120}
+            rows={3}
             className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
             value={formState.tagline ?? ""}
             onChange={(event) => updateField("tagline", event.target.value)}
           />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div className="space-y-1.5">
+            <label className="label-xs" htmlFor="edit-website-url">
+              Website
+            </label>
+            <input
+              id="edit-website-url"
+              type="url"
+              inputMode="url"
+              maxLength={500}
+              className={inputCls}
+              value={formState.websiteUrl ?? ""}
+              onChange={(event) =>
+                updateField("websiteUrl", event.target.value)
+              }
+            />
+          </div>
+
+          <label className="flex items-start gap-3 rounded-2xl border border-border bg-surface px-4 py-3 cursor-pointer sm:min-w-[220px]">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 rounded accent-brandRose dark:accent-brandCyan"
+              checked={formState.isVerified ?? false}
+              onChange={(event) =>
+                updateField("isVerified", event.target.checked)
+              }
+            />
+            <span className="space-y-0.5">
+              <span className="block text-sm font-medium text-foreground">
+                Show verified badge
+              </span>
+              <span className="block text-xs text-muted">
+                Adds the premium trust marker on the public profile.
+              </span>
+            </span>
+          </label>
         </div>
       </div>
 

@@ -65,11 +65,19 @@ describe("ContactFollowUpForm", () => {
       ),
     );
 
-    expect(screen.getByRole("button", { name: /tomorrow/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /next week/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /1 month/i })).toBeInTheDocument();
     expect(
-      await screen.findByText(/set a one-tap reminder for the next conversation/i),
+      screen.getByRole("button", { name: /tomorrow/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /next week/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /1 month/i }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        /keep the next conversation easy to pick back up/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -138,14 +146,19 @@ describe("ContactFollowUpForm", () => {
       screen.queryByLabelText(/when should this come back up\?/i),
     ).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /pick date and time/i }));
+    await user.click(
+      screen.getByRole("button", { name: /pick date and time/i }),
+    );
     expect(
       screen.getByLabelText(/when should this come back up\?/i),
     ).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(/when should this come back up\?/i), {
-      target: { value: "2099-04-15T14:30" },
-    });
+    fireEvent.change(
+      screen.getByLabelText(/when should this come back up\?/i),
+      {
+        target: { value: "2099-04-15T14:30" },
+      },
+    );
     fireEvent.click(screen.getByRole("button", { name: /schedule reminder/i }));
 
     await waitFor(() => {
@@ -174,12 +187,13 @@ describe("ContactFollowUpForm", () => {
       }),
     );
 
-    expect(screen.getByText(/keep the next conversation in view/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/keep the next conversation in view/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/2 reminders in view/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /open follow-ups/i })).toHaveAttribute(
-      "href",
-      "/app/follow-ups",
-    );
+    expect(
+      screen.getByRole("link", { name: /open follow-ups/i }),
+    ).toHaveAttribute("href", "/app/follow-ups");
     expect(mocks.create).not.toHaveBeenCalled();
   });
 
@@ -197,7 +211,9 @@ describe("ContactFollowUpForm", () => {
       }),
     );
 
-    expect(screen.getByText(/this conversation is waiting on you/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/this conversation is waiting on you/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/^overdue$/i)).toBeInTheDocument();
   });
 
@@ -216,7 +232,9 @@ describe("ContactFollowUpForm", () => {
     );
 
     expect(screen.getByText(/reach out again/i)).toBeInTheDocument();
-    expect(screen.getByText(/you haven't interacted in a while/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/you haven't interacted in a while/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/^gentle$/i)).toBeInTheDocument();
   });
 });

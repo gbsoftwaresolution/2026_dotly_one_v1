@@ -46,6 +46,8 @@ export type PersonaMinAggregateOutputType = {
   jobTitle: string | null
   companyName: string | null
   tagline: string | null
+  websiteUrl: string | null
+  isVerified: boolean | null
   profilePhotoUrl: string | null
   accessMode: $Enums.PersonaAccessMode | null
   verifiedOnly: boolean | null
@@ -73,6 +75,8 @@ export type PersonaMaxAggregateOutputType = {
   jobTitle: string | null
   companyName: string | null
   tagline: string | null
+  websiteUrl: string | null
+  isVerified: boolean | null
   profilePhotoUrl: string | null
   accessMode: $Enums.PersonaAccessMode | null
   verifiedOnly: boolean | null
@@ -100,6 +104,8 @@ export type PersonaCountAggregateOutputType = {
   jobTitle: number
   companyName: number
   tagline: number
+  websiteUrl: number
+  isVerified: number
   profilePhotoUrl: number
   accessMode: number
   verifiedOnly: number
@@ -138,6 +144,8 @@ export type PersonaMinAggregateInputType = {
   jobTitle?: true
   companyName?: true
   tagline?: true
+  websiteUrl?: true
+  isVerified?: true
   profilePhotoUrl?: true
   accessMode?: true
   verifiedOnly?: true
@@ -165,6 +173,8 @@ export type PersonaMaxAggregateInputType = {
   jobTitle?: true
   companyName?: true
   tagline?: true
+  websiteUrl?: true
+  isVerified?: true
   profilePhotoUrl?: true
   accessMode?: true
   verifiedOnly?: true
@@ -192,6 +202,8 @@ export type PersonaCountAggregateInputType = {
   jobTitle?: true
   companyName?: true
   tagline?: true
+  websiteUrl?: true
+  isVerified?: true
   profilePhotoUrl?: true
   accessMode?: true
   verifiedOnly?: true
@@ -305,8 +317,10 @@ export type PersonaGroupByOutputType = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName: string | null
+  tagline: string | null
+  websiteUrl: string | null
+  isVerified: boolean
   profilePhotoUrl: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly: boolean
@@ -356,8 +370,10 @@ export type PersonaWhereInput = {
   publicUrl?: Prisma.StringFilter<"Persona"> | string
   fullName?: Prisma.StringFilter<"Persona"> | string
   jobTitle?: Prisma.StringFilter<"Persona"> | string
-  companyName?: Prisma.StringFilter<"Persona"> | string
-  tagline?: Prisma.StringFilter<"Persona"> | string
+  companyName?: Prisma.StringNullableFilter<"Persona"> | string | null
+  tagline?: Prisma.StringNullableFilter<"Persona"> | string | null
+  websiteUrl?: Prisma.StringNullableFilter<"Persona"> | string | null
+  isVerified?: Prisma.BoolFilter<"Persona"> | boolean
   profilePhotoUrl?: Prisma.StringNullableFilter<"Persona"> | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFilter<"Persona"> | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFilter<"Persona"> | boolean
@@ -394,8 +410,10 @@ export type PersonaOrderByWithRelationInput = {
   publicUrl?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   jobTitle?: Prisma.SortOrder
-  companyName?: Prisma.SortOrder
-  tagline?: Prisma.SortOrder
+  companyName?: Prisma.SortOrderInput | Prisma.SortOrder
+  tagline?: Prisma.SortOrderInput | Prisma.SortOrder
+  websiteUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  isVerified?: Prisma.SortOrder
   profilePhotoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   accessMode?: Prisma.SortOrder
   verifiedOnly?: Prisma.SortOrder
@@ -436,8 +454,10 @@ export type PersonaWhereUniqueInput = Prisma.AtLeast<{
   isPrimary?: Prisma.BoolFilter<"Persona"> | boolean
   fullName?: Prisma.StringFilter<"Persona"> | string
   jobTitle?: Prisma.StringFilter<"Persona"> | string
-  companyName?: Prisma.StringFilter<"Persona"> | string
-  tagline?: Prisma.StringFilter<"Persona"> | string
+  companyName?: Prisma.StringNullableFilter<"Persona"> | string | null
+  tagline?: Prisma.StringNullableFilter<"Persona"> | string | null
+  websiteUrl?: Prisma.StringNullableFilter<"Persona"> | string | null
+  isVerified?: Prisma.BoolFilter<"Persona"> | boolean
   profilePhotoUrl?: Prisma.StringNullableFilter<"Persona"> | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFilter<"Persona"> | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFilter<"Persona"> | boolean
@@ -474,8 +494,10 @@ export type PersonaOrderByWithAggregationInput = {
   publicUrl?: Prisma.SortOrder
   fullName?: Prisma.SortOrder
   jobTitle?: Prisma.SortOrder
-  companyName?: Prisma.SortOrder
-  tagline?: Prisma.SortOrder
+  companyName?: Prisma.SortOrderInput | Prisma.SortOrder
+  tagline?: Prisma.SortOrderInput | Prisma.SortOrder
+  websiteUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  isVerified?: Prisma.SortOrder
   profilePhotoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   accessMode?: Prisma.SortOrder
   verifiedOnly?: Prisma.SortOrder
@@ -510,8 +532,10 @@ export type PersonaScalarWhereWithAggregatesInput = {
   publicUrl?: Prisma.StringWithAggregatesFilter<"Persona"> | string
   fullName?: Prisma.StringWithAggregatesFilter<"Persona"> | string
   jobTitle?: Prisma.StringWithAggregatesFilter<"Persona"> | string
-  companyName?: Prisma.StringWithAggregatesFilter<"Persona"> | string
-  tagline?: Prisma.StringWithAggregatesFilter<"Persona"> | string
+  companyName?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
+  tagline?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
+  websiteUrl?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
+  isVerified?: Prisma.BoolWithAggregatesFilter<"Persona"> | boolean
   profilePhotoUrl?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
   accessMode?: Prisma.EnumPersonaAccessModeWithAggregatesFilter<"Persona"> | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolWithAggregatesFilter<"Persona"> | boolean
@@ -536,8 +560,10 @@ export type PersonaCreateInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -574,8 +600,10 @@ export type PersonaUncheckedCreateInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -608,8 +636,10 @@ export type PersonaUpdateInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -646,8 +676,10 @@ export type PersonaUncheckedUpdateInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -682,8 +714,10 @@ export type PersonaCreateManyInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -708,8 +742,10 @@ export type PersonaUpdateManyMutationInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -736,8 +772,10 @@ export type PersonaUncheckedUpdateManyInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -781,6 +819,8 @@ export type PersonaCountOrderByAggregateInput = {
   jobTitle?: Prisma.SortOrder
   companyName?: Prisma.SortOrder
   tagline?: Prisma.SortOrder
+  websiteUrl?: Prisma.SortOrder
+  isVerified?: Prisma.SortOrder
   profilePhotoUrl?: Prisma.SortOrder
   accessMode?: Prisma.SortOrder
   verifiedOnly?: Prisma.SortOrder
@@ -813,6 +853,8 @@ export type PersonaMaxOrderByAggregateInput = {
   jobTitle?: Prisma.SortOrder
   companyName?: Prisma.SortOrder
   tagline?: Prisma.SortOrder
+  websiteUrl?: Prisma.SortOrder
+  isVerified?: Prisma.SortOrder
   profilePhotoUrl?: Prisma.SortOrder
   accessMode?: Prisma.SortOrder
   verifiedOnly?: Prisma.SortOrder
@@ -840,6 +882,8 @@ export type PersonaMinOrderByAggregateInput = {
   jobTitle?: Prisma.SortOrder
   companyName?: Prisma.SortOrder
   tagline?: Prisma.SortOrder
+  websiteUrl?: Prisma.SortOrder
+  isVerified?: Prisma.SortOrder
   profilePhotoUrl?: Prisma.SortOrder
   accessMode?: Prisma.SortOrder
   verifiedOnly?: Prisma.SortOrder
@@ -1095,8 +1139,10 @@ export type PersonaCreateWithoutUserInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -1131,8 +1177,10 @@ export type PersonaUncheckedCreateWithoutUserInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -1196,8 +1244,10 @@ export type PersonaScalarWhereInput = {
   publicUrl?: Prisma.StringFilter<"Persona"> | string
   fullName?: Prisma.StringFilter<"Persona"> | string
   jobTitle?: Prisma.StringFilter<"Persona"> | string
-  companyName?: Prisma.StringFilter<"Persona"> | string
-  tagline?: Prisma.StringFilter<"Persona"> | string
+  companyName?: Prisma.StringNullableFilter<"Persona"> | string | null
+  tagline?: Prisma.StringNullableFilter<"Persona"> | string | null
+  websiteUrl?: Prisma.StringNullableFilter<"Persona"> | string | null
+  isVerified?: Prisma.BoolFilter<"Persona"> | boolean
   profilePhotoUrl?: Prisma.StringNullableFilter<"Persona"> | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFilter<"Persona"> | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFilter<"Persona"> | boolean
@@ -1222,8 +1272,10 @@ export type PersonaCreateWithoutAgencyProfileInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -1258,8 +1310,10 @@ export type PersonaUncheckedCreateWithoutAgencyProfileInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -1318,8 +1372,10 @@ export type PersonaCreateWithoutQrAccessTokensInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -1355,8 +1411,10 @@ export type PersonaUncheckedCreateWithoutQrAccessTokensInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -1404,8 +1462,10 @@ export type PersonaUpdateWithoutQrAccessTokensInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1441,8 +1501,10 @@ export type PersonaUncheckedUpdateWithoutQrAccessTokensInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1474,8 +1536,10 @@ export type PersonaCreateWithoutEventParticipationsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -1511,8 +1575,10 @@ export type PersonaUncheckedCreateWithoutEventParticipationsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -1560,8 +1626,10 @@ export type PersonaUpdateWithoutEventParticipationsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1597,8 +1665,10 @@ export type PersonaUncheckedUpdateWithoutEventParticipationsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1630,8 +1700,10 @@ export type PersonaCreateWithoutOutgoingContactRequestsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -1667,8 +1739,10 @@ export type PersonaUncheckedCreateWithoutOutgoingContactRequestsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -1705,8 +1779,10 @@ export type PersonaCreateWithoutIncomingContactRequestsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -1742,8 +1818,10 @@ export type PersonaUncheckedCreateWithoutIncomingContactRequestsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -1791,8 +1869,10 @@ export type PersonaUpdateWithoutOutgoingContactRequestsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1828,8 +1908,10 @@ export type PersonaUncheckedUpdateWithoutOutgoingContactRequestsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1872,8 +1954,10 @@ export type PersonaUpdateWithoutIncomingContactRequestsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1909,8 +1993,10 @@ export type PersonaUncheckedUpdateWithoutIncomingContactRequestsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1942,8 +2028,10 @@ export type PersonaCreateWithoutOwnedRelationshipsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -1979,8 +2067,10 @@ export type PersonaUncheckedCreateWithoutOwnedRelationshipsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -2017,8 +2107,10 @@ export type PersonaCreateWithoutTargetRelationshipsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -2054,8 +2146,10 @@ export type PersonaUncheckedCreateWithoutTargetRelationshipsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -2103,8 +2197,10 @@ export type PersonaUpdateWithoutOwnedRelationshipsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2140,8 +2236,10 @@ export type PersonaUncheckedUpdateWithoutOwnedRelationshipsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2184,8 +2282,10 @@ export type PersonaUpdateWithoutTargetRelationshipsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2221,8 +2321,10 @@ export type PersonaUncheckedUpdateWithoutTargetRelationshipsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2254,8 +2356,10 @@ export type PersonaCreateWithoutAnalyticsEventsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -2291,8 +2395,10 @@ export type PersonaUncheckedCreateWithoutAnalyticsEventsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -2340,8 +2446,10 @@ export type PersonaUpdateWithoutAnalyticsEventsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2377,8 +2485,10 @@ export type PersonaUncheckedUpdateWithoutAnalyticsEventsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2410,8 +2520,10 @@ export type PersonaCreateWithoutAnalyticsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -2447,8 +2559,10 @@ export type PersonaUncheckedCreateWithoutAnalyticsInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -2496,8 +2610,10 @@ export type PersonaUpdateWithoutAnalyticsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2533,8 +2649,10 @@ export type PersonaUncheckedUpdateWithoutAnalyticsInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2567,8 +2685,10 @@ export type PersonaCreateManyUserInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -2593,8 +2713,10 @@ export type PersonaUpdateWithoutUserInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2629,8 +2751,10 @@ export type PersonaUncheckedUpdateWithoutUserInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2664,8 +2788,10 @@ export type PersonaUncheckedUpdateManyWithoutUserInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2691,8 +2817,10 @@ export type PersonaCreateManyAgencyProfileInput = {
   publicUrl: string
   fullName: string
   jobTitle: string
-  companyName: string
-  tagline: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
   profilePhotoUrl?: string | null
   accessMode: $Enums.PersonaAccessMode
   verifiedOnly?: boolean
@@ -2717,8 +2845,10 @@ export type PersonaUpdateWithoutAgencyProfileInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2753,8 +2883,10 @@ export type PersonaUncheckedUpdateWithoutAgencyProfileInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2788,8 +2920,10 @@ export type PersonaUncheckedUpdateManyWithoutAgencyProfileInput = {
   publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
   fullName?: Prisma.StringFieldUpdateOperationsInput | string
   jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
-  companyName?: Prisma.StringFieldUpdateOperationsInput | string
-  tagline?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
   verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2903,6 +3037,8 @@ export type PersonaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   jobTitle?: boolean
   companyName?: boolean
   tagline?: boolean
+  websiteUrl?: boolean
+  isVerified?: boolean
   profilePhotoUrl?: boolean
   accessMode?: boolean
   verifiedOnly?: boolean
@@ -2942,6 +3078,8 @@ export type PersonaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   jobTitle?: boolean
   companyName?: boolean
   tagline?: boolean
+  websiteUrl?: boolean
+  isVerified?: boolean
   profilePhotoUrl?: boolean
   accessMode?: boolean
   verifiedOnly?: boolean
@@ -2972,6 +3110,8 @@ export type PersonaSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   jobTitle?: boolean
   companyName?: boolean
   tagline?: boolean
+  websiteUrl?: boolean
+  isVerified?: boolean
   profilePhotoUrl?: boolean
   accessMode?: boolean
   verifiedOnly?: boolean
@@ -3002,6 +3142,8 @@ export type PersonaSelectScalar = {
   jobTitle?: boolean
   companyName?: boolean
   tagline?: boolean
+  websiteUrl?: boolean
+  isVerified?: boolean
   profilePhotoUrl?: boolean
   accessMode?: boolean
   verifiedOnly?: boolean
@@ -3018,7 +3160,7 @@ export type PersonaSelectScalar = {
   updatedAt?: boolean
 }
 
-export type PersonaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "agencyProfileId" | "type" | "isPrimary" | "username" | "publicUrl" | "fullName" | "jobTitle" | "companyName" | "tagline" | "profilePhotoUrl" | "accessMode" | "verifiedOnly" | "emailVerified" | "phoneVerified" | "businessVerified" | "trustScore" | "sharingMode" | "smartCardConfig" | "publicPhone" | "publicWhatsappNumber" | "publicEmail" | "createdAt" | "updatedAt", ExtArgs["result"]["persona"]>
+export type PersonaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "agencyProfileId" | "type" | "isPrimary" | "username" | "publicUrl" | "fullName" | "jobTitle" | "companyName" | "tagline" | "websiteUrl" | "isVerified" | "profilePhotoUrl" | "accessMode" | "verifiedOnly" | "emailVerified" | "phoneVerified" | "businessVerified" | "trustScore" | "sharingMode" | "smartCardConfig" | "publicPhone" | "publicWhatsappNumber" | "publicEmail" | "createdAt" | "updatedAt", ExtArgs["result"]["persona"]>
 export type PersonaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -3065,8 +3207,10 @@ export type $PersonaPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     publicUrl: string
     fullName: string
     jobTitle: string
-    companyName: string
-    tagline: string
+    companyName: string | null
+    tagline: string | null
+    websiteUrl: string | null
+    isVerified: boolean
     profilePhotoUrl: string | null
     accessMode: $Enums.PersonaAccessMode
     verifiedOnly: boolean
@@ -3525,6 +3669,8 @@ export interface PersonaFieldRefs {
   readonly jobTitle: Prisma.FieldRef<"Persona", 'String'>
   readonly companyName: Prisma.FieldRef<"Persona", 'String'>
   readonly tagline: Prisma.FieldRef<"Persona", 'String'>
+  readonly websiteUrl: Prisma.FieldRef<"Persona", 'String'>
+  readonly isVerified: Prisma.FieldRef<"Persona", 'Boolean'>
   readonly profilePhotoUrl: Prisma.FieldRef<"Persona", 'String'>
   readonly accessMode: Prisma.FieldRef<"Persona", 'PersonaAccessMode'>
   readonly verifiedOnly: Prisma.FieldRef<"Persona", 'Boolean'>

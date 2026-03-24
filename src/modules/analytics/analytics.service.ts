@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import {
   AnalyticsEventType as PrismaAnalyticsEventType,
+  ContactRelationshipState,
   Prisma,
 } from "../../generated/prisma/client";
 import { createHash } from "crypto";
@@ -379,6 +380,41 @@ export class AnalyticsService {
         verifiedCount,
         issuedCount,
       ),
+    };
+  }
+
+  async getMyAnalytics(userId: string) {
+    const now = new Date();
+    const startOfMonth = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+    );
+    const startOfNextMonth = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
+    );
+
+    const where = {
+      ownerUserId: userId,
+      state: ContactRelationshipState.APPROVED,
+    } satisfies Prisma.ContactRelationshipWhereInput;
+
+    const [totalConnections, connectionsThisMonth] = await Promise.all([
+      this.prismaService.contactRelationship.count({
+        where,
+      }),
+      this.prismaService.contactRelationship.count({
+        where: {
+          ...where,
+          connectedAt: {
+            gte: startOfMonth,
+            lt: startOfNextMonth,
+          },
+        },
+      }),
+    ]);
+
+    return {
+      totalConnections,
+      connectionsThisMonth,
     };
   }
 

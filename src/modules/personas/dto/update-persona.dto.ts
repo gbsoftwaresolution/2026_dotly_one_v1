@@ -14,6 +14,15 @@ import {
 import { PersonaAccessMode } from "../../../common/enums/persona-access-mode.enum";
 import { PersonaType } from "../../../common/enums/persona-type.enum";
 
+function trimNullableString(value: unknown): unknown {
+  if (value === null || typeof value !== "string") {
+    return value;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue.length > 0 ? trimmedValue : null;
+}
+
 export class UpdatePersonaDto {
   @IsOptional()
   @IsEnum(PersonaType)
@@ -36,20 +45,27 @@ export class UpdatePersonaDto {
   jobTitle?: string;
 
   @IsOptional()
-  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
+  @Transform(({ value }) => trimNullableString(value))
   @IsString()
   @IsNotEmpty()
   @MinLength(1)
   @MaxLength(120)
-  companyName?: string;
+  companyName?: string | null;
 
   @IsOptional()
-  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
+  @Transform(({ value }) => trimNullableString(value))
   @IsString()
   @IsNotEmpty()
   @MinLength(1)
-  @MaxLength(160)
-  tagline?: string;
+  @MaxLength(120)
+  tagline?: string | null;
+
+  @IsOptional()
+  @Transform(({ value }) => trimNullableString(value))
+  @IsString()
+  @IsUrl({ require_protocol: true })
+  @MaxLength(500)
+  websiteUrl?: string | null;
 
   @IsOptional()
   @Transform(({ value }) =>
@@ -77,4 +93,8 @@ export class UpdatePersonaDto {
   @IsOptional()
   @IsBoolean()
   verifiedOnly?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isVerified?: boolean;
 }

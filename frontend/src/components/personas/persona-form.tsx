@@ -23,7 +23,9 @@ const initialFormState: CreatePersonaInput = {
   jobTitle: "",
   companyName: "",
   tagline: "",
+  websiteUrl: "",
   accessMode: "request",
+  isVerified: false,
 };
 
 export function PersonaForm() {
@@ -59,6 +61,7 @@ export function PersonaForm() {
         jobTitle: formState.jobTitle.trim(),
         companyName: formState.companyName.trim(),
         tagline: formState.tagline.trim(),
+        websiteUrl: formState.websiteUrl?.trim(),
       });
 
       setCreatedPersona(persona);
@@ -92,7 +95,8 @@ export function PersonaForm() {
             Your persona is ready to share
           </h2>
           <p className="text-sm leading-6 text-muted">
-            We set up the sharing basics already, so you can start with a clear first impression and refine it later.
+            We set up the sharing basics already, so you can start with a clear
+            first impression and refine it later.
           </p>
         </section>
 
@@ -255,10 +259,8 @@ export function PersonaForm() {
         </label>
         <textarea
           id="persona-tagline"
-          required
-          minLength={1}
-          maxLength={160}
-          rows={4}
+          maxLength={120}
+          rows={3}
           className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20 resize-none"
           placeholder="Designing thoughtful identity experiences for modern teams."
           value={formState.tagline}
@@ -267,6 +269,46 @@ export function PersonaForm() {
         <p className="text-sm leading-6 text-muted">
           Keep it short enough that someone can recognize you later.
         </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <div className="space-y-1.5">
+          <label className="label-xs" htmlFor="persona-website-url">
+            Website
+          </label>
+          <input
+            id="persona-website-url"
+            type="url"
+            inputMode="url"
+            maxLength={500}
+            className={inputCls}
+            placeholder="https://your-site.com"
+            value={formState.websiteUrl ?? ""}
+            onChange={(event) => updateField("websiteUrl", event.target.value)}
+          />
+          <p className="text-sm leading-6 text-muted">
+            Optional. Adds one clean external link to your public card.
+          </p>
+        </div>
+
+        <label className="flex items-start gap-3 rounded-2xl border border-border bg-surface px-4 py-3 cursor-pointer sm:min-w-[220px]">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 rounded accent-brandRose dark:accent-brandCyan"
+            checked={formState.isVerified ?? false}
+            onChange={(event) =>
+              updateField("isVerified", event.target.checked)
+            }
+          />
+          <span className="space-y-0.5">
+            <span className="block text-sm font-medium text-foreground">
+              Show verified badge
+            </span>
+            <span className="block text-xs text-muted">
+              Adds a visible trust cue to the public profile when enabled.
+            </span>
+          </span>
+        </label>
       </div>
 
       {error ? (

@@ -41,6 +41,11 @@ export interface UserSessionSummary {
   isCurrent: boolean;
 }
 
+export interface CurrentUserReferral {
+  id: string;
+  referralCode: string;
+}
+
 export interface UserSecurityProfile {
   trustBadge: "verified" | "attention";
   maskedEmail: string;

@@ -5,8 +5,8 @@ interface PublicAgencyAgentCardSource {
   publicUrl: string;
   fullName: string;
   jobTitle: string;
-  companyName: string;
-  tagline: string;
+  companyName: string | null;
+  tagline: string | null;
   profilePhotoUrl: string | null;
   trust: PublicPersonaTrustDto;
 }
@@ -20,9 +20,9 @@ export class PublicAgencyAgentCardDto {
 
   jobTitle!: string;
 
-  companyName!: string;
+  companyName!: string | null;
 
-  tagline!: string;
+  tagline!: string | null;
 
   profilePhotoUrl!: string | null;
 

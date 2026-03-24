@@ -175,12 +175,12 @@ function buildActivityEvents(
 function getStateBadge(state: ContactDetail["state"]) {
   switch (state) {
     case "instant_access":
-      return <StatusBadge label="Instant Access" tone="warning" />;
+      return <StatusBadge label="Connected now" tone="warning" />;
     case "expired":
-      return <StatusBadge label="Expired" tone="neutral" />;
+      return <StatusBadge label="Connection closed" tone="neutral" />;
     case "approved":
     default:
-      return <StatusBadge label="Approved" tone="success" />;
+      return <StatusBadge label="Connected" tone="success" />;
   }
 }
 
@@ -517,10 +517,7 @@ export default async function ContactDetailPage({
         </div>
       </Card>
 
-      <ActivitySection
-        events={activityEvents}
-        loadError={activityLoadError}
-      />
+      <ActivitySection events={activityEvents} loadError={activityLoadError} />
 
       <RelationshipActions
         relationshipId={relationshipId}

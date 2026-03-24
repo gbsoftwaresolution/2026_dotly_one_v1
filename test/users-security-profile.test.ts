@@ -138,6 +138,46 @@ describe("UsersService security profile", () => {
     assert.deepEqual(result.security.restrictedActions, []);
   });
 
+  it("returns the current user's referral code for sharing", async () => {
+    const service = new UsersService(
+      {
+        user: {
+          findUnique: async ({ select }: any) => {
+            if (select?.referralCode) {
+              return {
+                id: "user-1",
+                referralCode: "SHARECODE1",
+              };
+            }
+
+            return {
+              id: "user-1",
+              email: "user@dotly.one",
+              isVerified: false,
+              phoneNumber: null,
+              pendingPhoneNumber: null,
+              phoneVerifiedAt: null,
+            };
+          },
+        },
+        mobileOtpChallenge: {
+          findFirst: async () => null,
+        },
+      } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+
+    const result = await service.getCurrentUserReferral("user-1");
+
+    assert.deepEqual(result, {
+      id: "user-1",
+      referralCode: "SHARECODE1",
+    });
+  });
+
   it("delegates authenticated resend requests to AuthService", async () => {
     const calls: string[] = [];
     const service = new UsersService(

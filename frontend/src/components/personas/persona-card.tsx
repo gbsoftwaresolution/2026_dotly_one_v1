@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowUpRight, Check } from "lucide-react";
 
 import { routes } from "@/lib/constants/routes";
 import { formatAccessMode } from "@/lib/persona/labels";
@@ -42,6 +43,9 @@ export function PersonaCard({ persona }: PersonaCardProps) {
   const isOpen = persona.accessMode === "open";
   const gradient = getPersonaGradient(persona.username);
   const initials = getInitials(persona.fullName);
+  const tagline = persona.tagline?.trim() || null;
+  const companyName = persona.companyName?.trim() || null;
+  const websiteUrl = persona.websiteUrl?.trim() || null;
 
   return (
     <article
@@ -83,9 +87,17 @@ export function PersonaCard({ persona }: PersonaCardProps) {
 
           {/* Name + handle */}
           <div className="flex-1 min-w-0">
-            <h2 className="font-sans text-[17px] font-bold text-foreground leading-tight truncate">
-              {persona.fullName}
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="min-w-0 truncate font-sans text-[17px] font-bold leading-tight text-foreground">
+                {persona.fullName}
+              </h2>
+              {persona.isVerified ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/12 dark:text-emerald-300">
+                  <Check className="h-3 w-3" strokeWidth={2.5} />
+                  Verified
+                </span>
+              ) : null}
+            </div>
             <p className="font-mono text-[11px] text-muted mt-0.5 truncate">
               dotly.id/{persona.username}
             </p>
@@ -112,8 +124,11 @@ export function PersonaCard({ persona }: PersonaCardProps) {
           </span>
         </div>
 
-        {/* ── Metadata grid ───────────────────────────── */}
-        {persona.jobTitle || persona.companyName ? (
+        {tagline ? (
+          <p className="line-clamp-2 text-sm leading-6 text-muted">{tagline}</p>
+        ) : null}
+
+        {persona.jobTitle || companyName || websiteUrl ? (
           <dl className="grid grid-cols-2 gap-3">
             {persona.jobTitle ? (
               <div className="space-y-0.5">
@@ -125,13 +140,33 @@ export function PersonaCard({ persona }: PersonaCardProps) {
                 </dd>
               </div>
             ) : null}
-            {persona.companyName ? (
+            {companyName ? (
               <div className="space-y-0.5">
                 <dt className="font-mono text-[9px] font-black uppercase tracking-[0.12em] text-muted/60 dark:text-zinc-600">
                   Company
                 </dt>
                 <dd className="font-sans text-sm font-semibold text-foreground truncate">
-                  {persona.companyName}
+                  {companyName}
+                </dd>
+              </div>
+            ) : null}
+            {websiteUrl ? (
+              <div className="space-y-0.5">
+                <dt className="font-mono text-[9px] font-black uppercase tracking-[0.12em] text-muted/60 dark:text-zinc-600">
+                  Website
+                </dt>
+                <dd>
+                  <a
+                    href={websiteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex max-w-full items-center gap-1 truncate text-sm font-semibold text-foreground transition hover:text-brandRose dark:hover:text-brandCyan"
+                  >
+                    <span className="truncate">
+                      {websiteUrl.replace(/^https?:\/\//, "")}
+                    </span>
+                    <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0" />
+                  </a>
                 </dd>
               </div>
             ) : null}

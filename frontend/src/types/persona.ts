@@ -71,8 +71,10 @@ export interface PersonaSummary {
   publicUrl: string;
   fullName: string;
   jobTitle: string;
-  companyName: string;
-  tagline: string;
+  companyName: string | null;
+  tagline: string | null;
+  websiteUrl?: string | null;
+  isVerified?: boolean;
   profilePhotoUrl?: string | null;
   accessMode: PersonaAccessMode;
   verifiedOnly: boolean;
@@ -124,8 +126,10 @@ export interface CreatePersonaInput {
   jobTitle: string;
   companyName: string;
   tagline: string;
+  websiteUrl?: string;
   accessMode: PersonaAccessMode;
   verifiedOnly?: boolean;
+  isVerified?: boolean;
 }
 
 export interface UpdatePersonaInput {
@@ -133,8 +137,10 @@ export interface UpdatePersonaInput {
   jobTitle?: string;
   companyName?: string;
   tagline?: string;
+  websiteUrl?: string;
   accessMode?: PersonaAccessMode;
   verifiedOnly?: boolean;
+  isVerified?: boolean;
 }
 
 export interface UpdatePersonaSharingInput {
@@ -150,8 +156,10 @@ export interface PublicProfile {
   publicUrl: string;
   fullName: string;
   jobTitle: string;
-  companyName: string;
-  tagline: string;
+  companyName: string | null;
+  tagline: string | null;
+  websiteUrl?: string | null;
+  isVerified?: boolean;
   profilePhotoUrl?: string | null;
   sharingMode: PersonaSharingMode;
   instantConnectUrl?: string | null;

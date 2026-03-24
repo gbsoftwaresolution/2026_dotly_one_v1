@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   getMyFastShare: vi.fn(),
   getCurrent: vi.fn(),
+  getCurrentAnalytics: vi.fn(),
 }));
 
 vi.mock("@/lib/api/persona-api", () => ({
@@ -21,6 +22,7 @@ vi.mock("@/lib/api/persona-api", () => ({
 vi.mock("@/lib/api/user-api", () => ({
   userApi: {
     getCurrent: mocks.getCurrent,
+    getCurrentAnalytics: mocks.getCurrentAnalytics,
   },
 }));
 
@@ -90,6 +92,7 @@ describe("InstantShareExperience", () => {
     mocks.list.mockReset();
     mocks.getMyFastShare.mockReset();
     mocks.getCurrent.mockReset();
+    mocks.getCurrentAnalytics.mockReset();
     clearShareFastStore();
 
     mocks.list.mockImplementation(() => new Promise(() => {}));
@@ -99,12 +102,18 @@ describe("InstantShareExperience", () => {
     render(
       React.createElement(InstantShareExperience, {
         initialFastShare: createInitialFastShare("smart_card"),
+        initialAnalytics: {
+          totalConnections: 24,
+          connectionsThisMonth: 5,
+        },
         initialUser: userFixture,
       }),
     );
 
     expect(screen.getByText(/sender persona/i)).toBeInTheDocument();
     expect(screen.getByText(/scan to view my contact/i)).toBeInTheDocument();
+    expect(screen.getByText(/you've connected with/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+5 this month/i)).toBeInTheDocument();
     expect(screen.getByText(/verified/i)).toBeInTheDocument();
   });
 
@@ -112,6 +121,10 @@ describe("InstantShareExperience", () => {
     render(
       React.createElement(InstantShareExperience, {
         initialFastShare: createInitialFastShare("instant_connect"),
+        initialAnalytics: {
+          totalConnections: 24,
+          connectionsThisMonth: 5,
+        },
         initialUser: userFixture,
       }),
     );

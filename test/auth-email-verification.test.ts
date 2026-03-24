@@ -9,6 +9,8 @@ import { AuthService } from "../src/modules/auth/auth.service";
 interface UserRecord {
   id: string;
   email: string;
+  referralCode: string;
+  referredBy?: string | null;
   passwordHash: string;
   isVerified: boolean;
   phoneVerifiedAt?: Date | null;
@@ -151,6 +153,10 @@ function createAuthServiceHarness(options?: {
             return candidate.id === where.id;
           }
 
+          if (where.referralCode) {
+            return candidate.referralCode === where.referralCode;
+          }
+
           return false;
         });
 
@@ -160,6 +166,8 @@ function createAuthServiceHarness(options?: {
         const user: UserRecord = {
           id: `user-${++userSequence}`,
           email: data.email,
+          referralCode: data.referralCode,
+          referredBy: data.referredBy ?? null,
           passwordHash: data.passwordHash,
           isVerified: data.isVerified ?? false,
         };
@@ -351,6 +359,9 @@ describe("AuthService email verification hardening", () => {
 
     assert.equal(result.user.email, "new@dotly.one");
     assert.equal(result.user.isVerified, false);
+    assert.ok(typeof result.user.referralCode === "string");
+    assert.equal(result.user.referralCode.length, 10);
+    assert.equal(result.user.referredBy, null);
     assert.equal(result.verificationPending, true);
     assert.equal(result.verificationEmailSent, true);
     assert.equal(state.tokens.length, 1);
@@ -422,6 +433,7 @@ describe("AuthService email verification hardening", () => {
     });
 
     assert.equal(result.user.isVerified, false);
+    assert.equal(result.user.referredBy, null);
     assert.equal(result.verificationPending, true);
     assert.equal(result.verificationEmailSent, false);
     assert.equal(state.tokens.length, 1);
@@ -466,6 +478,44 @@ describe("AuthService email verification hardening", () => {
         hasIpAddress: false,
       },
     });
+  });
+
+  it("tracks the referrer when signup uses a valid referral code", async () => {
+    const { service, state } = createAuthServiceHarness({
+      users: [
+        {
+          id: "user-1",
+          email: "referrer@dotly.one",
+          referralCode: "REFERRAL10",
+          referredBy: null,
+          passwordHash: "hash",
+          isVerified: true,
+        },
+      ],
+    });
+
+    const result = await service.signup({
+      email: "new@dotly.one",
+      password: "SecurePass123!",
+      referralCode: " referral10 ",
+    });
+
+    assert.equal(result.user.referredBy, "user-1");
+    assert.equal(state.users[1]?.referredBy, "user-1");
+  });
+
+  it("rejects signup when the referral code is invalid", async () => {
+    const { service } = createAuthServiceHarness();
+
+    await assert.rejects(
+      () =>
+        service.signup({
+          email: "new@dotly.one",
+          password: "SecurePass123!",
+          referralCode: "MISSING10",
+        }),
+      /referral code is invalid/i,
+    );
   });
 
   it("records failed logins without leaking raw credentials", async () => {
@@ -584,6 +634,7 @@ describe("AuthService email verification hardening", () => {
         {
           id: "user-1",
           email: "user@dotly.one",
+          referralCode: "VERIFY001A",
           passwordHash: "hash",
           isVerified: false,
         },
@@ -657,6 +708,7 @@ describe("AuthService email verification hardening", () => {
         {
           id: "user-1",
           email: "user@dotly.one",
+          referralCode: "VERIFY002B",
           passwordHash: "hash",
           isVerified: false,
         },
@@ -687,6 +739,7 @@ describe("AuthService email verification hardening", () => {
         {
           id: "user-1",
           email: "user@dotly.one",
+          referralCode: "VERIFY003C",
           passwordHash: "hash",
           isVerified: false,
         },
@@ -744,6 +797,7 @@ describe("AuthService email verification hardening", () => {
         {
           id: "user-1",
           email: "user@dotly.one",
+          referralCode: "VERIFY004D",
           passwordHash: "hash",
           isVerified: false,
         },
@@ -786,6 +840,7 @@ describe("AuthService email verification hardening", () => {
         {
           id: "user-1",
           email: "user@dotly.one",
+          referralCode: "VERIFY005E",
           passwordHash: "hash",
           isVerified: false,
         },

@@ -91,7 +91,9 @@ describe("FollowUpsScreen", () => {
       expect(mocks.processDue).toHaveBeenCalledTimes(1);
       expect(mocks.list).toHaveBeenCalledWith({ status: "pending" });
     });
-    expect(await screen.findByText(/no follow-ups in view/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/nothing to follow up right now/i),
+    ).toBeInTheDocument();
   });
 
   it("renders the load error state and retry action", async () => {
@@ -99,14 +101,16 @@ describe("FollowUpsScreen", () => {
 
     render(React.createElement(FollowUpsScreen));
 
-    expect(await screen.findByText(/follow-ups unavailable/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+    expect(
+      await screen.findByText(/follow-ups unavailable/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /try again/i }),
+    ).toBeInTheDocument();
   });
 
   it("completes a follow-up and refreshes the rendered sections", async () => {
-    mocks.list.mockResolvedValue([
-      createFollowUp(),
-    ]);
+    mocks.list.mockResolvedValue([createFollowUp()]);
     mocks.complete.mockResolvedValue(
       createFollowUp({
         status: "completed",
@@ -125,14 +129,18 @@ describe("FollowUpsScreen", () => {
       ),
     );
 
-    expect(await screen.findByRole("heading", { name: /^open$/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: /^next up$/i }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^mark done$/i }));
 
     await waitFor(() => {
       expect(mocks.complete).toHaveBeenCalledWith("follow-up-1");
     });
 
-    expect(await screen.findByRole("status")).toHaveTextContent(/marked complete/i);
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      /marked complete/i,
+    );
     expect(screen.queryByText("Alice Demo")).not.toBeInTheDocument();
   });
 
@@ -146,21 +154,21 @@ describe("FollowUpsScreen", () => {
     expect(await screen.findByText("Alice Demo")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^dismiss$/i }));
 
-    expect(await screen.findByText(/could not cancel this follow-up right now/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/could not cancel this follow-up right now/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("Alice Demo")).toBeInTheDocument();
   });
 
   it("loads a different status when a filter is selected", async () => {
-    mocks.list
-      .mockResolvedValueOnce([createFollowUp()])
-      .mockResolvedValueOnce([
-        createFollowUp({
-          id: "follow-up-2",
-          status: "completed",
-          completedAt: "2099-04-11T10:00:00.000Z",
-          updatedAt: "2099-04-11T10:00:00.000Z",
-        }),
-      ]);
+    mocks.list.mockResolvedValueOnce([createFollowUp()]).mockResolvedValueOnce([
+      createFollowUp({
+        id: "follow-up-2",
+        status: "completed",
+        completedAt: "2099-04-11T10:00:00.000Z",
+        updatedAt: "2099-04-11T10:00:00.000Z",
+      }),
+    ]);
     const user = userEvent.setup();
 
     render(React.createElement(FollowUpsScreen));
@@ -274,21 +282,24 @@ describe("FollowUpsScreen", () => {
 
     render(React.createElement(FollowUpsScreen));
 
-    expect(await screen.findByRole("heading", { name: /overdue/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /ready now/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /coming up/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: /overdue/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /ready now/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /coming up/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /later/i })).toBeInTheDocument();
     expect(screen.getByText("Olivia Overdue")).toBeInTheDocument();
     expect(screen.getByText("Dylan Due")).toBeInTheDocument();
     expect(screen.getByText("Sasha Soon")).toBeInTheDocument();
     expect(screen.getByText("Liam Later")).toBeInTheDocument();
     expect(screen.getAllByText("Met at Tech Summit").length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link").map((item) => item.textContent)).toEqual([
-      "Olivia Overdue",
-      "Dylan Due",
-      "Sasha Soon",
-      "Liam Later",
-    ]);
+    expect(screen.getAllByRole("link").map((item) => item.textContent)).toEqual(
+      ["Olivia Overdue", "Dylan Due", "Sasha Soon", "Liam Later"],
+    );
   });
 
   it("degrades safely when relationship summary data is partial", async () => {

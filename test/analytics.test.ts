@@ -5,6 +5,7 @@ import { ForbiddenException, NotFoundException } from "@nestjs/common";
 
 import {
   AnalyticsEventType as PrismaAnalyticsEventType,
+  ContactRelationshipState,
   PersonaSharingMode as PrismaPersonaSharingMode,
 } from "../src/generated/prisma/client";
 
@@ -235,6 +236,56 @@ describe("AnalyticsService", () => {
       verificationConversionRate: 66.67,
     });
   });
+
+  it("returns total connections and this month's connections", async () => {
+    const capturedWhere: Array<Record<string, unknown>> = [];
+
+    const service = new AnalyticsService(
+      {
+        contactRelationship: {
+          count: async ({ where }: { where: Record<string, unknown> }) => {
+            capturedWhere.push(where);
+
+            return capturedWhere.length === 1 ? 8 : 3;
+          },
+        },
+      } as any,
+      { warn: () => undefined } as any,
+    );
+
+    const result = await service.getMyAnalytics("user-id");
+
+    assert.deepEqual(result, {
+      totalConnections: 8,
+      connectionsThisMonth: 3,
+    });
+    assert.equal(capturedWhere.length, 2);
+    assert.deepEqual(capturedWhere[0], {
+      ownerUserId: "user-id",
+      state: ContactRelationshipState.APPROVED,
+    });
+    assert.equal(capturedWhere[1].ownerUserId, "user-id");
+    assert.equal(capturedWhere[1].state, ContactRelationshipState.APPROVED);
+    assert.deepEqual(Object.keys(capturedWhere[1]).sort(), [
+      "connectedAt",
+      "ownerUserId",
+      "state",
+    ]);
+
+    const connectedAt = capturedWhere[1].connectedAt as {
+      gte: Date;
+      lt: Date;
+    };
+
+    assert.equal(connectedAt.gte.getUTCDate(), 1);
+    assert.equal(connectedAt.gte.getUTCHours(), 0);
+    assert.equal(connectedAt.gte.getUTCMinutes(), 0);
+    assert.equal(connectedAt.gte.getUTCSeconds(), 0);
+    assert.equal(connectedAt.gte.getUTCMilliseconds(), 0);
+    assert.equal(connectedAt.lt.getUTCDate(), 1);
+    assert.equal(connectedAt.lt.getUTCHours(), 0);
+    assert.ok(connectedAt.lt.getTime() > connectedAt.gte.getTime());
+  });
 });
 
 describe("ProfilesService analytics hook", () => {
@@ -252,6 +303,8 @@ describe("ProfilesService analytics hook", () => {
             jobTitle: "Founder",
             companyName: "Dotly",
             tagline: "Connect fast",
+            websiteUrl: "https://dotly.one",
+            isVerified: true,
             profilePhotoUrl: null,
             accessMode: "OPEN",
             verifiedOnly: false,
@@ -285,6 +338,8 @@ describe("ProfilesService analytics hook", () => {
       jobTitle: "Founder",
       companyName: "Dotly",
       tagline: "Connect fast",
+      websiteUrl: "https://dotly.one",
+      isVerified: true,
       profilePhotoUrl: null,
       sharingMode: "smart_card",
       instantConnectUrl: null,
@@ -328,6 +383,8 @@ describe("ProfilesService analytics hook", () => {
             jobTitle: "Founder",
             companyName: "Dotly",
             tagline: "Connect fast",
+            websiteUrl: "https://dotly.one",
+            isVerified: false,
             profilePhotoUrl: null,
             accessMode: "OPEN",
             verifiedOnly: false,
@@ -789,7 +846,10 @@ describe("ProfilesService analytics hook", () => {
       },
     ]);
     assert.equal(tracked.length, 2);
-    assert.equal(firstResult.instantConnectUrl, "https://dotly.id/q/profile-qr-1");
+    assert.equal(
+      firstResult.instantConnectUrl,
+      "https://dotly.id/q/profile-qr-1",
+    );
     assert.deepEqual(secondResult, firstResult);
   });
 

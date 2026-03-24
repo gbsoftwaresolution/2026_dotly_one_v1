@@ -18,12 +18,13 @@ import { VerificationStatusBadge } from "@/components/auth/verification-status-b
 import { TrustSignalCard } from "@/components/settings/trust-signal-card";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
-import { authApi } from "@/lib/api";
+import { authApi, userApi } from "@/lib/api";
 import { routes } from "@/lib/constants/routes";
 import { cn } from "@/lib/utils/cn";
 import type { RequestMobileOtpResult, SessionListResult } from "@/types/auth";
 import { classifyAuthError } from "@/lib/utils/auth-errors";
 import type {
+  CurrentUserReferral,
   UserMobileOtpEnrollment,
   UserProfile,
   UserSessionSummary,
@@ -590,6 +591,122 @@ function PasswordRecoveryCard({ user }: { user: UserProfile }) {
             reset attempts. Completing a reset signs every device out.
           </p>
         </div>
+      </div>
+    </SectionCard>
+  );
+}
+
+function ReferralShareCard() {
+  const [referral, setReferral] = useState<CurrentUserReferral | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const [isCopying, setIsCopying] = useState(false);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadReferral() {
+      try {
+        const result = await userApi.getCurrentReferral();
+
+        if (!isActive) {
+          return;
+        }
+
+        setReferral(result);
+      } catch {
+        if (!isActive) {
+          return;
+        }
+
+        setFeedback({
+          tone: "warning",
+          message:
+            "Dotly could not load your referral code right now. Refresh this page and try again.",
+        });
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadReferral();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  async function handleCopy() {
+    if (!referral) {
+      return;
+    }
+
+    setIsCopying(true);
+
+    try {
+      await navigator.clipboard.writeText(referral.referralCode);
+      setFeedback({
+        tone: "success",
+        message:
+          "Referral code copied. Share it with a friend to track the signup source.",
+      });
+    } catch {
+      setFeedback({
+        tone: "error",
+        message:
+          "Dotly could not copy your referral code automatically. Copy it manually instead.",
+      });
+    } finally {
+      setIsCopying(false);
+    }
+  }
+
+  return (
+    <SectionCard eyebrow="Referral" title="Invite with your referral code">
+      <div className="space-y-4">
+        <div className="rounded-[22px] border border-border bg-[radial-gradient(circle_at_top_left,rgba(255,51,102,0.12),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.14),transparent_30%)] p-4">
+          <div className="flex items-start gap-3">
+            <Waypoints className="mt-0.5 h-5 w-5 text-brandRose dark:text-brandCyan" />
+            <div className="space-y-1.5">
+              <p className="text-sm font-semibold text-foreground">
+                Share one code, keep tracking simple
+              </p>
+              <p className="text-sm leading-6 text-muted">
+                Anyone who signs up with this code is linked back to your
+                account as the referrer. No rewards logic, just clean
+                attribution.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <FeedbackBanner feedback={feedback} />
+
+        <div className="rounded-[22px] border border-dashed border-border px-4 py-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+            Your referral code
+          </p>
+          <p className="mt-3 font-mono text-2xl font-semibold tracking-[0.22em] text-foreground">
+            {isLoading
+              ? "Loading..."
+              : (referral?.referralCode ?? "Unavailable")}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Keep the code exactly as shown when sharing it.
+          </p>
+        </div>
+
+        <SecondaryButton
+          type="button"
+          fullWidth
+          onClick={() => void handleCopy()}
+          disabled={!referral || isLoading}
+          isLoading={isCopying}
+        >
+          Copy referral code
+        </SecondaryButton>
       </div>
     </SectionCard>
   );
@@ -1331,6 +1448,7 @@ export function AccountSecuritySettings({ user }: { user: UserProfile }) {
           isResending={isResending}
           onResend={handleResend}
         />
+        <ReferralShareCard />
         <ChangePasswordCard />
         <PasswordRecoveryCard user={user} />
         <MobileOtpCard user={user} />

@@ -254,9 +254,13 @@ describe("ContactDetailPage", () => {
     expect(screen.getByTestId("quick-interaction-panel")).toHaveTextContent(
       "quick-interactions-active",
     );
-    expect(mocks.apiRequest).toHaveBeenNthCalledWith(1, "/contacts/relationship-id", {
-      token: "token",
-    });
+    expect(mocks.apiRequest).toHaveBeenNthCalledWith(
+      1,
+      "/contacts/relationship-id",
+      {
+        token: "token",
+      },
+    );
     expect(mocks.apiRequest).toHaveBeenNthCalledWith(
       2,
       "/relationships/relationship-id/timeline",
@@ -273,7 +277,7 @@ describe("ContactDetailPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("You said hi")).toBeInTheDocument();
     expect(screen.getByText("yesterday")).toBeInTheDocument();
-    expect(screen.getByText(/^Connected$/)).toBeInTheDocument();
+    expect(screen.getAllByText(/^Connected$/).length).toBeGreaterThan(0);
     expect(screen.queryByText("Touchpoints")).not.toBeInTheDocument();
     expect(screen.queryByText("Source")).not.toBeInTheDocument();
   });
@@ -326,7 +330,7 @@ describe("ContactDetailPage", () => {
     expect(screen.getByText("You followed up")).toBeInTheDocument();
     expect(screen.getByText("They followed up")).toBeInTheDocument();
     expect(screen.getByText("You sent thanks")).toBeInTheDocument();
-    expect(screen.queryByText(/^Connected$/)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/^Connected$/)).toHaveLength(1);
   });
 
   it("renders an empty activity state when no valid events are available", async () => {
@@ -439,7 +443,7 @@ describe("ContactDetailPage", () => {
 
     render(element);
 
-    expect(screen.getAllByText("Connected")).toHaveLength(2);
+    expect(screen.getAllByText("Connected")).toHaveLength(3);
   });
 
   it("passes follow-up summary context to the reminder block", async () => {
@@ -498,7 +502,9 @@ describe("ContactDetailPage", () => {
 
     render(element);
 
-    expect(screen.getByText("We could not load the latest story right now.")).toBeInTheDocument();
+    expect(
+      screen.getByText("We could not load the latest story right now."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Connected on Mar 8")).toBeInTheDocument();
   });
 });

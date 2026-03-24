@@ -238,8 +238,10 @@ export class PersonasService {
           publicUrl: buildPublicUrl(createPersonaDto.username),
           fullName: createPersonaDto.fullName,
           jobTitle: createPersonaDto.jobTitle,
-          companyName: createPersonaDto.companyName,
-          tagline: createPersonaDto.tagline,
+          companyName: createPersonaDto.companyName ?? null,
+          tagline: createPersonaDto.tagline ?? null,
+          websiteUrl: createPersonaDto.websiteUrl ?? null,
+          isVerified: createPersonaDto.isVerified ?? false,
           profilePhotoUrl: createPersonaDto.profilePhotoUrl ?? null,
           accessMode: toPrismaAccessMode(createPersonaDto.accessMode),
           verifiedOnly: createPersonaDto.verifiedOnly ?? false,
@@ -413,11 +415,7 @@ export class PersonasService {
       where: {
         userId,
       },
-      orderBy: [
-        { isPrimary: "desc" },
-        { createdAt: "asc" },
-        { id: "asc" },
-      ],
+      orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }, { id: "asc" }],
       select: fastSharePersonaSelect,
     });
 
@@ -536,6 +534,14 @@ export class PersonasService {
 
     if (updatePersonaDto.tagline !== undefined) {
       data.tagline = updatePersonaDto.tagline;
+    }
+
+    if (updatePersonaDto.websiteUrl !== undefined) {
+      data.websiteUrl = updatePersonaDto.websiteUrl;
+    }
+
+    if (updatePersonaDto.isVerified !== undefined) {
+      data.isVerified = updatePersonaDto.isVerified;
     }
 
     if (updatePersonaDto.profilePhotoUrl !== undefined) {
@@ -1016,7 +1022,8 @@ export class PersonasService {
   ): Promise<PersonaSharePayload> {
     const repairedPersona =
       await this.applySystemManagedSharingDefaultsIfNeeded(persona);
-    const preferredShare = await this.resolvePreferredShareConfig(repairedPersona);
+    const preferredShare =
+      await this.resolvePreferredShareConfig(repairedPersona);
 
     return {
       personaId: repairedPersona.id,
@@ -1086,7 +1093,10 @@ export class PersonasService {
 
     try {
       const quickConnectAvailability =
-        await this.resolveQuickConnectAvailability(persona, safeSmartCardConfig);
+        await this.resolveQuickConnectAvailability(
+          persona,
+          safeSmartCardConfig,
+        );
       const compatibleSmartCardConfig = validateSmartCardConfigCompatibility(
         safeSmartCardConfig,
         {
@@ -1411,7 +1421,10 @@ export class PersonasService {
     }
 
     for (const persona of missingEligiblePersonas) {
-      const wasProvisioned = await this.createActiveProfileQrToken(persona.id, db);
+      const wasProvisioned = await this.createActiveProfileQrToken(
+        persona.id,
+        db,
+      );
 
       if (wasProvisioned) {
         activeProfileQrPersonaIds.add(persona.id);
@@ -1527,6 +1540,14 @@ export class PersonasService {
         updatePersonaDto.tagline !== undefined
           ? updatePersonaDto.tagline
           : persona.tagline,
+      websiteUrl:
+        updatePersonaDto.websiteUrl !== undefined
+          ? updatePersonaDto.websiteUrl
+          : persona.websiteUrl,
+      isVerified:
+        updatePersonaDto.isVerified !== undefined
+          ? updatePersonaDto.isVerified
+          : persona.isVerified,
       profilePhotoUrl:
         updatePersonaDto.profilePhotoUrl !== undefined
           ? updatePersonaDto.profilePhotoUrl
