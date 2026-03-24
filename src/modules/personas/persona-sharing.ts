@@ -2,7 +2,7 @@ import { BadRequestException } from "@nestjs/common";
 import {
   PersonaAccessMode as PrismaPersonaAccessMode,
   PersonaSharingMode as PrismaPersonaSharingMode,
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 
 import { PersonaSharingMode } from "../../common/enums/persona-sharing-mode.enum";
 import { PersonaSmartCardPrimaryAction } from "../../common/enums/persona-smart-card-primary-action.enum";

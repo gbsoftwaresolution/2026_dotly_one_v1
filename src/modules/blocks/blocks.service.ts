@@ -7,7 +7,7 @@ import {
 import {
   ContactRequestStatus as PrismaContactRequestStatus,
   Prisma,
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 

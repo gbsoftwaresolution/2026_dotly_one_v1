@@ -151,7 +151,9 @@ describe("PublicSmartCard", () => {
     });
   });
 
-  it("renders a request access primary button and direct action links", () => {
+  it("renders a request access primary button and hides extra contact options until asked", async () => {
+    const user = userEvent.setup();
+
     render(
       React.createElement(PublicSmartCard, {
         profile: createProfile({
@@ -174,20 +176,19 @@ describe("PublicSmartCard", () => {
       }),
     );
 
+    expect(screen.getAllByRole("button", { name: /request access/i })[0]).toBeEnabled();
+    expect(screen.getByText(/request access to connect with jane doe/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^verified$/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /request access/i }),
-    ).toBeEnabled();
-    expect(screen.getByText(/^next step$/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /ask jane doe for access when you want a more intentional intro/i,
-      ),
-    ).toBeInTheDocument();
+      screen.queryByTestId("smart-card-actions-grid"),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /more contact options/i }));
+
     expect(screen.getByTestId("smart-card-actions-grid")).toHaveAttribute(
       "data-action-count",
       "4",
     );
-    expect(screen.getByLabelText(/verified identity/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /call/i })).toHaveAttribute(
       "href",
       "tel:+15551234567",
@@ -218,7 +219,7 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    expect(screen.getByLabelText(/verified identity/i)).toHaveClass(
+    expect(screen.getByLabelText(/^verified$/i)).toHaveClass(
       "bg-emerald-700",
     );
     expect(
@@ -242,12 +243,12 @@ describe("PublicSmartCard", () => {
     );
 
     expect(
-      screen.queryByLabelText(/verified identity/i),
+      screen.queryByLabelText(/^verified$/i),
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/dotly verified/i)).not.toBeInTheDocument();
   });
 
-  it("scrolls to the request panel when request access is pressed", async () => {
+  it("shows a direct request error when no sender persona is available", async () => {
     const user = userEvent.setup();
 
     render(
@@ -264,11 +265,13 @@ describe("PublicSmartCard", () => {
 
     await user.click(screen.getByRole("button", { name: /request access/i }));
 
-    expect(scrollIntoView).toHaveBeenCalledTimes(1);
-    expect(screen.getByText(/request form ready below/i)).toBeInTheDocument();
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /dotly needs one of your personas/i,
+    );
   });
 
-  it("reveals the action panel when contact me is the primary action", async () => {
+  it("contacts directly and keeps extra contact actions hidden until asked", async () => {
     const user = userEvent.setup();
 
     render(
@@ -293,19 +296,22 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    expect(screen.getByRole("link", { name: /call/i })).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /use one of the direct actions below to reach out right away/i,
-      ),
-    ).toBeInTheDocument();
+      screen.queryByRole("link", { name: /call/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/contact jane doe directly/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /^contact$/i }));
 
     expect(scrollIntoView).not.toHaveBeenCalled();
-    expect(
-      screen.getByText(/choose a direct way to reach out below/i),
-    ).toBeInTheDocument();
+    expect(assignLocation).toHaveBeenCalledWith("tel:+15551234567");
+
+    await user.click(screen.getByRole("button", { name: /more contact options/i }));
+
+    expect(screen.getByRole("link", { name: /call/i })).toHaveAttribute(
+      "href",
+      "tel:+15551234567",
+    );
   });
 
   it("connects inline when instant connect succeeds", async () => {
@@ -354,7 +360,7 @@ describe("PublicSmartCard", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: /^connected$/i }),
+        screen.getByRole("button", { name: /connected ✓/i }),
       ).toBeDisabled();
     });
     expect(fetchMock).toHaveBeenCalledWith(
@@ -367,7 +373,6 @@ describe("PublicSmartCard", () => {
         }),
       }),
     );
-    expect(screen.getByText(/connected instantly/i)).toBeInTheDocument();
     expect(await screen.findByRole("status")).toHaveTextContent(/connected/i);
     expect(assignLocation).not.toHaveBeenCalled();
   });
@@ -409,10 +414,8 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    await user.selectOptions(
-      screen.getByLabelText(/connecting as/i),
-      "persona-2",
-    );
+    await user.click(screen.getByRole("button", { name: /customize/i }));
+    await user.selectOptions(screen.getByRole("combobox"), "persona-2");
     await user.click(screen.getByRole("button", { name: /^connect$/i }));
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -455,7 +458,7 @@ describe("PublicSmartCard", () => {
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent(
-      /choose one of your personas before connecting/i,
+      /dotly needs one of your personas before connecting/i,
     );
   });
 
@@ -534,64 +537,75 @@ describe("PublicSmartCard", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: /^connected$/i }),
+        screen.getByRole("button", { name: /connected ✓/i }),
       ).toBeDisabled();
     });
-    expect(screen.getByText(/already connected/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/connected ✓/i).length).toBeGreaterThan(0);
   });
 
-  it("falls back to request access when instant connect is not allowed", async () => {
+  it("falls back to sending a request when instant connect is not allowed", async () => {
     const user = userEvent.setup();
 
-    fetchMock.mockResolvedValue({
-      ok: false,
-      status: 403,
-      text: vi.fn().mockResolvedValue(
-        JSON.stringify({
-          message: "Instant connect is not available for this persona",
-        }),
-      ),
-    });
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        text: vi.fn().mockResolvedValue(
+          JSON.stringify({
+            message: "Instant connect is not available for this persona",
+          }),
+        ),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        text: vi.fn().mockResolvedValue(
+          JSON.stringify({
+            username: "jane",
+            fullName: "Jane Doe",
+            accessMode: "request",
+          }),
+        ),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        text: vi.fn().mockResolvedValue(
+          JSON.stringify({
+            id: "request-1",
+          }),
+        ),
+      });
 
     render(
-      React.createElement(
-        React.Fragment,
-        null,
-        React.createElement(PublicSmartCard, {
-          profile: createProfile({
-            instantConnectUrl: "https://dotly.id/q/profile-qr-1",
-            smartCard: {
-              primaryAction: "instant_connect",
-              actionState: {
-                requestAccessEnabled: true,
-                instantConnectEnabled: true,
-                contactMeEnabled: false,
-              },
-              actionLinks: {
-                call: null,
-                whatsapp: null,
-                email: null,
-                vcard: null,
-              },
+      React.createElement(PublicSmartCard, {
+        profile: createProfile({
+          instantConnectUrl: "https://dotly.id/q/profile-qr-1",
+          smartCard: {
+            primaryAction: "instant_connect",
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: true,
+              contactMeEnabled: false,
             },
-          }),
-          initialPersonas: createPersonas(),
+            actionLinks: {
+              call: null,
+              whatsapp: null,
+              email: null,
+              vcard: null,
+            },
+          },
         }),
-        React.createElement("div", { id: "request-access-panel" }),
-      ),
+        initialPersonas: createPersonas(),
+      }),
     );
 
     await user.click(screen.getByRole("button", { name: /^connect$/i }));
 
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: /request access/i }),
-      ).toBeEnabled();
+        screen.getByRole("button", { name: /request sent ✓/i }),
+      ).toBeDisabled();
     });
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      /request access instead/i,
-    );
-    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
   it("shows blocked copy and does not fall back when the user is blocked", async () => {
@@ -684,6 +698,7 @@ describe("PublicSmartCard", () => {
       ),
     );
 
+    await user.click(screen.getByRole("button", { name: /more contact options/i }));
     await user.click(screen.getByRole("button", { name: /^save$/i }));
 
     expect(fetchMock).toHaveBeenCalledWith("/api/public/jane/vcard", {
@@ -692,7 +707,7 @@ describe("PublicSmartCard", () => {
     expect(createObjectUrl).toHaveBeenCalledTimes(1);
     expect(revokeObjectUrl).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole("status")).toHaveTextContent(
-      /contact saved/i,
+      /saved to contacts/i,
     );
   });
 
@@ -725,6 +740,7 @@ describe("PublicSmartCard", () => {
       }),
     );
 
+    await user.click(screen.getByRole("button", { name: /more contact options/i }));
     await user.click(screen.getByRole("button", { name: /^save$/i }));
 
     expect(screen.getByRole("alert")).toHaveTextContent(
@@ -769,6 +785,7 @@ describe("PublicSmartCard", () => {
       }),
     );
 
+    await user.click(screen.getByRole("button", { name: /more contact options/i }));
     const saveContactButton = screen.getByRole("button", {
       name: /^save$/i,
     });
@@ -783,7 +800,7 @@ describe("PublicSmartCard", () => {
     await user.click(saveContactButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/contact saved/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/saved to contacts/i).length).toBeGreaterThan(0);
     });
   });
 
@@ -843,9 +860,6 @@ describe("PublicSmartCard", () => {
     expect(
       screen.getByRole("button", { name: /request access/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/showing request access right now/i),
-    ).toBeInTheDocument();
   });
 
   it("falls back to request access when contact me is unavailable but requests are enabled", () => {
@@ -873,9 +887,6 @@ describe("PublicSmartCard", () => {
     expect(
       screen.getByRole("button", { name: /request access/i }),
     ).toBeEnabled();
-    expect(
-      screen.getByText(/showing request access right now/i),
-    ).toBeInTheDocument();
   });
 
   it("shows a disabled CTA with helper text when no fallback is available", () => {
@@ -902,11 +913,7 @@ describe("PublicSmartCard", () => {
 
     expect(screen.getByRole("button", { name: /^contact$/i })).toBeDisabled();
     expect(screen.getByText(/try again later/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /use one of the direct actions below to reach out right away/i,
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/contact jane doe directly/i)).toBeInTheDocument();
   });
 
   it("keeps the hero clean when save is the only available action", () => {
@@ -930,6 +937,38 @@ describe("PublicSmartCard", () => {
         }),
       }),
     );
+
+    expect(
+      screen.queryByTestId("smart-card-actions-grid"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /more contact options/i })).toBeEnabled();
+  });
+
+  it("reveals the save action only after explicit intent", async () => {
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: createProfile({
+          smartCard: {
+            primaryAction: "request_access",
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: false,
+              contactMeEnabled: true,
+            },
+            actionLinks: {
+              call: null,
+              whatsapp: null,
+              email: null,
+              vcard: "/api/public/jane/vcard",
+            },
+          },
+        }),
+      }),
+    );
+
+    await user.click(screen.getByRole("button", { name: /more contact options/i }));
 
     expect(screen.getByTestId("smart-card-actions-grid")).toHaveAttribute(
       "data-action-count",
@@ -972,10 +1011,7 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    expect(screen.getByRole("link", { name: /whatsapp/i })).toHaveAttribute(
-      "href",
-      "https://wa.me/15551234567",
-    );
+    expect(screen.getByRole("button", { name: /more contact options/i })).toBeEnabled();
   });
 
   it("hides the actions panel when every action link is null", () => {

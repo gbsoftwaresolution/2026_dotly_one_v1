@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import {
   AnalyticsEventType as PrismaAnalyticsEventType,
   Prisma,
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 import { createHash } from "crypto";
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";

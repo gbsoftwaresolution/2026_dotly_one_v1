@@ -25,6 +25,7 @@ Minimum required backend values:
 NODE_ENV=development
 PORT=3000
 TRUST_PROXY=false
+HEALTH_ENDPOINT_TOKEN=
 DATABASE_URL=postgresql://naveenprasath-p@localhost/dotly_one_id?host=/var/run/postgresql
 JWT_SECRET=replace-with-a-long-random-secret
 JWT_EXPIRES_IN=7d
@@ -39,6 +40,7 @@ MAILGUN_DOMAIN=
 MAIL_FROM_EMAIL="Dotly.one <noreply@dotly.one>"
 FRONTEND_VERIFICATION_URL_BASE=http://localhost:3001/verify-email
 FRONTEND_PASSWORD_RESET_URL_BASE=http://localhost:3001/reset-password
+SUPPORT_INBOX_ALLOWED_EMAILS=support@dotly.one
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_FROM_PHONE_NUMBER=
@@ -56,6 +58,7 @@ AUTH_COOKIE_DOMAIN=
 Production hardening rules:
 
 - `JWT_SECRET` must be at least 32 characters, use multiple character classes, and cannot be a placeholder.
+- `HEALTH_ENDPOINT_TOKEN` must be at least 32 characters and is required in production for `/v1/metrics` and `/v1/health/verification` access.
 - `JWT_EXPIRES_IN` must use the supported duration format: `s`, `m`, `h`, or `d` suffixes.
 - `TRUST_PROXY` must be set explicitly in production to match the actual ingress chain. Use `false` for direct edge deployment, `true` only when every inbound hop is trusted, or a bounded hop count / named Express preset such as `1` or `loopback` when traffic crosses known reverse proxies.
 - `CORS_ORIGINS`, `FRONTEND_VERIFICATION_URL_BASE`, `FRONTEND_PASSWORD_RESET_URL_BASE`, and `QR_BASE_URL` must use trusted HTTPS origins in production. Localhost, `.local`, `.example`, and `.internal` hosts are rejected.
@@ -64,6 +67,8 @@ Production hardening rules:
 - `AUTH_COOKIE_SAME_SITE=none` is only valid with `AUTH_COOKIE_SECURE=true` and should be reserved for deliberate cross-site embedding or federation cases.
 - Mailgun is optional in development, but production startup now fails fast unless `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, `MAIL_FROM_EMAIL`, `FRONTEND_VERIFICATION_URL_BASE`, and `FRONTEND_PASSWORD_RESET_URL_BASE` are all present.
 - `MAIL_FROM_EMAIL` may be a plain address or a mailbox string such as `Dotly.one <noreply@dotly.one>` when you want a branded sender name.
+- `SUPPORT_INBOX_ALLOWED_EMAILS` controls which authenticated accounts can access the internal support inbox.
+- `SUPPORT_INBOX_ALLOWED_EMAILS` accepts a comma-separated email allowlist such as `support@dotly.one,ops@dotly.one`.
 - Twilio is optional in every environment, but partial Twilio configuration is rejected. Configure all three values together or leave all three blank.
 
 Mail behavior:
@@ -269,3 +274,4 @@ npm run build
 - Twilio is the SMS gateway for mobile OTP enrollment. Use a verified sender number that can deliver to the regions you support.
 - Mailgun and Twilio failures intentionally degrade the affected auth flows without exposing provider internals to end users. Alert on repeated `provider_error` outcomes in metrics or repeated degraded `/v1/health/verification` responses before promoting traffic.
 - The current trust model is now email verification plus verified mobile OTP, with room for future linked auth methods or passkeys.
+- Public support form submissions are persisted to the internal support inbox even when outbound email delivery is unavailable, so support can still triage requests after login.

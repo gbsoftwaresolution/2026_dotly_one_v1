@@ -24,15 +24,11 @@ describe("PublicQrPreviewCard", () => {
       }),
     );
 
-    expect(screen.getByText(/^profile$/i)).toBeInTheDocument();
-    expect(screen.getByText(/profile preview/i)).toBeInTheDocument();
+    expect(screen.getByText(/^contact$/i)).toBeInTheDocument();
+    expect(screen.getByText(/contact preview/i)).toBeInTheDocument();
+    expect(screen.getByText(/scan to view my contact/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/scan to view this dotly profile/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /scanning this qr opens the public profile so they can choose the next step/i,
-      ),
+      screen.getByText(/open this person's contact and choose the next step/i),
     ).toBeInTheDocument();
   });
 
@@ -54,14 +50,12 @@ describe("PublicQrPreviewCard", () => {
       }),
     );
 
-    expect(screen.getByText(/^quick connect$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^who shared this qr$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^connect$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^who shared this$/i)).toBeInTheDocument();
     expect(screen.getByText(/scan to connect on dotly/i)).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /confirm who shared this qr, then connect from the persona/i,
-      ),
+      screen.getByText(/about to connect with this person\. confirm the name/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/temporary intro/i)).toBeInTheDocument();
+    expect(screen.getByText(/connect from this qr/i)).toBeInTheDocument();
   });
 });

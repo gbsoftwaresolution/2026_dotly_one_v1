@@ -41,6 +41,8 @@ function createFollowUp(overrides: Record<string, unknown> = {}) {
     relationshipId: "relationship-1",
     remindAt: "2099-04-10T10:00:00.000Z",
     status: "pending",
+    isSystemGenerated: false,
+    type: "manual",
     note: "Follow up on partnership discussion",
     createdAt: "2099-04-01T09:00:00.000Z",
     updatedAt: "2099-04-01T09:00:00.000Z",
@@ -332,5 +334,28 @@ describe("FollowUpsScreen", () => {
     render(React.createElement(FollowUpsScreen));
 
     expect(await screen.findByText("Connected via QR")).toBeInTheDocument();
+  });
+
+  it("renders system-generated follow-ups with softer copy and a set-follow-up action", async () => {
+    mocks.list.mockResolvedValue([
+      createFollowUp({
+        isSystemGenerated: true,
+        type: "inactivity",
+        note: null,
+      }),
+    ]);
+
+    render(React.createElement(FollowUpsScreen));
+
+    expect(await screen.findByText(/reach out again/i)).toBeInTheDocument();
+    expect(screen.getByText(/stay in touch/i)).toBeInTheDocument();
+    expect(screen.getByText(/reconnect after 2 weeks/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/you haven't interacted in a while/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /set follow-up/i }),
+    ).toHaveAttribute("href", "/app/contacts/relationship-1");
+    expect(screen.getAllByRole("button", { name: /^done$/i })).toHaveLength(2);
   });
 });

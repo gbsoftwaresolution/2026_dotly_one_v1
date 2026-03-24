@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 import {
   PersonaAccessMode as PrismaPersonaAccessMode,
   PersonaSharingMode as PrismaPersonaSharingMode,
-} from "@prisma/client";
+} from "../src/generated/prisma/client";
 import { NotFoundException } from "@nestjs/common";
 
 import { PersonaSmartCardPrimaryAction } from "../src/common/enums/persona-smart-card-primary-action.enum";

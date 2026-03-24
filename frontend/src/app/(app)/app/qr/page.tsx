@@ -8,7 +8,7 @@ export default async function QrPage() {
   const initialFastShare = await personaApi.getMyFastShare(accessToken).catch(() => null);
 
   return (
-    <section className="mx-auto flex min-h-screen-dvh w-full max-w-2xl flex-col justify-center px-4 py-4 sm:px-6 sm:py-6">
+    <section className="mx-auto flex min-h-screen-dvh w-full max-w-none flex-col justify-center px-2 py-2 sm:px-4 sm:py-4">
       <InstantShareExperience initialUser={user} initialFastShare={initialFastShare} />
     </section>
   );

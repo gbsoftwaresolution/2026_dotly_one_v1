@@ -27,7 +27,7 @@ function getQrErrorCopy(error: ApiError) {
   if (loweredMessage.includes("usage limit")) {
     return {
       title: "QR exhausted",
-      description: "This Quick Connect link has reached its usage limit.",
+      description: "This QR link has reached its usage limit.",
     };
   }
 
@@ -100,7 +100,7 @@ function LoginPrompt({
     <Card className="space-y-5 rounded-[2rem] border-border/70 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-          Quick Connect
+          Connect
         </p>
         <h2 className="font-sans text-xl font-bold text-foreground">
           Continue with {hostName}
@@ -112,8 +112,8 @@ function LoginPrompt({
 
       <p className="font-sans text-sm leading-6 text-muted">
         {invalidSession
-          ? "Your session expired. Log in again to continue from one of your personas."
-          : "Log in or create a Dotly account to continue from one of your personas."}
+          ? "Your session expired. Log in again to continue."
+          : "Log in or get your Dotly to continue."}
       </p>
 
       <div className="space-y-3">
@@ -121,13 +121,13 @@ function LoginPrompt({
           href={loginUrl}
           className="inline-flex w-full items-center justify-center rounded-2xl bg-brandRose py-5 px-5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 dark:bg-brandCyan dark:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-brandRose dark:focus:ring-brandCyan focus:ring-offset-2"
         >
-          Login to continue
+          Log in to continue
         </a>
         <a
           href={`${routes.public.signup}?next=${encodeURIComponent(`/q/${code}`)}`}
           className="inline-flex w-full items-center justify-center rounded-2xl border border-border bg-white py-5 px-5 text-sm font-semibold text-foreground transition-all hover:bg-slate-50 active:scale-95 dark:bg-zinc-950 dark:hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-border focus:ring-offset-2"
         >
-          Create an account
+          Get your Dotly
         </a>
       </div>
     </Card>
@@ -139,20 +139,20 @@ function NoPersonasPrompt() {
     <Card className="space-y-4 rounded-[2rem] border-border/70 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-          Quick Connect
+          Connect
         </p>
         <h2 className="font-sans text-lg font-semibold text-foreground">
-          Create a persona first
+          Get your Dotly first
         </h2>
         <p className="font-sans text-sm leading-6 text-muted">
-          You need at least one persona before you can continue this introduction.
+          You need a Dotly before you can continue this introduction.
         </p>
       </div>
       <a
         href={routes.app.createPersona}
         className="inline-flex w-full items-center justify-center rounded-2xl bg-brandRose py-5 px-5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 dark:bg-brandCyan dark:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-brandRose dark:focus:ring-brandCyan focus:ring-offset-2"
       >
-        Create a persona
+        Get your Dotly
       </a>
     </Card>
   );
@@ -188,7 +188,7 @@ export default async function QrLandingPage({
       );
     }
 
-    // Quick Connect — detect auth state
+    // Connect flow: detect auth state
     const accessToken = await getServerAccessToken();
     const isAuthenticated = !!accessToken;
     let hasValidSession = isAuthenticated;

@@ -1,3 +1,6 @@
+import "dotenv/config";
+
+import { PrismaPg } from "@prisma/adapter-pg";
 import {
   ContactRequestSourceType,
   EventParticipantRole,
@@ -6,9 +9,13 @@ import {
   PersonaAccessMode,
   PersonaType,
   PrismaClient,
-} from "@prisma/client";
+} from "../src/generated/prisma/client";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({
+    connectionString: process.env.DATABASE_URL ?? "",
+  }),
+});
 const SEEDED_PASSWORD_HASH =
   "$2b$10$CwTycUXWue0Thq9StjUM0uJ8sJ8fvkgP3Gzdh0dX8GZFODdgNpTi.";
 

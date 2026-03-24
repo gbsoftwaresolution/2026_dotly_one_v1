@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
-import { PersonaSharingMode as PrismaPersonaSharingMode } from "@prisma/client";
+import { PersonaSharingMode as PrismaPersonaSharingMode } from "../src/generated/prisma/client";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 
 import { PersonaAccessMode } from "../src/common/enums/persona-access-mode.enum";

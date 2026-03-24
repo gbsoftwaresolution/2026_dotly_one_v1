@@ -6,7 +6,7 @@ import {
   ConflictException,
   NotFoundException,
 } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../src/generated/prisma/client";
 
 import { AgencyProfileStatus } from "../src/common/enums/agency-profile-status.enum";
 import { toPrivateAgencyProfileView } from "../src/modules/agencies/agency.presenter";

@@ -47,7 +47,7 @@ export function PrimaryButton({
           !isLoading && [
             "dark:bg-gradient-cyan dark:text-bgOnyx dark:shadow-[0_0_0_1px_rgba(0,212,255,0.3),0_4px_16px_rgba(0,212,255,0.20)]",
             "bg-gradient-rose text-white shadow-[0_0_0_1px_rgba(255,51,102,0.3),0_4px_16px_rgba(255,51,102,0.20)]",
-            "tap-feedback transition-[transform,background-color,border-color,box-shadow,color,opacity] duration-[160ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+            "tap-feedback transition-[transform,background-color,border-color,box-shadow,color,opacity] duration-[140ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
             "hover:opacity-95 hover:-translate-y-px hover:shadow-glow dark:hover:shadow-glow",
             "active:translate-y-0 active:shadow-none",
             "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:focus-visible:ring-offset-bgOnyx",
@@ -62,7 +62,7 @@ export function PrimaryButton({
         isSuccess && [
           "bg-status-success text-white dark:text-bgOnyx",
           "shadow-[0_0_0_1px_rgba(48,209,88,0.3),0_4px_16px_rgba(48,209,88,0.20)]",
-          "scale-[1.01] tap-feedback transition-[transform,background-color,border-color,box-shadow,color,opacity] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "scale-[1.01] tap-feedback transition-[transform,background-color,border-color,box-shadow,color,opacity] duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
         ],
         // Disabled state
         disabled && !isLoading && "opacity-40 cursor-not-allowed",

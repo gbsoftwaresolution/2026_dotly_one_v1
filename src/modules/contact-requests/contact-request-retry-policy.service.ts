@@ -3,7 +3,7 @@ import {
   ForbiddenException,
   Injectable,
 } from "@nestjs/common";
-import { ContactRequestStatus as PrismaContactRequestStatus } from "@prisma/client";
+import { ContactRequestStatus as PrismaContactRequestStatus } from "../../generated/prisma/client";
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 

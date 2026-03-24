@@ -10,12 +10,42 @@ export default async function SettingsPage() {
   const { user } = await requireServerSession(routes.app.settings);
 
   const shortcuts = [
-    { href: routes.app.qr, label: "QR sharing", description: "Generate a code when you are ready to share." },
-    { href: routes.app.contacts, label: "Connections", description: "Review active relationships and notes." },
-    { href: routes.app.notifications, label: "Notifications", description: "Catch up on unread account activity." },
-    { href: routes.app.analytics, label: "Analytics", description: "Check reach and persona-level signals." },
-    { href: routes.app.events, label: "Events", description: "Join event discovery and networking flows." },
-    { href: routes.app.followUps, label: "Follow-ups", description: "Stay on top of the next conversation." },
+    {
+      href: routes.app.qr,
+      label: "QR sharing",
+      description: "Generate a code when you are ready to share.",
+    },
+    {
+      href: routes.app.contacts,
+      label: "Connections",
+      description: "Review active relationships and notes.",
+    },
+    {
+      href: routes.app.notifications,
+      label: "Notifications",
+      description: "Catch up on unread account activity.",
+    },
+    {
+      href: routes.app.analytics,
+      label: "Analytics",
+      description: "Check reach and persona-level signals.",
+    },
+    {
+      href: routes.app.events,
+      label: "Events",
+      description: "Join event discovery and networking flows.",
+    },
+    {
+      href: routes.app.followUps,
+      label: "Follow-ups",
+      description: "Stay on top of the next conversation.",
+    },
+    {
+      href: routes.app.supportInbox,
+      label: "Support inbox",
+      description:
+        "Review inbound requests from support@dotly.one and update their status.",
+    },
   ] as const;
 
   return (
@@ -42,8 +72,12 @@ export default async function SettingsPage() {
               href={shortcut.href}
               className="rounded-[1.4rem] border border-border bg-background/70 px-4 py-4 transition-colors hover:border-brandRose/30 hover:bg-brandRose/5 dark:hover:border-brandCyan/30 dark:hover:bg-brandCyan/5"
             >
-              <p className="text-sm font-semibold text-foreground">{shortcut.label}</p>
-              <p className="mt-1 text-sm leading-6 text-muted">{shortcut.description}</p>
+              <p className="text-sm font-semibold text-foreground">
+                {shortcut.label}
+              </p>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                {shortcut.description}
+              </p>
             </Link>
           ))}
         </div>
@@ -53,8 +87,12 @@ export default async function SettingsPage() {
 
       <div className="glass rounded-3xl border border-border bg-surface p-5">
         <div className="mb-4 space-y-1">
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">Appearance</h2>
-          <p className="text-sm leading-6 text-muted">Choose the mode that feels clearest for everyday use.</p>
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">
+            Appearance
+          </h2>
+          <p className="text-sm leading-6 text-muted">
+            Choose the mode that feels clearest for everyday use.
+          </p>
         </div>
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-0.5">

@@ -9,4 +9,5 @@ export { publicApi } from "./public-api";
 export { qrApi } from "./qr-api";
 export { relationshipApi } from "./relationship-api";
 export { requestApi } from "./request-api";
+export { supportApi } from "./support-api";
 export { userApi } from "./user-api";

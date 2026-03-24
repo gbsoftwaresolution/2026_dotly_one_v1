@@ -11,7 +11,7 @@ import {
   ContactRequestStatus as PrismaContactRequestStatus,
   PersonaAccessMode as PrismaPersonaAccessMode,
   PersonaSharingMode as PrismaPersonaSharingMode,
-} from "@prisma/client";
+} from "../src/generated/prisma/client";
 
 import { ContactRequestSourceType } from "../src/common/enums/contact-request-source-type.enum";
 import { BlocksService } from "../src/modules/blocks/blocks.service";

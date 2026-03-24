@@ -1,5 +1,5 @@
 import { StatusBadge } from "@/components/shared/status-badge";
-import { formatPrimaryAction, formatSharingMode } from "@/lib/persona/labels";
+import { formatPrimaryAction } from "@/lib/persona/labels";
 import { getPublicTrustPresentation } from "@/lib/persona/public-trust";
 import { getPublicSmartCardDirectActions } from "@/lib/persona/smart-card";
 
@@ -13,7 +13,6 @@ interface PublicProfileCardProps {
 
 export function PublicProfileCard({ profile }: PublicProfileCardProps) {
   const avatarHue = ((profile.username?.charCodeAt(0) ?? 72) * 137) % 360;
-  const isSmartCard = profile.sharingMode === "smart_card";
   const trustPresentation = getPublicTrustPresentation(profile.trust);
   const enabledSmartCardActions = profile.smartCard
     ? getPublicSmartCardDirectActions(profile.smartCard, profile).map(
@@ -86,11 +85,6 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
 
       <div className="space-y-5 px-6 py-6">
         <div className="flex flex-wrap gap-2">
-          <StatusBadge
-            label={formatSharingMode(profile.sharingMode)}
-            tone={isSmartCard ? "cyan" : "neutral"}
-            dot
-          />
           {profile.smartCard?.primaryAction ? (
             <StatusBadge
               label={formatPrimaryAction(profile.smartCard.primaryAction)}
@@ -99,7 +93,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
           ) : null}
         </div>
 
-        {isSmartCard ? (
+        {profile.sharingMode === "smart_card" ? (
           <div className="space-y-3 rounded-3xl border border-cyan-200 bg-cyan-50/70 p-4 dark:border-brandCyan/25 dark:bg-brandCyan/10">
             <div className="space-y-1">
               <p className="label-xs text-cyan-700 dark:text-brandCyan">
@@ -108,14 +102,14 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
               <p className="text-sm leading-6 text-cyan-800 dark:text-white/80">
                 {profile.smartCard
                   ? dotlyPositioning.publicProfile.smartCardHelper
-                  : "This profile uses controlled access, but its public configuration is currently unavailable."}
+                  : "This profile is unavailable right now."}
               </p>
             </div>
 
             {profile.smartCard ? (
               <div className="space-y-2">
                 <p className="label-xs text-cyan-700 dark:text-brandCyan">
-                  Available actions
+                  Ways to connect
                 </p>
                 {enabledSmartCardActions.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
@@ -125,8 +119,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
                   </div>
                 ) : (
                   <p className="text-sm leading-6 text-cyan-800 dark:text-white/80">
-                    No direct contact actions are currently enabled on this
-                    card.
+                    No contact actions are available right now.
                   </p>
                 )}
               </div>

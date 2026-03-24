@@ -9,7 +9,7 @@ import {
   PersonaAccessMode as PrismaPersonaAccessMode,
   PersonaSharingMode as PrismaPersonaSharingMode,
   Prisma,
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 
 import { AgencyProfileStatus } from "../../common/enums/agency-profile-status.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";

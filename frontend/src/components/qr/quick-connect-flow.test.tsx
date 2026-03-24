@@ -38,17 +38,15 @@ describe("QuickConnectFlow", () => {
       }),
     );
 
-    expect(screen.getByText(/^quick connect$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^connect$/i, { selector: "p" })).toBeInTheDocument();
     expect(screen.getByText(/jane doe/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/connect while this introduction is still fresh/i),
+      screen.getByText(/you are ready to connect with jane/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/what happens next/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/choose the persona that matches how you met/i),
+      screen.getByText(/we will connect using your selected profile/i),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /connect now/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeInTheDocument();
   });
 });

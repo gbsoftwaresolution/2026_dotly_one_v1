@@ -21,7 +21,7 @@ type ToastItem = {
 
 const TOAST_EVENT = "dotly:toast";
 const DEFAULT_TOAST_DURATION_MS = 1800;
-const EXIT_DURATION_MS = 180;
+const EXIT_DURATION_MS = 160;
 
 export function showToast(detail: string | ToastDetail) {
   if (typeof window === "undefined") {
@@ -48,7 +48,7 @@ export function ToastViewport() {
     const dismissToast = (id: number) => {
       setToasts((current) =>
         current.map((toast) =>
-          toast.id === id ? { ...toast, exiting: true } : toast,
+          toast.id === id && !toast.exiting ? { ...toast, exiting: true } : toast,
         ),
       );
 
@@ -102,7 +102,7 @@ export function ToastViewport() {
             role="status"
             className={cn(
               "w-full rounded-full border px-4 py-3 text-center text-sm font-medium shadow-[0_20px_50px_rgba(15,23,42,0.18)] backdrop-blur-xl",
-              "transition-[opacity,transform] duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+              "transition-[opacity,transform] duration-[160ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
               toast.exiting ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100",
               toast.tone === "error"
                 ? "border-rose-500/20 bg-rose-500/92 text-white"

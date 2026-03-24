@@ -30,28 +30,28 @@ const stagger = {
 };
 
 const problemPoints = [
-  "Everyone gets permanent access",
-  "The moment you met disappears",
-  "You lose control of the next step",
-  "Your number becomes the product",
+  "Sharing your number is permanent",
+  "Paper cards get lost",
+  "People forget where you met",
+  "You lose control after the first hello",
 ];
 
 const solutionPoints = [
-  "Choose whether someone connects, requests access, or saves your details.",
-  "Keep trust and context attached to the relationship.",
-  "Share once without giving up control forever.",
+  "Share your Dotly instead of your number.",
+  "Let people connect, request access, or contact you.",
+  "Keep your contact details in your control.",
 ];
 
 const steps = [
   "Share your Dotly",
-  "They connect the right way",
-  "You keep control after the moment",
+  "They choose the next step",
+  "You stay in control",
 ];
 
 const smartCardPoints = [
-  "A primary action that is clear before you tap.",
-  "Direct actions only when they are meant to be shared.",
-  "Fast enough to use in the moment you meet.",
+  "One link with a clear next step.",
+  "Contact options only when you want them.",
+  "Easy to use in the moment you meet.",
 ];
 
 const realWorldExamples = ["Events", "Meetings", "Introductions"];
@@ -111,7 +111,7 @@ export default function LandingPage() {
               </div>
               <div className="space-y-2">
                 <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                  Real-world connection without giving up control.
+                  Share one Dotly. Keep your number private.
                 </h2>
                 <p className="text-sm leading-6 text-muted">
                   {dotlyPositioning.shortExplainer}
@@ -132,7 +132,7 @@ export default function LandingPage() {
               </div>
               <div className="space-y-2">
                 <h2 className="text-xl font-bold tracking-tight text-foreground">
-                  Sharing your number is a permanent decision.
+                  Sharing your number is too much, too soon.
                 </h2>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {problemPoints.map((point) => (
@@ -158,7 +158,7 @@ export default function LandingPage() {
               </div>
               <div className="space-y-2">
                 <h2 className="text-xl font-bold tracking-tight text-foreground">
-                  Dotly keeps the next step in your control.
+                  Dotly gives you a better way to connect.
                 </h2>
                 <div className="space-y-2">
                   {solutionPoints.map((point) => (
@@ -199,6 +199,13 @@ export default function LandingPage() {
                       <p className="mt-2 text-sm font-semibold text-foreground">
                         {step}
                       </p>
+                      <p className="mt-1 text-xs leading-5 text-muted">
+                        {index === 0
+                          ? "Share it in person, by link, or with QR."
+                          : index === 1
+                            ? "They can connect, request access, or contact you."
+                            : "You decide who gets through."}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -214,7 +221,7 @@ export default function LandingPage() {
           >
             <div className="space-y-4">
               <h2 className="text-xl font-bold tracking-tight text-foreground">
-                A smarter card for the moment after you meet
+                One contact page. Clear actions.
               </h2>
               <div className="grid gap-3 sm:grid-cols-3">
                 {smartCardPoints.map((point) => (
@@ -235,10 +242,10 @@ export default function LandingPage() {
           >
             <div className="space-y-4">
               <h2 className="text-xl font-bold tracking-tight text-foreground">
-                Trust shows up before access does
+                You control who can contact you
               </h2>
               <p className="text-sm leading-6 text-muted">
-                Trust is built in before the next step is shared.
+                Share your Dotly first. Share more only when you want to.
               </p>
             </div>
           </motion.div>
@@ -262,7 +269,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <p className="text-sm leading-6 text-muted">
-                Keep the memory of where you met and why it mattered.
+                Make it easy to connect without giving away too much.
               </p>
             </div>
           </motion.div>
@@ -288,7 +295,7 @@ export default function LandingPage() {
           <div className="relative text-center space-y-6">
             <div className="space-y-2">
               <h2 className="text-2xl font-black tracking-tight text-foreground">
-                Start with the identity you share in real life
+                Don&apos;t share your number. Share your Dotly.
               </h2>
               <p className="mx-auto max-w-[30ch] text-sm leading-relaxed text-muted">
                 {dotlyPositioning.supportingPoints.join(" ")}
@@ -304,6 +311,11 @@ export default function LandingPage() {
               <Link href="/login" className="block w-full">
                 <SecondaryButton fullWidth size="md">
                   Log in
+                </SecondaryButton>
+              </Link>
+              <Link href="/support" className="block w-full">
+                <SecondaryButton fullWidth size="md">
+                  Support
                 </SecondaryButton>
               </Link>
             </div>

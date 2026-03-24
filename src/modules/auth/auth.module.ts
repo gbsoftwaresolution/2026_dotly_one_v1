@@ -4,6 +4,7 @@ import { JwtModule } from "@nestjs/jwt";
 import type { StringValue } from "ms";
 
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { OptionalJwtAuthGuard } from "../../common/guards/optional-jwt-auth.guard";
 import { AnalyticsModule } from "../analytics/analytics.module";
 
 import { AuthAbuseProtectionService } from "./auth-abuse-protection.service";
@@ -41,6 +42,7 @@ import { VerificationPolicyService } from "./verification-policy.service";
     AuthMetricsService,
     AuthService,
     JwtAuthGuard,
+    OptionalJwtAuthGuard,
     PasswordPolicyService,
     DeviceSessionService,
     SecurityArtifactLifecycleService,
@@ -52,6 +54,7 @@ import { VerificationPolicyService } from "./verification-policy.service";
     AuthService,
     DeviceSessionService,
     JwtAuthGuard,
+    OptionalJwtAuthGuard,
     JwtModule,
     SecurityArtifactLifecycleService,
     VerificationPolicyService,

@@ -103,8 +103,9 @@ describe("InstantShareExperience", () => {
       }),
     );
 
-    expect(screen.getByText(/scan to open my profile/i)).toBeInTheDocument();
-    expect(screen.getByText(/scan to view my dotly/i)).toBeInTheDocument();
+    expect(screen.getByText(/sender persona/i)).toBeInTheDocument();
+    expect(screen.getByText(/scan to view my contact/i)).toBeInTheDocument();
+    expect(screen.getByText(/verified/i)).toBeInTheDocument();
   });
 
   it("shows the instant connect scan clarity line while bootstrapping the share shell", () => {
@@ -115,7 +116,8 @@ describe("InstantShareExperience", () => {
       }),
     );
 
-    expect(screen.getByText(/scan to open my profile/i)).toBeInTheDocument();
+    expect(screen.getByText(/sender persona/i)).toBeInTheDocument();
     expect(screen.getByText(/scan to connect on dotly/i)).toBeInTheDocument();
+    expect(screen.getByText(/verified/i)).toBeInTheDocument();
   });
 });

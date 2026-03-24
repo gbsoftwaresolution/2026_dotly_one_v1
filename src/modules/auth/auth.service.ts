@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../../generated/prisma/client";
 import * as bcrypt from "bcryptjs";
 import { createHash, randomBytes, randomInt } from "node:crypto";
 

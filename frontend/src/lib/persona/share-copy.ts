@@ -9,15 +9,15 @@ function isInstantConnect(type: ShareLikeType): boolean {
 export function getShareInstruction(type: ShareLikeType): string {
   return isInstantConnect(type)
     ? "Scan to connect on Dotly"
-    : "Scan to view my Dotly";
+    : "Scan to view my contact";
 }
 
 export function getShareHeadline(type: ShareLikeType): string {
-  return isInstantConnect(type) ? "Ready to connect" : "Ready to share";
+  return isInstantConnect(type) ? "Ready to connect" : "View my contact";
 }
 
 export function getShareDescription(type: ShareLikeType): string {
   return isInstantConnect(type)
     ? "They scan once and connect right away."
-    : "They scan once and land on your Dotly card.";
+    : "They scan once and open your contact.";
 }

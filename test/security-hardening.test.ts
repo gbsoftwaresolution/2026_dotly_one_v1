@@ -10,7 +10,7 @@ import {
   PersonaAccessMode as PrismaPersonaAccessMode,
   QrStatus as PrismaQrStatus,
   QrType as PrismaQrType,
-} from "@prisma/client";
+} from "../src/generated/prisma/client";
 
 import { JwtAuthGuard } from "../src/common/guards/jwt-auth.guard";
 import { QrService } from "../src/modules/qr/qr.service";

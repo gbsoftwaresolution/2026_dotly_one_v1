@@ -10,7 +10,7 @@ import {
   PersonaSharingMode as PrismaPersonaSharingMode,
   QrStatus as PrismaQrStatus,
   QrType as PrismaQrType,
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { PersonaSmartCardPrimaryAction } from "../../common/enums/persona-smart-card-primary-action.enum";

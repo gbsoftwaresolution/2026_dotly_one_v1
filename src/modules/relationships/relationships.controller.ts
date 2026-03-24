@@ -4,6 +4,8 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
+  Patch,
   Post,
   UseGuards,
 } from "@nestjs/common";
@@ -14,6 +16,7 @@ import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 
 import { CreateInstantConnectDto } from "./dto/create-instant-connect.dto";
 import { CreatePublicInstantConnectDto } from "./dto/create-public-instant-connect.dto";
+import { UpdateRelationshipDto } from "./dto/update-relationship.dto";
 import { RelationshipsService } from "./relationships.service";
 
 @UseGuards(JwtAuthGuard)
@@ -44,6 +47,19 @@ export class RelationshipsController {
       user.id,
       username,
       createInstantConnectDto,
+    );
+  }
+
+  @Patch(":id")
+  updateRelationship(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id", new ParseUUIDPipe()) id: string,
+    @Body() updateRelationshipDto: UpdateRelationshipDto,
+  ) {
+    return this.relationshipsService.updateOwnedRelationshipNotes(
+      user.id,
+      id,
+      updateRelationshipDto,
     );
   }
 }

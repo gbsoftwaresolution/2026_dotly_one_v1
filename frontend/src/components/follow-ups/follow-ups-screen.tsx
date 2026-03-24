@@ -20,6 +20,13 @@ import { followUpsApi } from "@/lib/api/follow-ups-api";
 import { ApiError } from "@/lib/api/client";
 import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
+import {
+  getPassiveReminderBadgeLabel,
+  getPassiveReminderBody,
+  getPassiveReminderHeadline,
+  getPassiveReminderScheduleLabel,
+  isPassiveInactivityFollowUp,
+} from "@/lib/follow-ups/passive-reminder";
 import { formatConnectionContext } from "@/lib/utils/format-contact-relationship";
 import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import { cn } from "@/lib/utils/cn";
@@ -254,6 +261,13 @@ function getConnectionContextLine(followUp: FollowUp) {
   );
 }
 
+function getPassiveContactLine(followUp: FollowUp) {
+  const title = getFollowUpTitle(followUp);
+  const companyLine = getCompanyLine(followUp);
+
+  return companyLine ? `${title} • ${companyLine}` : title;
+}
+
 export function FollowUpsScreen() {
   const router = useRouter();
   const { followUps: followUpState } = useAppDataSnapshot();
@@ -435,6 +449,7 @@ export function FollowUpsScreen() {
               <div className="space-y-3">
                 {section.items.map((followUp) => {
                   const isWorking = actionState?.id === followUp.id;
+                  const isPassiveReminder = isPassiveInactivityFollowUp(followUp);
                   const title = getFollowUpTitle(followUp);
                   const companyLine = getCompanyLine(followUp);
                   const connectionContextLine =
@@ -450,6 +465,8 @@ export function FollowUpsScreen() {
                           ? "translate-y-2 opacity-0"
                           : "translate-y-0 opacity-100",
                         "rounded-card border border-black/[0.06] bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_0_rgba(255,255,255,0.9)] dark:border-white/[0.06] dark:bg-surface1 dark:shadow-card sm:p-5",
+                        isPassiveReminder &&
+                          "border-cyan-200/80 bg-cyan-50/50 dark:border-brandCyan/20 dark:bg-brandCyan/[0.06]",
                         section.key === "overdue"
                           ? "border-rose-200/80 dark:border-rose-900/60"
                           : section.key === "due"
@@ -460,15 +477,26 @@ export function FollowUpsScreen() {
                       <div className="space-y-4">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0 space-y-1">
+                            {isPassiveReminder ? (
+                              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-cyan-700 dark:text-brandCyan">
+                                {getPassiveReminderBadgeLabel()}
+                              </p>
+                            ) : null}
                             <Link
                               href={routes.app.contactDetail(
                                 followUp.relationshipId,
                               )}
                               className="block text-base font-semibold text-foreground transition-colors hover:text-brandRose dark:hover:text-brandCyan"
                             >
-                              {title}
+                              {isPassiveReminder
+                                ? getPassiveReminderHeadline()
+                                : title}
                             </Link>
-                            {companyLine ? (
+                            {isPassiveReminder ? (
+                              <p className="text-sm text-muted">
+                                {getPassiveContactLine(followUp)}
+                              </p>
+                            ) : companyLine ? (
                               <p className="text-sm text-muted">
                                 {companyLine}
                               </p>
@@ -490,13 +518,27 @@ export function FollowUpsScreen() {
                           </div>
                         ) : null}
 
-                        <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
+                        <div
+                          className={cn(
+                            "rounded-2xl border px-4 py-3",
+                            isPassiveReminder
+                              ? "border-cyan-200/80 bg-cyan-50/80 dark:border-brandCyan/20 dark:bg-brandCyan/[0.08]"
+                              : "border-border bg-surface/60",
+                          )}
+                        >
                           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                            Revisit on
+                            {isPassiveReminder
+                              ? getPassiveReminderScheduleLabel()
+                              : "Revisit on"}
                           </p>
                           <p className="mt-1 text-sm font-medium text-foreground">
                             {formatReminder(followUp.remindAt)}
                           </p>
+                          {isPassiveReminder ? (
+                            <p className="mt-1 text-sm leading-6 text-foreground/80">
+                              {getPassiveReminderBody()}
+                            </p>
+                          ) : null}
                         </div>
 
                         {followUp.note ? (
@@ -521,20 +563,33 @@ export function FollowUpsScreen() {
                           >
                             {isWorking && actionState?.type === "complete"
                               ? "Completing..."
-                              : "Mark done"}
+                              : isPassiveReminder
+                                ? "Done"
+                                : "Mark done"}
                           </PrimaryButton>
-                          <SecondaryButton
-                            type="button"
-                            fullWidth
-                            disabled={isWorking}
-                            onClick={() =>
-                              void handleAction(followUp.id, "cancel")
-                            }
-                          >
-                            {isWorking && actionState?.type === "cancel"
-                              ? "Cancelling..."
-                              : "Dismiss"}
-                          </SecondaryButton>
+                          {isPassiveReminder ? (
+                            <Link
+                              href={routes.app.contactDetail(
+                                followUp.relationshipId,
+                              )}
+                              className="inline-flex min-h-[60px] w-full items-center justify-center rounded-2xl border border-border bg-transparent px-5 py-4 text-sm font-semibold text-foreground transition-all hover:bg-slate-50 hover:border-border active:scale-95 dark:hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-border focus:ring-offset-2"
+                            >
+                              Set follow-up
+                            </Link>
+                          ) : (
+                            <SecondaryButton
+                              type="button"
+                              fullWidth
+                              disabled={isWorking}
+                              onClick={() =>
+                                void handleAction(followUp.id, "cancel")
+                              }
+                            >
+                              {isWorking && actionState?.type === "cancel"
+                                ? "Cancelling..."
+                                : "Dismiss"}
+                            </SecondaryButton>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -548,6 +603,7 @@ export function FollowUpsScreen() {
         <div className="space-y-3">
           {followUps.map((followUp) => {
             const isWorking = actionState?.id === followUp.id;
+            const isPassiveReminder = isPassiveInactivityFollowUp(followUp);
             const title = getFollowUpTitle(followUp);
             const companyLine = getCompanyLine(followUp);
             const connectionContextLine = getConnectionContextLine(followUp);
@@ -563,19 +619,32 @@ export function FollowUpsScreen() {
                     ? "translate-y-2 opacity-0"
                     : "translate-y-0 opacity-100",
                   "rounded-card border border-black/[0.06] bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_0_rgba(255,255,255,0.9)] dark:border-white/[0.06] dark:bg-surface1 dark:shadow-card sm:p-5",
+                  isPassiveReminder &&
+                    "border-cyan-200/80 bg-cyan-50/50 dark:border-brandCyan/20 dark:bg-brandCyan/[0.06]",
                   followUp.status !== "pending" ? "opacity-90" : "",
                 )}
               >
                 <div className="space-y-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 space-y-1">
+                      {isPassiveReminder ? (
+                        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-cyan-700 dark:text-brandCyan">
+                          {getPassiveReminderBadgeLabel()}
+                        </p>
+                      ) : null}
                       <Link
                         href={routes.app.contactDetail(followUp.relationshipId)}
                         className="block text-base font-semibold text-foreground transition-colors hover:text-brandRose dark:hover:text-brandCyan"
                       >
-                        {title}
+                        {isPassiveReminder
+                          ? getPassiveReminderHeadline()
+                          : title}
                       </Link>
-                      {companyLine ? (
+                      {isPassiveReminder ? (
+                        <p className="text-sm text-muted">
+                          {getPassiveContactLine(followUp)}
+                        </p>
+                      ) : companyLine ? (
                         <p className="text-sm text-muted">{companyLine}</p>
                       ) : null}
                       {connectionContextLine ? (
@@ -595,15 +664,29 @@ export function FollowUpsScreen() {
                     </div>
                   ) : null}
 
-                  <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
+                  <div
+                    className={cn(
+                      "rounded-2xl border px-4 py-3",
+                      isPassiveReminder
+                        ? "border-cyan-200/80 bg-cyan-50/80 dark:border-brandCyan/20 dark:bg-brandCyan/[0.08]"
+                        : "border-border bg-surface/60",
+                    )}
+                  >
                     <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                      {followUp.status === "pending"
-                        ? "Revisit on"
-                        : "Follow-up"}
+                      {isPassiveReminder
+                        ? getPassiveReminderScheduleLabel()
+                        : followUp.status === "pending"
+                          ? "Revisit on"
+                          : "Follow-up"}
                     </p>
                     <p className="mt-1 text-sm font-medium text-foreground">
                       {formatReminder(followUp.remindAt)}
                     </p>
+                    {isPassiveReminder ? (
+                      <p className="mt-1 text-sm leading-6 text-foreground/80">
+                        {getPassiveReminderBody()}
+                      </p>
+                    ) : null}
                     {resolutionLabel ? (
                       <p className="mt-1 text-xs text-muted">
                         {followUp.status === "completed"
@@ -636,18 +719,31 @@ export function FollowUpsScreen() {
                       >
                         {isWorking && actionState?.type === "complete"
                           ? "Completing..."
-                          : "Mark done"}
+                          : isPassiveReminder
+                            ? "Done"
+                            : "Mark done"}
                       </PrimaryButton>
-                      <SecondaryButton
-                        type="button"
-                        fullWidth
-                        disabled={isWorking}
-                        onClick={() => void handleAction(followUp.id, "cancel")}
-                      >
-                        {isWorking && actionState?.type === "cancel"
-                          ? "Cancelling..."
-                          : "Dismiss"}
-                      </SecondaryButton>
+                      {isPassiveReminder ? (
+                        <Link
+                          href={routes.app.contactDetail(followUp.relationshipId)}
+                          className="inline-flex min-h-[60px] w-full items-center justify-center rounded-2xl border border-border bg-transparent px-5 py-4 text-sm font-semibold text-foreground transition-all hover:bg-slate-50 hover:border-border active:scale-95 dark:hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-border focus:ring-offset-2"
+                        >
+                          Set follow-up
+                        </Link>
+                      ) : (
+                        <SecondaryButton
+                          type="button"
+                          fullWidth
+                          disabled={isWorking}
+                          onClick={() =>
+                            void handleAction(followUp.id, "cancel")
+                          }
+                        >
+                          {isWorking && actionState?.type === "cancel"
+                            ? "Cancelling..."
+                            : "Dismiss"}
+                        </SecondaryButton>
+                      )}
                     </div>
                   ) : null}
                 </div>

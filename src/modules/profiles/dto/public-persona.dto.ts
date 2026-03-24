@@ -1,4 +1,4 @@
-import { PersonaAccessMode as PrismaPersonaAccessMode } from "@prisma/client";
+import { PersonaAccessMode as PrismaPersonaAccessMode } from "../../../generated/prisma/client";
 
 import { PersonaSharingMode } from "../../../common/enums/persona-sharing-mode.enum";
 import {

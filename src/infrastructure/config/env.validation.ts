@@ -68,6 +68,32 @@ export const envValidationSchema = Joi.object({
     .uri({ scheme: [/https?/] })
     .allow("")
     .default(""),
+  SUPPORT_INBOX_ALLOWED_EMAILS: Joi.string()
+    .custom((value, helpers) => {
+      const normalized = String(value).trim();
+
+      if (normalized.length === 0) {
+        return "";
+      }
+
+      const emailList = normalized
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+
+      if (
+        emailList.length === 0 ||
+        emailList.some(
+          (entry) => EMAIL_ADDRESS_SCHEMA.validate(entry).error !== undefined,
+        )
+      ) {
+        return helpers.error("string.email");
+      }
+
+      return emailList.join(",");
+    }, "support inbox allowlist validation")
+    .allow("")
+    .default(""),
   TWILIO_ACCOUNT_SID: Joi.alternatives()
     .try(
       Joi.string().length(0),
@@ -90,6 +116,20 @@ export const envValidationSchema = Joi.object({
     .default(true),
   FOLLOW_UPS_PROCESSING_CRON: Joi.string().min(1).default("* * * * *"),
   FOLLOW_UPS_PROCESSING_BATCH_SIZE: Joi.number()
+    .integer()
+    .min(1)
+    .max(1000)
+    .default(100),
+  FOLLOW_UPS_PASSIVE_PROCESSING_ENABLED: Joi.boolean()
+    .truthy("true")
+    .truthy("1")
+    .falsy("false")
+    .falsy("0")
+    .default(true),
+  FOLLOW_UPS_PASSIVE_PROCESSING_CRON: Joi.string()
+    .min(1)
+    .default("0 */12 * * *"),
+  FOLLOW_UPS_PASSIVE_PROCESSING_BATCH_SIZE: Joi.number()
     .integer()
     .min(1)
     .max(1000)
@@ -292,7 +332,7 @@ function isValidMailboxAddress(value: string): boolean {
   const trimmedValue = value.trim();
   const mailboxMatch = trimmedValue.match(/^([^<>]+)\s*<([^<>]+)>$/);
   const emailCandidate = mailboxMatch
-    ? mailboxMatch[2]?.trim() ?? ""
+    ? (mailboxMatch[2]?.trim() ?? "")
     : trimmedValue;
 
   if (mailboxMatch && mailboxMatch[1]?.trim().length === 0) {

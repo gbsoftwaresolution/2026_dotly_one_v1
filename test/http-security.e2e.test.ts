@@ -558,13 +558,18 @@ describe("HTTP Security E2E", () => {
     assert.equal(requestCalls.length, 0);
   });
 
-  it("rejects unauthenticated public profile reads", async () => {
+  it("serves unauthenticated public profile reads without viewer context", async () => {
+    publicProfileCalls.length = 0;
     const response = await fetch(`${baseUrl}/v1/public/personas/alice`);
     const payload = await response.json();
 
-    assert.equal(response.status, 401);
-    assert.equal(payload.success, false);
-    assert.equal(payload.message, "Authentication token is required");
+    assert.equal(response.status, 200);
+    assert.equal(payload.success, true);
+    assert.equal((publicProfileCalls.at(-1) as any)?.viewerUserId, null);
+    assert.equal(
+      typeof (publicProfileCalls.at(-1) as any)?.idempotencyKey,
+      "string",
+    );
   });
 
   it("serves authenticated public profiles with only the allowed public fields", async () => {
@@ -655,13 +660,17 @@ describe("HTTP Security E2E", () => {
     );
   });
 
-  it("rejects unauthenticated public vcard downloads", async () => {
+  it("downloads unauthenticated public vcards without a JSON envelope", async () => {
     const response = await fetch(`${baseUrl}/v1/public/personas/alice/vcard`);
-    const payload = await response.json();
+    const payload = await response.text();
 
-    assert.equal(response.status, 401);
-    assert.equal(payload.success, false);
-    assert.equal(payload.message, "Authentication token is required");
+    assert.equal(response.status, 200);
+    assert.match(
+      response.headers.get("content-type") ?? "",
+      /^text\/vcard; charset=utf-8$/,
+    );
+    assert.match(payload, /BEGIN:VCARD/);
+    assert.doesNotMatch(payload, /"success":true/);
   });
 
   it("downloads authenticated public vcards without a JSON envelope", async () => {

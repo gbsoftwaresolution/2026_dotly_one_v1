@@ -5,10 +5,6 @@ import { PublicUserInteractions } from "@/components/profile/public-user-interac
 import { publicApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { getServerAccessToken } from "@/lib/auth/server-session";
-import {
-  hasPublicSmartCardDirectActions,
-  resolvePublicSmartCardPrimaryCta,
-} from "@/lib/persona/smart-card";
 
 interface PublicUserPageProps {
   username: string;
@@ -31,24 +27,7 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
     const isAuthenticated = Boolean(accessToken);
 
     const isSmartCard = profile.sharingMode === "smart_card";
-    const resolvedSmartCardPrimaryCta =
-      profile.sharingMode === "smart_card" && profile.smartCard
-        ? resolvePublicSmartCardPrimaryCta(profile.smartCard.primaryAction, {
-            instantConnectUrl: profile.instantConnectUrl,
-            actionState: profile.smartCard.actionState,
-            hasDirectActions: hasPublicSmartCardDirectActions(profile),
-          })
-        : null;
-    const supportsInstantConnectRequestFallback =
-      profile.sharingMode === "smart_card" &&
-      profile.smartCard !== null &&
-      resolvedSmartCardPrimaryCta?.requestedAction === "instant_connect" &&
-      profile.smartCard.actionState.requestAccessEnabled;
-    const showRequestAccessPanel =
-      profile.sharingMode === "controlled" ||
-      (resolvedSmartCardPrimaryCta?.action === "request_access" &&
-        !resolvedSmartCardPrimaryCta.isDisabled) ||
-      supportsInstantConnectRequestFallback;
+    const showRequestAccessPanel = profile.sharingMode === "controlled";
     const loginHref = buildLoginHref(profile.username);
 
     return (

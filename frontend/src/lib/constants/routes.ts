@@ -6,6 +6,7 @@ export const routes = {
     verifyEmail: "/verify-email",
     forgotPassword: "/forgot-password",
     resetPassword: "/reset-password",
+    support: "/support",
     terms: "/terms",
     privacy: "/privacy",
     qrLanding: "/q",
@@ -15,7 +16,8 @@ export const routes = {
     personas: "/app/personas",
     createPersona: "/app/personas/create",
     personaDetail: (personaId: string) => `/app/personas/${personaId}`,
-    personaSettings: (personaId: string) => `/app/personas/settings/${personaId}`,
+    personaSettings: (personaId: string) =>
+      `/app/personas/settings/${personaId}`,
     requests: "/app/requests",
     qr: "/app/qr",
     contacts: "/app/contacts",
@@ -27,5 +29,6 @@ export const routes = {
     notifications: "/app/notifications",
     analytics: "/app/analytics",
     settings: "/app/settings",
+    supportInbox: "/app/support",
   },
 } as const;

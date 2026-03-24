@@ -2,7 +2,7 @@ import {
   PersonaAccessMode as PrismaPersonaAccessMode,
   PersonaType as PrismaPersonaType,
   Prisma,
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 
 import { PersonaAccessMode } from "../../common/enums/persona-access-mode.enum";
 import { PersonaType } from "../../common/enums/persona-type.enum";

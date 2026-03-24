@@ -99,7 +99,7 @@ export function PublicUserInteractions({
         <PublicProfileCard profile={profile} />
       )}
 
-      {showRequestAccessPanel ? (
+      {showRequestAccessPanel && profile.sharingMode !== "smart_card" ? (
         <div id="request-access-panel" tabIndex={-1}>
           {personasLoading && resolvedAuth ? (
             <Card className="space-y-4">

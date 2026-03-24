@@ -1,7 +1,7 @@
 import {
   AgencyProfileStatus as PrismaAgencyProfileStatus,
   Prisma,
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 
 import { AgencyProfileStatus } from "../../common/enums/agency-profile-status.enum";
 import { canonicalizePublicUrl } from "../personas/public-url";

@@ -29,7 +29,7 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-3">
             <StatusBadge
-              label={isQuickConnect ? "Quick Connect" : "Profile"}
+              label={isQuickConnect ? "Connect" : "Contact"}
               tone="neutral"
             />
             <div className="space-y-1">
@@ -55,15 +55,15 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
       <div className="space-y-5 px-6 py-6">
         <div className="space-y-1 rounded-3xl border border-border bg-surface/60 p-4">
           <p className="label-xs text-muted">
-            {isQuickConnect ? "Who shared this QR" : "Profile preview"}
+            {isQuickConnect ? "Who shared this" : "Contact preview"}
           </p>
           <p className="text-sm font-semibold text-foreground">
             {scanInstruction}
           </p>
           <p className="text-sm leading-6 text-muted">
             {isQuickConnect
-              ? "You are about to connect with this person. Confirm the name, then continue in one tap."
-              : "You are about to open this person's Dotly card and choose the next step from there."}
+              ? "You are about to connect with this person. Confirm the name, then continue."
+              : "You are about to open this person's contact and choose the next step."}
           </p>
         </div>
 
@@ -81,8 +81,8 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
           </div>
           {isQuickConnect ? (
             <div className="space-y-1">
-              <dt className="label-xs text-muted">Access type</dt>
-              <dd className="text-foreground">Temporary intro</dd>
+              <dt className="label-xs text-muted">Contact</dt>
+              <dd className="text-foreground">Connect from this QR</dd>
             </div>
           ) : null}
         </dl>

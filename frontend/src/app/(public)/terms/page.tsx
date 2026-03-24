@@ -1,4 +1,7 @@
+import Link from "next/link";
+
 import { LegalPageShell } from "@/components/layout/legal-page-shell";
+import { routes } from "@/lib/constants/routes";
 
 const sections = [
   {
@@ -65,6 +68,17 @@ const sections = [
           Continued use of Dotly after material updates means you accept the
           revised terms. If you do not agree with future changes, you should
           stop using the service.
+        </p>
+        <p>
+          If you have questions about these terms or need account help, reach
+          out through{" "}
+          <Link
+            href={routes.public.support}
+            className="font-semibold text-foreground underline underline-offset-4"
+          >
+            Dotly support
+          </Link>
+          .
         </p>
       </>
     ),

@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { PersonaAccessMode as PrismaPersonaAccessMode } from "@prisma/client";
+import { PersonaAccessMode as PrismaPersonaAccessMode } from "../../generated/prisma/client";
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { BlocksService } from "../blocks/blocks.service";

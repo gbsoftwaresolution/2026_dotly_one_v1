@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 import { contactsApi } from "@/lib/api/contacts-api";
 import { ApiError } from "@/lib/api/client";
@@ -78,6 +78,13 @@ let renderedSnapshot: AppDataSnapshot = {
   personas: snapshot.personas,
   contacts: snapshot.contacts,
   followUps: snapshot.followUps,
+  currentPersona: null,
+};
+
+const serverRenderedSnapshot: AppDataSnapshot = {
+  personas: createResourceState(EMPTY_PERSONAS),
+  contacts: createResourceState(EMPTY_CONTACTS),
+  followUps: createFollowUpState(),
   currentPersona: null,
 };
 
@@ -237,7 +244,7 @@ function upsertFollowUpItem(items: FollowUp[], followUp: FollowUp) {
 
 export function hydrateAppDataStore() {
   if (hydrated || !canUseStorage()) {
-    return;
+    return false;
   }
 
   hydrated = true;
@@ -245,14 +252,14 @@ export function hydrateAppDataStore() {
   const storedValue = window.sessionStorage.getItem(STORAGE_KEY);
 
   if (!storedValue) {
-    return;
+    return false;
   }
 
   try {
     const parsedValue = JSON.parse(storedValue) as PersistedAppDataSnapshot | null;
 
     if (!parsedValue || typeof parsedValue !== "object") {
-      return;
+      return false;
     }
 
     snapshot = {
@@ -296,8 +303,10 @@ export function hydrateAppDataStore() {
       },
     };
     syncRenderedSnapshot();
+    return true;
   } catch {
     window.sessionStorage.removeItem(STORAGE_KEY);
+    return false;
   }
 }
 
@@ -326,6 +335,10 @@ export function clearAppDataStore() {
 export function getAppDataSnapshot() {
   hydrateAppDataStore();
   return renderedSnapshot;
+}
+
+function getServerAppDataSnapshot() {
+  return serverRenderedSnapshot;
 }
 
 export async function refreshPersonas(options?: { force?: boolean }) {
@@ -600,7 +613,19 @@ function subscribe(listener: () => void) {
 }
 
 export function useAppDataSnapshot() {
-  return useSyncExternalStore(subscribe, getAppDataSnapshot, getAppDataSnapshot);
+  const appDataSnapshot = useSyncExternalStore(
+    subscribe,
+    getAppDataSnapshot,
+    getServerAppDataSnapshot,
+  );
+
+  useEffect(() => {
+    if (hydrateAppDataStore()) {
+      emitChange();
+    }
+  }, []);
+
+  return appDataSnapshot;
 }
 
 export { APP_DATA_WARM_ROUTES };

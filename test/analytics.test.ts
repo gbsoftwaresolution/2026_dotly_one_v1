@@ -6,7 +6,7 @@ import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import {
   AnalyticsEventType as PrismaAnalyticsEventType,
   PersonaSharingMode as PrismaPersonaSharingMode,
-} from "@prisma/client";
+} from "../src/generated/prisma/client";
 
 import { AnalyticsService } from "../src/modules/analytics/analytics.service";
 import { ContactRequestSourceType } from "../src/common/enums/contact-request-source-type.enum";

@@ -24,6 +24,8 @@ export interface MailConfigurationStatus {
   missingSettings: MailConfigurationKey[];
 }
 
+export type MailDeliveryResult = "sent" | "skipped" | "failed";
+
 @Injectable()
 export class MailService {
   constructor(
@@ -35,6 +37,12 @@ export class MailService {
 
   isConfigured(): boolean {
     return this.isEmailVerificationConfigured();
+  }
+
+  isSupportConfigured(): boolean {
+    return Boolean(
+      this.getMailgunApiKey() && this.getMailgunDomain() && this.getFromEmail(),
+    );
   }
 
   getConfigurationStatus(): MailConfigurationStatus {
@@ -199,6 +207,80 @@ export class MailService {
       text: template.text,
       html: template.html,
     });
+  }
+
+  async sendSupportRequest(options: {
+    to: string;
+    subject: string;
+    text: string;
+    html: string;
+    replyTo?: string;
+  }): Promise<MailDeliveryResult> {
+    if (!this.isSupportConfigured()) {
+      this.logger.warn(
+        "Support email skipped because mail delivery is not fully configured",
+        "MailService",
+      );
+      return "skipped";
+    }
+
+    const form = new URLSearchParams({
+      from: this.getFromEmail(),
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
+    });
+
+    if (options.replyTo?.trim()) {
+      form.set("h:Reply-To", options.replyTo.trim());
+    }
+
+    try {
+      const response = await fetch(this.getMailgunMessagesUrl(), {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${Buffer.from(`api:${this.getMailgunApiKey()}`).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: form.toString(),
+      });
+
+      if (!response.ok) {
+        await response.text();
+
+        this.logger.errorWithMeta(
+          "Mailgun support email delivery failed",
+          {
+            status: response.status,
+            statusText: response.statusText,
+            recipientDomain: this.getEmailDomain(options.to),
+            providerRequestId: this.getProviderRequestId(response),
+          },
+          undefined,
+          "MailService",
+        );
+
+        return "failed";
+      }
+
+      return "sent";
+    } catch (error) {
+      this.logger.errorWithMeta(
+        "Mailgun support email request failed",
+        {
+          recipientDomain: this.getEmailDomain(options.to),
+          error:
+            error instanceof Error
+              ? { name: error.name, message: error.message }
+              : { message: "Unknown mail delivery error" },
+        },
+        error instanceof Error ? error.stack : undefined,
+        "MailService",
+      );
+
+      return "failed";
+    }
   }
 
   isEmailVerificationConfigured(): boolean {

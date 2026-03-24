@@ -2,6 +2,7 @@ import type { ContactRequestSourceType } from "./request";
 
 export type FollowUpStatus = "pending" | "completed" | "cancelled";
 export type FollowUpPreset = "TOMORROW" | "NEXT_WEEK" | "ONE_MONTH";
+export type FollowUpType = "manual" | "inactivity" | "event_followup";
 
 export interface FollowUpTargetPersona {
   id: string;
@@ -31,6 +32,8 @@ export interface FollowUp {
   relationshipId: string;
   remindAt: string;
   status: FollowUpStatus;
+  isSystemGenerated?: boolean;
+  type?: FollowUpType;
   note: string | null;
   createdAt: string;
   updatedAt: string;

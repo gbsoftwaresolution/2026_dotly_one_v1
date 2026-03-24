@@ -52,6 +52,9 @@ export const configuration = () => ({
     frontendPasswordResetUrlBase:
       process.env.FRONTEND_PASSWORD_RESET_URL_BASE ?? "",
   },
+  support: {
+    inboxAllowedEmails: process.env.SUPPORT_INBOX_ALLOWED_EMAILS ?? "",
+  },
   sms: {
     twilioAccountSid: process.env.TWILIO_ACCOUNT_SID ?? "",
     twilioAuthToken: process.env.TWILIO_AUTH_TOKEN ?? "",
@@ -66,6 +69,14 @@ export const configuration = () => ({
       cron: process.env.FOLLOW_UPS_PROCESSING_CRON ?? "* * * * *",
       batchSize: Number.parseInt(
         process.env.FOLLOW_UPS_PROCESSING_BATCH_SIZE ?? "100",
+        10,
+      ),
+    },
+    passiveProcessing: {
+      enabled: process.env.FOLLOW_UPS_PASSIVE_PROCESSING_ENABLED !== "false",
+      cron: process.env.FOLLOW_UPS_PASSIVE_PROCESSING_CRON ?? "0 */12 * * *",
+      batchSize: Number.parseInt(
+        process.env.FOLLOW_UPS_PASSIVE_PROCESSING_BATCH_SIZE ?? "100",
         10,
       ),
     },

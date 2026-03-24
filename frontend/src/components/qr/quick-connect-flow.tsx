@@ -39,15 +39,15 @@ function getConnectErrorCopy(error: ApiError): string {
     if (msg.includes("blocked"))
       return "This connection is blocked and cannot be completed.";
     if (msg.includes("verified"))
-      return "Quick Connect requires a verified email or mobile verification.";
-    return "You are not allowed to use this Quick Connect.";
+      return "Verify your email or phone before you connect.";
+    return "You are not allowed to connect here.";
   }
   if (msg.includes("usage limit") || msg.includes("exhausted"))
-    return "This Quick Connect QR has reached its usage limit and can no longer be used.";
+    return "This QR code has reached its limit and can no longer be used.";
   if (msg.includes("expired"))
-    return "This Quick Connect QR has expired and can no longer be used.";
+    return "This QR code has expired and can no longer be used.";
   if (msg.includes("already"))
-    return "You already have an active Quick Connect relationship with this person.";
+    return "You are already connected with this person.";
   if (error.status === 404) return "This QR code no longer exists.";
   return error.message || "Something went wrong. Please try again.";
 }
@@ -75,19 +75,18 @@ function getConnectErrorState(error: ApiError): FlowState {
         type: "error",
         title: "Connection blocked",
         message:
-          "This person cannot be reached through Quick Connect because one side has blocked the other.",
+          "This person cannot be reached because one side has blocked the other.",
       };
     if (msg.includes("verified"))
       return {
         type: "error",
         title: "Verification required",
-        message:
-          "Verify your email or complete mobile verification before using Quick Connect.",
+        message: "Verify your email or phone before you connect.",
       };
     return {
       type: "error",
       title: "Access denied",
-      message: "You are not allowed to use this Quick Connect.",
+      message: "You are not allowed to connect here.",
     };
   }
 
@@ -95,38 +94,35 @@ function getConnectErrorState(error: ApiError): FlowState {
     return {
       type: "error",
       title: "QR exhausted",
-      message:
-        "This Quick Connect QR has reached its usage limit and can no longer be used.",
+      message: "This QR code has reached its limit and can no longer be used.",
     };
 
   if (msg.includes("not active yet"))
     return {
       type: "error",
       title: "Cooldown active",
-      message:
-        "This Quick Connect QR is not active yet. Please try again later.",
+      message: "This QR code is not active yet. Please try again later.",
     };
 
   if (msg.includes("expired"))
     return {
       type: "error",
       title: "QR expired",
-      message: "This Quick Connect QR has expired and can no longer be used.",
+      message: "This QR code has expired and can no longer be used.",
     };
 
   if (msg.includes("active instant access relationship already exists"))
     return {
       type: "error",
-      title: "Already Connected",
-      message:
-        "You already have an active instant access connection with this person.",
+      title: "Already connected",
+      message: "You are already connected with this person.",
     };
 
   if (msg.includes("contact relationship already exists"))
     return {
       type: "error",
-      title: "Already Connected",
-      message: "You already have an approved relationship with this contact.",
+      title: "Already connected",
+      message: "You are already connected with this contact.",
     };
 
   if (error.status === 404)
@@ -239,13 +235,13 @@ export function QuickConnectFlow({
           <div className="space-y-1">
             <StatusBadge label="Connected" tone="success" />
             <h2 className="pt-1 text-xl font-bold text-foreground">
-              Connected
+              Connected ✓
             </h2>
             <p className="text-sm text-muted">
               {target.jobTitle} at {target.companyName}
             </p>
             <p className="text-sm text-muted">
-              This introduction is now live in Dotly with no extra steps.
+              This contact is now saved in Dotly.
             </p>
           </div>
         </div>
@@ -323,7 +319,7 @@ export function QuickConnectFlow({
             </div>
             <div className="min-w-0 space-y-1">
               <p className="label-xs text-brandRose dark:text-brandCyan">
-                Quick Connect
+                Connect
               </p>
               <h2 className="text-[1.15rem] font-semibold tracking-tight text-foreground">
                 {hostName}
@@ -334,15 +330,14 @@ export function QuickConnectFlow({
             </div>
           </div>
           <p className="mt-4 text-left text-sm leading-6 text-muted">
-            You are looking at {hostFirstName}&apos;s live Dotly intro.
+            You are ready to connect with {hostFirstName} on Dotly.
           </p>
         </div>
 
         <div className="space-y-1 rounded-[1.4rem] border border-border bg-surface/50 px-4 py-3.5">
           <p className="label-xs text-muted">What happens next</p>
           <p className="text-left text-sm leading-6 text-muted">
-            We will connect using your default persona now and save this intro
-            instantly.
+            We will connect using your selected profile and save this contact.
           </p>
         </div>
       </div>
@@ -449,7 +444,7 @@ export function QuickConnectFlow({
         isSuccess={isSettling}
         loadingLabel="Connecting..."
       >
-        {isSettling ? "Connected" : "Connect"}
+        {isSettling ? "Connected ✓" : "Connect"}
       </PrimaryButton>
     </div>
   );

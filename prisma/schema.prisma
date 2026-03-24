@@ -1,10 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+  importFileExtension = ""
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum QrType {
@@ -68,16 +70,40 @@ enum ContactRelationshipState {
   EXPIRED        @map("expired")
 }
 
+enum RelationshipConnectionSource {
+  QR      @map("qr")
+  EVENT   @map("event")
+  MANUAL  @map("manual")
+  UNKNOWN @map("unknown")
+}
+
 enum FollowUpStatus {
   PENDING   @map("pending")
   COMPLETED @map("completed")
   CANCELLED @map("cancelled")
 }
 
+enum FollowUpType {
+  MANUAL         @map("manual")
+  INACTIVITY     @map("inactivity")
+  EVENT_FOLLOWUP @map("event_followup")
+}
+
 enum AgencyProfileStatus {
   DRAFT    @map("draft")
   ACTIVE   @map("active")
   ARCHIVED @map("archived")
+}
+
+enum SupportRequestStatus {
+  OPEN     @map("open")
+  RESOLVED @map("resolved")
+}
+
+enum SupportDeliveryStatus {
+  SENT   @map("sent")
+  LOGGED @map("logged")
+  FAILED @map("failed")
 }
 
 enum NotificationType {
@@ -131,6 +157,7 @@ model User {
   initiatedBlocks         Block[]               @relation("BlockerUser")
   receivedBlocks          Block[]               @relation("BlockedUser")
   notifications           Notification[]
+  resolvedSupportRequests SupportRequest[]      @relation("SupportRequestResolvedByUser")
   createdAt               DateTime              @default(now())
   updatedAt               DateTime              @updatedAt
 
@@ -359,27 +386,32 @@ model ContactRequest {
 }
 
 model ContactRelationship {
-  id              String                   @id @default(uuid()) @db.Uuid
-  ownerUserId     String                   @db.Uuid
-  targetUserId    String                   @db.Uuid
-  ownerPersonaId  String                   @db.Uuid
-  targetPersonaId String                   @db.Uuid
-  state           ContactRelationshipState @default(APPROVED)
-  sourceType      ContactRequestSourceType
-  sourceId        String?                  @db.Uuid
+  id                 String                       @id @default(uuid()) @db.Uuid
+  ownerUserId        String                       @db.Uuid
+  targetUserId       String                       @db.Uuid
+  ownerPersonaId     String                       @db.Uuid
+  targetPersonaId    String                       @db.Uuid
+  state              ContactRelationshipState     @default(APPROVED)
+  sourceType         ContactRequestSourceType
+  sourceId           String?                      @db.Uuid
   connectionContext Json?
-  accessStartAt   DateTime?
-  accessEndAt     DateTime?
+  connectedAt        DateTime                     @default(now())
+  metAt              DateTime?
+  connectionSource   RelationshipConnectionSource @default(UNKNOWN)
+  contextLabel       String?                      @db.VarChar(160)
+  accessStartAt      DateTime?
+  accessEndAt        DateTime?
   lastInteractionAt DateTime?
-  interactionCount Int                      @default(0)
-  createdAt       DateTime                 @default(now())
-  updatedAt       DateTime                 @updatedAt
-  ownerUser       User                     @relation("ContactRelationshipOwnerUser", fields: [ownerUserId], references: [id], onDelete: Cascade)
-  targetUser      User                     @relation("ContactRelationshipTargetUser", fields: [targetUserId], references: [id], onDelete: Cascade)
-  ownerPersona    Persona                  @relation("ContactRelationshipOwnerPersona", fields: [ownerPersonaId, ownerUserId], references: [id, userId], onDelete: Cascade)
-  targetPersona   Persona                  @relation("ContactRelationshipTargetPersona", fields: [targetPersonaId, targetUserId], references: [id, userId], onDelete: Cascade)
-  memories        ContactMemory[]
-  followUps       FollowUp[]
+  interactionCount   Int                          @default(0)
+  notes              String?                      @db.Text
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  ownerUser          User                         @relation("ContactRelationshipOwnerUser", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  targetUser         User                         @relation("ContactRelationshipTargetUser", fields: [targetUserId], references: [id], onDelete: Cascade)
+  ownerPersona       Persona                      @relation("ContactRelationshipOwnerPersona", fields: [ownerPersonaId, ownerUserId], references: [id, userId], onDelete: Cascade)
+  targetPersona      Persona                      @relation("ContactRelationshipTargetPersona", fields: [targetPersonaId, targetUserId], references: [id, userId], onDelete: Cascade)
+  memories           ContactMemory[]
+  followUps          FollowUp[]
 
   @@unique([ownerUserId, targetUserId, ownerPersonaId, targetPersonaId])
   @@unique([id, ownerUserId])
@@ -395,6 +427,8 @@ model FollowUp {
   remindAt       DateTime
   triggeredAt    DateTime?
   status         FollowUpStatus @default(PENDING)
+  isSystemGenerated Boolean     @default(false)
+  type           FollowUpType   @default(MANUAL)
   note           String?        @db.VarChar(1000)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
@@ -406,6 +440,7 @@ model FollowUp {
   @@index([ownerUserId, status, triggeredAt, remindAt])
   @@index([relationshipId, remindAt])
   @@index([ownerUserId, updatedAt])
+  @@index([relationshipId, isSystemGenerated, type, createdAt])
 }
 
 model ContactMemory {
@@ -448,6 +483,28 @@ model Notification {
 
   @@index([userId, createdAt])
   @@index([userId, isRead, createdAt])
+}
+
+model SupportRequest {
+  id               String                @id @default(uuid()) @db.Uuid
+  referenceId      String                @unique @db.VarChar(64)
+  requesterName    String?               @db.VarChar(120)
+  requesterEmail   String                @db.VarChar(254)
+  topic            String                @db.VarChar(80)
+  details          String                @db.Text
+  status           SupportRequestStatus  @default(OPEN)
+  deliveryStatus   SupportDeliveryStatus @default(LOGGED)
+  ipAddressHash    String?               @db.VarChar(64)
+  userAgent        String?               @db.VarChar(512)
+  resolvedAt       DateTime?
+  resolvedByUserId String?               @db.Uuid
+  resolvedByUser   User?                 @relation("SupportRequestResolvedByUser", fields: [resolvedByUserId], references: [id], onDelete: SetNull)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@index([status, createdAt])
+  @@index([requesterEmail, createdAt])
+  @@index([resolvedByUserId, resolvedAt])
 }
 
 model AnalyticsEvent {

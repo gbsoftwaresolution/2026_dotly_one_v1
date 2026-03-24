@@ -99,7 +99,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/this profile is missing its access configuration/i),
+      screen.getByText(/this profile isn't ready right now/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: /log in to continue/i }),
@@ -152,16 +152,12 @@ describe("RequestAccessPanel", () => {
       ),
     );
 
-    await user.type(
-      screen.getByLabelText(/add context/i),
-      "We met at a product meetup.",
-    );
     await user.click(screen.getByRole("button", { name: /request access/i }));
 
     await waitFor(() => {
       expect(mocks.sendRequest).toHaveBeenCalledWith({
         fromPersonaId: "persona-1",
-        reason: "We met at a product meetup.",
+        reason: undefined,
         sourceId: null,
         sourceType: "profile",
         toUsername: "target",
@@ -172,6 +168,61 @@ describe("RequestAccessPanel", () => {
       screen.getByRole("button", { name: /request sent/i }),
     ).toBeDisabled();
     expect(await screen.findByRole("status")).toHaveTextContent(/request sent/i);
+  });
+
+  it("keeps persona and note customization out of the default request flow", async () => {
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(RequestAccessPanel, {
+        profile: profileFixture,
+        initialPersonas: [
+          personaFixture,
+          {
+            ...personaFixture,
+            id: "persona-2",
+            username: "sender-ops",
+            fullName: "Sender Ops",
+          },
+        ],
+        isAuthenticated: true,
+        currentUser: {
+          id: "user-1",
+          email: "user@dotly.one",
+          isVerified: true,
+          security: {
+            trustBadge: "verified",
+            maskedEmail: "us**@dotly.one",
+            mailDeliveryAvailable: true,
+            passwordResetAvailable: true,
+            smsDeliveryAvailable: true,
+            maskedPhoneNumber: null,
+            phoneVerificationStatus: "not_enrolled",
+            mobileOtpEnrollment: null,
+            explanation:
+              "Email verification is the first trust factor for your Dotly identity.",
+            unlockedActions: ["Send contact requests"],
+            restrictedActions: [],
+            requirements: [
+              {
+                key: "send_contact_request",
+                label: "Send contact requests",
+                unlocked: true,
+              },
+            ],
+            trustFactors: [],
+          },
+        },
+      }),
+    );
+
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/add a note/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /customize/i }));
+
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
+    expect(screen.getByLabelText(/add a note/i)).toBeInTheDocument();
   });
 
   it("keeps request access available when smart card mode uses request_access", async () => {
@@ -233,7 +284,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/request access from this card/i),
+      screen.getByRole("heading", { name: /^request access$/i }),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /request access/i }));
@@ -271,7 +322,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/^connect leads this card$/i),
+      screen.getByText(/^connect is the next step$/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /request access/i }),
@@ -332,7 +383,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/request access from this card/i),
+      screen.getByRole("heading", { name: /^request access$/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /request access/i })).toBeEnabled();
   });
@@ -351,7 +402,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/this profile is missing its access configuration/i),
+      screen.getByText(/this profile isn't ready right now/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /request access/i }),
@@ -389,7 +440,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByText(/verify your account before sending requests/i),
+      screen.getByText(/verify your account before sending a request/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /request access/i }),

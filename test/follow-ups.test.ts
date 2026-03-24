@@ -11,7 +11,7 @@ import {
   ContactRequestSourceType as PrismaContactRequestSourceType,
   FollowUpStatus as PrismaFollowUpStatus,
   FollowUpType as PrismaFollowUpType,
-} from "@prisma/client";
+} from "../src/generated/prisma/client";
 
 import { resolveFollowUpPreset } from "../src/modules/follow-ups/follow-up-preset.util";
 import { FollowUpsService } from "../src/modules/follow-ups/follow-ups.service";

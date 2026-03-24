@@ -1,4 +1,7 @@
+import Link from "next/link";
+
 import { LegalPageShell } from "@/components/layout/legal-page-shell";
+import { routes } from "@/lib/constants/routes";
 
 const sections = [
   {
@@ -66,6 +69,17 @@ const sections = [
         <p>
           If Dotly adds more formal export, deletion, or retention controls,
           this page should be updated to reflect those workflows clearly.
+        </p>
+        <p>
+          If you need help with a privacy question or account-related request,
+          contact{" "}
+          <Link
+            href={routes.public.support}
+            className="font-semibold text-foreground underline underline-offset-4"
+          >
+            Dotly support
+          </Link>
+          .
         </p>
       </>
     ),

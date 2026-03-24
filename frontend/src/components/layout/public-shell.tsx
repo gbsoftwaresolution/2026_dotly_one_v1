@@ -16,6 +16,7 @@ export function PublicShell({ children }: PropsWithChildren) {
     topLevelPath.length === 1 &&
     topLevelPath[0] !== "login" &&
     topLevelPath[0] !== "signup" &&
+    topLevelPath[0] !== "support" &&
     topLevelPath[0] !== "terms" &&
     topLevelPath[0] !== "privacy" &&
     topLevelPath[0] !== "verify-email";
@@ -63,10 +64,24 @@ export function PublicShell({ children }: PropsWithChildren) {
         <nav className="flex items-center gap-2" aria-label="Site navigation">
           {isAcquisitionRoute ? (
             <div className="hidden md:flex md:items-center md:gap-2">
+              <Link
+                href="/support"
+                className="inline-flex min-h-11 items-center rounded-pill px-4 font-sans text-sm font-semibold text-muted transition-all duration-200 hover:bg-slate-100 hover:text-foreground hover:dark:bg-white/[0.06]"
+              >
+                Support
+              </Link>
               <ThemeSwitcher />
             </div>
           ) : (
-            <ThemeSwitcher />
+            <>
+              <Link
+                href="/support"
+                className="inline-flex min-h-11 items-center rounded-pill px-4 font-sans text-sm font-semibold text-muted transition-all duration-200 hover:bg-slate-100 hover:text-foreground hover:dark:bg-white/[0.06]"
+              >
+                Support
+              </Link>
+              <ThemeSwitcher />
+            </>
           )}
           <Link
             href="/login"
@@ -90,6 +105,24 @@ export function PublicShell({ children }: PropsWithChildren) {
       <main className="flex flex-1 items-start py-6 sm:items-center sm:py-8">
         <div className="w-full">{children}</div>
       </main>
+
+      <footer className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-border/60 py-4 text-xs font-medium text-muted">
+        <Link
+          href="/support"
+          className="transition-colors hover:text-foreground"
+        >
+          Support
+        </Link>
+        <Link
+          href="/privacy"
+          className="transition-colors hover:text-foreground"
+        >
+          Privacy
+        </Link>
+        <Link href="/terms" className="transition-colors hover:text-foreground">
+          Terms
+        </Link>
+      </footer>
     </div>
   );
 }

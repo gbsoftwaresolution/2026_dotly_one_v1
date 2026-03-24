@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
+import { SecondaryButton } from "@/components/shared/secondary-button";
+import { showToast } from "@/components/shared/toast-viewport";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { contactsApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
@@ -53,6 +55,7 @@ export function RelationshipActions({
     try {
       const result = await contactsApi.upgrade(relationshipId);
       setState(result.state);
+      showToast("Access upgraded");
     } catch (error) {
       setUpgradeError(
         error instanceof ApiError
@@ -72,6 +75,7 @@ export function RelationshipActions({
       const result = await contactsApi.expire(relationshipId);
       setState(result.state);
       setIsExpired(true);
+      showToast("Access ended");
     } catch (error) {
       setExpireError(
         error instanceof ApiError
@@ -156,14 +160,14 @@ export function RelationshipActions({
 
       {showExpire ? (
         <div className="space-y-2">
-          <button
+          <SecondaryButton
             type="button"
             onClick={() => void handleExpire()}
             disabled={isExpiring || isUpgrading}
-            className="inline-flex w-full items-center justify-center rounded-2xl border border-border bg-transparent py-4 px-5 text-sm font-semibold text-foreground transition-all hover:bg-slate-50 hover:border-border active:scale-95 dark:hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-border focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            fullWidth
           >
             {isExpiring ? "Expiring..." : "Expire Now"}
-          </button>
+          </SecondaryButton>
           {expireError ? (
             <p className="font-sans text-xs text-rose-600 dark:text-rose-400 px-1">
               {expireError}

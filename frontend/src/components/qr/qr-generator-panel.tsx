@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BadgeCheck, Copy, RefreshCw, Share2 } from "lucide-react";
+import {
+  BadgeCheck,
+  Copy,
+  RefreshCw,
+  Share2,
+} from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
@@ -14,11 +19,7 @@ import { isApiError } from "@/lib/api/client";
 import { personaApi } from "@/lib/api/persona-api";
 import { routes } from "@/lib/constants/routes";
 import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
-import {
-  getShareDescription as getShareDescriptionCopy,
-  getShareHeadline,
-  getShareInstruction,
-} from "@/lib/persona/share-copy";
+import { getShareInstruction } from "@/lib/persona/share-copy";
 import {
   getPersonaFastShare,
   getShareFastSnapshot,
@@ -47,22 +48,6 @@ type FeedbackState = {
   tone: "success" | "error";
   message: string;
 } | null;
-
-const primaryActionLabels = {
-  instant_connect: "Connect",
-  request_access: "Request Access",
-  contact_me: "Contact",
-} as const;
-
-const secondaryActionLabels: Array<{
-  key: keyof PersonaFastSharePayload["effectiveActions"];
-  label: string;
-}> = [
-  { key: "canCall", label: "Call" },
-  { key: "canWhatsapp", label: "WhatsApp" },
-  { key: "canEmail", label: "Email" },
-  { key: "canSaveContact", label: "Save Contact" },
-];
 
 function toInitialSharePayload(
   value: MyFastSharePayload | null,
@@ -103,45 +88,6 @@ function toShareQrSummary(
   };
 }
 
-function getPrimaryActionLabel(
-  sharePayload: PersonaFastSharePayload | null,
-): string | null {
-  if (!sharePayload) {
-    return null;
-  }
-
-  return primaryActionLabels[sharePayload.primaryAction];
-}
-
-function getEnabledSecondaryActions(
-  sharePayload: PersonaFastSharePayload | null,
-): string[] {
-  if (!sharePayload) {
-    return [];
-  }
-
-  return secondaryActionLabels
-    .filter((option) => sharePayload.effectiveActions[option.key])
-    .map((option) => option.label);
-}
-
-function getShareDescription(
-  sharePayload: PersonaFastSharePayload | null,
-  persona: PersonaSummary | null,
-): string {
-  const baseDescription = getShareDescriptionCopy(
-    sharePayload?.preferredShareType,
-  );
-
-  if (!persona) {
-    return baseDescription;
-  }
-
-  return sharePayload?.preferredShareType === "instant_connect"
-    ? `${baseDescription} ${persona.fullName.split(/\s+/)[0] || "They"} appears with the next step already chosen.`
-    : `${baseDescription} ${persona.fullName.split(/\s+/)[0] || "They"} appears with your public card ready.`;
-}
-
 function avatarGradient(seed: string): string {
   const hue = ((seed.charCodeAt(0) || 68) * 73) % 360;
 
@@ -178,7 +124,7 @@ export function QrGeneratorPanel({
   const initialShareQr = initialSharePayload
     ? toShareQrSummary(initialSharePayload)
     : null;
-  const [selectedPersonaId] = useState(initialPersonaId);
+  const [selectedPersonaId, setSelectedPersonaId] = useState(initialPersonaId);
   const initialCacheKey =
     initialPersonaId && initialShareQr ? initialPersonaId : "";
   const [generatedQr, setGeneratedQr] = useState<GeneratedQr | null>(
@@ -199,6 +145,7 @@ export function QrGeneratorPanel({
     ),
   );
   const latestRequestRef = useRef(0);
+  const prefetchedPersonaIdsRef = useRef(new Set<string>());
 
   const selectedPersona =
     personas.find((persona) => persona.id === selectedPersonaId) ?? null;
@@ -216,6 +163,10 @@ export function QrGeneratorPanel({
   const identityLine = [selectedPersona?.jobTitle, selectedPersona?.companyName]
     .filter(Boolean)
     .join(" at ");
+  const identityMetaLine = [identityLine, selectedPersona?.username]
+    .filter(Boolean)
+    .map((value, index) => (index === 1 ? `@${value}` : value))
+    .join(" • ");
   const isVerified = user.security.trustBadge === "verified";
   const shareTitle = selectedPersona
     ? `${selectedPersona.fullName} on Dotly`
@@ -225,8 +176,6 @@ export function QrGeneratorPanel({
       ? `Connect with ${selectedPersona.fullName} on Dotly.`
       : `Open ${selectedPersona.fullName}'s profile on Dotly.`
     : "Open this Dotly profile.";
-  const primaryActionLabel = getPrimaryActionLabel(sharePayload);
-  const secondaryActions = getEnabledSecondaryActions(sharePayload);
 
   useEffect(() => {
     if (initialFastShare) {
@@ -249,6 +198,7 @@ export function QrGeneratorPanel({
     const cachedQr = cacheRef.current.get(cacheKey);
     if (cachedQr) {
       setGeneratedQr(cachedQr);
+      setGeneratedQrKey(cacheKey);
       setSharePayload(getPersonaFastShare(selectedPersonaId));
       setIsLoadingQr(false);
       return;
@@ -324,6 +274,48 @@ export function QrGeneratorPanel({
     selectedPersonaId,
   ]);
 
+  useEffect(() => {
+    if (shareLocked || personas.length < 2) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const personaIdsToPrefetch = personas
+      .map((persona) => persona.id)
+      .filter(
+        (personaId) =>
+          personaId !== selectedPersonaId &&
+          !prefetchedPersonaIdsRef.current.has(personaId) &&
+          !getPersonaFastShare(personaId),
+      );
+
+    if (!personaIdsToPrefetch.length) {
+      return;
+    }
+
+    for (const personaId of personaIdsToPrefetch) {
+      prefetchedPersonaIdsRef.current.add(personaId);
+    }
+
+    void Promise.allSettled(
+      personaIdsToPrefetch.map(async (personaId) => {
+        const nextSharePayload = await personaApi.getFastShare(personaId);
+
+        if (isCancelled) {
+          return;
+        }
+
+        cacheRef.current.set(personaId, toShareQrSummary(nextSharePayload));
+        upsertPersonaFastShare(nextSharePayload);
+      }),
+    );
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [personas, selectedPersonaId, shareLocked]);
+
   async function copyCurrentLink(successMessage: string) {
     if (!generatedQr) {
       setFeedback({
@@ -390,42 +382,26 @@ export function QrGeneratorPanel({
   }
 
   return (
-    <section className="relative isolate overflow-hidden rounded-[2.5rem] border border-black/[0.06] bg-[linear-gradient(180deg,rgba(255,255,255,0.95)_0%,rgba(248,250,252,0.98)_100%)] p-4 shadow-[0_36px_120px_rgba(15,23,42,0.12)] dark:border-white/[0.08] dark:bg-[linear-gradient(180deg,rgba(18,18,20,0.96)_0%,rgba(8,8,9,0.98)_100%)] sm:p-6">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[2.5rem]">
-        <div className="absolute -left-10 top-0 h-40 w-40 rounded-full bg-brandRose/12 blur-3xl dark:bg-brandCyan/10" />
-        <div className="absolute bottom-0 right-0 h-52 w-52 rounded-full bg-brandViolet/12 blur-3xl dark:bg-brandCyan/8" />
+    <section className="relative isolate overflow-hidden rounded-[2.9rem] border border-black/[0.06] bg-[linear-gradient(180deg,rgba(255,255,255,0.97)_0%,rgba(247,249,252,0.99)_100%)] p-3 shadow-[0_36px_120px_rgba(15,23,42,0.12)] dark:border-white/[0.08] dark:bg-[linear-gradient(180deg,rgba(18,18,20,0.96)_0%,rgba(8,8,9,0.98)_100%)] sm:p-4">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[2.9rem]">
+        <div className="absolute -left-12 top-0 h-40 w-40 rounded-full bg-brandRose/12 blur-3xl dark:bg-brandCyan/10" />
+        <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-brandViolet/12 blur-3xl dark:bg-brandCyan/8" />
       </div>
 
-      <div className="relative z-10 flex min-h-[calc(100dvh-3rem)] flex-col gap-6 sm:min-h-[calc(100dvh-4rem)]">
-        <div className="space-y-6">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 space-y-1">
-              <p className="label-xs text-muted">Share</p>
-              <h1 className="text-[2.2rem] font-semibold tracking-tight text-foreground sm:text-[2.5rem]">
-                Show your QR
-              </h1>
-              <p className="max-w-[30rem] text-[15px] leading-7 text-muted">
-                Open once, hold still, and let the other person scan.
-              </p>
-            </div>
-
-            <div className="rounded-full border border-black/[0.06] bg-black/[0.03] px-3 py-1.5 text-xs font-semibold text-muted dark:border-white/[0.08] dark:bg-white/[0.05]">
-              @{selectedPersona?.username}
-            </div>
-          </div>
-
+      <div className="relative z-10 flex min-h-[calc(100dvh-0.75rem)] flex-col gap-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] sm:min-h-[calc(100dvh-1rem)] sm:gap-4">
+        <div className="flex items-start gap-3">
           {selectedPersona ? (
-            <div className="flex items-center gap-3 rounded-[1.85rem] border border-black/[0.06] bg-white/78 px-4 py-4 shadow-[0_14px_46px_rgba(15,23,42,0.06)] dark:border-white/[0.08] dark:bg-white/[0.045] sm:px-5 sm:py-5">
+            <div className="flex min-w-0 flex-1 items-center gap-3 rounded-[1.8rem] border border-black/[0.06] bg-white/82 px-3.5 py-3 shadow-[0_14px_40px_rgba(15,23,42,0.06)] dark:border-white/[0.08] dark:bg-white/[0.045] sm:px-4 sm:py-3.5">
               {selectedPersona.profilePhotoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={selectedPersona.profilePhotoUrl}
                   alt={selectedPersona.fullName}
-                  className="h-14 w-14 rounded-[1.2rem] object-cover"
+                  className="h-11 w-11 rounded-[1rem] object-cover sm:h-12 sm:w-12"
                 />
               ) : (
                 <div
-                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.2rem] text-base font-semibold text-white"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] text-sm font-semibold text-white sm:h-12 sm:w-12"
                   style={{
                     background: avatarGradient(selectedPersona.fullName),
                   }}
@@ -436,72 +412,55 @@ export function QrGeneratorPanel({
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="truncate text-[1.15rem] font-semibold tracking-tight text-foreground">
+                  <h1 className="truncate text-[1.1rem] font-semibold tracking-tight text-foreground">
                     {selectedPersona.fullName}
-                  </h2>
+                  </h1>
                   {isVerified ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400">
                       <BadgeCheck className="h-3.5 w-3.5" />
                       Verified
                     </span>
                   ) : null}
                 </div>
 
-                {identityLine ? (
-                  <p className="truncate text-sm leading-6 text-muted">
-                    {identityLine}
-                  </p>
-                ) : null}
-
-                {selectedPersona.tagline ? (
-                  <p className="mt-1 line-clamp-1 text-sm leading-6 text-foreground/80 dark:text-white/75">
-                    {selectedPersona.tagline}
-                  </p>
-                ) : null}
+                <p className="truncate text-sm leading-6 text-muted">
+                  {identityMetaLine}
+                </p>
               </div>
             </div>
           ) : null}
 
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
-            {primaryActionLabel ? (
-              <span className="rounded-full border border-emerald-500/18 bg-emerald-500/8 px-3 py-1.5 font-medium text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300">
-                Next step: {primaryActionLabel}
-              </span>
-            ) : null}
-            {secondaryActions.length > 0 ? (
-              <span className="text-xs uppercase tracking-[0.14em] text-muted">
-                {secondaryActions.join(" • ")}
-              </span>
-            ) : null}
-            {personas.length > 1 ? (
-              <Link
-                href={routes.app.personas}
-                className="font-medium text-muted transition-colors hover:text-foreground"
+          {personas.length > 1 ? (
+            <Link href={routes.app.personas} className="shrink-0">
+              <SecondaryButton
+                type="button"
+                size="sm"
+                className="h-11 rounded-[1.2rem] px-4 sm:h-12"
               >
-                Change persona
-              </Link>
-            ) : null}
-          </div>
+                Customize
+              </SecondaryButton>
+            </Link>
+          ) : null}
         </div>
 
         <div className="flex flex-1 flex-col justify-center gap-4">
-          <div className="mx-auto flex w-full max-w-[32rem] flex-1 items-center justify-center">
+          <div className="mx-auto flex w-full flex-1 items-center justify-center">
             {shareLocked ? (
               <VerificationPrompt
                 email={user.email}
                 title="QR sharing is waiting on verification"
-                description="Verify your email or mobile factor to unlock a live share card for in-person introductions."
+                description="Verify your email or phone to unlock QR sharing."
                 compact
                 className="w-full"
               />
-            ) : error ? (
-              <div className="flex min-h-[21rem] w-full flex-col items-center justify-center rounded-[2rem] border border-rose-500/20 bg-white p-6 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)] dark:bg-zinc-950">
+            ) : error && !generatedQr ? (
+              <div className="flex min-h-[24rem] w-full flex-col items-center justify-center rounded-[2.25rem] border border-rose-500/20 bg-white p-6 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)] dark:bg-zinc-950">
                 <p className="label-xs text-rose-600 dark:text-rose-400">
                   Share unavailable
                 </p>
-                <h3 className="mt-2 text-xl font-semibold text-foreground">
+                <h2 className="mt-2 text-xl font-semibold text-foreground">
                   Could not refresh this code
-                </h3>
+                </h2>
                 <p className="mt-2 max-w-[24ch] text-sm leading-6 text-muted">
                   {error}
                 </p>
@@ -517,37 +476,37 @@ export function QrGeneratorPanel({
                 </SecondaryButton>
               </div>
             ) : (
-              <div className="relative w-full rounded-[2.7rem] border border-black/[0.08] bg-white px-6 py-8 shadow-[0_38px_100px_rgba(15,23,42,0.13)] dark:border-white/[0.08] dark:bg-zinc-950 sm:px-9 sm:py-10">
-                <div className="pointer-events-none absolute inset-x-10 top-1/2 h-28 -translate-y-1/2 rounded-full bg-brandRose/10 blur-3xl dark:bg-brandCyan/10" />
+              <div className="relative w-full rounded-[2.85rem] border border-black/[0.08] bg-white px-3 py-4 shadow-[0_38px_100px_rgba(15,23,42,0.13)] dark:border-white/[0.08] dark:bg-zinc-950 sm:px-4 sm:py-5">
+                <div className="pointer-events-none absolute inset-x-8 top-1/2 h-32 -translate-y-1/2 rounded-full bg-brandRose/10 blur-3xl dark:bg-brandCyan/10" />
 
                 {isLoadingQr ? (
                   generatedQr ? (
-                    <div className="flex min-h-[25rem] items-center justify-center sm:min-h-[27rem]">
+                    <div className="flex min-h-[26rem] items-center justify-center sm:min-h-[28rem]">
                       <QRCodeSVG
                         value={generatedQr.url}
-                        size={388}
+                        size={440}
                         level="H"
                         includeMargin={false}
                         bgColor="#ffffff"
                         fgColor="#050505"
-                        className="relative h-auto w-full max-w-[23.5rem]"
+                        className="relative h-auto w-full max-w-[26rem]"
                       />
                     </div>
                   ) : (
-                    <div className="flex min-h-[25rem] flex-col items-center justify-center gap-4 sm:min-h-[27rem]">
-                      <div className="skeleton h-[21rem] w-full max-w-[21rem] rounded-[2rem] sm:h-[22rem] sm:max-w-[22rem]" />
+                    <div className="flex min-h-[26rem] flex-col items-center justify-center gap-4 sm:min-h-[28rem]">
+                      <div className="skeleton h-[22.5rem] w-full max-w-[22.5rem] rounded-[2.1rem] sm:h-[23.5rem] sm:max-w-[23.5rem]" />
                     </div>
                   )
                 ) : generatedQr ? (
-                  <div className="flex min-h-[25rem] items-center justify-center sm:min-h-[27rem]">
+                  <div className="flex min-h-[26rem] items-center justify-center sm:min-h-[28rem]">
                     <QRCodeSVG
                       value={generatedQr.url}
-                      size={388}
+                      size={440}
                       level="H"
                       includeMargin={false}
                       bgColor="#ffffff"
                       fgColor="#050505"
-                      className="relative h-auto w-full max-w-[23.5rem]"
+                      className="relative h-auto w-full max-w-[26rem]"
                     />
                   </div>
                 ) : null}
@@ -557,22 +516,28 @@ export function QrGeneratorPanel({
 
           <div className="space-y-1.5 text-center">
             <p className="text-lg font-semibold tracking-tight text-foreground">
-              {getShareHeadline(sharePayload?.preferredShareType)}
-            </p>
-            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-foreground/70">
               {getShareInstruction(sharePayload?.preferredShareType)}
             </p>
-            <p className="mx-auto max-w-[34ch] text-[15px] leading-7 text-muted">
-              {getShareDescription(sharePayload, selectedPersona)}
-            </p>
+            {isLoadingQr && generatedQr ? (
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                Updating quietly
+              </p>
+            ) : null}
+            {error && generatedQr ? (
+              <p className="mx-auto max-w-[30ch] text-sm leading-6 text-amber-700 dark:text-amber-300">
+                Showing your last ready QR while Dotly reconnects.
+              </p>
+            ) : null}
           </div>
         </div>
 
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-[1.55rem] border border-black/[0.06] bg-white/76 p-2 shadow-[0_14px_40px_rgba(15,23,42,0.06)] dark:border-white/[0.08] dark:bg-white/[0.045]">
+            <div className="grid grid-cols-2 gap-2">
             <SecondaryButton
               type="button"
-              className="h-14 w-full"
+              size="sm"
+              className="h-13 w-full rounded-[1.2rem]"
               disabled={!generatedQr || isLoadingQr || shareLocked}
               onClick={() => void copyCurrentLink("Link copied")}
             >
@@ -584,35 +549,29 @@ export function QrGeneratorPanel({
 
             <PrimaryButton
               type="button"
-              className="h-14 w-full"
+              size="sm"
+              className="h-13 w-full rounded-[1.2rem]"
               disabled={!generatedQr || isLoadingQr || shareLocked}
               onClick={() => void handleShare()}
             >
               <span className="inline-flex items-center gap-2">
                 <Share2 className="h-4 w-4" />
-                Share link
+                Share
               </span>
             </PrimaryButton>
+            </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3 px-1">
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">
-              {sharePayload?.preferredShareType === "instant_connect"
-                ? "Instant Connect"
-                : "Smart Card"}
-            </p>
-
-            {!shareLocked ? (
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-foreground"
-                onClick={handleRefresh}
-              >
-                <RefreshCw className="h-4 w-4" />
-                Refresh QR
-              </button>
-            ) : null}
-          </div>
+          {!shareLocked && error && generatedQr ? (
+            <button
+              type="button"
+              className="mx-auto inline-flex items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-foreground"
+              onClick={handleRefresh}
+            >
+              <RefreshCw className="h-4 w-4" />
+              Retry refresh
+            </button>
+          ) : null}
 
           {feedback ? (
             <p

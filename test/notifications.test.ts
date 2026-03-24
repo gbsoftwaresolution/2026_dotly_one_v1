@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
 import { NotFoundException, UnauthorizedException } from "@nestjs/common";
-import { PersonaSharingMode as PrismaPersonaSharingMode } from "@prisma/client";
+import { PersonaSharingMode as PrismaPersonaSharingMode } from "../src/generated/prisma/client";
 import { of } from "rxjs";
 
 import { NotificationType } from "../src/common/enums/notification-type.enum";

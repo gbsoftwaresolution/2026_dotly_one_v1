@@ -6,7 +6,7 @@ import {
 import {
   ContactRequestSourceType as PrismaContactRequestSourceType,
   ContactRequestStatus as PrismaContactRequestStatus,
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 
 import { ContactRequestStatus } from "../../common/enums/contact-request-status.enum";
 import { NotificationType } from "../../common/enums/notification-type.enum";

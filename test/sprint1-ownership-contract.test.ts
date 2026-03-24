@@ -6,7 +6,7 @@ import {
   ContactRelationshipState as PrismaContactRelationshipState,
   ContactRequestSourceType as PrismaContactRequestSourceType,
   ContactRequestStatus as PrismaContactRequestStatus,
-} from "@prisma/client";
+} from "../src/generated/prisma/client";
 
 import { PersonaSharingMode } from "../src/common/enums/persona-sharing-mode.enum";
 import { ContactRequestRespondService } from "../src/modules/contact-requests/contact-request-respond.service";

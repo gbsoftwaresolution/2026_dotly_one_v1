@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
 
 import { Card } from "@/components/shared/card";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -12,7 +11,6 @@ import { showToast } from "@/components/shared/toast-viewport";
 import { publicApi, requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
-import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
 import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
 import { formatPrimaryAction } from "@/lib/persona/labels";
@@ -97,7 +95,7 @@ export function RequestAccessPanel({
   const [selectedPersonaId, setSelectedPersonaId] = useState(
     resolvePreferredPersonaId(initialPersonas),
   );
-  const [showPersonaPicker, setShowPersonaPicker] = useState(false);
+  const [showCustomizeOptions, setShowCustomizeOptions] = useState(false);
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -127,16 +125,16 @@ export function RequestAccessPanel({
   const smartCardPrimaryAction = smartCardPrimaryCta?.action ?? null;
   const smartCardLoginDescription =
     smartCardPrimaryAction === null
-      ? "This profile is missing its primary access action right now. Log in to continue once access is available."
-      : `${dotlyPositioning.publicProfile.smartCardHelper} Log in to continue from one of your personas.`;
+      ? "This profile isn't available right now. Log in and try again later."
+      : "Log in to connect or request access.";
   const smartCardPrimaryActionHeading =
     smartCardPrimaryAction === null
-      ? "This card is currently unavailable"
-      : `${formatPrimaryAction(smartCardPrimaryAction)} leads this card`;
+      ? "This profile is currently unavailable"
+      : `${formatPrimaryAction(smartCardPrimaryAction)} is the next step`;
   const smartCardRequestDescription =
     smartCardPrimaryAction === null
-      ? `This profile is missing its primary access action. Send a permission request to ${profile.fullName}.`
-      : `${dotlyPositioning.publicProfile.smartCardHelper} Request access when you want a more intentional introduction to ${profile.fullName}.`;
+      ? `This profile isn't available right now. Try again later.`
+      : `Request access to connect with ${profile.fullName}.`;
   const isSmartCardMisconfigured =
     profile.sharingMode === "smart_card" && profile.smartCard === null;
   const supportsRequestAccess =
@@ -155,7 +153,9 @@ export function RequestAccessPanel({
     event.preventDefault();
 
     if (!selectedPersonaId) {
-      setError("Choose a persona before sending your request.");
+      setError(
+        "Dotly needs one of your personas before it can send this request.",
+      );
       return;
     }
 
@@ -177,7 +177,8 @@ export function RequestAccessPanel({
         sourceId: null,
       });
 
-      setSuccessMessage("Request sent");
+      setSuccessMessage("Request sent ✓");
+      setShowCustomizeOptions(false);
       showToast("Request sent");
     } catch (submissionError) {
       setError(toFriendlyMessage(submissionError));
@@ -191,15 +192,12 @@ export function RequestAccessPanel({
       <Card className="space-y-4 border-amber-300/50 bg-amber-50/80 dark:border-status-warning/25 dark:bg-status-warning/10">
         <div className="space-y-2">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-amber-700 dark:text-status-warning">
-            Profile access unavailable
+            Profile unavailable
           </p>
           <h2 className="font-sans text-lg font-semibold text-foreground">
-            This profile is missing its access configuration
+            This profile isn&apos;t ready right now
           </h2>
-          <p className="text-sm leading-6 text-muted">
-            The owner has enabled profile access, but the public access details
-            are incomplete right now. Try again later.
-          </p>
+          <p className="text-sm leading-6 text-muted">Try again later.</p>
         </div>
       </Card>
     );
@@ -210,19 +208,15 @@ export function RequestAccessPanel({
       <Card className="space-y-4">
         <div className="space-y-2">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-            {profile.sharingMode === "smart_card"
-              ? "Profile access"
-              : "Request access"}
+            Request access
           </p>
           <h2 className="font-sans text-lg font-semibold text-foreground">
-            {profile.sharingMode === "smart_card"
-              ? "Log in to continue from this card"
-              : "Log in to connect"}
+            Log in to continue
           </h2>
           <p className="text-sm leading-6 text-muted">
             {profile.sharingMode === "smart_card"
               ? smartCardLoginDescription
-              : dotlyPositioning.publicProfile.controlledHelper}
+              : `Log in to request access to ${profile.fullName}.`}
           </p>
         </div>
         <Link href={loginHref} className="block">
@@ -240,15 +234,14 @@ export function RequestAccessPanel({
             Your profile
           </p>
           <h2 className="font-sans text-lg font-semibold text-foreground">
-            This persona belongs to you
+            This is your Dotly
           </h2>
           <p className="text-sm leading-6 text-muted">
-            Contact requests are only for reaching other people. Manage your own
-            personas from the workspace.
+            Requests are for connecting with other people.
           </p>
         </div>
         <Link href={routes.app.personas} className="block">
-          <SecondaryButton className="w-full">Open personas</SecondaryButton>
+          <SecondaryButton className="w-full">Open your Dotlys</SecondaryButton>
         </Link>
       </Card>
     );
@@ -265,8 +258,7 @@ export function RequestAccessPanel({
             {smartCardPrimaryActionHeading}
           </h2>
           <p className="text-sm leading-6 text-muted">
-            This profile leads with a direct access action instead of a request.
-            Continue through the profile above.
+            Use the action above to continue.
           </p>
         </div>
       </Card>
@@ -290,8 +282,8 @@ export function RequestAccessPanel({
     return (
       <VerificationPrompt
         email={currentUser.email}
-        title="Verify your account before sending requests"
-        description={`Dotly only sends connection requests from accounts with a verified email or mobile verification. Add either one before requesting an intro to ${profile.fullName}.`}
+        title="Verify your account before sending a request"
+        description={`Verify your email or phone before requesting access to ${profile.fullName}.`}
       />
     );
   }
@@ -299,11 +291,11 @@ export function RequestAccessPanel({
   if (initialPersonas.length === 0) {
     return (
       <EmptyState
-        title="Create a persona to send requests"
-        description="You need at least one persona before you can request access to another profile."
+        title="Get your Dotly to send requests"
+        description="Create your Dotly before you request access to someone else."
         action={
           <Link href={routes.app.createPersona}>
-            <PrimaryButton className="w-full">Create persona</PrimaryButton>
+            <PrimaryButton className="w-full">Get your Dotly</PrimaryButton>
           </Link>
         }
       />
@@ -314,92 +306,86 @@ export function RequestAccessPanel({
     <Card className="space-y-5">
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-brandRose dark:text-brandCyan">
-          {profile.sharingMode === "smart_card"
-            ? "Profile access"
-            : "Request access"}
+          Request access
         </p>
         <h2 className="font-sans text-lg font-semibold text-foreground">
-          {profile.sharingMode === "smart_card"
-            ? "Request access from this card"
-            : "Reach out from one of your personas"}
+          Request access
         </h2>
         <p className="text-sm leading-6 text-muted">
           {profile.sharingMode === "smart_card"
             ? smartCardRequestDescription
-            : dotlyPositioning.publicProfile.controlledHelper}
+            : `Send a request to ${profile.fullName} instantly with your default persona.`}
         </p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <label
-              htmlFor="fromPersonaId"
-              className="block font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
-            >
-              Send from
-            </label>
-            {hasMultiplePersonas ? (
-              <button
-                type="button"
-                onClick={() => setShowPersonaPicker((current) => !current)}
-                disabled={isSubmitting || Boolean(successMessage)}
-                className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted transition-colors hover:text-foreground"
-              >
-                {showPersonaPicker ? "Done" : "Change"}
-                <ChevronDown
-                  className={`h-3.5 w-3.5 transition-transform ${
-                    showPersonaPicker ? "rotate-180" : "rotate-0"
-                  }`}
-                />
-              </button>
-            ) : null}
-          </div>
-
-          {selectedPersona ? (
-            <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
-              <p className="text-sm font-semibold text-foreground">
-                {selectedPersona.fullName}
-              </p>
-              <p className="text-sm text-muted">@{selectedPersona.username}</p>
-            </div>
-          ) : null}
-
-          {showPersonaPicker && hasMultiplePersonas ? (
-            <select
-              id="fromPersonaId"
-              className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 font-sans text-sm text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
-              value={selectedPersonaId}
-              onChange={(event) => setSelectedPersonaId(event.target.value)}
-              disabled={isSubmitting || Boolean(successMessage)}
-            >
-              {initialPersonas.map((persona) => (
-                <option key={persona.id} value={persona.id}>
-                  {persona.fullName} - @{persona.username}
-                </option>
-              ))}
-            </select>
-          ) : null}
-        </div>
-
-        <div className="space-y-2">
-          <label
-            htmlFor="reason"
-            className="block font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
-          >
-            Add Context
-          </label>
-          <textarea
-            id="reason"
-            maxLength={280}
-            rows={3}
-            className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 font-sans text-sm text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
-            placeholder="Add a note they will recognize later (optional)"
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setShowCustomizeOptions((current) => !current)}
             disabled={isSubmitting || Boolean(successMessage)}
-          />
+            className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted transition-colors hover:text-foreground"
+          >
+            {showCustomizeOptions ? "Hide" : "Customize"}
+          </button>
         </div>
+
+        {showCustomizeOptions ? (
+          <div className="space-y-4">
+            {hasMultiplePersonas ? (
+              <div className="space-y-2">
+                <label
+                  htmlFor="fromPersonaId"
+                  className="block font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
+                >
+                  Send from
+                </label>
+                {selectedPersona ? (
+                  <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
+                    <p className="text-sm font-semibold text-foreground">
+                      {selectedPersona.fullName}
+                    </p>
+                    <p className="text-sm text-muted">
+                      @{selectedPersona.username}
+                    </p>
+                  </div>
+                ) : null}
+                <select
+                  id="fromPersonaId"
+                  className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 font-sans text-sm text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+                  value={selectedPersonaId}
+                  onChange={(event) => setSelectedPersonaId(event.target.value)}
+                  disabled={isSubmitting || Boolean(successMessage)}
+                >
+                  {initialPersonas.map((persona) => (
+                    <option key={persona.id} value={persona.id}>
+                      {persona.fullName} - @{persona.username}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+
+            <div className="space-y-2">
+              <label
+                htmlFor="reason"
+                className="block font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
+              >
+                Add a note
+              </label>
+              <textarea
+                id="reason"
+                maxLength={280}
+                rows={3}
+                className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 font-sans text-sm text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+                placeholder="Add a note they will recognize later (optional)"
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                disabled={isSubmitting || Boolean(successMessage)}
+              />
+            </div>
+          </div>
+        ) : null}
 
         {error ? (
           <div className="rounded-2xl border border-rose-500 bg-rose-500/10 px-4 py-3">
@@ -415,7 +401,7 @@ export function RequestAccessPanel({
               isSuccess
               disabled
             >
-              Request Sent
+              Request sent ✓
             </PrimaryButton>
           ) : (
             <PrimaryButton
@@ -423,7 +409,7 @@ export function RequestAccessPanel({
               className="h-[60px] w-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Sending request..." : "Request Access"}
+              {isSubmitting ? "Sending..." : "Request Access"}
             </PrimaryButton>
           )}
         </div>

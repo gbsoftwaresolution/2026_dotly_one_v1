@@ -12,7 +12,7 @@ import {
   QrStatus as PrismaQrStatus,
   QrType as PrismaQrType,
   PersonaSharingMode as PrismaPersonaSharingMode,
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 import { randomBytes } from "crypto";
 
 import { PersonaSmartCardPrimaryAction } from "../../common/enums/persona-smart-card-primary-action.enum";
@@ -67,7 +67,7 @@ interface PersonaSmartDefaults {
   source: PersonaSharingConfigSource;
 }
 
-const fastSharePersonaSelect = Prisma.validator<Prisma.PersonaSelect>()({
+const fastSharePersonaSelect = {
   id: true,
   username: true,
   fullName: true,
@@ -78,7 +78,7 @@ const fastSharePersonaSelect = Prisma.validator<Prisma.PersonaSelect>()({
   publicPhone: true,
   publicWhatsappNumber: true,
   publicEmail: true,
-});
+} satisfies Prisma.PersonaSelect;
 
 type PersonaDbClient = Pick<PrismaService, "persona" | "qRAccessToken">;
 type FastSharePersonaRecord = Prisma.PersonaGetPayload<{

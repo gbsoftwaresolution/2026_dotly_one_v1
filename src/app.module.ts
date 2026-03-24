@@ -27,6 +27,7 @@ import { PersonasModule } from "./modules/personas/personas.module";
 import { ProfilesModule } from "./modules/profiles/profiles.module";
 import { QrModule } from "./modules/qr/qr.module";
 import { RelationshipsModule } from "./modules/relationships/relationships.module";
+import { SupportModule } from "./modules/support/support.module";
 import { UsersModule } from "./modules/users/users.module";
 
 @Module({
@@ -53,6 +54,7 @@ import { UsersModule } from "./modules/users/users.module";
     ContactRequestsModule,
     ContactsModule,
     RelationshipsModule,
+    SupportModule,
     FollowUpsModule,
     ContactMemoryModule,
     EventsModule,

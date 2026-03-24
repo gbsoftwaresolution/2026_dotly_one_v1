@@ -10,7 +10,7 @@ import {
   FollowUpStatus as PrismaFollowUpStatus,
   FollowUpType as PrismaFollowUpType,
   Prisma,
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 
 import { ContactRequestSourceType } from "../../common/enums/contact-request-source-type.enum";
 import { FollowUpStatus } from "../../common/enums/follow-up-status.enum";

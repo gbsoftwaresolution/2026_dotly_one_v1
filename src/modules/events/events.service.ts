@@ -9,7 +9,7 @@ import {
   EventParticipantRole as PrismaEventParticipantRole,
   EventStatus as PrismaEventStatus,
   Prisma,
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 
 import { EventParticipantRole } from "../../common/enums/event-participant-role.enum";
 import { EventStatus } from "../../common/enums/event-status.enum";
