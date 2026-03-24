@@ -3,13 +3,28 @@ import Link from "next/link";
 import { Card } from "@/components/shared/card";
 import { ExpiryBadge } from "@/components/shared/expiry-badge";
 import { StatusBadge } from "@/components/shared/status-badge";
+import {
+  getPassiveReminderBadgeLabel,
+  getPassiveReminderBody,
+} from "@/lib/follow-ups/passive-reminder";
 import { routes } from "@/lib/constants/routes";
 import {
   formatConnectionContext,
   formatRelationshipAge,
   getRecentActivityLabel,
 } from "@/lib/utils/format-contact-relationship";
+import { cn } from "@/lib/utils/cn";
 import type { Contact } from "@/types/contact";
+
+function summarizeNote(note: string): string {
+  const normalized = note.replace(/\s+/g, " ").trim();
+
+  if (normalized.length <= 96) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, 93).trimEnd()}...`;
+}
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("en", {
@@ -39,9 +54,13 @@ function isNearExpiry(accessEndAt: string): boolean {
 
 interface ContactCardProps {
   contact: Contact;
+  hasPassiveReminder?: boolean;
 }
 
-export function ContactCard({ contact }: ContactCardProps) {
+export function ContactCard({
+  contact,
+  hasPassiveReminder = false,
+}: ContactCardProps) {
   const {
     targetPersona,
     connectedAt,
@@ -52,6 +71,7 @@ export function ContactCard({ contact }: ContactCardProps) {
     accessEndAt,
     lastInteractionAt,
     metadata,
+    memory,
   } = contact;
 
   const nearExpiry =
@@ -85,11 +105,14 @@ export function ContactCard({ contact }: ContactCardProps) {
       className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-brandRose dark:focus-visible:ring-brandCyan rounded-3xl"
     >
       <Card
-        className={`space-y-4 transition-all hover:bg-slate-50/50 active:scale-[0.99] dark:hover:bg-zinc-900/50 ${
-          nearExpiry
-            ? "border-amber-400/40 dark:border-amber-500/30 shadow-[0_0_20px_rgba(251,191,36,0.12)]"
-            : ""
-        }`}
+        className={cn(
+          "space-y-4 transition-all hover:bg-slate-50/50 active:scale-[0.99] dark:hover:bg-zinc-900/50",
+          nearExpiry &&
+            "border-amber-400/40 dark:border-amber-500/30 shadow-[0_0_20px_rgba(251,191,36,0.12)]",
+          hasPassiveReminder &&
+            !nearExpiry &&
+            "border-cyan-200/80 bg-cyan-50/40 dark:border-brandCyan/20 dark:bg-brandCyan/[0.07]",
+        )}
       >
         <div className="flex items-start gap-4">
           {targetPersona.profilePhotoUrl ? (
@@ -136,6 +159,28 @@ export function ContactCard({ contact }: ContactCardProps) {
             ) : null}
           </div>
         </div>
+
+        {hasPassiveReminder ? (
+          <div className="rounded-2xl border border-cyan-200/80 bg-cyan-50/70 px-4 py-3 dark:border-brandCyan/20 dark:bg-brandCyan/[0.08]">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-cyan-700 dark:text-brandCyan">
+              {getPassiveReminderBadgeLabel()}
+            </p>
+            <p className="mt-1 font-sans text-xs leading-5 text-cyan-900 dark:text-white/78">
+              {getPassiveReminderBody()}
+            </p>
+          </div>
+        ) : null}
+
+        {memory.note ? (
+          <div className="rounded-2xl border border-border/80 bg-surface/70 px-4 py-3">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+              Private note
+            </p>
+            <p className="mt-1 font-sans text-sm leading-6 text-foreground/85">
+              {summarizeNote(memory.note)}
+            </p>
+          </div>
+        ) : null}
 
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
           <span className="rounded-full bg-slate-100 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-slate-600 dark:bg-white/[0.06] dark:text-white/60">

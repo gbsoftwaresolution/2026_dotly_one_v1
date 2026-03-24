@@ -15,7 +15,8 @@ import {
   Prisma,
   QrStatus as PrismaQrStatus,
   QrType as PrismaQrType,
-} from "@prisma/client";
+  RelationshipConnectionSource as PrismaRelationshipConnectionSource,
+} from "../../generated/prisma/client";
 
 import { ContactRequestSourceType } from "../../common/enums/contact-request-source-type.enum";
 import { PersonaSmartCardPrimaryAction } from "../../common/enums/persona-smart-card-primary-action.enum";
@@ -95,6 +96,28 @@ type RelationshipConnectionContext = {
 type EventSummary = {
   id: string;
   name: string;
+  startsAt: Date;
+};
+
+type RelationshipTimelineDefaults = {
+  connectedAt: Date;
+  metAt: Date;
+  connectionSource: PrismaRelationshipConnectionSource;
+  contextLabel: string | null;
+  lastInteractionAt: Date;
+};
+
+type OwnedRelationshipNotesRow = {
+  id: string;
+  ownerUserId: string;
+  notes: string | null;
+  updatedAt: Date;
+};
+
+type UpdatedRelationshipNotesRow = {
+  id: string;
+  notes: string | null;
+  updatedAt: Date;
 };
 
 @Injectable()
@@ -282,6 +305,11 @@ export class RelationshipsService {
         sourceId:
           source === ContactRequestSourceType.Event ? (eventId ?? null) : null,
         connectionContext: relationshipContext,
+        connectedAt,
+        metAt: eventSummary?.startsAt ?? connectedAt,
+        connectionSource: toRelationshipConnectionSource(sourceType),
+        contextLabel: eventSummary?.name ?? null,
+        lastInteractionAt: connectedAt,
       },
     );
 
@@ -323,8 +351,24 @@ export class RelationshipsService {
       sourceType: PrismaContactRequestSourceType;
       sourceId?: string | null;
       connectionContext?: RelationshipConnectionContext | null;
+      connectedAt?: Date;
+      metAt?: Date | null;
+      connectionSource?: PrismaRelationshipConnectionSource;
+      contextLabel?: string | null;
+      lastInteractionAt?: Date | null;
     },
   ) {
+    const timeline = await this.resolveRelationshipTimelineDefaults(tx, {
+      sourceType: data.sourceType,
+      sourceId: data.sourceId ?? null,
+      connectionContext: data.connectionContext ?? null,
+      connectedAt: data.connectedAt,
+      metAt: data.metAt,
+      connectionSource: data.connectionSource,
+      contextLabel: data.contextLabel,
+      lastInteractionAt: data.lastInteractionAt,
+    });
+
     try {
       const relationship = await tx.contactRelationship.create({
         data: {
@@ -335,6 +379,11 @@ export class RelationshipsService {
           state: PrismaContactRelationshipState.APPROVED,
           sourceType: data.sourceType,
           sourceId: data.sourceId ?? null,
+          connectedAt: timeline.connectedAt,
+          metAt: timeline.metAt,
+          connectionSource: timeline.connectionSource,
+          contextLabel: timeline.contextLabel,
+          lastInteractionAt: timeline.lastInteractionAt,
           ...(data.connectionContext
             ? {
                 connectionContext: this.attachEventContext(
@@ -357,6 +406,11 @@ export class RelationshipsService {
           state: PrismaContactRelationshipState.APPROVED,
           sourceType: data.sourceType,
           sourceId: data.sourceId ?? null,
+          connectedAt: timeline.connectedAt,
+          metAt: timeline.metAt,
+          connectionSource: timeline.connectionSource,
+          contextLabel: timeline.contextLabel,
+          lastInteractionAt: timeline.lastInteractionAt,
           ...(data.connectionContext
             ? {
                 connectionContext: this.attachEventContext(
@@ -410,7 +464,30 @@ export class RelationshipsService {
       return null;
     }
 
-    await prisma.contactRelationship.updateMany({
+    await this.updateLastInteractionAt(prisma, relationshipId, interactionAt);
+
+    return prisma.contactRelationship.findUnique({
+      where: {
+        id: relationshipId,
+      },
+      select: {
+        id: true,
+        lastInteractionAt: true,
+        interactionCount: true,
+      },
+    });
+  }
+
+  async updateLastInteractionAt(
+    prisma: Prisma.TransactionClient | PrismaService,
+    relationshipId: string,
+    interactionAt: Date = new Date(),
+  ) {
+    if (Number.isNaN(interactionAt.getTime())) {
+      throw new Error("Invalid interaction timestamp");
+    }
+
+    const updateResult = await prisma.contactRelationship.updateMany({
       where: {
         id: relationshipId,
         OR: [
@@ -429,6 +506,10 @@ export class RelationshipsService {
       },
     });
 
+    if (updateResult.count !== 1) {
+      return null;
+    }
+
     return prisma.contactRelationship.findUnique({
       where: {
         id: relationshipId,
@@ -436,8 +517,85 @@ export class RelationshipsService {
       select: {
         id: true,
         lastInteractionAt: true,
-        interactionCount: true,
       },
+    });
+  }
+
+  async getRelationshipTimeline(
+    userId: string,
+    relationshipId: string,
+    prisma: Prisma.TransactionClient | PrismaService = this.prismaService,
+  ) {
+    const relationship = await prisma.contactRelationship.findFirst({
+      where: {
+        id: relationshipId,
+        ownerUserId: userId,
+      },
+      select: {
+        createdAt: true,
+        connectedAt: true,
+        metAt: true,
+        connectionSource: true,
+        contextLabel: true,
+        lastInteractionAt: true,
+      },
+    });
+
+    if (!relationship) {
+      throw new NotFoundException("Relationship not found");
+    }
+
+    const connectedAt = relationship.connectedAt ?? relationship.createdAt;
+
+    return {
+      connectedAt,
+      metAt: relationship.metAt ?? connectedAt,
+      connectionSource: relationship.connectionSource,
+      contextLabel: relationship.contextLabel ?? null,
+      lastInteractionAt: relationship.lastInteractionAt ?? null,
+    };
+  }
+
+  async updateOwnedRelationshipNotes(
+    userId: string,
+    relationshipId: string,
+    input: { notes?: string | null },
+  ) {
+    const normalizedNotes = input.notes ?? null;
+
+    return this.prismaService.$transaction(async (tx) => {
+      const relationship = await this.getOwnedRelationshipNotesForUpdate(
+        tx,
+        userId,
+        relationshipId,
+      );
+
+      if ((relationship.notes ?? null) === normalizedNotes) {
+        return {
+          id: relationship.id,
+          notes: relationship.notes,
+          updatedAt: relationship.updatedAt,
+        };
+      }
+
+      const now = new Date();
+      const [updatedRelationship] = await tx.$queryRaw<
+        UpdatedRelationshipNotesRow[]
+      >(Prisma.sql`
+        UPDATE "ContactRelationship"
+        SET
+          "notes" = ${normalizedNotes},
+          "updatedAt" = ${now}
+        WHERE "id" = ${relationshipId}::uuid
+          AND "ownerUserId" = ${userId}::uuid
+        RETURNING "id", "notes", "updatedAt"
+      `);
+
+      if (!updatedRelationship) {
+        throw new NotFoundException("Relationship not found");
+      }
+
+      return updatedRelationship;
     });
   }
 
@@ -451,6 +609,11 @@ export class RelationshipsService {
       sourceType: PrismaContactRequestSourceType;
       sourceId?: string | null;
       connectionContext: RelationshipConnectionContext;
+      connectedAt: Date;
+      metAt: Date;
+      connectionSource: PrismaRelationshipConnectionSource;
+      contextLabel: string | null;
+      lastInteractionAt: Date;
     },
   ) {
     const relationshipResult = await this.upsertApprovedRelationship(tx, {
@@ -461,6 +624,11 @@ export class RelationshipsService {
       sourceType: data.sourceType,
       sourceId: data.sourceId ?? null,
       connectionContext: data.connectionContext,
+      connectedAt: data.connectedAt,
+      metAt: data.metAt,
+      connectionSource: data.connectionSource,
+      contextLabel: data.contextLabel,
+      lastInteractionAt: data.lastInteractionAt,
     });
 
     const reciprocalRelationshipResult = await this.upsertApprovedRelationship(
@@ -473,6 +641,11 @@ export class RelationshipsService {
         sourceType: data.sourceType,
         sourceId: data.sourceId ?? null,
         connectionContext: data.connectionContext,
+        connectedAt: data.connectedAt,
+        metAt: data.metAt,
+        connectionSource: data.connectionSource,
+        contextLabel: data.contextLabel,
+        lastInteractionAt: data.lastInteractionAt,
       },
     );
 
@@ -524,8 +697,13 @@ export class RelationshipsService {
             state: PrismaContactRelationshipState.INSTANT_ACCESS,
             sourceType: PrismaContactRequestSourceType.QR,
             sourceId: data.sourceId,
+            connectedAt: data.accessStartAt,
+            metAt: data.accessStartAt,
+            connectionSource: PrismaRelationshipConnectionSource.QR,
+            contextLabel: null,
             accessStartAt: data.accessStartAt,
             accessEndAt: data.accessEndAt,
+            lastInteractionAt: data.accessStartAt,
           },
           select: {
             id: true,
@@ -576,8 +754,13 @@ export class RelationshipsService {
         state: PrismaContactRelationshipState.INSTANT_ACCESS,
         sourceType: PrismaContactRequestSourceType.QR,
         sourceId: data.sourceId,
+        connectedAt: data.accessStartAt,
+        metAt: data.accessStartAt,
+        connectionSource: PrismaRelationshipConnectionSource.QR,
+        contextLabel: null,
         accessStartAt: data.accessStartAt,
         accessEndAt: data.accessEndAt,
+        lastInteractionAt: data.accessStartAt,
       },
       select: {
         id: true,
@@ -819,6 +1002,27 @@ export class RelationshipsService {
     return relationship;
   }
 
+  private async getOwnedRelationshipNotesForUpdate(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    relationshipId: string,
+  ) {
+    const [relationship] = await tx.$queryRaw<OwnedRelationshipNotesRow[]>(
+      Prisma.sql`
+        SELECT "id", "ownerUserId", "notes", "updatedAt"
+        FROM "ContactRelationship"
+        WHERE "id" = ${relationshipId}::uuid
+        LIMIT 1
+      `,
+    );
+
+    if (!relationship || relationship.ownerUserId !== userId) {
+      throw new NotFoundException("Relationship not found");
+    }
+
+    return relationship;
+  }
+
   private async upsertApprovedRelationship(
     tx: Prisma.TransactionClient,
     data: {
@@ -829,6 +1033,11 @@ export class RelationshipsService {
       sourceType: PrismaContactRequestSourceType;
       sourceId?: string | null;
       connectionContext: RelationshipConnectionContext;
+      connectedAt: Date;
+      metAt: Date;
+      connectionSource: PrismaRelationshipConnectionSource;
+      contextLabel: string | null;
+      lastInteractionAt: Date;
     },
   ) {
     const existingRelationship = await tx.contactRelationship.findUnique({
@@ -863,8 +1072,13 @@ export class RelationshipsService {
             sourceType: data.sourceType,
             sourceId: data.sourceId ?? null,
             connectionContext: this.attachEventContext(data.connectionContext),
+            connectedAt: data.connectedAt,
+            metAt: data.metAt,
+            connectionSource: data.connectionSource,
+            contextLabel: data.contextLabel,
             accessStartAt: null,
             accessEndAt: null,
+            lastInteractionAt: data.lastInteractionAt,
           },
           select: {
             id: true,
@@ -926,8 +1140,13 @@ export class RelationshipsService {
         sourceType: data.sourceType,
         sourceId: data.sourceId ?? null,
         connectionContext: this.attachEventContext(data.connectionContext),
+        connectedAt: data.connectedAt,
+        metAt: data.metAt,
+        connectionSource: data.connectionSource,
+        contextLabel: data.contextLabel,
         accessStartAt: null,
         accessEndAt: null,
+        lastInteractionAt: data.lastInteractionAt,
       },
       select: {
         id: true,
@@ -1006,6 +1225,7 @@ export class RelationshipsService {
     return {
       id: event.id,
       name: event.name,
+      startsAt: event.startsAt,
     };
   }
 
@@ -1020,6 +1240,65 @@ export class RelationshipsService {
     }
 
     return eventSummary;
+  }
+
+  private async resolveRelationshipTimelineDefaults(
+    tx: Prisma.TransactionClient,
+    data: {
+      sourceType: PrismaContactRequestSourceType;
+      sourceId?: string | null;
+      connectionContext?: RelationshipConnectionContext | null;
+      connectedAt?: Date;
+      metAt?: Date | null;
+      connectionSource?: PrismaRelationshipConnectionSource;
+      contextLabel?: string | null;
+      lastInteractionAt?: Date | null;
+    },
+  ): Promise<RelationshipTimelineDefaults> {
+    const connectedAt = data.connectedAt ?? new Date();
+    const eventTimeline =
+      data.sourceType === PrismaContactRequestSourceType.EVENT && data.sourceId
+        ? await this.getRelationshipTimelineEvent(tx, data.sourceId)
+        : null;
+
+    return {
+      connectedAt,
+      metAt: data.metAt ?? eventTimeline?.startsAt ?? connectedAt,
+      connectionSource:
+        data.connectionSource ??
+        toRelationshipConnectionSource(data.sourceType),
+      contextLabel:
+        normalizeTimelineContextLabel(data.contextLabel) ??
+        normalizeTimelineContextLabel(eventTimeline?.name) ??
+        (data.sourceType === PrismaContactRequestSourceType.EVENT
+          ? normalizeTimelineContextLabel(data.connectionContext?.label)
+          : null),
+      lastInteractionAt: data.lastInteractionAt ?? connectedAt,
+    };
+  }
+
+  private async getRelationshipTimelineEvent(
+    tx: Prisma.TransactionClient,
+    eventId: string,
+  ) {
+    const event = await tx.event.findUnique({
+      where: {
+        id: eventId,
+      },
+      select: {
+        name: true,
+        startsAt: true,
+      },
+    });
+
+    if (!event) {
+      return null;
+    }
+
+    return {
+      name: event.name,
+      startsAt: event.startsAt,
+    };
   }
 
   private buildRelationshipContext(
@@ -1069,6 +1348,28 @@ function toPrismaSourceType(
     case undefined:
       return PrismaContactRequestSourceType.PROFILE;
   }
+}
+
+function toRelationshipConnectionSource(
+  sourceType: PrismaContactRequestSourceType,
+): PrismaRelationshipConnectionSource {
+  switch (sourceType) {
+    case PrismaContactRequestSourceType.QR:
+      return PrismaRelationshipConnectionSource.QR;
+    case PrismaContactRequestSourceType.EVENT:
+      return PrismaRelationshipConnectionSource.EVENT;
+    case PrismaContactRequestSourceType.PROFILE:
+      return PrismaRelationshipConnectionSource.MANUAL;
+  }
+}
+
+function normalizeTimelineContextLabel(value: string | null | undefined) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue.length > 0 ? trimmedValue : null;
 }
 
 function toInstantConnectSourceLabel(

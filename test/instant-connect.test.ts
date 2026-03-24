@@ -15,7 +15,7 @@ import {
   PersonaSharingMode as PrismaPersonaSharingMode,
   QrStatus as PrismaQrStatus,
   QrType as PrismaQrType,
-} from "@prisma/client";
+} from "../src/generated/prisma/client";
 
 import { ContactsService } from "../src/modules/contacts/contacts.service";
 import { QrService } from "../src/modules/qr/qr.service";
@@ -2125,6 +2125,7 @@ describe("ContactsService", () => {
                 accessEndAt: null,
                 lastInteractionAt: null,
                 interactionCount: 0,
+                notes: null,
                 createdAt: new Date("2026-03-20T08:00:00.000Z"),
                 sourceType: PrismaContactRequestSourceType.PROFILE,
                 targetPersona: {
@@ -2140,6 +2141,7 @@ describe("ContactsService", () => {
                 },
                 memories: [],
               }),
+              update: async () => ({ id: "relationship-id" }),
             },
           }),
       } as any,
@@ -2185,6 +2187,7 @@ describe("ContactsService", () => {
                 accessEndAt: null,
                 lastInteractionAt: new Date("2026-03-22T11:00:00.000Z"),
                 interactionCount: 4,
+                notes: "Unchanged note",
                 createdAt: new Date("2026-03-20T08:00:00.000Z"),
                 sourceType: PrismaContactRequestSourceType.PROFILE,
                 targetPersona: {
@@ -2207,6 +2210,7 @@ describe("ContactsService", () => {
                   },
                 ],
               }),
+              update: async () => ({ id: "relationship-id" }),
             },
           }),
       } as any,

@@ -10,7 +10,7 @@ import {
   PersonaAccessMode as PrismaPersonaAccessMode,
   Prisma,
   RelationshipConnectionSource as PrismaRelationshipConnectionSource,
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 
 import { ContactRequestSourceType } from "../../common/enums/contact-request-source-type.enum";
 import { PersonaAccessMode } from "../../common/enums/persona-access-mode.enum";
@@ -58,6 +58,7 @@ const contactListRelationshipSelect = {
   accessEndAt: true,
   lastInteractionAt: true,
   interactionCount: true,
+  notes: true,
   createdAt: true,
   connectedAt: true,
   metAt: true,
@@ -255,7 +256,7 @@ export class ContactsService {
       }
 
       const note = updateContactNoteDto.note;
-      const existingNote = normalizedRelationship.memories[0]?.note ?? null;
+      const existingNote = normalizedRelationship.notes ?? null;
 
       if (existingNote === note) {
         return {
@@ -268,23 +269,13 @@ export class ContactsService {
         };
       }
 
-      await this.contactMemoryService.updateNote(tx, {
-        memoryId: normalizedRelationship.memories[0]?.id,
-        relationshipId: normalizedRelationship.id,
-        eventId:
-          normalizedRelationship.memories[0]?.eventId ??
-          extractContextEventId(normalizedRelationship.connectionContext),
-        contextLabel:
-          normalizedRelationship.memories[0]?.contextLabel ??
-          extractContextLabel(normalizedRelationship.connectionContext),
-        metAt:
-          normalizedRelationship.memories[0]?.metAt ??
-          normalizedRelationship.accessStartAt ??
-          normalizedRelationship.createdAt,
-        sourceLabel:
-          normalizedRelationship.memories[0]?.sourceLabel ??
-          toSourceLabel(normalizedRelationship.sourceType),
-        note,
+      await tx.contactRelationship.update({
+        where: {
+          id: normalizedRelationship.id,
+        },
+        data: {
+          notes: note,
+        },
       });
 
       return {
@@ -368,7 +359,7 @@ export class ContactsService {
       memory: {
         metAt: timeline.metAt,
         sourceLabel,
-        note: memory?.note ?? null,
+        note: relationship.notes ?? null,
       },
       metadata,
     };
@@ -422,7 +413,7 @@ export class ContactsService {
       memory: {
         metAt: timeline.metAt,
         sourceLabel,
-        note: memory?.note ?? null,
+        note: relationship.notes ?? null,
       },
       followUpSummary,
       metadata,

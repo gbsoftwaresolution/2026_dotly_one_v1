@@ -9,10 +9,12 @@ import { contactsApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import {
   refreshContacts,
+  refreshFollowUps,
   useAppDataSnapshot,
 } from "@/lib/app-data-store";
 import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
+import { getPassiveReminderRelationshipIds } from "@/lib/follow-ups/passive-reminder";
 import { isExpiredSessionError } from "@/lib/utils/auth-errors";
 import { cn } from "@/lib/utils/cn";
 import type { Contact } from "@/types/contact";
@@ -33,6 +35,7 @@ function filterContacts(contacts: Contact[], query: string) {
       contact.targetPersona.companyName,
       contact.contextLabel,
       contact.memory.sourceLabel,
+      contact.memory.note,
     ]
       .filter(Boolean)
       .join(" ")
@@ -44,7 +47,8 @@ function filterContacts(contacts: Contact[], query: string) {
 
 export function ContactsScreen() {
   const router = useRouter();
-  const { contacts: contactsState } = useAppDataSnapshot();
+  const { contacts: contactsState, followUps: followUpsState } =
+    useAppDataSnapshot();
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<Contact[] | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -55,6 +59,11 @@ export function ContactsScreen() {
   const cachedMatches = useMemo(
     () => filterContacts(contactsState.data, trimmedSearch),
     [contactsState.data, trimmedSearch],
+  );
+  const passiveReminderRelationshipIds = useMemo(
+    () =>
+      getPassiveReminderRelationshipIds(followUpsState.pending.data),
+    [followUpsState.pending.data],
   );
   const displayedContacts = trimmedSearch
     ? (searchResults ?? cachedMatches)
@@ -89,6 +98,20 @@ export function ContactsScreen() {
       }
     });
   }, [router]);
+
+  useEffect(() => {
+    if (followUpsState.pending.status !== "idle") {
+      return;
+    }
+
+    void refreshFollowUps("pending", { processDue: false }).catch((error) => {
+      if (isExpiredSessionError(error)) {
+        router.replace(
+          `/login?next=${encodeURIComponent(routes.app.contacts)}&reason=expired`,
+        );
+      }
+    });
+  }, [followUpsState.pending.status, router]);
 
   useEffect(() => {
     if (!trimmedSearch) {
@@ -205,7 +228,13 @@ export function ContactsScreen() {
       ) : (
         <div className="flex flex-col gap-3">
           {displayedContacts.map((contact) => (
-            <ContactCard key={contact.relationshipId} contact={contact} />
+            <ContactCard
+              key={contact.relationshipId}
+              contact={contact}
+              hasPassiveReminder={passiveReminderRelationshipIds.has(
+                contact.relationshipId,
+              )}
+            />
           ))}
         </div>
       )}

@@ -320,6 +320,24 @@ export default async function ContactDetailPage({
         </div>
       </Card>
 
+      <Card>
+        <div className="space-y-4" id="private-note">
+          <div className="space-y-1">
+            <h2 className="font-sans text-lg font-semibold text-foreground">
+              Private note
+            </h2>
+            <p className="font-sans text-sm text-muted">
+              Capture the one thing you will want to remember later.
+            </p>
+          </div>
+          <NoteEditor
+            relationshipId={relationshipId}
+            initialNote={memory.note}
+            disabled={isExpired}
+          />
+        </div>
+      </Card>
+
       <ConnectionSection
         summary={connectionSummary}
         connectedLine={connectedLine}
@@ -349,24 +367,6 @@ export default async function ContactDetailPage({
               closed.
             </p>
           ) : null}
-        </div>
-      </Card>
-
-      <Card>
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <h2 className="font-sans text-lg font-semibold text-foreground">
-              Notes
-            </h2>
-            <p className="font-sans text-sm text-muted">
-              Keep a lightweight memory of how you know each other.
-            </p>
-          </div>
-          <NoteEditor
-            relationshipId={relationshipId}
-            initialNote={memory.note}
-            disabled={isExpired}
-          />
         </div>
       </Card>
 

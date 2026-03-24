@@ -94,4 +94,45 @@ describe("ContactCard", () => {
     expect(screen.getByText("Connected 1mo")).toBeInTheDocument();
     expect(screen.queryByText("Recently active")).not.toBeInTheDocument();
   });
+
+  it("shows a subtle passive reconnect hint when a system reminder exists", () => {
+    render(
+      React.createElement(ContactCard, {
+        contact: createContact({
+          metadata: {
+            lastInteractionAt: "2026-03-01T12:00:00.000Z",
+            interactionCount: 0,
+            hasInteractions: false,
+            isRecentlyActive: false,
+            relationshipAgeDays: 30,
+          },
+        }),
+        hasPassiveReminder: true,
+      }),
+    );
+
+    expect(screen.getByText(/stay in touch/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/you haven't interacted in a while/i),
+    ).toBeInTheDocument();
+  });
+
+  it("surfaces a private note preview when one exists", () => {
+    render(
+      React.createElement(ContactCard, {
+        contact: createContact({
+          memory: {
+            metAt: "2026-03-08T12:00:00.000Z",
+            sourceLabel: "Event",
+            note: "Met after the launch panel and wants a follow-up on pricing next month.",
+          },
+        }),
+      }),
+    );
+
+    expect(screen.getByText("Private note")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Met after the launch panel and wants a follow-up/i),
+    ).toBeInTheDocument();
+  });
 });

@@ -1,17 +1,15 @@
 import { Transform } from "class-transformer";
 import { IsString, MaxLength, ValidateIf } from "class-validator";
 
-export class UpdateContactNoteDto {
-  @Transform(({ value }) => {
-    if (typeof value !== "string") {
-      return value;
-    }
+import {
+  PRIVATE_NOTE_MAX_LENGTH,
+  normalizePrivateNote,
+} from "../../../common/utils/private-note.util";
 
-    const trimmedValue = value.trim();
-    return trimmedValue.length > 0 ? trimmedValue : null;
-  })
+export class UpdateContactNoteDto {
+  @Transform(({ value }) => normalizePrivateNote(value))
   @ValidateIf((_, value) => value !== null)
   @IsString()
-  @MaxLength(1000)
+  @MaxLength(PRIVATE_NOTE_MAX_LENGTH)
   note!: string | null;
 }

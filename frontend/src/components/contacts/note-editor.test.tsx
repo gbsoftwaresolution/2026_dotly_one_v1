@@ -2,17 +2,10 @@ import React from "react";
 
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  refresh: vi.fn(),
   updateNote: vi.fn(),
-}));
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    refresh: mocks.refresh,
-  }),
 }));
 
 vi.mock("@/lib/api", async () => {
@@ -29,12 +22,8 @@ vi.mock("@/lib/api", async () => {
 import { NoteEditor } from "./note-editor";
 
 describe("NoteEditor", () => {
-  beforeEach(() => {
-    mocks.refresh.mockReset();
+  it("autosaves the private note after typing pauses", async () => {
     mocks.updateNote.mockReset();
-  });
-
-  it("refreshes the contact detail after a successful save", async () => {
     mocks.updateNote.mockResolvedValue({
       relationshipId: "relationship-id",
       note: "Updated note",
@@ -51,9 +40,8 @@ describe("NoteEditor", () => {
       }),
     );
 
-    await user.clear(screen.getByLabelText(/connection note/i));
-    await user.type(screen.getByLabelText(/connection note/i), "Updated note");
-    await user.click(screen.getByRole("button", { name: /save note/i }));
+    await user.clear(screen.getByLabelText(/private note/i));
+    await user.type(screen.getByLabelText(/private note/i), "Updated note");
 
     await waitFor(() => {
       expect(mocks.updateNote).toHaveBeenCalledWith("relationship-id", {
@@ -61,7 +49,34 @@ describe("NoteEditor", () => {
       });
     });
 
-    expect(mocks.refresh).toHaveBeenCalledTimes(1);
-    expect(screen.getByText(/note saved/i)).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent(/^saved$/i);
+  });
+
+  it("removes the note when the field is cleared on blur", async () => {
+    mocks.updateNote.mockReset();
+    mocks.updateNote.mockResolvedValue({
+      relationshipId: "relationship-id",
+      note: null,
+      lastInteractionAt: "2026-03-22T11:00:00.000Z",
+      interactionCount: 3,
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(NoteEditor, {
+        relationshipId: "relationship-id",
+        initialNote: "Original note",
+      }),
+    );
+
+    await user.clear(screen.getByLabelText(/private note/i));
+    await user.tab();
+
+    await waitFor(() => {
+      expect(mocks.updateNote).toHaveBeenCalledWith("relationship-id", {
+        note: null,
+      });
+    });
   });
 });
