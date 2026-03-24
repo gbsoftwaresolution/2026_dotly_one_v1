@@ -134,7 +134,7 @@ export function RequestAccessPanel({
   const smartCardRequestDescription =
     smartCardPrimaryAction === null
       ? `This profile isn't available right now. Try again later.`
-      : `Request access to connect with ${profile.fullName}.`;
+      : `Send a simple connection request to ${profile.fullName}.`;
   const isSmartCardMisconfigured =
     profile.sharingMode === "smart_card" && profile.smartCard === null;
   const supportsRequestAccess =
@@ -291,11 +291,11 @@ export function RequestAccessPanel({
   if (initialPersonas.length === 0) {
     return (
       <EmptyState
-        title="Get your Dotly to send requests"
-        description="Create your Dotly before you request access to someone else."
+        title="Create a profile to send requests"
+        description="Create a profile before you request access to someone else."
         action={
           <Link href={routes.app.createPersona}>
-            <PrimaryButton className="w-full">Get your Dotly</PrimaryButton>
+            <PrimaryButton className="w-full">Create profile</PrimaryButton>
           </Link>
         }
       />
@@ -306,10 +306,10 @@ export function RequestAccessPanel({
     <Card className="space-y-5">
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-brandRose dark:text-brandCyan">
-          Request access
+          Connect
         </p>
         <h2 className="font-sans text-lg font-semibold text-foreground">
-          Request access
+          Request to connect
         </h2>
         <p className="text-sm leading-6 text-muted">
           {profile.sharingMode === "smart_card"
@@ -326,7 +326,7 @@ export function RequestAccessPanel({
             disabled={isSubmitting || Boolean(successMessage)}
             className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted transition-colors hover:text-foreground"
           >
-            {showCustomizeOptions ? "Hide" : "Customize"}
+            {showCustomizeOptions ? "Keep this Dotly" : "Use another Dotly"}
           </button>
         </div>
 
@@ -409,7 +409,7 @@ export function RequestAccessPanel({
               className="h-[60px] w-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Sending..." : "Request Access"}
+              {isSubmitting ? "Sending..." : "Request to connect"}
             </PrimaryButton>
           )}
         </div>

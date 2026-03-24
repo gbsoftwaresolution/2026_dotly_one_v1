@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   AtSign,
+  ArrowUpRight,
   Check,
   Download,
   MessageCircle,
@@ -128,7 +129,7 @@ function getPrimaryCtaLabel(
     case "login":
       return "Log in to continue";
     case "request_access":
-      return "Request Access";
+      return "Request to connect";
     case "instant_connect":
       return "Connect";
     case "contact_me":
@@ -142,7 +143,7 @@ function getCardActionSummary(
 ): string {
   switch (primaryAction) {
     case "request_access":
-      return `Request access to connect with ${fullName}.`;
+      return `Request to connect with ${fullName}.`;
     case "instant_connect":
       return "Connect and save this contact.";
     case "contact_me":
@@ -298,6 +299,41 @@ function SmartCardTrustBadge({ trust }: { trust: PublicProfile["trust"] }) {
       <span>{presentation.shortLabel}</span>
     </span>
   );
+}
+
+function getSafeExternalWebsiteUrl(
+  value: string | null | undefined,
+): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return null;
+  }
+
+  try {
+    const url = new URL(trimmedValue);
+
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return null;
+    }
+
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function getCompactWebsiteLabel(value: string): string {
+  try {
+    const { hostname } = new URL(value);
+    return hostname.replace(/^www\./, "");
+  } catch {
+    return "Website";
+  }
 }
 
 export function PublicSmartCardSkeleton() {
@@ -466,7 +502,7 @@ export function PublicSmartCard({
   const selectedPersona = initialPersonas.find(
     (persona) => persona.id === selectedPersonaId,
   );
-  const hasCustomizeOptions = isAuthenticated && hasMultiplePersonas;
+  const hasAlternatePersonaChoice = isAuthenticated && hasMultiplePersonas;
   const displayedPrimaryAction = primaryAction;
   const primaryCtaAction =
     showLoginCta && displayedPrimaryAction !== "contact_me"
@@ -477,11 +513,14 @@ export function PublicSmartCard({
     : isConnected
       ? "Connected ✓"
       : getPrimaryCtaLabel(primaryCtaAction);
-  const trustPresentation = getPublicTrustPresentation(profile.trust);
-  const cardActionSummary = getCardActionSummary(
-    displayedPrimaryAction,
-    profile.fullName,
-  );
+  const cardActionSummary =
+    displayedPrimaryAction === "instant_connect"
+      ? `Tap Connect to save ${profile.fullName} as a contact.`
+      : getCardActionSummary(displayedPrimaryAction, profile.fullName);
+  const trimmedTagline = profile.tagline?.trim() || null;
+  const trimmedCompanyName = profile.companyName?.trim() || null;
+  const websiteUrl = getSafeExternalWebsiteUrl(profile.websiteUrl);
+  const websiteLabel = websiteUrl ? getCompactWebsiteLabel(websiteUrl) : null;
   const contextSummary =
     profile.tagline?.trim() || dotlyPositioning.shortExplainer;
   const canSendRequest = hasUnlockedTrustRequirement(
@@ -653,7 +692,9 @@ export function PublicSmartCard({
     const preferredAction = smartActions[0];
 
     if (!preferredAction) {
-      setErrorState("No direct contact actions are available on this card yet.");
+      setErrorState(
+        "No direct contact actions are available on this card yet.",
+      );
       return;
     }
 
@@ -752,9 +793,7 @@ export function PublicSmartCard({
 
         finishInstantConnectMeasurement(measurementId, "forbidden");
         setInstantConnectUiState(previousUiState);
-        setErrorState(
-          "This profile is not accepting connections right now.",
-        );
+        setErrorState("This profile is not accepting connections right now.");
         return;
       }
 
@@ -831,32 +870,47 @@ export function PublicSmartCard({
 
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <SmartCardTrustBadge trust={profile.trust} />
+              {profile.isVerified !== false ? (
+                <SmartCardTrustBadge trust={profile.trust} />
+              ) : null}
             </div>
-            <h1 className="text-[2.2rem] font-semibold leading-none tracking-tight text-foreground sm:text-[2.5rem]">
+            <h1 className="text-[2.2rem] font-semibold leading-none tracking-[-0.03em] text-foreground sm:text-[2.5rem]">
               {profile.fullName}
             </h1>
-            <p className="mx-auto max-w-[28ch] text-[15px] leading-7 text-muted">
-              {cardActionSummary}
-            </p>
-            {trustPresentation ? (
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">
-                {dotlyPositioning.publicProfile.verifiedLabel}
+            {trimmedTagline ? (
+              <p
+                className="mx-auto max-w-[31ch] text-sm leading-6 text-muted/95 line-clamp-2 sm:text-[15px]"
+                title={trimmedTagline}
+              >
+                {trimmedTagline}
               </p>
             ) : null}
-            {(profile.jobTitle || profile.companyName) && (
-              <p className="text-sm font-medium leading-5 text-foreground/72 sm:text-base">
-                {[profile.jobTitle, profile.companyName]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
+            {(trimmedCompanyName || websiteUrl) && (
+              <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+                {trimmedCompanyName ? (
+                  <span className="inline-flex items-center rounded-full border border-black/8 bg-black/[0.03] px-3 py-1.5 text-xs font-medium tracking-[0.01em] text-foreground/72 dark:border-white/10 dark:bg-white/[0.045] dark:text-white/72">
+                    {trimmedCompanyName}
+                  </span>
+                ) : null}
+                {websiteUrl && websiteLabel ? (
+                  <a
+                    href={websiteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/78 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-black/16 hover:bg-white dark:border-white/10 dark:bg-white/[0.05] dark:text-white/88 dark:hover:border-white/20 dark:hover:bg-white/[0.08]"
+                  >
+                    <span>Website</span>
+                    <span className="max-w-[16ch] truncate text-muted">
+                      {websiteLabel}
+                    </span>
+                    <ArrowUpRight className="h-3.5 w-3.5 text-muted" />
+                  </a>
+                ) : null}
+              </div>
             )}
-            {profile.tagline ? (
-              <p
-                className="mx-auto max-w-[30ch] text-sm leading-7 text-muted line-clamp-2"
-                title={profile.tagline}
-              >
-                {profile.tagline}
+            {!trimmedTagline ? (
+              <p className="mx-auto max-w-[28ch] text-[13px] leading-6 text-muted">
+                {cardActionSummary}
               </p>
             ) : null}
           </div>
@@ -917,24 +971,24 @@ export function PublicSmartCard({
             </p>
           ) : null}
 
-          {hasCustomizeOptions ? (
+          {hasAlternatePersonaChoice ? (
             <div className="flex justify-center">
               <button
                 type="button"
                 onClick={() => setShowCustomizeOptions((current) => !current)}
                 className="text-sm font-medium text-muted transition-colors hover:text-foreground"
               >
-                {showCustomizeOptions ? "Hide" : "Customize"}
+                {showCustomizeOptions ? "Keep this profile" : "Choose profile"}
               </button>
             </div>
           ) : null}
 
-          {showCustomizeOptions && hasCustomizeOptions ? (
+          {showCustomizeOptions && hasAlternatePersonaChoice ? (
             <div className="space-y-2 text-left">
               <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
                 {primaryCtaAction === "request_access"
-                  ? "Sending from"
-                  : "Connecting as"}
+                  ? "Requesting from"
+                  : "Connecting from"}
               </p>
               {selectedPersona ? (
                 <div className="rounded-[1.35rem] border border-black/8 bg-white/82 px-4 py-3.5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
@@ -993,7 +1047,7 @@ export function PublicSmartCard({
                   onClick={() => setShowDirectActions((current) => !current)}
                   className="text-sm font-medium text-muted transition-colors hover:text-foreground"
                 >
-                  {showDirectActions ? "Hide contact options" : "More contact options"}
+                  {showDirectActions ? "Hide more actions" : "More actions"}
                 </button>
               </div>
 

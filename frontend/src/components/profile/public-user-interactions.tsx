@@ -123,7 +123,7 @@ export function PublicUserInteractions({
             />
           )}
           <p className="px-1 pt-3 text-center text-xs font-medium uppercase tracking-[0.14em] text-muted">
-            Get your own Dotly
+            Create profile
           </p>
         </div>
       ) : null}

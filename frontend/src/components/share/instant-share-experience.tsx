@@ -6,6 +6,7 @@ import { BadgeCheck, RefreshCw } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 import { VerificationPrompt } from "@/components/auth/verification-prompt";
+import { ConnectionProgressNote } from "@/components/analytics/connection-progress-note";
 import { QrGeneratorPanel } from "@/components/qr/qr-generator-panel";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SecondaryButton } from "@/components/shared/secondary-button";
@@ -15,6 +16,7 @@ import { userApi } from "@/lib/api/user-api";
 import { routes } from "@/lib/constants/routes";
 import { getShareInstruction } from "@/lib/persona/share-copy";
 import { getShareFastSnapshot, seedMyFastShare } from "@/lib/share-fast-store";
+import type { CurrentUserAnalytics } from "@/types/analytics";
 import type {
   MyFastSharePayload,
   PersonaFastSharePayload,
@@ -25,6 +27,7 @@ import type { UserProfile } from "@/types/user";
 interface InstantShareExperienceProps {
   initialFastShare?: MyFastSharePayload | null;
   initialUser?: UserProfile | null;
+  initialAnalytics?: CurrentUserAnalytics | null;
 }
 
 function formatBootstrapError(error: unknown): string {
@@ -187,6 +190,7 @@ function FastQrShell({
 export function InstantShareExperience({
   initialFastShare = null,
   initialUser = null,
+  initialAnalytics = null,
 }: InstantShareExperienceProps) {
   const cachedSharePayload = useMemo(() => {
     const initialSharePayload =
@@ -216,6 +220,9 @@ export function InstantShareExperience({
   const [fastShare, setFastShare] = useState<MyFastSharePayload | null>(
     initialFastShare,
   );
+  const [analytics, setAnalytics] = useState<CurrentUserAnalytics | null>(
+    initialAnalytics,
+  );
   const [personas, setPersonas] = useState<PersonaSummary[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadNonce, setReloadNonce] = useState(0);
@@ -235,12 +242,20 @@ export function InstantShareExperience({
     const userPromise = initialUser
       ? Promise.resolve(initialUser)
       : userApi.getCurrent();
+    const analyticsPromise = initialAnalytics
+      ? Promise.resolve(initialAnalytics)
+      : userApi.getCurrentAnalytics().catch(() => null);
     const fastSharePromise = initialFastShare
       ? Promise.resolve(initialFastShare)
       : personaApi.getMyFastShare();
 
-    void Promise.all([userPromise, personaApi.list(), fastSharePromise])
-      .then(([nextUser, nextPersonas, nextFastShare]) => {
+    void Promise.all([
+      userPromise,
+      personaApi.list(),
+      fastSharePromise,
+      analyticsPromise,
+    ])
+      .then(([nextUser, nextPersonas, nextFastShare, nextAnalytics]) => {
         if (isCancelled) {
           return;
         }
@@ -251,6 +266,7 @@ export function InstantShareExperience({
           setUser(nextUser);
           setPersonas(nextPersonas);
           setFastShare(nextFastShare);
+          setAnalytics(nextAnalytics);
           setLoadError(null);
           setIsBootstrapping(false);
         });
@@ -269,7 +285,7 @@ export function InstantShareExperience({
     return () => {
       isCancelled = true;
     };
-  }, [initialFastShare, initialUser, reloadNonce]);
+  }, [initialAnalytics, initialFastShare, initialUser, reloadNonce]);
 
   const resolvedFastShare = fastShare ?? initialFastShare;
   const hasResolvedFastShare = Boolean(
@@ -280,6 +296,7 @@ export function InstantShareExperience({
     return (
       <QrGeneratorPanel
         initialFastShare={resolvedFastShare}
+        analytics={analytics}
         personas={personas}
         user={user}
       />
@@ -300,12 +317,12 @@ export function InstantShareExperience({
         </div>
 
         <EmptyState
-          title="Get your Dotly to start sharing"
-          description="Create your first Dotly so you can share a live QR for meetings, events, and introductions."
+          title="Create a profile to start sharing"
+          description="Create your first profile so you can share a live QR for meetings, events, and introductions."
           action={
             <Link href={routes.app.createPersona}>
               <SecondaryButton className="h-[60px] w-full active:scale-95">
-                Get your Dotly
+                Create profile
               </SecondaryButton>
             </Link>
           }
@@ -402,12 +419,15 @@ export function InstantShareExperience({
   }
 
   return (
-    <FastQrShell
-      sharePayload={cachedSharePayload}
-      isRefreshing={isBootstrapping}
-      error={loadError}
-      onRetry={() => setReloadNonce((current) => current + 1)}
-      isVerified={initialUser?.security.trustBadge === "verified"}
-    />
+    <div className="space-y-3">
+      <ConnectionProgressNote analytics={analytics} />
+      <FastQrShell
+        sharePayload={cachedSharePayload}
+        isRefreshing={isBootstrapping}
+        error={loadError}
+        onRetry={() => setReloadNonce((current) => current + 1)}
+        isVerified={initialUser?.security.trustBadge === "verified"}
+      />
+    </div>
   );
 }

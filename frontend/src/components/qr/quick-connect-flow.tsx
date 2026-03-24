@@ -235,13 +235,13 @@ export function QuickConnectFlow({
           <div className="space-y-1">
             <StatusBadge label="Connected" tone="success" />
             <h2 className="pt-1 text-xl font-bold text-foreground">
-              Connected ✓
+              You're connected
             </h2>
             <p className="text-sm text-muted">
               {target.jobTitle} at {target.companyName}
             </p>
             <p className="text-sm text-muted">
-              This contact is now saved in Dotly.
+              {target.fullName} is now saved in your contacts.
             </p>
           </div>
         </div>
@@ -268,13 +268,7 @@ export function QuickConnectFlow({
           href={routes.app.contactDetail(result.relationshipId)}
           className="inline-flex w-full items-center justify-center rounded-2xl bg-brandRose py-5 px-5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brandRose/40 dark:bg-brandCyan dark:text-zinc-950 dark:focus:ring-brandCyan/40"
         >
-          View connection
-        </a>
-        <a
-          href={routes.public.signup}
-          className="inline-flex w-full items-center justify-center rounded-2xl border border-border bg-white/80 py-4 px-5 text-sm font-semibold text-foreground transition-all hover:bg-slate-50 active:scale-95 dark:bg-zinc-950/80 dark:hover:bg-zinc-900"
-        >
-          Get your own Dotly
+          Open contact
         </a>
       </div>
     );
@@ -330,14 +324,14 @@ export function QuickConnectFlow({
             </div>
           </div>
           <p className="mt-4 text-left text-sm leading-6 text-muted">
-            You are ready to connect with {hostFirstName} on Dotly.
+            Tap Connect to save {hostFirstName} as a contact.
           </p>
         </div>
 
         <div className="space-y-1 rounded-[1.4rem] border border-border bg-surface/50 px-4 py-3.5">
-          <p className="label-xs text-muted">What happens next</p>
+          <p className="label-xs text-muted">What Connect does</p>
           <p className="text-left text-sm leading-6 text-muted">
-            We will connect using your selected profile and save this contact.
+            Uses the selected profile below and saves this contact instantly.
           </p>
         </div>
       </div>
@@ -353,7 +347,7 @@ export function QuickConnectFlow({
               className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted transition-colors hover:text-foreground"
             >
               <Repeat2 className="h-3.5 w-3.5" />
-              Change
+              Switch
             </button>
           ) : null}
         </div>

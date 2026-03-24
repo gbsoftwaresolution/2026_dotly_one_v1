@@ -1,3 +1,5 @@
+import { ArrowUpRight, Check } from "lucide-react";
+
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatPrimaryAction } from "@/lib/persona/labels";
 import { getPublicTrustPresentation } from "@/lib/persona/public-trust";
@@ -14,6 +16,9 @@ interface PublicProfileCardProps {
 export function PublicProfileCard({ profile }: PublicProfileCardProps) {
   const avatarHue = ((profile.username?.charCodeAt(0) ?? 72) * 137) % 360;
   const trustPresentation = getPublicTrustPresentation(profile.trust);
+  const tagline = profile.tagline?.trim() || null;
+  const companyName = profile.companyName?.trim() || null;
+  const websiteUrl = profile.websiteUrl?.trim() || null;
   const enabledSmartCardActions = profile.smartCard
     ? getPublicSmartCardDirectActions(profile.smartCard, profile).map(
         (action) => {
@@ -32,35 +37,51 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
     : [];
 
   return (
-    <Card className="overflow-hidden p-0 shadow-shell border-border/60">
-      {/* Hero gradient band */}
+    <Card className="overflow-hidden border-border/60 p-0 shadow-shell">
       <div
-        className="px-6 py-7"
+        className="relative overflow-hidden px-6 py-7"
         style={{
           background: `linear-gradient(135deg, hsl(${avatarHue},60%,18%) 0%, hsl(${(avatarHue + 40) % 360},55%,12%) 100%)`,
         }}
       >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),transparent_45%)]" />
         <div className="flex items-start justify-between gap-4">
-          <div className="space-y-3">
-            <div className="space-y-1">
+          <div className="relative space-y-3">
+            {profile.isVerified !== false && trustPresentation ? (
+              <p className="inline-flex items-center gap-1.5 rounded-full border border-white/18 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/92">
+                <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                {trustPresentation.shortLabel}
+              </p>
+            ) : null}
+            <div className="space-y-2">
               <h2 className="text-3xl font-bold tracking-tight text-white">
                 {profile.fullName}
               </h2>
-              <p className="text-base text-white/70">
-                {[profile.jobTitle, profile.companyName]
-                  .filter(Boolean)
-                  .join(" at ")}
-              </p>
-              {trustPresentation ? (
-                <div className="pt-2">
-                  <p className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white">
-                    {trustPresentation.shortLabel}
-                  </p>
-                  <p className="mt-2 max-w-[38ch] text-sm leading-6 text-white/72">
-                    {trustPresentation.detail}
-                  </p>
-                </div>
+              {tagline ? (
+                <p className="max-w-[32ch] text-sm leading-6 text-white/78">
+                  {tagline}
+                </p>
               ) : null}
+              {(companyName || websiteUrl) && (
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {companyName ? (
+                    <span className="inline-flex items-center rounded-full border border-white/14 bg-white/10 px-3 py-1 text-xs font-medium text-white/82">
+                      {companyName}
+                    </span>
+                  ) : null}
+                  {websiteUrl ? (
+                    <a
+                      href={websiteUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/16 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 transition hover:bg-white/14"
+                    >
+                      Website
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                    </a>
+                  ) : null}
+                </div>
+              )}
             </div>
           </div>
           {profile.profilePhotoUrl ? (
@@ -96,12 +117,10 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
         {profile.sharingMode === "smart_card" ? (
           <div className="space-y-3 rounded-3xl border border-cyan-200 bg-cyan-50/70 p-4 dark:border-brandCyan/25 dark:bg-brandCyan/10">
             <div className="space-y-1">
-              <p className="label-xs text-cyan-700 dark:text-brandCyan">
-                Next step
-              </p>
+              <p className="label-xs text-cyan-700 dark:text-brandCyan">Next</p>
               <p className="text-sm leading-6 text-cyan-800 dark:text-white/80">
                 {profile.smartCard
-                  ? dotlyPositioning.publicProfile.smartCardHelper
+                  ? "Tap the main button to continue with this person."
                   : "This profile is unavailable right now."}
               </p>
             </div>
@@ -126,29 +145,46 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
             ) : null}
           </div>
         ) : (
-          <div className="space-y-1 rounded-3xl border border-border bg-surface/60 p-4">
-            <p className="label-xs text-muted">Request access</p>
-            <p className="text-sm leading-6 text-muted">
-              {dotlyPositioning.publicProfile.controlledHelper}
-            </p>
+          <div className="space-y-3 rounded-3xl border border-border bg-surface/60 p-5">
+            <div className="space-y-1">
+              <p className="label-xs text-muted">Request access</p>
+              <p className="text-sm leading-6 text-muted">
+                {dotlyPositioning.publicProfile.controlledHelper}
+              </p>
+            </div>
+            <div className="grid gap-3 rounded-[1.4rem] border border-border/70 bg-background/70 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-foreground">
+                  Clear identity, calm gatekeeping
+                </p>
+                <p className="text-sm leading-6 text-muted">
+                  This profile keeps the first impression minimal, then lets the
+                  owner approve who gets closer access.
+                </p>
+              </div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                @{profile.username}
+              </p>
+            </div>
           </div>
         )}
 
-        {/* About */}
-        <div className="space-y-2">
-          <p className="label-xs text-muted">About</p>
-          <p className="text-base leading-7 text-foreground">
-            {profile.tagline || "No public tagline available."}
-          </p>
-        </div>
-
-        {/* Meta */}
-        <dl className="grid gap-4 rounded-3xl border border-border bg-surface/60 p-4 text-sm">
-          <div className="space-y-1">
-            <dt className="label-xs text-muted">Username</dt>
-            <dd className="font-mono text-foreground">@{profile.username}</dd>
+        {!tagline && trustPresentation ? (
+          <div className="rounded-3xl border border-emerald-500/15 bg-emerald-500/[0.06] p-4">
+            <p className="text-sm leading-6 text-foreground/82">
+              {trustPresentation.detail}
+            </p>
           </div>
-        </dl>
+        ) : null}
+
+        {!tagline && !companyName && !websiteUrl ? null : (
+          <dl className="grid gap-4 rounded-3xl border border-border bg-surface/60 p-4 text-sm">
+            <div className="space-y-1">
+              <dt className="label-xs text-muted">Username</dt>
+              <dd className="font-mono text-foreground">@{profile.username}</dd>
+            </div>
+          </dl>
+        )}
       </div>
     </Card>
   );

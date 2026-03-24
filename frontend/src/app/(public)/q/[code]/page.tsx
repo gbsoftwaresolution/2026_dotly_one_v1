@@ -113,7 +113,7 @@ function LoginPrompt({
       <p className="font-sans text-sm leading-6 text-muted">
         {invalidSession
           ? "Your session expired. Log in again to continue."
-          : "Log in or get your Dotly to continue."}
+          : "Log in or create a profile to continue."}
       </p>
 
       <div className="space-y-3">
@@ -127,7 +127,7 @@ function LoginPrompt({
           href={`${routes.public.signup}?next=${encodeURIComponent(`/q/${code}`)}`}
           className="inline-flex w-full items-center justify-center rounded-2xl border border-border bg-white py-5 px-5 text-sm font-semibold text-foreground transition-all hover:bg-slate-50 active:scale-95 dark:bg-zinc-950 dark:hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-border focus:ring-offset-2"
         >
-          Get your Dotly
+          Create profile
         </a>
       </div>
     </Card>
@@ -142,17 +142,17 @@ function NoPersonasPrompt() {
           Connect
         </p>
         <h2 className="font-sans text-lg font-semibold text-foreground">
-          Get your Dotly first
+          Create your profile first
         </h2>
         <p className="font-sans text-sm leading-6 text-muted">
-          You need a Dotly before you can continue this introduction.
+          You need a profile before you can continue this connection.
         </p>
       </div>
       <a
         href={routes.app.createPersona}
         className="inline-flex w-full items-center justify-center rounded-2xl bg-brandRose py-5 px-5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 dark:bg-brandCyan dark:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-brandRose dark:focus:ring-brandCyan focus:ring-offset-2"
       >
-        Get your Dotly
+        Create profile
       </a>
     </Card>
   );

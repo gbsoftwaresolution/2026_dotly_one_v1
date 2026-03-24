@@ -50,12 +50,18 @@ describe("PublicQrPreviewCard", () => {
       }),
     );
 
-    expect(screen.getByText(/^connect$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^who shared this$/i)).toBeInTheDocument();
-    expect(screen.getByText(/scan to connect on dotly/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/about to connect with this person\. confirm the name/i),
+      screen.getByText(/^connect$/i, { selector: "span" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/connect from this qr/i)).toBeInTheDocument();
+    expect(screen.getByText(/^ready to connect$/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/scan to open their profile, then tap connect/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/you will see this profile first/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/^connect$/i, { selector: "dd" }),
+    ).toBeInTheDocument();
   });
 });

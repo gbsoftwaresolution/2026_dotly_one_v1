@@ -14,7 +14,9 @@ function avatarGradient(name: string): string {
 
 export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
   const isQuickConnect = qr.type === "quick_connect";
-  const scanInstruction = getShareInstruction(qr.type);
+  const scanInstruction = isQuickConnect
+    ? "Scan to open their profile, then tap Connect."
+    : getShareInstruction(qr.type);
 
   return (
     <div className="glass overflow-hidden rounded-3xl border border-border bg-surface">
@@ -55,14 +57,14 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
       <div className="space-y-5 px-6 py-6">
         <div className="space-y-1 rounded-3xl border border-border bg-surface/60 p-4">
           <p className="label-xs text-muted">
-            {isQuickConnect ? "Who shared this" : "Contact preview"}
+            {isQuickConnect ? "Ready to connect" : "Contact preview"}
           </p>
           <p className="text-sm font-semibold text-foreground">
             {scanInstruction}
           </p>
           <p className="text-sm leading-6 text-muted">
             {isQuickConnect
-              ? "You are about to connect with this person. Confirm the name, then continue."
+              ? "You will see this profile first so you can confirm the person before connecting."
               : "You are about to open this person's contact and choose the next step."}
           </p>
         </div>
@@ -81,8 +83,8 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
           </div>
           {isQuickConnect ? (
             <div className="space-y-1">
-              <dt className="label-xs text-muted">Contact</dt>
-              <dd className="text-foreground">Connect from this QR</dd>
+              <dt className="label-xs text-muted">Primary action</dt>
+              <dd className="text-foreground">Connect</dd>
             </div>
           ) : null}
         </dl>
