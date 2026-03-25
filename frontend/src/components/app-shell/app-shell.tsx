@@ -1,6 +1,6 @@
 "use client";
 
-import type { PropsWithChildren, ReactNode } from "react";
+import type { PropsWithChildren } from "react";
 
 import { Menu, QrCode } from "lucide-react";
 import Link from "next/link";
@@ -21,11 +21,10 @@ import type { SessionSnapshot } from "@/types/auth";
 import { AppPrefetchBootstrap } from "./app-prefetch-bootstrap";
 
 interface AppShellProps extends PropsWithChildren {
-  headerAction?: ReactNode;
   session: SessionSnapshot;
 }
 
-export function AppShell({ children, headerAction, session }: AppShellProps) {
+export function AppShell({ children, session }: AppShellProps) {
   const pathname = usePathname();
   const sectionLabel = getAppSectionLabel(pathname);
   const sectionDescription = getAppSectionDescription(pathname);
@@ -76,7 +75,6 @@ export function AppShell({ children, headerAction, session }: AppShellProps) {
                   <QrCode className="h-6 w-6" />
                 </Link>
                 <NotificationBadge />
-                {headerAction ?? null}
               </div>
             </div>
           </header>
