@@ -247,6 +247,7 @@ export class NotificationsService {
     }
 
     const notificationData = data as unknown as Record<string, unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { relationshipId: _relationshipId, ...sanitizedData } =
       notificationData;
 

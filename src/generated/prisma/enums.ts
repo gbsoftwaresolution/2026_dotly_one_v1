@@ -44,6 +44,14 @@ export const PersonaAccessMode = {
 export type PersonaAccessMode = (typeof PersonaAccessMode)[keyof typeof PersonaAccessMode]
 
 
+export const PersonaSocialLinksDisplayMode = {
+  BUTTONS: 'BUTTONS',
+  ICONS: 'ICONS'
+} as const
+
+export type PersonaSocialLinksDisplayMode = (typeof PersonaSocialLinksDisplayMode)[keyof typeof PersonaSocialLinksDisplayMode]
+
+
 export const PersonaSharingMode = {
   CONTROLLED: 'CONTROLLED',
   SMART_CARD: 'SMART_CARD'

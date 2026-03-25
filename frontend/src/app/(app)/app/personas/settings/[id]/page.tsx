@@ -68,7 +68,7 @@ export default async function PersonaSharingSettingsPage({
         description={`Decide how ${persona.fullName} is introduced first, and what people can do from the public card.`}
       />
 
-      <div className="premium-card overflow-visible rounded-[2rem] p-4 sm:rounded-3xl sm:p-6">
+      <div className="flex flex-col gap-4">
         <div className="mb-5 space-y-1 sm:mb-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
             Sharing system

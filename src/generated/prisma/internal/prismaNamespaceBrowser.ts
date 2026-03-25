@@ -210,6 +210,10 @@ export const PersonaScalarFieldEnum = {
   publicPhone: 'publicPhone',
   publicWhatsappNumber: 'publicWhatsappNumber',
   publicEmail: 'publicEmail',
+  locationAddress: 'locationAddress',
+  locationMapUrl: 'locationMapUrl',
+  socialLinks: 'socialLinks',
+  socialLinksDisplayMode: 'socialLinksDisplayMode',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

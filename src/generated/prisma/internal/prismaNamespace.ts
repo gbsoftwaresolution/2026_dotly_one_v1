@@ -2063,6 +2063,10 @@ export const PersonaScalarFieldEnum = {
   publicPhone: 'publicPhone',
   publicWhatsappNumber: 'publicWhatsappNumber',
   publicEmail: 'publicEmail',
+  locationAddress: 'locationAddress',
+  locationMapUrl: 'locationMapUrl',
+  socialLinks: 'socialLinks',
+  socialLinksDisplayMode: 'socialLinksDisplayMode',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -2459,6 +2463,20 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
+ * Reference to a field of type 'PersonaSocialLinksDisplayMode'
+ */
+export type EnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonaSocialLinksDisplayMode'>
+    
+
+
+/**
+ * Reference to a field of type 'PersonaSocialLinksDisplayMode[]'
+ */
+export type ListEnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonaSocialLinksDisplayMode[]'>
     
 
 

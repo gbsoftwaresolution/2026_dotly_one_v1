@@ -219,52 +219,53 @@ export function NotificationsScreen() {
   }
 
   return (
-    <div className="space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+    <div className="space-y-4">
       <div className="space-y-1">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-          Step 1
-        </p>
         <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
           Read the stream
         </h2>
       </div>
 
-      {unreadCount > 0 ? (
-        <div className="flex items-center justify-between">
-          <p className="font-mono text-xs text-muted dark:text-zinc-500">
-            {unreadCount} unread
-          </p>
-          <button
-            type="button"
-            onClick={handleMarkAll}
-            disabled={isMarkingAll}
-            className="font-mono text-xs font-medium text-foreground transition-opacity hover:opacity-70 disabled:opacity-40"
-          >
-            {isMarkingAll ? "Marking…" : "Mark all as read"}
-          </button>
+      <div className="flex flex-col overflow-hidden rounded-[1.25rem] bg-foreground/[0.02] backdrop-blur-[40px] saturate-[200%] ring-[0.5px] ring-black/5 dark:bg-white/[0.03] dark:ring-white/10 shadow-sm divide-y divide-black/5 dark:divide-white/5">
+        <div className="flex flex-col gap-3 p-4 sm:p-5">
+          {unreadCount > 0 ? (
+            <div className="flex items-center justify-between">
+              <p className="font-mono text-xs text-muted dark:text-zinc-500">
+                {unreadCount} unread
+              </p>
+              <button
+                type="button"
+                onClick={handleMarkAll}
+                disabled={isMarkingAll}
+                className="font-mono text-xs font-medium text-foreground transition-opacity hover:opacity-70 disabled:opacity-40"
+              >
+                {isMarkingAll ? "Marking…" : "Mark all as read"}
+              </button>
+            </div>
+          ) : null}
+
+          {markAllError ? (
+            <p className="text-xs text-rose-600 dark:text-rose-400">
+              {markAllError}
+            </p>
+          ) : null}
+
+          {markReadError ? (
+            <p className="text-xs text-rose-600 dark:text-rose-400">
+              {markReadError}
+            </p>
+          ) : null}
         </div>
-      ) : null}
 
-      {markAllError ? (
-        <p className="text-xs text-rose-600 dark:text-rose-400">
-          {markAllError}
-        </p>
-      ) : null}
-
-      {markReadError ? (
-        <p className="text-xs text-rose-600 dark:text-rose-400">
-          {markReadError}
-        </p>
-      ) : null}
-
-      {notifications.map((notification) => (
-        <NotificationItem
-          key={notification.id}
-          notification={notification}
-          onMarkRead={handleMarkRead}
-          isMarkingRead={markingReadId === notification.id}
-        />
-      ))}
+        {notifications.map((notification) => (
+          <NotificationItem
+            key={notification.id}
+            notification={notification}
+            onMarkRead={handleMarkRead}
+            isMarkingRead={markingReadId === notification.id}
+          />
+        ))}
+      </div>
     </div>
   );
 }

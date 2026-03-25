@@ -1193,7 +1193,8 @@ function toApiFollowUpType(
   throw new Error("Unsupported follow-up type");
 }
 
-function toApiRelationshipState(
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _toApiRelationshipState(
   state: PrismaContactRelationshipState,
 ): "approved" | "instant_access" | "expired" {
   switch (state) {

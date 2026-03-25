@@ -31,8 +31,7 @@ export function PersonaCard({ persona }: PersonaCardProps) {
   return (
     <article
       className={cn(
-        "premium-card relative overflow-hidden rounded-[1.75rem] p-4 transition-all duration-500 ease-[0.16,1,0.3,1] sm:rounded-3xl sm:p-5",
-        "motion-safe:animate-[fade-in_420ms_ease-out] hover:scale-[0.995] active:scale-[0.99]",
+        "p-5 transition-colors hover:bg-black/[0.02] active:bg-black/5 dark:hover:bg-white/[0.02] dark:active:bg-white/5"
       )}
     >
       <div className="space-y-4 sm:space-y-5">

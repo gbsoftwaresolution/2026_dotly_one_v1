@@ -186,6 +186,8 @@ export interface PublicProfile {
   instantConnectUrl?: string | null;
   smartCard: PublicProfileSmartCard | null;
   trust: PublicPersonaTrust;
+  socialLinks?: PersonaSocialLink[];
+  socialLinksDisplayMode?: PersonaSocialLinksDisplayMode;
 }
 
 export interface InstantConnectResult {
@@ -267,3 +269,11 @@ export interface ResolvedQuickConnectQr {
 }
 
 export type ResolvedQr = ResolvedProfileQr | ResolvedQuickConnectQr;
+
+export type PersonaSocialLinksDisplayMode = "icons" | "list" | "buttons";
+
+export interface PersonaSocialLink {
+  id: string;
+  url: string;
+  title: string;
+}

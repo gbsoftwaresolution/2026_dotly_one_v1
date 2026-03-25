@@ -407,10 +407,8 @@ export function PersonaSharingSettingsForm({
     }
   }
 
-  const inputCls =
-    "min-h-[54px] w-full rounded-2xl bg-foreground/[0.03] px-4 text-[15px] font-medium text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06] dark:focus:ring-white/10";
-  const sectionCls =
-    "space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:space-y-5 sm:rounded-3xl sm:p-5";
+  const inputCls = "w-full bg-transparent px-4 py-3.5 text-[17px] tracking-tight text-foreground outline-none placeholder:text-muted/50";
+  const sectionCls = "flex flex-col overflow-hidden rounded-[20px] bg-black/[0.03] dark:bg-white/[0.04] backdrop-blur-[40px] saturate-[200%]";
 
   const smartCardSelected = formState.sharingMode === "smart_card";
   const validationErrors = getValidationErrors(formState);
@@ -427,9 +425,7 @@ export function PersonaSharingSettingsForm({
       <form className="space-y-6" onSubmit={handleSubmit}>
         <section className={sectionCls}>
           <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-              Step 1
-            </p>
+            
             <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
               Current sharing posture
             </h2>
@@ -465,9 +461,7 @@ export function PersonaSharingSettingsForm({
               <legend className="sr-only">How people can access you</legend>
 
               <div className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                  Step 2
-                </p>
+                
                 <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
                   Choose the introduction mode
                 </h2>
@@ -512,9 +506,7 @@ export function PersonaSharingSettingsForm({
             {smartCardSelected ? (
               <section className={sectionCls}>
                 <div className="space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                    Step 3
-                  </p>
+                  
                   <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
                     Smart Card config
                   </h2>

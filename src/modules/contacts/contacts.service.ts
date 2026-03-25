@@ -435,7 +435,8 @@ export class ContactsService {
     },
     recentInteractions: ContactDetailRecentInteraction[],
   ) {
-    const memory = relationship.memories[0];
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _memory = relationship.memories[0];
     const timeline = this.buildRelationshipTimeline(relationship);
     const metadata = this.buildRelationshipDetailMetadata(relationship, now);
     const sourceLabel = this.buildMemorySourceLabel(relationship);
@@ -885,11 +886,13 @@ function parseConnectionContext(value: Prisma.JsonValue | null | undefined): {
   };
 }
 
-function extractContextLabel(value: Prisma.JsonValue | null | undefined) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _extractContextLabel(value: Prisma.JsonValue | null | undefined) {
   return parseConnectionContext(value)?.label ?? null;
 }
 
-function extractContextEventId(value: Prisma.JsonValue | null | undefined) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _extractContextEventId(value: Prisma.JsonValue | null | undefined) {
   return parseConnectionContext(value)?.eventId ?? null;
 }
 

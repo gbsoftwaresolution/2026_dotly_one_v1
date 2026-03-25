@@ -477,7 +477,7 @@ export function FollowUpsScreen() {
                 <p className="text-sm text-muted">{section.description}</p>
               </div>
 
-              <div className="space-y-3">
+              <div className="overflow-hidden rounded-3xl bg-white/40 backdrop-blur-[40px] saturate-[200%] shadow-sm ring-[0.5px] ring-black/5 dark:bg-black/40 dark:ring-white/10 divide-y divide-black/5 dark:divide-white/5">
                 {section.items.map((followUp) => {
                   const isWorking = actionState?.id === followUp.id;
                   const isPassiveReminder =
@@ -496,7 +496,7 @@ export function FollowUpsScreen() {
                         exitingIds[followUp.id]
                           ? "translate-y-2 opacity-0"
                           : "translate-y-0 opacity-100",
-                        "rounded-card bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06] sm:p-5",
+                        "p-5 transition-colors hover:bg-black/[0.02] active:bg-black/5 dark:hover:bg-white/[0.02] dark:active:bg-white/5",
                         isPassiveReminder &&
                           "border-black/5 bg-foreground/[0.04] dark:border-white/10 dark:bg-white/[0.06]",
                         section.key === "overdue"
@@ -632,7 +632,7 @@ export function FollowUpsScreen() {
           ))}
         </div>
       ) : (
-        <div className="space-y-3 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+        <div className="overflow-hidden rounded-3xl bg-white/40 backdrop-blur-[40px] saturate-[200%] shadow-sm ring-[0.5px] ring-black/5 dark:bg-black/40 dark:ring-white/10 divide-y divide-black/5 dark:divide-white/5">
           {followUps.map((followUp) => {
             const isWorking = actionState?.id === followUp.id;
             const isPassiveReminder = isPassiveInactivityFollowUp(followUp);
@@ -650,7 +650,7 @@ export function FollowUpsScreen() {
                   exitingIds[followUp.id]
                     ? "translate-y-2 opacity-0"
                     : "translate-y-0 opacity-100",
-                  "rounded-card bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06] sm:p-5",
+                  "p-5 transition-colors hover:bg-black/[0.02] active:bg-black/5 dark:hover:bg-white/[0.02] dark:active:bg-white/5",
                   isPassiveReminder &&
                     "border-black/5 bg-foreground/[0.04] dark:border-white/10 dark:bg-white/[0.06]",
                   followUp.status !== "pending" ? "opacity-90" : "",

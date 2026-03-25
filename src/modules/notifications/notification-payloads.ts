@@ -29,9 +29,9 @@ export interface OwnedInstantConnectNotificationData {
   relationshipId?: string;
 }
 
-export interface CreateReceivedInstantConnectNotificationData {}
+export type CreateReceivedInstantConnectNotificationData = Record<string, never>;
 
-export interface ReceivedInstantConnectNotificationData {}
+export type ReceivedInstantConnectNotificationData = Record<string, never>;
 
 export type CreateInstantConnectNotificationData =
   | CreateOwnedInstantConnectNotificationData
@@ -41,9 +41,9 @@ export type InstantConnectNotificationData =
   | OwnedInstantConnectNotificationData
   | ReceivedInstantConnectNotificationData;
 
-export interface CreateEventJoinedNotificationData {}
+export type CreateEventJoinedNotificationData = Record<string, never>;
 
-export interface EventJoinedNotificationData {}
+export type EventJoinedNotificationData = Record<string, never>;
 
 export type CreateEventRequestNotificationData =
   CreateRequestReceivedNotificationData;

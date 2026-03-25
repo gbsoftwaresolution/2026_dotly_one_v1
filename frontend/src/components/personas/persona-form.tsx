@@ -194,10 +194,8 @@ export function PersonaForm() {
     }
   }
 
-  const inputCls =
-    "min-h-[54px] w-full rounded-2xl bg-foreground/[0.03] px-4 text-[16px] font-medium text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06] dark:focus:ring-white/10 sm:min-h-[52px] sm:text-[15px]";
-  const sectionCls =
-    "space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:space-y-5 sm:rounded-3xl sm:p-5";
+  const inputCls = "w-full bg-transparent px-4 py-3.5 text-[17px] text-foreground outline-none placeholder:text-muted/50 tracking-tight";
+  const sectionCls = "flex flex-col overflow-hidden rounded-[20px] bg-black/[0.03] dark:bg-white/[0.04] backdrop-blur-[40px] saturate-[200%]";
   const usernameTone = getUsernameTone(usernameAvailability);
   const usernameInputCls =
     usernameTone === "success"
@@ -268,9 +266,7 @@ export function PersonaForm() {
     <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
       <section className={sectionCls}>
         <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-            Step 1
-          </p>
+          
           <h3 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
             Handle and access
           </h3>
@@ -407,9 +403,7 @@ export function PersonaForm() {
 
       <section className={sectionCls}>
         <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-            Step 2
-          </p>
+          
           <h3 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
             Public identity
           </h3>
@@ -475,7 +469,7 @@ export function PersonaForm() {
             id="persona-tagline"
             maxLength={120}
             rows={3}
-            className="w-full rounded-2xl bg-foreground/[0.03] px-4 py-3.5 text-[16px] font-medium text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06] dark:focus:ring-white/10 resize-none sm:text-[15px]"
+            className="w-full bg-transparent px-4 py-3.5 text-[17px] tracking-tight text-foreground outline-none placeholder:text-muted/50 resize-none"
             placeholder="Designing thoughtful identity experiences for modern teams."
             value={formState.tagline}
             onChange={(event) => updateField("tagline", event.target.value)}
@@ -488,9 +482,7 @@ export function PersonaForm() {
 
       <section className={sectionCls}>
         <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-            Step 3
-          </p>
+          
           <h3 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
             Trust and links
           </h3>
@@ -518,7 +510,7 @@ export function PersonaForm() {
             </p>
           </div>
 
-          <label className="flex w-full items-start justify-between gap-4 rounded-2xl bg-foreground/[0.03] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 cursor-pointer transition-colors hover:bg-foreground/[0.05] dark:bg-white/[0.045] dark:ring-white/5 hover:dark:bg-white/[0.06] sm:min-w-[220px] sm:max-w-[280px]">
+          <label className="flex w-full items-center justify-between gap-4 px-4 py-3.5 cursor-pointer transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
             <span className="min-w-0 space-y-1 pr-2">
               <span className="block text-sm font-medium text-foreground">
                 Show verified badge

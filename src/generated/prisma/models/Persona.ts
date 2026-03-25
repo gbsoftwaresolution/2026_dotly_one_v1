@@ -59,6 +59,9 @@ export type PersonaMinAggregateOutputType = {
   publicPhone: string | null
   publicWhatsappNumber: string | null
   publicEmail: string | null
+  locationAddress: string | null
+  locationMapUrl: string | null
+  socialLinksDisplayMode: $Enums.PersonaSocialLinksDisplayMode | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -88,6 +91,9 @@ export type PersonaMaxAggregateOutputType = {
   publicPhone: string | null
   publicWhatsappNumber: string | null
   publicEmail: string | null
+  locationAddress: string | null
+  locationMapUrl: string | null
+  socialLinksDisplayMode: $Enums.PersonaSocialLinksDisplayMode | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -118,6 +124,10 @@ export type PersonaCountAggregateOutputType = {
   publicPhone: number
   publicWhatsappNumber: number
   publicEmail: number
+  locationAddress: number
+  locationMapUrl: number
+  socialLinks: number
+  socialLinksDisplayMode: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -157,6 +167,9 @@ export type PersonaMinAggregateInputType = {
   publicPhone?: true
   publicWhatsappNumber?: true
   publicEmail?: true
+  locationAddress?: true
+  locationMapUrl?: true
+  socialLinksDisplayMode?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -186,6 +199,9 @@ export type PersonaMaxAggregateInputType = {
   publicPhone?: true
   publicWhatsappNumber?: true
   publicEmail?: true
+  locationAddress?: true
+  locationMapUrl?: true
+  socialLinksDisplayMode?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -216,6 +232,10 @@ export type PersonaCountAggregateInputType = {
   publicPhone?: true
   publicWhatsappNumber?: true
   publicEmail?: true
+  locationAddress?: true
+  locationMapUrl?: true
+  socialLinks?: true
+  socialLinksDisplayMode?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -333,6 +353,10 @@ export type PersonaGroupByOutputType = {
   publicPhone: string | null
   publicWhatsappNumber: string | null
   publicEmail: string | null
+  locationAddress: string | null
+  locationMapUrl: string | null
+  socialLinks: runtime.JsonValue | null
+  socialLinksDisplayMode: $Enums.PersonaSocialLinksDisplayMode
   createdAt: Date
   updatedAt: Date
   _count: PersonaCountAggregateOutputType | null
@@ -386,6 +410,10 @@ export type PersonaWhereInput = {
   publicPhone?: Prisma.StringNullableFilter<"Persona"> | string | null
   publicWhatsappNumber?: Prisma.StringNullableFilter<"Persona"> | string | null
   publicEmail?: Prisma.StringNullableFilter<"Persona"> | string | null
+  locationAddress?: Prisma.StringNullableFilter<"Persona"> | string | null
+  locationMapUrl?: Prisma.StringNullableFilter<"Persona"> | string | null
+  socialLinks?: Prisma.JsonNullableFilter<"Persona">
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFilter<"Persona"> | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
   agencyProfile?: Prisma.XOR<Prisma.AgencyProfileNullableScalarRelationFilter, Prisma.AgencyProfileWhereInput> | null
@@ -426,6 +454,10 @@ export type PersonaOrderByWithRelationInput = {
   publicPhone?: Prisma.SortOrderInput | Prisma.SortOrder
   publicWhatsappNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   publicEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  locationAddress?: Prisma.SortOrderInput | Prisma.SortOrder
+  locationMapUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  socialLinks?: Prisma.SortOrderInput | Prisma.SortOrder
+  socialLinksDisplayMode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   agencyProfile?: Prisma.AgencyProfileOrderByWithRelationInput
@@ -470,6 +502,10 @@ export type PersonaWhereUniqueInput = Prisma.AtLeast<{
   publicPhone?: Prisma.StringNullableFilter<"Persona"> | string | null
   publicWhatsappNumber?: Prisma.StringNullableFilter<"Persona"> | string | null
   publicEmail?: Prisma.StringNullableFilter<"Persona"> | string | null
+  locationAddress?: Prisma.StringNullableFilter<"Persona"> | string | null
+  locationMapUrl?: Prisma.StringNullableFilter<"Persona"> | string | null
+  socialLinks?: Prisma.JsonNullableFilter<"Persona">
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFilter<"Persona"> | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
   agencyProfile?: Prisma.XOR<Prisma.AgencyProfileNullableScalarRelationFilter, Prisma.AgencyProfileWhereInput> | null
@@ -510,6 +546,10 @@ export type PersonaOrderByWithAggregationInput = {
   publicPhone?: Prisma.SortOrderInput | Prisma.SortOrder
   publicWhatsappNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   publicEmail?: Prisma.SortOrderInput | Prisma.SortOrder
+  locationAddress?: Prisma.SortOrderInput | Prisma.SortOrder
+  locationMapUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  socialLinks?: Prisma.SortOrderInput | Prisma.SortOrder
+  socialLinksDisplayMode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.PersonaCountOrderByAggregateInput
@@ -548,6 +588,10 @@ export type PersonaScalarWhereWithAggregatesInput = {
   publicPhone?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
   publicWhatsappNumber?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
   publicEmail?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
+  locationAddress?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
+  locationMapUrl?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
+  socialLinks?: Prisma.JsonNullableWithAggregatesFilter<"Persona">
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeWithAggregatesFilter<"Persona"> | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Persona"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Persona"> | Date | string
 }
@@ -576,6 +620,10 @@ export type PersonaCreateInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
@@ -616,6 +664,10 @@ export type PersonaUncheckedCreateInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
@@ -652,6 +704,10 @@ export type PersonaUpdateInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
@@ -692,6 +748,10 @@ export type PersonaUncheckedUpdateInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
@@ -730,6 +790,10 @@ export type PersonaCreateManyInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -758,6 +822,10 @@ export type PersonaUpdateManyMutationInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -788,6 +856,10 @@ export type PersonaUncheckedUpdateManyInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -833,6 +905,10 @@ export type PersonaCountOrderByAggregateInput = {
   publicPhone?: Prisma.SortOrder
   publicWhatsappNumber?: Prisma.SortOrder
   publicEmail?: Prisma.SortOrder
+  locationAddress?: Prisma.SortOrder
+  locationMapUrl?: Prisma.SortOrder
+  socialLinks?: Prisma.SortOrder
+  socialLinksDisplayMode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -866,6 +942,9 @@ export type PersonaMaxOrderByAggregateInput = {
   publicPhone?: Prisma.SortOrder
   publicWhatsappNumber?: Prisma.SortOrder
   publicEmail?: Prisma.SortOrder
+  locationAddress?: Prisma.SortOrder
+  locationMapUrl?: Prisma.SortOrder
+  socialLinksDisplayMode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -895,6 +974,9 @@ export type PersonaMinOrderByAggregateInput = {
   publicPhone?: Prisma.SortOrder
   publicWhatsappNumber?: Prisma.SortOrder
   publicEmail?: Prisma.SortOrder
+  locationAddress?: Prisma.SortOrder
+  locationMapUrl?: Prisma.SortOrder
+  socialLinksDisplayMode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -1015,6 +1097,10 @@ export type NullableIntFieldUpdateOperationsInput = {
 
 export type EnumPersonaSharingModeFieldUpdateOperationsInput = {
   set?: $Enums.PersonaSharingMode
+}
+
+export type EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput = {
+  set?: $Enums.PersonaSocialLinksDisplayMode
 }
 
 export type PersonaCreateNestedOneWithoutQrAccessTokensInput = {
@@ -1155,6 +1241,10 @@ export type PersonaCreateWithoutUserInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
@@ -1193,6 +1283,10 @@ export type PersonaUncheckedCreateWithoutUserInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
@@ -1260,6 +1354,10 @@ export type PersonaScalarWhereInput = {
   publicPhone?: Prisma.StringNullableFilter<"Persona"> | string | null
   publicWhatsappNumber?: Prisma.StringNullableFilter<"Persona"> | string | null
   publicEmail?: Prisma.StringNullableFilter<"Persona"> | string | null
+  locationAddress?: Prisma.StringNullableFilter<"Persona"> | string | null
+  locationMapUrl?: Prisma.StringNullableFilter<"Persona"> | string | null
+  socialLinks?: Prisma.JsonNullableFilter<"Persona">
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFilter<"Persona"> | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
 }
@@ -1288,6 +1386,10 @@ export type PersonaCreateWithoutAgencyProfileInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
@@ -1326,6 +1428,10 @@ export type PersonaUncheckedCreateWithoutAgencyProfileInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
@@ -1388,6 +1494,10 @@ export type PersonaCreateWithoutQrAccessTokensInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
@@ -1427,6 +1537,10 @@ export type PersonaUncheckedCreateWithoutQrAccessTokensInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
@@ -1478,6 +1592,10 @@ export type PersonaUpdateWithoutQrAccessTokensInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
@@ -1517,6 +1635,10 @@ export type PersonaUncheckedUpdateWithoutQrAccessTokensInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
@@ -1552,6 +1674,10 @@ export type PersonaCreateWithoutEventParticipationsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
@@ -1591,6 +1717,10 @@ export type PersonaUncheckedCreateWithoutEventParticipationsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
@@ -1642,6 +1772,10 @@ export type PersonaUpdateWithoutEventParticipationsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
@@ -1681,6 +1815,10 @@ export type PersonaUncheckedUpdateWithoutEventParticipationsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
@@ -1716,6 +1854,10 @@ export type PersonaCreateWithoutOutgoingContactRequestsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
@@ -1755,6 +1897,10 @@ export type PersonaUncheckedCreateWithoutOutgoingContactRequestsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
@@ -1795,6 +1941,10 @@ export type PersonaCreateWithoutIncomingContactRequestsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
@@ -1834,6 +1984,10 @@ export type PersonaUncheckedCreateWithoutIncomingContactRequestsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
@@ -1885,6 +2039,10 @@ export type PersonaUpdateWithoutOutgoingContactRequestsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
@@ -1924,6 +2082,10 @@ export type PersonaUncheckedUpdateWithoutOutgoingContactRequestsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
@@ -1970,6 +2132,10 @@ export type PersonaUpdateWithoutIncomingContactRequestsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
@@ -2009,6 +2175,10 @@ export type PersonaUncheckedUpdateWithoutIncomingContactRequestsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
@@ -2044,6 +2214,10 @@ export type PersonaCreateWithoutOwnedRelationshipsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
@@ -2083,6 +2257,10 @@ export type PersonaUncheckedCreateWithoutOwnedRelationshipsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
@@ -2123,6 +2301,10 @@ export type PersonaCreateWithoutTargetRelationshipsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
@@ -2162,6 +2344,10 @@ export type PersonaUncheckedCreateWithoutTargetRelationshipsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
@@ -2213,6 +2399,10 @@ export type PersonaUpdateWithoutOwnedRelationshipsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
@@ -2252,6 +2442,10 @@ export type PersonaUncheckedUpdateWithoutOwnedRelationshipsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
@@ -2298,6 +2492,10 @@ export type PersonaUpdateWithoutTargetRelationshipsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
@@ -2337,6 +2535,10 @@ export type PersonaUncheckedUpdateWithoutTargetRelationshipsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
@@ -2372,6 +2574,10 @@ export type PersonaCreateWithoutAnalyticsEventsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
@@ -2411,6 +2617,10 @@ export type PersonaUncheckedCreateWithoutAnalyticsEventsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
@@ -2462,6 +2672,10 @@ export type PersonaUpdateWithoutAnalyticsEventsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
@@ -2501,6 +2715,10 @@ export type PersonaUncheckedUpdateWithoutAnalyticsEventsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
@@ -2536,6 +2754,10 @@ export type PersonaCreateWithoutAnalyticsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
@@ -2575,6 +2797,10 @@ export type PersonaUncheckedCreateWithoutAnalyticsInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
@@ -2626,6 +2852,10 @@ export type PersonaUpdateWithoutAnalyticsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
@@ -2665,6 +2895,10 @@ export type PersonaUncheckedUpdateWithoutAnalyticsInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
@@ -2701,6 +2935,10 @@ export type PersonaCreateManyUserInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2729,6 +2967,10 @@ export type PersonaUpdateWithoutUserInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
@@ -2767,6 +3009,10 @@ export type PersonaUncheckedUpdateWithoutUserInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
@@ -2804,6 +3050,10 @@ export type PersonaUncheckedUpdateManyWithoutUserInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2833,6 +3083,10 @@ export type PersonaCreateManyAgencyProfileInput = {
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2861,6 +3115,10 @@ export type PersonaUpdateWithoutAgencyProfileInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
@@ -2899,6 +3157,10 @@ export type PersonaUncheckedUpdateWithoutAgencyProfileInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
@@ -2936,6 +3198,10 @@ export type PersonaUncheckedUpdateManyWithoutAgencyProfileInput = {
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -3051,6 +3317,10 @@ export type PersonaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   publicPhone?: boolean
   publicWhatsappNumber?: boolean
   publicEmail?: boolean
+  locationAddress?: boolean
+  locationMapUrl?: boolean
+  socialLinks?: boolean
+  socialLinksDisplayMode?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
@@ -3092,6 +3362,10 @@ export type PersonaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   publicPhone?: boolean
   publicWhatsappNumber?: boolean
   publicEmail?: boolean
+  locationAddress?: boolean
+  locationMapUrl?: boolean
+  socialLinks?: boolean
+  socialLinksDisplayMode?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
@@ -3124,6 +3398,10 @@ export type PersonaSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   publicPhone?: boolean
   publicWhatsappNumber?: boolean
   publicEmail?: boolean
+  locationAddress?: boolean
+  locationMapUrl?: boolean
+  socialLinks?: boolean
+  socialLinksDisplayMode?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
@@ -3156,11 +3434,15 @@ export type PersonaSelectScalar = {
   publicPhone?: boolean
   publicWhatsappNumber?: boolean
   publicEmail?: boolean
+  locationAddress?: boolean
+  locationMapUrl?: boolean
+  socialLinks?: boolean
+  socialLinksDisplayMode?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type PersonaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "agencyProfileId" | "type" | "isPrimary" | "username" | "publicUrl" | "fullName" | "jobTitle" | "companyName" | "tagline" | "websiteUrl" | "isVerified" | "profilePhotoUrl" | "accessMode" | "verifiedOnly" | "emailVerified" | "phoneVerified" | "businessVerified" | "trustScore" | "sharingMode" | "smartCardConfig" | "publicPhone" | "publicWhatsappNumber" | "publicEmail" | "createdAt" | "updatedAt", ExtArgs["result"]["persona"]>
+export type PersonaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "agencyProfileId" | "type" | "isPrimary" | "username" | "publicUrl" | "fullName" | "jobTitle" | "companyName" | "tagline" | "websiteUrl" | "isVerified" | "profilePhotoUrl" | "accessMode" | "verifiedOnly" | "emailVerified" | "phoneVerified" | "businessVerified" | "trustScore" | "sharingMode" | "smartCardConfig" | "publicPhone" | "publicWhatsappNumber" | "publicEmail" | "locationAddress" | "locationMapUrl" | "socialLinks" | "socialLinksDisplayMode" | "createdAt" | "updatedAt", ExtArgs["result"]["persona"]>
 export type PersonaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -3223,6 +3505,10 @@ export type $PersonaPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     publicPhone: string | null
     publicWhatsappNumber: string | null
     publicEmail: string | null
+    locationAddress: string | null
+    locationMapUrl: string | null
+    socialLinks: runtime.JsonValue | null
+    socialLinksDisplayMode: $Enums.PersonaSocialLinksDisplayMode
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["persona"]>
@@ -3683,6 +3969,10 @@ export interface PersonaFieldRefs {
   readonly publicPhone: Prisma.FieldRef<"Persona", 'String'>
   readonly publicWhatsappNumber: Prisma.FieldRef<"Persona", 'String'>
   readonly publicEmail: Prisma.FieldRef<"Persona", 'String'>
+  readonly locationAddress: Prisma.FieldRef<"Persona", 'String'>
+  readonly locationMapUrl: Prisma.FieldRef<"Persona", 'String'>
+  readonly socialLinks: Prisma.FieldRef<"Persona", 'Json'>
+  readonly socialLinksDisplayMode: Prisma.FieldRef<"Persona", 'PersonaSocialLinksDisplayMode'>
   readonly createdAt: Prisma.FieldRef<"Persona", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Persona", 'DateTime'>
 }

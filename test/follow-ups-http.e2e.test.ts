@@ -3,7 +3,6 @@ import { after, before, beforeEach, describe, it } from "node:test";
 
 import {
   ConflictException,
-  ForbiddenException,
   INestApplication,
   Module,
   NotFoundException,

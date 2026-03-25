@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { Card } from "@/components/shared/card";
 import { ExpiryBadge } from "@/components/shared/expiry-badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { routes } from "@/lib/constants/routes";
@@ -103,29 +102,15 @@ export function ContactCard({
   return (
     <Link
       href={routes.app.contactDetail(relationshipId)}
-      className="block rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15"
+      className={cn(
+        "block relative p-4 sm:p-5 space-y-4 focus:outline-none transition-colors hover:bg-black/[0.02] active:bg-black/5 dark:hover:bg-white/[0.02] dark:active:bg-white/5 motion-safe:animate-[fade-in_420ms_ease-out]",
+        nearExpiry && "bg-amber-50/50 dark:bg-amber-900/10",
+        !nearExpiry && resolvedPriorityTone === "attention" && "bg-rose-50/30 dark:bg-rose-900/10",
+        !nearExpiry && resolvedPriorityTone === "recent" && "bg-emerald-50/30 dark:bg-emerald-900/10",
+        !nearExpiry && resolvedPriorityTone === "planned" && "bg-sky-50/30 dark:bg-sky-900/10",
+        !nearExpiry && !resolvedPriorityTone && hasPassiveReminder && "bg-foreground/[0.02] dark:bg-white/[0.04]"
+      )}
     >
-      <Card
-        className={cn(
-          "space-y-4 transition-all duration-500 ease-[0.16,1,0.3,1] hover:scale-[0.995] hover:bg-foreground/[0.02] active:scale-[0.99] dark:hover:bg-white/[0.04] motion-safe:animate-[fade-in_420ms_ease-out]",
-          nearExpiry &&
-            "border-amber-400/40 dark:border-amber-500/30 shadow-[0_0_20px_rgba(251,191,36,0.12)]",
-          !nearExpiry &&
-            resolvedPriorityTone === "attention" &&
-            "border-rose-200/80 bg-rose-50/50 dark:border-rose-300/15 dark:bg-rose-300/[0.05]",
-          !nearExpiry &&
-            resolvedPriorityTone === "recent" &&
-            "border-emerald-200/80 bg-emerald-50/40 dark:border-emerald-300/15 dark:bg-emerald-300/[0.05]",
-          !nearExpiry &&
-            resolvedPriorityTone === "planned" &&
-            "border-sky-200/80 bg-sky-50/40 dark:border-sky-300/15 dark:bg-sky-300/[0.05]",
-          !nearExpiry &&
-            !resolvedPriorityTone &&
-            hasPassiveReminder &&
-            !nearExpiry &&
-            "border-black/5 bg-foreground/[0.04] dark:border-white/10 dark:bg-white/[0.06]",
-        )}
-      >
         <div className="flex items-start gap-4">
           {targetPersona.profilePhotoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -210,7 +195,6 @@ export function ContactCard({
             </span>
           ) : null}
         </div>
-      </Card>
-    </Link>
+      </Link>
   );
 }

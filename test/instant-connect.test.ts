@@ -1061,7 +1061,7 @@ describe("RelationshipsService", () => {
       {
         upsertInteractionMemory: async (
           tx: any,
-          payload: Record<string, unknown>,
+          _payload: Record<string, unknown>,
         ) => {
           const existingMemory = await tx.contactMemory.findFirst({});
           return { id: existingMemory.id };

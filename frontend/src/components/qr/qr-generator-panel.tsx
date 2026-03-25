@@ -398,11 +398,9 @@ export function QrGeneratorPanel({
   }
 
   return (
-    <section className="premium-card motion-safe:animate-[fade-in_420ms_ease-out] relative isolate overflow-hidden rounded-[2rem] p-3 sm:rounded-3xl sm:p-4">
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-white/40 to-white/10 dark:from-white/5 dark:to-transparent" />
-
-      <div className="relative z-10 flex min-h-[calc(100dvh-0.75rem)] flex-col gap-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] sm:min-h-[calc(100dvh-1rem)] sm:gap-4">
-        <section className="space-y-4 rounded-[1.75rem] bg-foreground/[0.02] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:px-5">
+    <div className="space-y-6 motion-safe:animate-[fade-in_420ms_ease-out]">
+      <div className="rounded-[1.25rem] bg-foreground/[0.02] backdrop-blur-[40px] saturate-[200%] ring-[0.5px] ring-black/5 dark:bg-white/[0.03] dark:ring-white/10 shadow-sm p-4 sm:p-5 flex flex-col gap-6">
+        <div className="space-y-4">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
               Step 2
@@ -480,9 +478,11 @@ export function QrGeneratorPanel({
               </Link>
             ) : null}
           </div>
-        </section>
+        </div>
 
-        <section className="flex flex-1 flex-col gap-4 rounded-[1.75rem] bg-foreground/[0.02] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:px-5">
+        <div className="h-px bg-black/5 dark:bg-white/5 -mx-4 sm:-mx-5" />
+
+        <div className="flex flex-1 flex-col gap-4">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
               Step 3
@@ -587,9 +587,11 @@ export function QrGeneratorPanel({
               ) : null}
             </div>
           </div>
-        </section>
+        </div>
 
-        <section className="space-y-3 rounded-[1.75rem] bg-foreground/[0.02] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:px-5">
+        <div className="h-px bg-black/5 dark:bg-white/5 -mx-4 sm:-mx-5" />
+
+        <div className="space-y-4">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
               Step 4
@@ -652,8 +654,8 @@ export function QrGeneratorPanel({
               {feedback.message}
             </p>
           ) : null}
-        </section>
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

@@ -85,7 +85,7 @@ export default async function PersonaDetailPage({
         }
       />
 
-      <div className="premium-card rounded-[2rem] p-4 sm:rounded-3xl sm:p-6">
+      <div className="flex flex-col gap-4">
         <div className="space-y-5 sm:space-y-6">
           <section className="space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
             <div className="space-y-1">

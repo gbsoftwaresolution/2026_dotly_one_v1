@@ -38,7 +38,6 @@ import {
   type PersonaPublicActionFields,
   normalizePublicEmailField,
   normalizePublicPhoneField,
-  toApiSharingMode,
   toSafeSmartCardConfig,
   toStoredSmartCardConfig,
   toPrismaSharingMode,

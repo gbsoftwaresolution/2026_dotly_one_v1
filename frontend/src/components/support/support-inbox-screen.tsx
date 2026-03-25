@@ -124,11 +124,11 @@ export function SupportInboxScreen() {
           }
         />
       ) : (
-        <div className="space-y-3">
+        <div className="overflow-hidden rounded-3xl bg-white/40 backdrop-blur-[40px] saturate-[200%] shadow-sm ring-[0.5px] ring-black/5 dark:bg-black/40 dark:ring-white/10 divide-y divide-black/5 dark:divide-white/5">
           {requests.map((request) => (
             <article
               key={request.id}
-              className="rounded-[28px] bg-white/80 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 transition-all duration-500 ease-[0.16,1,0.3,1] hover:scale-[0.995] motion-safe:animate-[fade-in_420ms_ease-out] dark:bg-zinc-950/80 dark:ring-white/[0.06]"
+              className="p-5 transition-colors hover:bg-black/[0.02] active:bg-black/5 dark:hover:bg-white/[0.02] dark:active:bg-white/5"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-2">

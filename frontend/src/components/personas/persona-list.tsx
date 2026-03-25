@@ -20,7 +20,7 @@ export function PersonaList({ personas }: PersonaListProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3 sm:gap-4">
+    <div className="overflow-hidden rounded-3xl bg-white/40 backdrop-blur-[40px] saturate-[200%] shadow-sm ring-[0.5px] ring-black/5 dark:bg-black/40 dark:ring-white/10 divide-y divide-black/5 dark:divide-white/5">
       {personas.map((persona) => (
         <PersonaCard key={persona.id} persona={persona} />
       ))}

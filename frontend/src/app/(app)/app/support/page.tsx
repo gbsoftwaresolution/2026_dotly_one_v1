@@ -7,12 +7,12 @@ export default async function SupportInboxPage() {
   await requireServerSession(routes.app.supportInbox);
 
   return (
-    <section className="space-y-5 sm:space-y-6">
+    <section className="flex flex-col mx-auto w-full max-w-2xl gap-6 animate-fade-up [animation-duration:700ms] pb-safe">
       <PageHeader
         title="Support Inbox"
         description="Review inbound support requests, track delivery status, and resolve launch-stage customer issues."
       />
-      <div className="premium-card rounded-[2rem] p-4 sm:rounded-3xl sm:p-6">
+      <div className="flex flex-col gap-4">
         <div className="mb-5 space-y-1 sm:mb-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
             Support queue

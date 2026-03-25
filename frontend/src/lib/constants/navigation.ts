@@ -15,7 +15,7 @@ export const appNavItems = [
   { href: routes.app.settings, label: "Settings", icon: "settings" },
 ] as const;
 
-const appSectionItems = [
+export const appSectionItems = [
   { href: routes.app.home, label: "Share" },
   { href: routes.app.qr, label: "Share" },
   { href: routes.app.personas, label: "Dotlys" },

@@ -27,7 +27,7 @@ export default async function PersonasPage() {
             </Link>
           }
         />
-        <div className="premium-card rounded-[2rem] p-4 sm:rounded-3xl sm:p-6">
+        <div className="flex flex-col gap-4">
           <div className="mb-5 space-y-1 sm:mb-6">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
               Identity collection

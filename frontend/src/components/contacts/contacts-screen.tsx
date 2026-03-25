@@ -32,16 +32,18 @@ interface ContactSectionProps {
 
 function ContactSection({ title, description, children }: ContactSectionProps) {
   return (
-    <section className="space-y-3 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
-      <div className="space-y-1 px-1">
-        <h2 className="font-sans text-base font-semibold text-foreground">
+    <section className="space-y-4">
+      <div className="space-y-1">
+        <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
           {title}
         </h2>
         {description ? (
           <p className="text-sm leading-6 text-muted">{description}</p>
         ) : null}
       </div>
-      <div className="flex flex-col gap-3">{children}</div>
+      <div className="flex flex-col overflow-hidden rounded-[1.25rem] bg-foreground/[0.02] backdrop-blur-[40px] saturate-[200%] ring-[0.5px] ring-black/5 dark:bg-white/[0.03] dark:ring-white/10 shadow-sm divide-y divide-black/5 dark:divide-white/5">
+        {children}
+      </div>
     </section>
   );
 }
@@ -252,7 +254,7 @@ export function ContactsScreen() {
         </div>
       )}
 
-      <div className="rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+      <div className="rounded-[1.25rem] bg-foreground/[0.02] backdrop-blur-[40px] saturate-[200%] ring-[0.5px] ring-black/5 dark:bg-white/[0.03] dark:ring-white/10 shadow-sm p-4 sm:p-5">
         <div className="space-y-4">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
@@ -330,7 +332,7 @@ export function ContactsScreen() {
           }
         />
       ) : trimmedSearch ? (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col overflow-hidden rounded-[1.25rem] bg-foreground/[0.02] backdrop-blur-[40px] saturate-[200%] ring-[0.5px] ring-black/5 dark:bg-white/[0.03] dark:ring-white/10 shadow-sm divide-y divide-black/5 dark:divide-white/5">
           {displayedContacts.map((contact) => renderContactCard(contact))}
         </div>
       ) : (

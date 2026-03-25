@@ -18,7 +18,7 @@ export default function CreatePersonaPage() {
           </Link>
         }
       />
-      <div className="premium-card rounded-[2rem] p-4 sm:rounded-3xl sm:p-8 space-y-5 sm:space-y-6">
+      <div className="flex flex-col gap-4">
         <div className="space-y-1.5 sm:space-y-1">
           <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
             Identity setup

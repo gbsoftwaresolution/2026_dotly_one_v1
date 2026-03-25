@@ -319,6 +319,13 @@ export type JsonNullableFilterBase<$PrismaModel = never> = {
   not?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | Prisma.JsonNullValueFilter
 }
 
+export type EnumPersonaSocialLinksDisplayModeFilter<$PrismaModel = never> = {
+  equals?: $Enums.PersonaSocialLinksDisplayMode | Prisma.EnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel>
+  in?: $Enums.PersonaSocialLinksDisplayMode[] | Prisma.ListEnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PersonaSocialLinksDisplayMode[] | Prisma.ListEnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPersonaSocialLinksDisplayModeFilter<$PrismaModel> | $Enums.PersonaSocialLinksDisplayMode
+}
+
 export type EnumPersonaTypeWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.PersonaType | Prisma.EnumPersonaTypeFieldRefInput<$PrismaModel>
   in?: $Enums.PersonaType[] | Prisma.ListEnumPersonaTypeFieldRefInput<$PrismaModel>
@@ -390,6 +397,16 @@ export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedJsonNullableFilter<$PrismaModel>
   _max?: Prisma.NestedJsonNullableFilter<$PrismaModel>
+}
+
+export type EnumPersonaSocialLinksDisplayModeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PersonaSocialLinksDisplayMode | Prisma.EnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel>
+  in?: $Enums.PersonaSocialLinksDisplayMode[] | Prisma.ListEnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PersonaSocialLinksDisplayMode[] | Prisma.ListEnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPersonaSocialLinksDisplayModeWithAggregatesFilter<$PrismaModel> | $Enums.PersonaSocialLinksDisplayMode
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPersonaSocialLinksDisplayModeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPersonaSocialLinksDisplayModeFilter<$PrismaModel>
 }
 
 export type EnumQrTypeFilter<$PrismaModel = never> = {
@@ -977,6 +994,13 @@ export type NestedEnumPersonaSharingModeFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumPersonaSharingModeFilter<$PrismaModel> | $Enums.PersonaSharingMode
 }
 
+export type NestedEnumPersonaSocialLinksDisplayModeFilter<$PrismaModel = never> = {
+  equals?: $Enums.PersonaSocialLinksDisplayMode | Prisma.EnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel>
+  in?: $Enums.PersonaSocialLinksDisplayMode[] | Prisma.ListEnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PersonaSocialLinksDisplayMode[] | Prisma.ListEnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPersonaSocialLinksDisplayModeFilter<$PrismaModel> | $Enums.PersonaSocialLinksDisplayMode
+}
+
 export type NestedEnumPersonaTypeWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.PersonaType | Prisma.EnumPersonaTypeFieldRefInput<$PrismaModel>
   in?: $Enums.PersonaType[] | Prisma.ListEnumPersonaTypeFieldRefInput<$PrismaModel>
@@ -1056,6 +1080,16 @@ export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
   gt?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
   gte?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
   not?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | Prisma.JsonNullValueFilter
+}
+
+export type NestedEnumPersonaSocialLinksDisplayModeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PersonaSocialLinksDisplayMode | Prisma.EnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel>
+  in?: $Enums.PersonaSocialLinksDisplayMode[] | Prisma.ListEnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PersonaSocialLinksDisplayMode[] | Prisma.ListEnumPersonaSocialLinksDisplayModeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPersonaSocialLinksDisplayModeWithAggregatesFilter<$PrismaModel> | $Enums.PersonaSocialLinksDisplayMode
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPersonaSocialLinksDisplayModeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPersonaSocialLinksDisplayModeFilter<$PrismaModel>
 }
 
 export type NestedEnumQrTypeFilter<$PrismaModel = never> = {
