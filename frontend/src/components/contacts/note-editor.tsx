@@ -79,44 +79,47 @@ export function NoteEditor({
     }
   }, [feedback]);
 
-  const handleSave = useCallback(async (force = false) => {
-    if (isSaving || disabled) {
-      return;
-    }
+  const handleSave = useCallback(
+    async (force = false) => {
+      if (isSaving || disabled) {
+        return;
+      }
 
-    const canonicalValue = toCanonicalValue(value);
-    const note = canonicalValue === "" ? null : canonicalValue;
+      const canonicalValue = toCanonicalValue(value);
+      const note = canonicalValue === "" ? null : canonicalValue;
 
-    if (canonicalValue === savedValueRef.current) {
-      setValue(canonicalValue);
+      if (canonicalValue === savedValueRef.current) {
+        setValue(canonicalValue);
+        setFeedback(null);
+        return;
+      }
+
+      if (!force && canonicalValue === lastAttemptedValueRef.current) {
+        return;
+      }
+
       setFeedback(null);
-      return;
-    }
+      setIsSaving(true);
+      lastAttemptedValueRef.current = canonicalValue;
 
-    if (!force && canonicalValue === lastAttemptedValueRef.current) {
-      return;
-    }
-
-    setFeedback(null);
-    setIsSaving(true);
-    lastAttemptedValueRef.current = canonicalValue;
-
-    try {
-      const result = await contactsApi.updateNote(relationshipId, { note });
-      const nextValue = result.note ?? "";
-      setValue(nextValue);
-      savedValueRef.current = nextValue;
-      setFeedback({ tone: "success", message: "Saved" });
-    } catch (error) {
-      setFeedback({
-        tone: "error",
-        message:
-          error instanceof ApiError ? error.message : "Not saved. Try again.",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  }, [disabled, isSaving, relationshipId, value]);
+      try {
+        const result = await contactsApi.updateNote(relationshipId, { note });
+        const nextValue = result.note ?? "";
+        setValue(nextValue);
+        savedValueRef.current = nextValue;
+        setFeedback({ tone: "success", message: "Saved" });
+      } catch (error) {
+        setFeedback({
+          tone: "error",
+          message:
+            error instanceof ApiError ? error.message : "Not saved. Try again.",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [disabled, isSaving, relationshipId, value],
+  );
 
   useEffect(() => {
     const canonicalValue = toCanonicalValue(value);
@@ -141,9 +144,9 @@ export function NoteEditor({
 
   const statusMessage =
     isSaving || feedback?.tone === "success"
-      ? (isSaving
-          ? { tone: "success" as const, message: "Saving..." }
-          : feedback)
+      ? isSaving
+        ? { tone: "success" as const, message: "Saving..." }
+        : feedback
       : null;
 
   return (
@@ -171,7 +174,7 @@ export function NoteEditor({
           rows={4}
           maxLength={MAX_NOTE_LENGTH}
           className={cn(
-            "max-h-[240px] min-h-[112px] w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 font-sans text-base leading-7 text-foreground placeholder:text-muted/60 transition-all focus:border-brandRose focus:outline-none focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20",
+            "max-h-[240px] min-h-[112px] w-full resize-none rounded-2xl bg-foreground/[0.03] px-4 py-3 font-sans text-base leading-7 text-foreground placeholder:text-muted/60 shadow-inner ring-1 ring-inset ring-black/5 transition-all focus:bg-foreground/[0.05] focus:outline-none focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]",
             disabled ? "cursor-not-allowed opacity-70" : "",
           )}
         />
@@ -186,15 +189,16 @@ export function NoteEditor({
       </div>
 
       {feedback?.tone === "error" ? (
-        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3">
+        <div className="rounded-2xl bg-rose-500/5 px-4 py-3 ring-1 ring-inset ring-rose-500/20">
           <p className="text-sm text-rose-600 dark:text-rose-400">
             {feedback.message}
           </p>
         </div>
       ) : disabled ? (
-        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+        <div className="rounded-2xl bg-amber-500/5 px-4 py-3 ring-1 ring-inset ring-amber-500/20">
           <p className="font-sans text-sm text-amber-600 dark:text-amber-400">
-            This private note is locked because the connection window has closed.
+            This private note is locked because the connection window has
+            closed.
           </p>
         </div>
       ) : null}

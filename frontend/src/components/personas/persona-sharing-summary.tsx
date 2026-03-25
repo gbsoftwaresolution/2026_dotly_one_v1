@@ -161,7 +161,7 @@ export function PersonaSharingSummary({
   return (
     <section
       className={cn(
-        "space-y-4 rounded-3xl border border-border bg-surface/45 p-4 sm:p-5",
+        "space-y-4 rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5",
         className,
       )}
     >
@@ -176,22 +176,22 @@ export function PersonaSharingSummary({
         ) : null}
       </div>
 
-      <dl className="space-y-3">
-        <div className="flex items-start justify-between gap-4 rounded-2xl bg-background/80 px-4 py-3">
+      <dl className="space-y-2">
+        <div className="flex items-start justify-between gap-4 rounded-2xl bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06]">
           <dt className="text-sm text-muted">Sharing mode</dt>
           <dd className="text-right text-sm font-semibold text-foreground">
             {formatSharingMode(sharingMode)}
           </dd>
         </div>
 
-        <div className="flex items-start justify-between gap-4 rounded-2xl bg-background/80 px-4 py-3">
+        <div className="flex items-start justify-between gap-4 rounded-2xl bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06]">
           <dt className="text-sm text-muted">{primaryActionTitle}</dt>
           <dd className="text-right text-sm font-semibold text-foreground">
             {primaryActionLabel}
           </dd>
         </div>
 
-        <div className="flex items-start justify-between gap-4 rounded-2xl bg-background/80 px-4 py-3">
+        <div className="flex items-start justify-between gap-4 rounded-2xl bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06]">
           <dt className="text-sm text-muted">Available actions</dt>
           <dd className="text-right text-sm font-semibold text-foreground">
             {availableActionsLabel}

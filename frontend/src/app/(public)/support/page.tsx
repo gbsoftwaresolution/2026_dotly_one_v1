@@ -237,83 +237,80 @@ export default function SupportPage() {
   }
 
   return (
-    <section className="relative overflow-hidden py-4 sm:py-8">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-[-10%] top-[8%] h-56 w-56 rounded-full bg-brandCyan/15 blur-[90px]" />
-        <div className="absolute bottom-[10%] right-[-10%] h-64 w-64 rounded-full bg-brandRose/15 blur-[110px]" />
+    <section className="relative overflow-hidden pt-28 pb-12 sm:pt-36 sm:pb-20 min-h-screen">
+      <div className="fixed inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden">
+        <div className="absolute top-[-10%] h-[800px] w-[800px] rounded-full bg-accent/5 blur-[120px] mix-blend-normal opacity-50" />
       </div>
 
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
-        <div className="overflow-hidden rounded-[2rem] border border-white/50 bg-white/75 p-6 shadow-[0_8px_40px_rgba(0,0,0,0.06)] backdrop-blur-2xl dark:border-white/10 dark:bg-black/45 dark:shadow-[0_8px_40px_rgba(0,0,0,0.4)] sm:p-8">
-          <div className="space-y-4">
-            <span className="inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/70 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/70 dark:border-white/10 dark:bg-white/5">
-              <LifeBuoy className="h-3.5 w-3.5 text-brandRose dark:text-brandCyan" />
+      <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8 px-4 sm:px-6">
+        <div className="premium-card rounded-[2.5rem] p-8 md:p-12 relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-4 max-w-2xl">
+            <span className="inline-flex items-center gap-2 rounded-full border border-black/5 dark:border-white/10 bg-foreground/5 px-4 py-1.5 font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-foreground">
+              <LifeBuoy className="h-3.5 w-3.5 text-accent" />
               Dotly support
             </span>
-            <div className="space-y-3">
-              <h1 className="max-w-[14ch] text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+            <div className="space-y-4">
+              <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl leading-[1.1]">
                 Get help when something blocks the next step.
               </h1>
-              <p className="max-w-2xl text-sm leading-7 text-muted sm:text-[15px]">
+              <p className="text-[17px] leading-relaxed text-muted font-medium max-w-[40ch]">
                 Send a support request directly from Dotly, or open an email
                 draft if you prefer to continue in your mail app.
               </p>
             </div>
-
-            <a
-              href={mailtoHref}
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-pill bg-foreground px-5 text-sm font-bold text-background transition-all hover:opacity-90 sm:w-auto"
-            >
-              <Mail className="h-4 w-4" />
-              Email {supportEmail}
-            </a>
           </div>
+
+          <a
+            href={mailtoHref}
+            className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-foreground px-8 text-[15px] font-semibold text-background transition-transform hover:scale-[0.98] shadow-md tap-feedback w-full md:w-auto shrink-0"
+          >
+            <Mail className="h-4 w-4" />
+            Email {supportEmail}
+          </a>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-3 relative z-10">
           {sections.map((section) => {
             const Icon = section.icon;
 
             return (
               <article
                 key={section.title}
-                className="rounded-[1.75rem] border border-black/[0.05] bg-white/80 p-5 shadow-card-light backdrop-blur-xl dark:border-white/[0.08] dark:bg-surface1/90 dark:shadow-card"
+                className="premium-card rounded-[2rem] p-8 flex flex-col"
               >
-                <div className="space-y-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brandRose/10 text-brandRose dark:bg-brandCyan/12 dark:text-brandCyan">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <h2 className="text-lg font-bold tracking-tight text-foreground">
-                    {section.title}
-                  </h2>
-                  <p className="text-sm leading-6 text-muted">
-                    {section.description}
-                  </p>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-foreground/5 ring-1 ring-black/5 dark:ring-white/10 mb-6">
+                  <Icon className="h-6 w-6 text-foreground" strokeWidth={1.5} />
                 </div>
+                <h2 className="text-xl font-semibold tracking-tight text-foreground mb-3">
+                  {section.title}
+                </h2>
+                <p className="text-[15px] leading-relaxed text-muted font-medium">
+                  {section.description}
+                </p>
               </article>
             );
           })}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1.25fr_0.95fr]">
+        <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr] relative z-10">
           <form
-            className="rounded-[1.75rem] border border-black/[0.05] bg-white/80 p-6 shadow-card-light backdrop-blur-xl dark:border-white/[0.08] dark:bg-surface1/90 dark:shadow-card"
+            className="premium-card rounded-[2.5rem] p-8 md:p-12"
             onSubmit={(event) => void handleSubmit(event)}
           >
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <h2 className="text-xl font-bold tracking-tight text-foreground">
+            <div className="space-y-8">
+              <div className="space-y-3">
+                <h2 className="text-3xl font-semibold tracking-tight text-foreground">
                   Start your support request
                 </h2>
-                <p className="text-sm leading-6 text-muted">
+                <p className="text-[16px] leading-relaxed text-muted font-medium">
                   Drafts are saved locally in this browser until you send or
                   clear them.
                 </p>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="space-y-2">
-                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <label className="space-y-2 flex flex-col">
+                  <span className="text-[13px] font-semibold uppercase tracking-wider text-muted ml-2">
                     Name
                   </span>
                   <input
@@ -322,12 +319,12 @@ export default function SupportPage() {
                       updateDraft("name", event.target.value)
                     }
                     placeholder="Your name"
-                    className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+                    className="min-h-[56px] w-full rounded-2xl bg-foreground/[0.03] px-4 text-[16px] font-medium text-foreground outline-none transition-all duration-300 shadow-inner ring-1 ring-black/5 placeholder:text-muted/50 focus:bg-foreground/[0.045] focus:ring-2 focus:ring-foreground/15 dark:bg-white/[0.045] dark:ring-white/10 dark:focus:bg-white/[0.07]"
                   />
                 </label>
 
-                <label className="space-y-2">
-                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                <label className="space-y-2 flex flex-col">
+                  <span className="text-[13px] font-semibold uppercase tracking-wider text-muted ml-2">
                     Reply email
                   </span>
                   <input
@@ -337,32 +334,49 @@ export default function SupportPage() {
                       updateDraft("email", event.target.value)
                     }
                     placeholder="you@example.com"
-                    className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+                    className="min-h-[56px] w-full rounded-2xl bg-foreground/[0.03] px-4 text-[16px] font-medium text-foreground outline-none transition-all duration-300 shadow-inner ring-1 ring-black/5 placeholder:text-muted/50 focus:bg-foreground/[0.045] focus:ring-2 focus:ring-foreground/15 dark:bg-white/[0.045] dark:ring-white/10 dark:focus:bg-white/[0.07]"
                   />
                 </label>
               </div>
 
-              <label className="space-y-2">
-                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+              <label className="space-y-2 flex flex-col">
+                <span className="text-[13px] font-semibold uppercase tracking-wider text-muted ml-2">
                   Topic
                 </span>
-                <select
-                  value={draft.topic}
-                  onChange={(event) =>
-                    updateDraft("topic", event.target.value as SupportTopic)
-                  }
-                  className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
-                >
-                  {topics.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={draft.topic}
+                    onChange={(event) =>
+                      updateDraft("topic", event.target.value as SupportTopic)
+                    }
+                    className="appearance-none min-h-[56px] w-full rounded-2xl bg-foreground/[0.03] px-4 pr-10 text-[16px] font-medium text-foreground outline-none transition-all duration-300 shadow-inner ring-1 ring-black/5 cursor-pointer focus:bg-foreground/[0.045] focus:ring-2 focus:ring-foreground/15 dark:bg-white/[0.045] dark:ring-white/10 dark:focus:bg-white/[0.07]"
+                  >
+                    {topics.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
+                    <svg
+                      className="h-4 w-4 text-muted"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 9l-7 7-7-7"
+                      ></path>
+                    </svg>
+                  </div>
+                </div>
               </label>
 
-              <label className="space-y-2">
-                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+              <label className="space-y-2 flex flex-col">
+                <span className="text-[13px] font-semibold uppercase tracking-wider text-muted ml-2">
                   Details
                 </span>
                 <textarea
@@ -370,9 +384,9 @@ export default function SupportPage() {
                   onChange={(event) =>
                     updateDraft("details", event.target.value)
                   }
-                  rows={7}
+                  rows={6}
                   placeholder="What happened, where it happened, and what you expected instead"
-                  className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted/60 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+                  className="w-full resize-none rounded-2xl bg-foreground/[0.03] px-4 py-4 text-[16px] font-medium text-foreground outline-none transition-all duration-300 shadow-inner ring-1 ring-black/5 placeholder:text-muted/50 focus:bg-foreground/[0.045] focus:ring-2 focus:ring-foreground/15 dark:bg-white/[0.045] dark:ring-white/10 dark:focus:bg-white/[0.07]"
                 />
               </label>
 
@@ -388,24 +402,32 @@ export default function SupportPage() {
                 />
               </label>
 
-              <div className="rounded-2xl border border-border/70 bg-background/70 px-4 py-3 text-sm text-muted">
-                Lightweight bot check is active for this form.
+              <div className="rounded-2xl bg-foreground/[0.02] px-5 py-4 ring-1 ring-black/5 dark:ring-white/10 shadow-inner">
+                <p className="text-[14px] font-medium text-muted">
+                  Lightweight bot check is active for this form.
+                </p>
               </div>
 
               {error ? (
-                <div className="rounded-2xl border border-rose-400/30 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200">
-                  {error}
+                <div className="rounded-2xl bg-status-error/10 px-5 py-4 ring-1 ring-status-error/20">
+                  <p className="text-[14px] font-medium text-status-error">
+                    {error}
+                  </p>
                 </div>
               ) : null}
 
               {result ? (
-                <div className="rounded-2xl border border-emerald-400/30 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200">
-                  <p className="font-semibold">Support request received</p>
-                  <p>
-                    Reference ID:{" "}
-                    <span className="font-mono">{result.referenceId}</span>
+                <div className="rounded-2xl bg-status-success/10 px-5 py-4 ring-1 ring-status-success/20 space-y-2">
+                  <p className="text-[15px] font-semibold text-status-success">
+                    Support request received
                   </p>
-                  <p>
+                  <p className="text-[14px] font-medium text-status-success/80">
+                    Reference ID:{" "}
+                    <span className="font-mono bg-status-success/10 px-2 py-0.5 rounded">
+                      {result.referenceId}
+                    </span>
+                  </p>
+                  <p className="text-[14px] font-medium text-status-success/80 mt-2">
                     {result.delivery === "sent"
                       ? "Your message was sent to the support inbox."
                       : "Your message was accepted and logged. If email delivery is delayed, you can still contact support@dotly.one directly."}
@@ -413,77 +435,88 @@ export default function SupportPage() {
                 </div>
               ) : null}
 
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <PrimaryButton type="submit" fullWidth isLoading={isSubmitting}>
+              <div className="flex flex-col gap-4 sm:flex-row pt-4">
+                <PrimaryButton
+                  type="submit"
+                  fullWidth
+                  className="h-14 text-[16px]"
+                  isLoading={isSubmitting}
+                >
                   Send support request
                 </PrimaryButton>
-                <a href={mailtoHref} className="block flex-1">
-                  <SecondaryButton type="button" fullWidth>
-                    Open email draft
+                <div className="flex gap-4 flex-1">
+                  <a href={mailtoHref} className="block flex-1">
+                    <SecondaryButton
+                      type="button"
+                      fullWidth
+                      className="h-14 text-[16px]"
+                    >
+                      Email draft
+                    </SecondaryButton>
+                  </a>
+                  <SecondaryButton
+                    type="button"
+                    fullWidth
+                    className="flex-1 h-14 text-[16px]"
+                    onClick={() => void handleCopyTemplate()}
+                  >
+                    {copied ? "Copied" : "Copy"}
                   </SecondaryButton>
-                </a>
-                <SecondaryButton
-                  type="button"
-                  fullWidth
-                  className="flex-1"
-                  onClick={() => void handleCopyTemplate()}
-                >
-                  {copied ? "Copied" : "Copy message"}
-                </SecondaryButton>
+                </div>
               </div>
             </div>
           </form>
 
-          <div className="flex flex-col gap-4">
-            <article className="rounded-[1.75rem] border border-black/[0.05] bg-white/80 p-6 shadow-card-light backdrop-blur-xl dark:border-white/[0.08] dark:bg-surface1/90 dark:shadow-card">
-              <div className="space-y-3">
-                <h2 className="text-xl font-bold tracking-tight text-foreground">
-                  What to include in your message
+          <div className="flex flex-col gap-6">
+            <article className="premium-card rounded-[2.5rem] p-8 md:p-10">
+              <div className="space-y-6">
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                  What to include
                 </h2>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                  <div className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-3 text-sm text-foreground/80 dark:border-white/[0.06]">
+                <div className="grid gap-3">
+                  <div className="rounded-2xl bg-foreground/[0.02] px-5 py-4 text-[15px] font-medium text-foreground ring-1 ring-black/5 dark:ring-white/10 shadow-inner">
                     Your account email or public username
                   </div>
-                  <div className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-3 text-sm text-foreground/80 dark:border-white/[0.06]">
+                  <div className="rounded-2xl bg-foreground/[0.02] px-5 py-4 text-[15px] font-medium text-foreground ring-1 ring-black/5 dark:ring-white/10 shadow-inner">
                     The page or flow where the issue happened
                   </div>
-                  <div className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-3 text-sm text-foreground/80 dark:border-white/[0.06]">
+                  <div className="rounded-2xl bg-foreground/[0.02] px-5 py-4 text-[15px] font-medium text-foreground ring-1 ring-black/5 dark:ring-white/10 shadow-inner">
                     What you expected to happen
                   </div>
-                  <div className="rounded-[1.1rem] border border-black/[0.05] bg-background/70 px-4 py-3 text-sm text-foreground/80 dark:border-white/[0.06]">
+                  <div className="rounded-2xl bg-foreground/[0.02] px-5 py-4 text-[15px] font-medium text-foreground ring-1 ring-black/5 dark:ring-white/10 shadow-inner">
                     Any error message you saw
                   </div>
                 </div>
               </div>
             </article>
 
-            <article className="rounded-[1.75rem] border border-black/[0.05] bg-white/80 p-6 shadow-card-light backdrop-blur-xl dark:border-white/[0.08] dark:bg-surface1/90 dark:shadow-card">
-              <div className="space-y-3">
-                <h2 className="text-xl font-bold tracking-tight text-foreground">
+            <article className="premium-card rounded-[2.5rem] p-8 md:p-10">
+              <div className="space-y-6">
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground">
                   Helpful links
                 </h2>
-                <div className="flex flex-col gap-2 text-sm font-semibold">
+                <div className="flex flex-col gap-3">
                   <Link
                     href={routes.public.forgotPassword}
-                    className="rounded-2xl border border-border/70 px-4 py-3 text-foreground transition-colors hover:bg-background/80"
+                    className="rounded-2xl bg-foreground/[0.02] px-5 py-4 text-[15px] font-medium text-foreground ring-1 ring-black/5 dark:ring-white/10 transition-all hover:bg-foreground/[0.05] hover:scale-[0.98] active:scale-[0.96] tap-feedback shadow-inner"
                   >
                     Reset your password
                   </Link>
                   <Link
                     href={routes.public.verifyEmail}
-                    className="rounded-2xl border border-border/70 px-4 py-3 text-foreground transition-colors hover:bg-background/80"
+                    className="rounded-2xl bg-foreground/[0.02] px-5 py-4 text-[15px] font-medium text-foreground ring-1 ring-black/5 dark:ring-white/10 transition-all hover:bg-foreground/[0.05] hover:scale-[0.98] active:scale-[0.96] tap-feedback shadow-inner"
                   >
                     Verify your email
                   </Link>
                   <Link
                     href={routes.public.privacy}
-                    className="rounded-2xl border border-border/70 px-4 py-3 text-foreground transition-colors hover:bg-background/80"
+                    className="rounded-2xl bg-foreground/[0.02] px-5 py-4 text-[15px] font-medium text-foreground ring-1 ring-black/5 dark:ring-white/10 transition-all hover:bg-foreground/[0.05] hover:scale-[0.98] active:scale-[0.96] tap-feedback shadow-inner"
                   >
                     Privacy policy
                   </Link>
                   <Link
                     href={routes.public.terms}
-                    className="rounded-2xl border border-border/70 px-4 py-3 text-foreground transition-colors hover:bg-background/80"
+                    className="rounded-2xl bg-foreground/[0.02] px-5 py-4 text-[15px] font-medium text-foreground ring-1 ring-black/5 dark:ring-white/10 transition-all hover:bg-foreground/[0.05] hover:scale-[0.98] active:scale-[0.96] tap-feedback shadow-inner"
                   >
                     Terms
                   </Link>

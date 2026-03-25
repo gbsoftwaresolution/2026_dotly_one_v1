@@ -24,13 +24,12 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
     : getShareInstruction(qr.type);
 
   return (
-    <div className="glass overflow-hidden rounded-3xl border border-border bg-surface">
-      {/* Header band — brand gradient */}
+    <div className="overflow-hidden rounded-3xl bg-white/95 shadow-[0_18px_50px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.05] dark:bg-zinc-950/92 dark:ring-white/[0.06]">
       <div
         className="relative px-6 py-7"
         style={{
           background:
-            "linear-gradient(135deg, hsl(330,70%,25%) 0%, hsl(330,60%,18%) 60%, hsl(200,60%,15%) 100%)",
+            "linear-gradient(180deg, rgba(20,20,20,0.98) 0%, rgba(42,42,42,0.94) 100%)",
         }}
       >
         <div className="flex items-start justify-between gap-4">
@@ -58,7 +57,7 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
       </div>
 
       <div className="space-y-5 px-6 py-6">
-        <div className="space-y-1 rounded-3xl border border-border bg-surface/60 p-4">
+        <div className="space-y-1 rounded-3xl bg-foreground/[0.03] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <p className="label-xs text-muted">
             {isQuickConnect ? "Ready to connect" : "Contact preview"}
           </p>
@@ -79,7 +78,7 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
           </p>
         </div>
 
-        <dl className="grid gap-4 rounded-3xl border border-border bg-surface/60 p-4 text-sm">
+        <dl className="grid gap-4 rounded-3xl bg-foreground/[0.03] p-4 text-sm shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <div className="space-y-1">
             <dt className="label-xs text-muted">Username</dt>
             <dd className="text-foreground">@{qr.persona.username}</dd>

@@ -88,15 +88,19 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
   }
 
   const inputCls =
-    "min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20";
+    "min-h-[52px] w-full rounded-2xl bg-foreground/[0.03] px-4 text-[15px] font-medium text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06] dark:focus:ring-white/10";
+  const sectionCls =
+    "space-y-4 rounded-[1.5rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-[1.75rem] sm:p-5";
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
-      {/* Access mode — most important for Phase 5 */}
-      <div className="space-y-3">
+      <section className={sectionCls}>
         <div className="space-y-1">
-          <p className="label-xs text-muted">Visibility Protocol</p>
-          <p className="text-xs text-muted">
+          <p className="label-xs text-muted">Step 1</p>
+          <p className="text-sm font-semibold tracking-tight text-foreground">
+            Visibility protocol
+          </p>
+          <p className="text-xs leading-5 text-muted">
             Control how others can connect with this persona.
           </p>
         </div>
@@ -108,10 +112,10 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
               <label
                 key={option.value}
                 className={cn(
-                  "relative flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-all focus-within:ring-2 focus-within:ring-brandRose focus-within:ring-offset-2 dark:focus-within:ring-brandCyan dark:focus-within:ring-offset-bgOnyx",
+                  "relative flex cursor-pointer items-start gap-3 rounded-2xl p-4 transition-all focus-within:ring-2 focus-within:ring-black/10",
                   isSelected
-                    ? "border-brandRose bg-brandRose/5 dark:border-brandCyan dark:bg-brandCyan/5"
-                    : "border-border bg-surface hover:bg-slate-50 dark:hover:bg-zinc-900",
+                    ? "bg-foreground/[0.05] ring-1 ring-black/10 dark:bg-white/[0.08] dark:ring-white/10"
+                    : "bg-foreground/[0.03] ring-1 ring-black/5 hover:bg-foreground/[0.05] dark:bg-white/[0.04] dark:ring-white/10 dark:hover:bg-white/[0.06]",
                 )}
               >
                 <div className="flex h-5 items-center">
@@ -126,7 +130,7 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
                         e.target.value as PersonaAccessMode,
                       )
                     }
-                    className="h-4 w-4 border-slate-300 text-brandRose dark:text-brandCyan focus:ring-brandRose dark:focus:ring-brandCyan focus:ring-offset-0 bg-transparent"
+                    className="h-4 w-4 rounded accent-black focus:ring-0 dark:accent-white"
                   />
                 </div>
                 <div className="flex flex-col">
@@ -152,10 +156,10 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
           })}
         </div>
 
-        <label className="flex items-start gap-3 rounded-2xl border border-border bg-surface px-4 py-3 cursor-pointer">
+        <label className="flex items-start gap-3 rounded-2xl bg-foreground/[0.03] px-4 py-3.5 shadow-inner ring-1 ring-inset ring-black/5 cursor-pointer dark:bg-white/[0.045] dark:ring-white/5">
           <input
             type="checkbox"
-            className="mt-0.5 h-4 w-4 rounded accent-brandRose dark:accent-brandCyan"
+            className="mt-0.5 h-4 w-4 rounded accent-black dark:accent-white"
             checked={formState.verifiedOnly ?? false}
             onChange={(event) =>
               updateField("verifiedOnly", event.target.checked)
@@ -170,11 +174,15 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
             </span>
           </span>
         </label>
-      </div>
+      </section>
 
-      {/* Profile info */}
-      <div className="space-y-4 pt-2">
-        <p className="label-xs text-muted">Profile info</p>
+      <section className={sectionCls}>
+        <div className="space-y-1">
+          <p className="label-xs text-muted">Step 2</p>
+          <p className="text-sm font-semibold tracking-tight text-foreground">
+            Profile info
+          </p>
+        </div>
 
         <div className="space-y-1.5">
           <label className="label-xs" htmlFor="edit-fullname">
@@ -231,7 +239,7 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
             id="edit-tagline"
             maxLength={120}
             rows={3}
-            className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+            className="w-full resize-none rounded-2xl bg-foreground/[0.03] px-4 py-3.5 text-[15px] font-medium text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06] dark:focus:ring-white/10"
             value={formState.tagline ?? ""}
             onChange={(event) => updateField("tagline", event.target.value)}
           />
@@ -255,10 +263,10 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
             />
           </div>
 
-          <label className="flex items-start gap-3 rounded-2xl border border-border bg-surface px-4 py-3 cursor-pointer sm:min-w-[220px]">
+          <label className="flex items-start gap-3 rounded-2xl bg-foreground/[0.03] px-4 py-3.5 shadow-inner ring-1 ring-inset ring-black/5 cursor-pointer dark:bg-white/[0.045] dark:ring-white/5 sm:min-w-[220px]">
             <input
               type="checkbox"
-              className="mt-0.5 h-4 w-4 rounded accent-brandRose dark:accent-brandCyan"
+              className="mt-0.5 h-4 w-4 rounded accent-black dark:accent-white"
               checked={formState.isVerified ?? false}
               onChange={(event) =>
                 updateField("isVerified", event.target.checked)
@@ -274,18 +282,18 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
             </span>
           </label>
         </div>
-      </div>
+      </section>
 
       {error ? (
-        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
-          <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
+        <div className="rounded-2xl bg-rose-500/5 px-4 py-3 ring-1 ring-inset ring-rose-500/20">
+          <p className="font-mono text-sm text-rose-600 dark:text-rose-400">
             {error}
           </p>
         </div>
       ) : null}
 
       {successMessage ? (
-        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+        <div className="rounded-2xl bg-emerald-500/5 px-4 py-3 ring-1 ring-inset ring-emerald-500/20">
           <p className="font-mono text-sm text-emerald-600 dark:text-emerald-400">
             {successMessage}
           </p>

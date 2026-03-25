@@ -30,13 +30,9 @@ interface ContactSectionProps {
   children: ReactNode;
 }
 
-function ContactSection({
-  title,
-  description,
-  children,
-}: ContactSectionProps) {
+function ContactSection({ title, description, children }: ContactSectionProps) {
   return (
-    <section className="space-y-3">
+    <section className="space-y-3 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
       <div className="space-y-1 px-1">
         <h2 className="font-sans text-base font-semibold text-foreground">
           {title}
@@ -50,9 +46,7 @@ function ContactSection({
   );
 }
 
-function getContactPriority(
-  contact: Contact,
-): ContactPriority | null {
+function getContactPriority(contact: Contact): ContactPriority | null {
   if (contact.followUpSummary.isOverdue) {
     return { bucket: "attention", label: "Overdue", tone: "attention" };
   }
@@ -158,14 +152,19 @@ export function ContactsScreen() {
       allContacts,
     };
   }, [displayedContacts]);
-  const hasCachedContacts = contactsState.data.length > 0 || contactsState.status === "ready";
+  const hasCachedContacts =
+    contactsState.data.length > 0 || contactsState.status === "ready";
   const showSkeleton =
     displayedContacts.length === 0 &&
     (trimmedSearch
       ? isSearchRefreshing && !hasCachedContacts
-      : (contactsState.status === "idle" || contactsState.status === "loading") && !hasCachedContacts);
+      : (contactsState.status === "idle" ||
+          contactsState.status === "loading") &&
+        !hasCachedContacts);
   const loadError = trimmedSearch ? searchError : contactsState.error;
-  const isRefreshing = trimmedSearch ? isSearchRefreshing : contactsState.status === "loading";
+  const isRefreshing = trimmedSearch
+    ? isSearchRefreshing
+    : contactsState.status === "loading";
 
   const renderContactCard = (contact: Contact) => {
     const priority = sectionedContacts.priorities.get(contact.relationshipId);
@@ -174,7 +173,9 @@ export function ContactsScreen() {
       <ContactCard
         key={contact.relationshipId}
         contact={contact}
-        hasPassiveReminder={contact.followUpSummary.hasPassiveInactivityFollowUp}
+        hasPassiveReminder={
+          contact.followUpSummary.hasPassiveInactivityFollowUp
+        }
         priorityLabel={priority?.label}
         priorityTone={priority?.tone}
       />
@@ -244,35 +245,48 @@ export function ContactsScreen() {
   return (
     <section className="space-y-4">
       {successMessage && (
-        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+        <div className="rounded-2xl bg-emerald-500/5 px-4 py-3 ring-1 ring-inset ring-emerald-500/20">
           <p className="font-mono text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
             {successMessage}
           </p>
         </div>
       )}
 
-      <div className="relative">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search connections..."
-          className={cn(
-            "w-full rounded-2xl border border-border bg-surface px-4 py-3 font-sans text-sm text-foreground placeholder:text-muted/50 transition-all focus:border-brandRose focus:outline-none focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20",
-          )}
-        />
-      </div>
+      <div className="rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+              Step 1
+            </p>
+            <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+              Search and sort
+            </h2>
+          </div>
 
-      <div className="min-h-5 px-1">
-        {isRefreshing ? (
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-            Updating connections...
-          </p>
-        ) : null}
+          <div className="relative">
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search connections..."
+              className={cn(
+                "w-full rounded-2xl bg-foreground/[0.03] px-4 py-3.5 font-sans text-sm text-foreground placeholder:text-muted/50 shadow-inner ring-1 ring-inset ring-black/5 transition-all focus:bg-foreground/[0.05] focus:outline-none focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]",
+              )}
+            />
+          </div>
+
+          <div className="min-h-5 px-1">
+            {isRefreshing ? (
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+                Updating connections...
+              </p>
+            ) : null}
+          </div>
+        </div>
       </div>
 
       {showSkeleton ? (
-        <div className="space-y-3">
+        <div className="space-y-3 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
@@ -300,7 +314,7 @@ export function ContactsScreen() {
                   }
                 });
               }}
-              className="inline-flex h-[60px] w-full items-center justify-center rounded-2xl bg-brandRose px-5 font-sans text-sm font-bold text-white transition-all hover:bg-brandRose/90 active:scale-95 dark:bg-brandCyan dark:text-zinc-950 dark:hover:bg-brandCyan/90 focus:outline-none focus:ring-2 focus:ring-brandRose focus:ring-offset-2"
+              className="inline-flex h-[60px] w-full items-center justify-center rounded-2xl bg-foreground px-5 font-sans text-sm font-bold text-background transition-all duration-200 hover:scale-[0.995] hover:opacity-95 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-foreground/15 focus:ring-offset-2"
             >
               Try again
             </button>
@@ -331,7 +345,7 @@ export function ContactsScreen() {
               )}
             </ContactSection>
           ) : (
-            <div className="rounded-3xl border border-border/70 bg-surface/70 px-5 py-4">
+            <div className="rounded-[1.75rem] bg-foreground/[0.02] px-5 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl">
               <p className="font-sans text-sm font-semibold text-foreground">
                 You&apos;re all caught up
               </p>
@@ -355,7 +369,7 @@ export function ContactsScreen() {
           {sectionedContacts.recentConnections.length > 0 ? (
             <ContactSection
               title="Recent connections"
-              description="People you&apos;ve been in touch with lately."
+              description="People you've been in touch with lately."
             >
               {sectionedContacts.recentConnections.map((contact) =>
                 renderContactCard(contact),

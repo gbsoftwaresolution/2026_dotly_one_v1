@@ -191,7 +191,7 @@ function SectionCard({
   return (
     <section
       className={cn(
-        "glass rounded-[28px] border border-border bg-surface p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.24)]",
+        "rounded-[28px] bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5",
         className,
       )}
     >
@@ -220,10 +220,10 @@ function ActionList({
   return (
     <div
       className={cn(
-        "rounded-[22px] border p-4",
+        "rounded-[22px] p-4 ring-1 ring-inset",
         tone === "success"
-          ? "border-emerald-500/20 bg-emerald-500/10"
-          : "border-amber-500/20 bg-amber-500/10",
+          ? "bg-emerald-500/5 ring-emerald-500/20"
+          : "bg-amber-500/5 ring-amber-500/20",
       )}
     >
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground/70">
@@ -252,11 +252,10 @@ function FeedbackBanner({ feedback }: { feedback: FeedbackState }) {
   return (
     <div
       className={cn(
-        "rounded-[22px] border px-4 py-3",
-        feedback.tone === "success" &&
-          "border-emerald-500/25 bg-emerald-500/10",
-        feedback.tone === "warning" && "border-amber-500/25 bg-amber-500/10",
-        feedback.tone === "error" && "border-rose-500/25 bg-rose-500/10",
+        "rounded-[22px] px-4 py-3 ring-1 ring-inset",
+        feedback.tone === "success" && "bg-emerald-500/5 ring-emerald-500/20",
+        feedback.tone === "warning" && "bg-amber-500/5 ring-amber-500/20",
+        feedback.tone === "error" && "bg-rose-500/5 ring-rose-500/20",
       )}
     >
       <p className="text-sm leading-6 text-foreground/85">{feedback.message}</p>
@@ -325,7 +324,7 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
       className="md:col-span-2"
     >
       <div className="space-y-5">
-        <div className="rounded-[24px] border border-border bg-[radial-gradient(circle_at_top_left,rgba(255,51,102,0.16),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.18),transparent_32%)] p-5">
+        <div className="rounded-[24px] bg-foreground/[0.04] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
@@ -385,9 +384,7 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
             tone={emailSignal.tone}
             description={emailSignal.description}
             detail={user.security.maskedEmail}
-            icon={
-              <Mail className="h-4 w-4 text-brandRose dark:text-brandCyan" />
-            }
+            icon={<Mail className="h-4 w-4 text-foreground" />}
           />
           <TrustSignalCard
             title="Mobile OTP status"
@@ -397,9 +394,7 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
             detail={
               user.security.maskedPhoneNumber ?? "No mobile number enrolled"
             }
-            icon={
-              <Smartphone className="h-4 w-4 text-brandRose dark:text-brandCyan" />
-            }
+            icon={<Smartphone className="h-4 w-4 text-foreground" />}
           />
           <TrustSignalCard
             title="Protected actions"
@@ -419,11 +414,9 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
                 : `${unlockedRequirementCount} requirements are already satisfied. A verified factor is still needed for the rest.`
             }
             detail={`${user.security.restrictedActions.length} action${user.security.restrictedActions.length === 1 ? "" : "s"} still gated`}
-            icon={
-              <ShieldCheck className="h-4 w-4 text-brandRose dark:text-brandCyan" />
-            }
+            icon={<ShieldCheck className="h-4 w-4 text-foreground" />}
           />
-          <div className="rounded-[22px] border border-border bg-white/60 p-4 dark:bg-white/[0.03]">
+          <div className="rounded-[22px] bg-white/80 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950/80 dark:ring-white/[0.06]">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-foreground/70">
               Verification requirements
             </p>
@@ -431,7 +424,7 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
               {user.security.requirements.map((requirement) => (
                 <div
                   key={requirement.key}
-                  className="flex items-center justify-between gap-3 rounded-[18px] border border-black/5 px-3 py-2 dark:border-white/10"
+                  className="flex items-center justify-between gap-3 rounded-[18px] bg-foreground/[0.03] px-3 py-2 ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10"
                 >
                   <p className="text-sm text-foreground/85">
                     {requirement.label}
@@ -476,8 +469,8 @@ function VerificationManagementCard({
   return (
     <SectionCard eyebrow="Email Verification" title="Manage email verification">
       <div className="space-y-4">
-        <div className="flex items-start gap-3 rounded-[22px] border border-border bg-white/60 p-4 dark:bg-white/[0.03]">
-          <Mail className="mt-0.5 h-5 w-5 text-brandRose dark:text-brandCyan" />
+        <div className="flex items-start gap-3 rounded-[22px] bg-white/80 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950/80 dark:ring-white/[0.06]">
+          <Mail className="mt-0.5 h-5 w-5 text-foreground" />
           <div className="space-y-1.5">
             <p className="text-sm font-semibold text-foreground">
               {user.isVerified
@@ -523,7 +516,7 @@ function VerificationManagementCard({
               Resend verification email
             </SecondaryButton>
 
-            <div className="rounded-[22px] border border-dashed border-border px-4 py-3">
+            <div className="rounded-[22px] bg-foreground/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
               <p className="text-sm font-semibold text-foreground">
                 Didn&apos;t receive it?
               </p>
@@ -534,14 +527,14 @@ function VerificationManagementCard({
               </p>
               <Link
                 href={`${routes.public.verifyEmail}?email=${encodeURIComponent(user.email)}`}
-                className="mt-3 inline-flex text-sm font-semibold text-brandRose transition-colors hover:text-brandRose/80 dark:text-brandCyan dark:hover:text-brandCyan/80"
+                className="mt-3 inline-flex text-sm font-semibold text-foreground transition-opacity hover:opacity-70"
               >
                 Open verification help
               </Link>
             </div>
           </div>
         ) : (
-          <div className="rounded-[22px] border border-emerald-500/25 bg-emerald-500/10 px-4 py-3">
+          <div className="rounded-[22px] bg-emerald-500/5 px-4 py-3 ring-1 ring-inset ring-emerald-500/20">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               <p className="text-sm leading-6 text-foreground/85">
@@ -561,9 +554,9 @@ function PasswordRecoveryCard({ user }: { user: UserProfile }) {
   return (
     <SectionCard eyebrow="Password" title="Password and recovery">
       <div className="space-y-3">
-        <div className="rounded-[22px] border border-border bg-white/60 p-4 dark:bg-white/[0.03]">
+        <div className="rounded-[22px] bg-white/80 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950/80 dark:ring-white/[0.06]">
           <div className="flex items-start gap-3">
-            <KeyRound className="mt-0.5 h-5 w-5 text-brandRose dark:text-brandCyan" />
+            <KeyRound className="mt-0.5 h-5 w-5 text-foreground" />
             <div>
               <p className="text-sm font-semibold text-foreground">
                 Forgot your password?
@@ -575,14 +568,14 @@ function PasswordRecoveryCard({ user }: { user: UserProfile }) {
               </p>
               <Link
                 href={routes.public.forgotPassword}
-                className="mt-3 inline-flex text-sm font-semibold text-brandRose transition-colors hover:text-brandRose/80 dark:text-brandCyan dark:hover:text-brandCyan/80"
+                className="mt-3 inline-flex text-sm font-semibold text-foreground transition-opacity hover:opacity-70"
               >
                 Open password recovery
               </Link>
             </div>
           </div>
         </div>
-        <div className="rounded-[22px] border border-dashed border-border px-4 py-3">
+        <div className="rounded-[22px] bg-foreground/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
           <p className="text-sm font-semibold text-foreground">
             Recovery behavior
           </p>
@@ -666,9 +659,9 @@ function ReferralShareCard() {
   return (
     <SectionCard eyebrow="Referral" title="Invite with your referral code">
       <div className="space-y-4">
-        <div className="rounded-[22px] border border-border bg-[radial-gradient(circle_at_top_left,rgba(255,51,102,0.12),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.14),transparent_30%)] p-4">
+        <div className="rounded-[22px] bg-foreground/[0.04] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
           <div className="flex items-start gap-3">
-            <Waypoints className="mt-0.5 h-5 w-5 text-brandRose dark:text-brandCyan" />
+            <Waypoints className="mt-0.5 h-5 w-5 text-foreground" />
             <div className="space-y-1.5">
               <p className="text-sm font-semibold text-foreground">
                 Share one code, keep tracking simple
@@ -684,7 +677,7 @@ function ReferralShareCard() {
 
         <FeedbackBanner feedback={feedback} />
 
-        <div className="rounded-[22px] border border-dashed border-border px-4 py-4">
+        <div className="rounded-[22px] bg-foreground/[0.03] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
             Your referral code
           </p>
@@ -768,7 +761,7 @@ function ChangePasswordCard() {
             type="password"
             value={currentPassword}
             onChange={(event) => setCurrentPassword(event.target.value)}
-            className="min-h-[52px] w-full rounded-[16px] border border-black/10 bg-white/60 px-4 text-sm text-foreground outline-none transition focus:border-brandRose focus:ring-[3px] focus:ring-brandRose/15 dark:border-white/10 dark:bg-white/[0.03] dark:focus:border-brandCyan dark:focus:ring-brandCyan/15"
+            className="min-h-[52px] w-full rounded-[16px] bg-foreground/[0.03] px-4 text-sm text-foreground outline-none transition shadow-inner ring-1 ring-inset ring-black/5 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]"
             autoComplete="current-password"
             maxLength={72}
             required
@@ -786,7 +779,7 @@ function ChangePasswordCard() {
             type="password"
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
-            className="min-h-[52px] w-full rounded-[16px] border border-black/10 bg-white/60 px-4 text-sm text-foreground outline-none transition focus:border-brandRose focus:ring-[3px] focus:ring-brandRose/15 dark:border-white/10 dark:bg-white/[0.03] dark:focus:border-brandCyan dark:focus:ring-brandCyan/15"
+            className="min-h-[52px] w-full rounded-[16px] bg-foreground/[0.03] px-4 text-sm text-foreground outline-none transition shadow-inner ring-1 ring-inset ring-black/5 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]"
             autoComplete="new-password"
             minLength={10}
             maxLength={72}
@@ -960,8 +953,8 @@ function MobileOtpCard({ user }: { user: UserProfile }) {
   return (
     <SectionCard eyebrow="Mobile Verification" title="Add mobile verification">
       <div className="space-y-4">
-        <div className="flex items-start gap-3 rounded-[22px] border border-border bg-white/60 p-4 dark:bg-white/[0.03]">
-          <Smartphone className="mt-0.5 h-5 w-5 text-brandRose dark:text-brandCyan" />
+        <div className="flex items-start gap-3 rounded-[22px] bg-white/80 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950/80 dark:ring-white/[0.06]">
+          <Smartphone className="mt-0.5 h-5 w-5 text-foreground" />
           <div className="space-y-1.5">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
               State: {statusLabel}
@@ -977,7 +970,7 @@ function MobileOtpCard({ user }: { user: UserProfile }) {
         </div>
 
         {!user.security.smsDeliveryAvailable ? (
-          <div className="rounded-[22px] border border-amber-500/25 bg-amber-500/10 px-4 py-3">
+          <div className="rounded-[22px] bg-amber-500/5 px-4 py-3 ring-1 ring-inset ring-amber-500/20">
             <div className="flex items-start gap-3">
               <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600 dark:text-amber-300" />
               <p className="text-sm leading-6 text-foreground/80">
@@ -1004,7 +997,7 @@ function MobileOtpCard({ user }: { user: UserProfile }) {
             value={phoneNumber}
             onChange={(event) => setPhoneNumber(event.target.value)}
             placeholder="+14155550199"
-            className="min-h-[52px] w-full rounded-[16px] border border-black/10 bg-white/60 px-4 text-sm text-foreground outline-none transition focus:border-brandRose focus:ring-[3px] focus:ring-brandRose/15 dark:border-white/10 dark:bg-white/[0.03] dark:focus:border-brandCyan dark:focus:ring-brandCyan/15"
+            className="min-h-[52px] w-full rounded-[16px] bg-foreground/[0.03] px-4 text-sm text-foreground outline-none transition shadow-inner ring-1 ring-inset ring-black/5 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]"
             required
           />
           <p className="text-xs leading-5 text-muted">
@@ -1016,7 +1009,7 @@ function MobileOtpCard({ user }: { user: UserProfile }) {
         </form>
 
         {viewState === "resend_blocked" ? (
-          <div className="rounded-[22px] border border-amber-500/25 bg-amber-500/10 px-4 py-3">
+          <div className="rounded-[22px] bg-amber-500/5 px-4 py-3 ring-1 ring-inset ring-amber-500/20">
             <div className="flex items-start gap-3">
               <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600 dark:text-amber-300" />
               <p className="text-sm leading-6 text-foreground/85">
@@ -1030,7 +1023,7 @@ function MobileOtpCard({ user }: { user: UserProfile }) {
 
         {otpState || user.security.mobileOtpEnrollment ? (
           <form
-            className="space-y-3 rounded-[22px] border border-dashed border-border px-4 py-4"
+            className="space-y-3 rounded-[22px] bg-foreground/[0.03] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10"
             onSubmit={handleVerify}
           >
             <div>
@@ -1051,7 +1044,7 @@ function MobileOtpCard({ user }: { user: UserProfile }) {
               value={code}
               onChange={(event) => setCode(event.target.value)}
               placeholder="123456"
-              className="min-h-[52px] w-full rounded-[16px] border border-black/10 bg-white/60 px-4 text-sm tracking-[0.3em] text-foreground outline-none transition focus:border-brandRose focus:ring-[3px] focus:ring-brandRose/15 dark:border-white/10 dark:bg-white/[0.03] dark:focus:border-brandCyan dark:focus:ring-brandCyan/15"
+              className="min-h-[52px] w-full rounded-[16px] bg-foreground/[0.03] px-4 text-sm tracking-[0.3em] text-foreground outline-none transition shadow-inner ring-1 ring-inset ring-black/5 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]"
               required
             />
             {otpState ? (
@@ -1084,7 +1077,7 @@ function SessionCard({
   isRevoking: boolean;
 }) {
   return (
-    <div className="rounded-[22px] border border-border bg-white/60 p-4 dark:bg-white/[0.03]">
+    <div className="rounded-[22px] bg-white/80 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950/80 dark:ring-white/[0.06]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -1218,7 +1211,7 @@ function SessionsCard() {
       className="md:col-span-2"
     >
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 rounded-[22px] border border-border bg-white/60 p-4 dark:bg-white/[0.03] lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 rounded-[22px] bg-white/80 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950/80 dark:ring-white/[0.06] lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-sm font-semibold text-foreground">
               Session registry is now active
@@ -1284,15 +1277,9 @@ function TrustFactorsCard({ user }: { user: UserProfile }) {
   ];
 
   const iconMap: Record<string, React.ReactNode> = {
-    email_verified: (
-      <Mail className="h-4 w-4 text-brandRose dark:text-brandCyan" />
-    ),
-    mobile_otp_verified: (
-      <Smartphone className="h-4 w-4 text-brandRose dark:text-brandCyan" />
-    ),
-    linked_auth_methods: (
-      <Waypoints className="h-4 w-4 text-brandRose dark:text-brandCyan" />
-    ),
+    email_verified: <Mail className="h-4 w-4 text-foreground" />,
+    mobile_otp_verified: <Smartphone className="h-4 w-4 text-foreground" />,
+    linked_auth_methods: <Waypoints className="h-4 w-4 text-foreground" />,
   };
 
   return (
@@ -1304,12 +1291,12 @@ function TrustFactorsCard({ user }: { user: UserProfile }) {
         {roadmapFactors.map((factor) => (
           <div
             key={factor.key}
-            className="flex items-start justify-between gap-3 rounded-[22px] border border-border bg-white/60 p-4 dark:bg-white/[0.03]"
+            className="flex items-start justify-between gap-3 rounded-[22px] bg-white/80 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950/80 dark:ring-white/[0.06]"
           >
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 rounded-full border border-border p-2">
+              <div className="mt-0.5 rounded-full bg-foreground/[0.03] p-2 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
                 {iconMap[factor.key] ?? (
-                  <Fingerprint className="h-4 w-4 text-brandRose dark:text-brandCyan" />
+                  <Fingerprint className="h-4 w-4 text-foreground" />
                 )}
               </div>
               <div>
@@ -1337,9 +1324,7 @@ function SecurityFoundationCard({ user }: { user: UserProfile }) {
         description: user.security.passwordResetAvailable
           ? "Recovery links can be requested from the public login flow and are delivered through Dotly mail."
           : "Password reset mail is disabled in this environment until the reset URL and mail provider are configured.",
-        icon: (
-          <LockKeyhole className="h-4 w-4 text-brandRose dark:text-brandCyan" />
-        ),
+        icon: <LockKeyhole className="h-4 w-4 text-foreground" />,
         status: user.security.passwordResetAvailable ? "Live" : "Setup needed",
       },
       {
@@ -1347,18 +1332,14 @@ function SecurityFoundationCard({ user }: { user: UserProfile }) {
         description: user.security.smsDeliveryAvailable
           ? "Twilio-backed SMS codes are ready for enrollment and future step-up trust checks."
           : "Add Twilio credentials to deliver real SMS codes in this environment.",
-        icon: (
-          <Smartphone className="h-4 w-4 text-brandRose dark:text-brandCyan" />
-        ),
+        icon: <Smartphone className="h-4 w-4 text-foreground" />,
         status: user.security.smsDeliveryAvailable ? "Live" : "Setup needed",
       },
       {
         title: "Revocable sessions",
         description:
           "Each login now creates a tracked device session that can be reviewed and remotely signed out from settings.",
-        icon: (
-          <ShieldCheck className="h-4 w-4 text-brandRose dark:text-brandCyan" />
-        ),
+        icon: <ShieldCheck className="h-4 w-4 text-foreground" />,
         status: "Live",
       },
     ],
@@ -1374,10 +1355,10 @@ function SecurityFoundationCard({ user }: { user: UserProfile }) {
         {controls.map((item) => (
           <div
             key={item.title}
-            className="rounded-[22px] border border-dashed border-border px-4 py-4"
+            className="rounded-[22px] bg-foreground/[0.03] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10"
           >
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 rounded-full border border-border p-2">
+              <div className="mt-0.5 rounded-full bg-foreground/[0.03] p-2 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
                 {item.icon}
               </div>
               <div>
@@ -1428,7 +1409,7 @@ export function AccountSecuritySettings({ user }: { user: UserProfile }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[28px] border border-border bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(255,255,255,0.72))] p-5 dark:bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]">
+      <div className="rounded-[28px] bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
         <p className="label-xs text-muted">Account Trust</p>
         <h2 className="mt-2 text-xl font-bold tracking-tight text-foreground">
           Dotly security center

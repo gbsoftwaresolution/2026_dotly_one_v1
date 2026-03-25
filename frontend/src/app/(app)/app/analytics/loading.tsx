@@ -10,7 +10,7 @@ export default function LoadingAnalyticsPage() {
         {Array.from({ length: 6 }).map((_, index) => (
           <div
             key={index}
-            className="h-24 animate-pulse rounded-2xl border border-border bg-surface"
+            className="h-24 animate-pulse rounded-2xl bg-foreground/[0.03] shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5"
           />
         ))}
       </div>
@@ -19,7 +19,7 @@ export default function LoadingAnalyticsPage() {
         {Array.from({ length: 3 }).map((_, index) => (
           <div
             key={index}
-            className="h-36 animate-pulse rounded-3xl border border-border bg-surface"
+            className="h-36 animate-pulse rounded-3xl bg-foreground/[0.03] shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5"
           />
         ))}
       </div>

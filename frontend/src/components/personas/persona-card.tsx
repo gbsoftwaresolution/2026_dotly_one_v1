@@ -12,24 +12,6 @@ interface PersonaCardProps {
   persona: PersonaSummary;
 }
 
-/** Deterministic gradient from username — gives each persona a unique feel */
-function getPersonaGradient(username: string): string {
-  const gradients = [
-    "from-cyan-500 to-blue-600",
-    "from-violet-500 to-purple-700",
-    "from-rose-500 to-pink-600",
-    "from-emerald-500 to-teal-600",
-    "from-amber-500 to-orange-600",
-    "from-sky-500 to-indigo-600",
-    "from-fuchsia-500 to-violet-600",
-    "from-teal-500 to-cyan-600",
-  ];
-  const idx =
-    username.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) %
-    gradients.length;
-  return gradients[idx];
-}
-
 /** Initials from fullName */
 function getInitials(name: string): string {
   return name
@@ -41,7 +23,6 @@ function getInitials(name: string): string {
 
 export function PersonaCard({ persona }: PersonaCardProps) {
   const isOpen = persona.accessMode === "open";
-  const gradient = getPersonaGradient(persona.username);
   const initials = getInitials(persona.fullName);
   const tagline = persona.tagline?.trim() || null;
   const companyName = persona.companyName?.trim() || null;
@@ -50,76 +31,48 @@ export function PersonaCard({ persona }: PersonaCardProps) {
   return (
     <article
       className={cn(
-        "relative rounded-card overflow-hidden",
-        // Dark: glass surface
-        "dark:bg-surface1 dark:border dark:border-white/[0.07]",
-        // Light: white card
-        "bg-white border border-black/[0.06]",
-        "shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:shadow-card",
-        "transition-all duration-300 ease-spring",
-        "hover:-translate-y-0.5 hover:dark:border-white/[0.12] hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] dark:hover:shadow-card-lg",
-        "active:translate-y-0 active:scale-[0.99]",
+        "premium-card relative overflow-hidden rounded-[1.75rem] p-4 transition-all duration-500 ease-[0.16,1,0.3,1] sm:rounded-3xl sm:p-5",
+        "motion-safe:animate-[fade-in_420ms_ease-out] hover:scale-[0.995] active:scale-[0.99]",
       )}
     >
-      {/* Top edge highlight */}
-      <div
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none"
-      />
-
-      <div className="p-5 space-y-4">
-        {/* ── Identity row ────────────────────────────── */}
-        <div className="flex items-center gap-4">
-          {/* Gradient avatar with initials */}
+      <div className="space-y-4 sm:space-y-5">
+        <div className="flex items-start gap-4">
           <div
             className={cn(
-              "h-12 w-12 rounded-xl flex-shrink-0 flex items-center justify-center",
-              "bg-gradient-to-br",
-              gradient,
-              "shadow-[0_4px_12px_rgba(0,0,0,0.25)]",
+              "flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-foreground/[0.06] shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.08] dark:ring-white/10",
             )}
             aria-hidden
           >
-            <span className="font-sans text-sm font-black text-white tracking-tight">
+            <span className="text-sm font-semibold tracking-tight text-foreground">
               {initials}
             </span>
           </div>
 
-          {/* Name + handle */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 className="min-w-0 truncate font-sans text-[17px] font-bold leading-tight text-foreground">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="min-w-0 truncate text-[17px] font-semibold leading-tight tracking-tight text-foreground">
                 {persona.fullName}
               </h2>
               {persona.isVerified ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/12 dark:text-emerald-300">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700 ring-1 ring-emerald-500/20 dark:text-emerald-300 dark:ring-emerald-400/20">
                   <Check className="h-3 w-3" strokeWidth={2.5} />
                   Verified
                 </span>
               ) : null}
             </div>
-            <p className="font-mono text-[11px] text-muted mt-0.5 truncate">
+            <p className="mt-1 text-[11px] font-medium text-muted truncate">
               dotly.id/{persona.username}
             </p>
           </div>
 
-          {/* Access mode chip */}
           <span
             className={cn(
-              "flex-shrink-0 inline-flex items-center rounded-pill px-2.5 py-1",
-              "font-mono text-[9px] font-black uppercase tracking-[0.10em]",
-              "border",
+              "inline-flex flex-shrink-0 items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ring-1",
               isOpen
-                ? "dark:bg-brandCyan/10 dark:text-brandCyan dark:border-brandCyan/25 bg-cyan-50 text-cyan-700 border-cyan-200"
-                : "dark:bg-white/[0.06] dark:text-white/40 dark:border-white/[0.08] bg-slate-100 text-slate-500 border-slate-200",
+                ? "bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300 dark:ring-emerald-400/20"
+                : "bg-foreground/[0.04] text-muted ring-black/5 dark:bg-white/[0.06] dark:ring-white/10",
             )}
           >
-            {isOpen ? (
-              <span
-                aria-hidden
-                className="mr-1 h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"
-              />
-            ) : null}
             {formatAccessMode(persona.accessMode)}
           </span>
         </div>
@@ -129,38 +82,38 @@ export function PersonaCard({ persona }: PersonaCardProps) {
         ) : null}
 
         {persona.jobTitle || companyName || websiteUrl ? (
-          <dl className="grid grid-cols-2 gap-3">
+          <dl className="grid gap-2 sm:grid-cols-2 sm:gap-3">
             {persona.jobTitle ? (
-              <div className="space-y-0.5">
-                <dt className="font-mono text-[9px] font-black uppercase tracking-[0.12em] text-muted/60 dark:text-zinc-600">
+              <div className="rounded-2xl bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06]">
+                <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Role
                 </dt>
-                <dd className="font-sans text-sm font-semibold text-foreground truncate">
+                <dd className="mt-1 truncate text-sm font-semibold text-foreground">
                   {persona.jobTitle}
                 </dd>
               </div>
             ) : null}
             {companyName ? (
-              <div className="space-y-0.5">
-                <dt className="font-mono text-[9px] font-black uppercase tracking-[0.12em] text-muted/60 dark:text-zinc-600">
+              <div className="rounded-2xl bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06]">
+                <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Company
                 </dt>
-                <dd className="font-sans text-sm font-semibold text-foreground truncate">
+                <dd className="mt-1 truncate text-sm font-semibold text-foreground">
                   {companyName}
                 </dd>
               </div>
             ) : null}
             {websiteUrl ? (
-              <div className="space-y-0.5">
-                <dt className="font-mono text-[9px] font-black uppercase tracking-[0.12em] text-muted/60 dark:text-zinc-600">
+              <div className="rounded-2xl bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06] sm:col-span-2">
+                <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Website
                 </dt>
-                <dd>
+                <dd className="mt-1">
                   <a
                     href={websiteUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex max-w-full items-center gap-1 truncate text-sm font-semibold text-foreground transition hover:text-brandRose dark:hover:text-brandCyan"
+                    className="inline-flex max-w-full items-center gap-1 truncate text-sm font-semibold text-foreground transition hover:opacity-70"
                   >
                     <span className="truncate">
                       {websiteUrl.replace(/^https?:\/\//, "")}
@@ -173,25 +126,13 @@ export function PersonaCard({ persona }: PersonaCardProps) {
           </dl>
         ) : null}
 
-        {/* ── Divider ─────────────────────────────────── */}
-        <div className="divider" />
-
-        {/* ── Actions ─────────────────────────────────── */}
         <div className="flex flex-col gap-2.5">
           <Link
             href={routes.app.personaDetail(persona.id)}
             className={cn(
-              "relative inline-flex h-12 w-full items-center justify-center rounded-xl overflow-hidden",
-              "font-sans text-sm font-bold",
-              "dark:bg-white/[0.06] dark:border dark:border-white/[0.08] dark:text-white",
-              "bg-slate-100 border border-black/[0.06] text-slate-900",
-              "transition-all duration-250 ease-spring",
-              "hover:dark:bg-white/[0.10] hover:bg-slate-200",
-              "active:scale-[0.97]",
-              "no-select",
+              "inline-flex h-12 w-full items-center justify-center rounded-2xl bg-foreground/[0.04] text-sm font-semibold text-foreground shadow-inner ring-1 ring-black/5 transition-all hover:bg-foreground/[0.06] active:scale-[0.98] dark:bg-white/[0.06] dark:ring-white/10",
             )}
           >
-            <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
             Edit Persona
           </Link>
 
@@ -199,28 +140,15 @@ export function PersonaCard({ persona }: PersonaCardProps) {
             <Link
               href={`/${persona.username}`}
               className={cn(
-                "relative inline-flex h-12 w-full items-center justify-center rounded-xl overflow-hidden",
-                "font-sans text-sm font-bold",
-                // Dark: cyan gradient
-                "dark:bg-gradient-cyan dark:text-bgOnyx dark:shadow-[0_0_0_1px_rgba(0,212,255,0.3),0_4px_16px_rgba(0,212,255,0.15)]",
-                // Light: rose gradient
-                "bg-gradient-rose text-white shadow-[0_0_0_1px_rgba(255,51,102,0.3),0_4px_16px_rgba(255,51,102,0.15)]",
-                "transition-all duration-250 ease-spring",
-                "hover:opacity-95 hover:-translate-y-px",
-                "active:scale-[0.97] active:translate-y-0",
-                "no-select",
+                "inline-flex h-12 w-full items-center justify-center rounded-2xl bg-foreground text-sm font-semibold text-background shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition-all hover:scale-[0.995] active:scale-[0.98]",
               )}
             >
-              <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
               View Public Profile
             </Link>
           ) : (
             <div
               className={cn(
-                "inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl",
-                "font-sans text-sm font-medium",
-                "dark:bg-white/[0.03] dark:border dark:border-white/[0.05] dark:text-zinc-600",
-                "bg-slate-50 border border-slate-100 text-slate-400",
+                "inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-foreground/[0.03] text-sm font-medium text-muted ring-1 ring-black/5 dark:bg-white/[0.04] dark:ring-white/10",
               )}
             >
               <svg
@@ -243,10 +171,10 @@ export function PersonaCard({ persona }: PersonaCardProps) {
         </div>
 
         {!isOpen ? (
-          <p className="text-[11px] text-muted/60 dark:text-zinc-700 leading-relaxed">
+          <p className="text-[11px] leading-relaxed text-muted">
             Set access mode to{" "}
-            <strong className="font-semibold text-muted">open</strong> to
-            publish at dotly.id/{persona.username}
+            <strong className="font-semibold text-foreground/80">open</strong>{" "}
+            to publish at dotly.id/{persona.username}
           </p>
         ) : null}
       </div>

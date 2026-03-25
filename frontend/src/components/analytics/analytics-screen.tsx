@@ -36,7 +36,7 @@ function SummarySkeleton() {
       {Array.from({ length: 10 }).map((_, i) => (
         <div
           key={i}
-          className="skeleton rounded-2xl border border-border bg-surface p-4 flex flex-col justify-between"
+          className="skeleton rounded-2xl bg-foreground/[0.03] p-4 flex flex-col justify-between shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5"
         >
           <div className="h-2.5 w-2/3 rounded-full bg-current opacity-10" />
           <div className="mt-3 h-6 w-1/2 rounded-full bg-current opacity-10" />
@@ -234,10 +234,16 @@ export function AnalyticsScreen() {
       summary.totalVerificationBlocks > 0);
 
   return (
-    <div className="space-y-8">
-      {/* Summary section */}
-      <section className="space-y-3">
-        <h2 className="label-xs text-muted">Global Hub</h2>
+    <div className="space-y-6 sm:space-y-8">
+      <section className="space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+        <div className="space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+            Step 1
+          </p>
+          <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+            Global hub
+          </h2>
+        </div>
 
         {summaryLoading ? (
           <SummarySkeleton />
@@ -292,16 +298,22 @@ export function AnalyticsScreen() {
         ) : null}
       </section>
 
-      {/* Per-persona breakdown */}
-      <section className="space-y-3">
-        <h2 className="label-xs text-muted">Persona Insights</h2>
+      <section className="space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+        <div className="space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+            Step 2
+          </p>
+          <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+            Persona insights
+          </h2>
+        </div>
 
         {personasLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 2 }).map((_, i) => (
               <div
                 key={i}
-                className="skeleton rounded-3xl border border-border bg-surface p-5"
+                className="skeleton rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5"
               >
                 <div className="mb-4 space-y-2">
                   <div className="h-4 w-1/3 rounded-full bg-current opacity-10" />

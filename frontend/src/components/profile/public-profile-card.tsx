@@ -38,7 +38,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
     : [];
 
   return (
-    <Card className="overflow-hidden border-border/60 p-0 shadow-shell">
+    <Card className="overflow-hidden p-0 shadow-shell">
       <div
         className="relative overflow-hidden px-6 py-7"
         style={{
@@ -116,10 +116,10 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
         </div>
 
         {profile.sharingMode === "smart_card" ? (
-          <div className="space-y-3 rounded-3xl border border-cyan-200 bg-cyan-50/70 p-4 dark:border-brandCyan/25 dark:bg-brandCyan/10">
+          <div className="space-y-3 rounded-3xl bg-foreground/[0.03] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
             <div className="space-y-1">
-              <p className="label-xs text-cyan-700 dark:text-brandCyan">Next</p>
-              <p className="text-sm leading-6 text-cyan-800 dark:text-white/80">
+              <p className="label-xs text-muted">Next</p>
+              <p className="text-sm leading-6 text-foreground/80">
                 {profile.smartCard
                   ? "Tap the main button to continue with this person."
                   : "This profile is unavailable right now."}
@@ -128,9 +128,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
 
             {profile.smartCard ? (
               <div className="space-y-2">
-                <p className="label-xs text-cyan-700 dark:text-brandCyan">
-                  Ways to connect
-                </p>
+                <p className="label-xs text-muted">Ways to connect</p>
                 {enabledSmartCardActions.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {enabledSmartCardActions.map((label) => (
@@ -138,7 +136,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm leading-6 text-cyan-800 dark:text-white/80">
+                  <p className="text-sm leading-6 text-foreground/80">
                     No contact actions are available right now.
                   </p>
                 )}
@@ -146,14 +144,14 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
             ) : null}
           </div>
         ) : (
-          <div className="space-y-3 rounded-3xl border border-border bg-surface/60 p-5">
+          <div className="space-y-3 rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
             <div className="space-y-1">
               <p className="label-xs text-muted">Request access</p>
               <p className="text-sm leading-6 text-muted">
                 {dotlyPositioning.publicProfile.controlledHelper}
               </p>
             </div>
-            <div className="grid gap-3 rounded-[1.4rem] border border-border/70 bg-background/70 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div className="grid gap-3 rounded-[1.4rem] bg-white/80 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 sm:grid-cols-[1fr_auto] sm:items-center dark:bg-zinc-950/80 dark:ring-white/[0.06]">
               <div className="space-y-1">
                 <p className="text-sm font-semibold text-foreground">
                   Clear identity, calm gatekeeping
@@ -171,7 +169,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
         )}
 
         {!tagline && trustPresentation ? (
-          <div className="rounded-3xl border border-emerald-500/15 bg-emerald-500/[0.06] p-4">
+          <div className="rounded-3xl bg-emerald-500/[0.06] p-4 ring-1 ring-inset ring-emerald-500/15">
             <p className="text-sm leading-6 text-foreground/82">
               {trustPresentation.detail}
             </p>
@@ -179,7 +177,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
         ) : null}
 
         {!tagline && !companyName && !websiteUrl ? null : (
-          <dl className="grid gap-4 rounded-3xl border border-border bg-surface/60 p-4 text-sm">
+          <dl className="grid gap-4 rounded-3xl bg-foreground/[0.03] p-4 text-sm shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
             <div className="space-y-1">
               <dt className="label-xs text-muted">Username</dt>
               <dd className="font-mono text-foreground">@{profile.username}</dd>

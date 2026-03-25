@@ -13,7 +13,7 @@ describe("Persona DTO validation", () => {
   it("trims and accepts nullable identity enhancement fields", () => {
     const dto = plainToInstance(CreatePersonaDto, {
       type: PersonaType.Personal,
-      username: "  AliceDemo  ",
+      username: "  alicedemo  ",
       fullName: "  Alice Demo  ",
       jobTitle: "  Founder  ",
       companyName: "  Dotly  ",
@@ -39,6 +39,22 @@ describe("Persona DTO validation", () => {
     const properties = errors.map((error) => error.property).sort();
 
     assert.deepEqual(properties, ["tagline", "websiteUrl"]);
+  });
+
+  it("rejects short premium usernames on create", () => {
+    const dto = plainToInstance(CreatePersonaDto, {
+      type: PersonaType.Personal,
+      username: "short",
+      fullName: "Alice Demo",
+      jobTitle: "Founder",
+      companyName: "Dotly",
+      accessMode: PersonaAccessMode.Open,
+    });
+
+    const errors = validateSync(dto);
+    const properties = errors.map((error) => error.property);
+
+    assert.equal(properties.includes("username"), true);
   });
 
   it("normalizes blank nullable enhancement fields to null", () => {

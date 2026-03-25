@@ -4,21 +4,21 @@
 
 /* ============================================================
    DESIGN TOKENS — CSS Custom Properties
-   Two themes: "onyx" (dark, default) & "luminous" (light)
+   Pure Apple Grade Theme
    ============================================================ */
 
 :root {
-  /* Onyx (dark) theme — default */
-  --color-background: #080808;
-  --color-foreground: #f2f2f2;
-  --color-surface: #0f0f0f;
-  --color-surface-elevated: #161616;
-  --color-border: rgba(255, 255, 255, 0.06);
-  --color-border-subtle: rgba(255, 255, 255, 0.03);
-  --color-muted: #8a8a8e;
-  --color-accent: #00d4ff;
-  --color-accent-foreground: #080808;
-  --color-success: #30d158;
+  /* Dark theme — default */
+  --color-background: #000000;
+  --color-foreground: #f5f5f7;
+  --color-surface: #1c1c1e;
+  --color-surface-elevated: #2c2c2e;
+  --color-border: rgba(255, 255, 255, 0.15);
+  --color-border-subtle: rgba(255, 255, 255, 0.08);
+  --color-muted: #8e8e93;
+  --color-accent: #0a84ff;
+  --color-accent-foreground: #ffffff;
+  --color-success: #32d74b;
   --color-warning: #ffd60a;
   --color-error: #ff453a;
 
@@ -31,20 +31,20 @@
   --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Luminous (light) theme overrides */
+/* Light theme overrides */
 html:not(.dark) {
-  --color-background: #f5f5f7;
+  --color-background: #f2f2f7;
   --color-foreground: #1d1d1f;
   --color-surface: #ffffff;
-  --color-surface-elevated: #f2f2f7;
-  --color-border: rgba(0, 0, 0, 0.08);
-  --color-border-subtle: rgba(0, 0, 0, 0.04);
-  --color-muted: #6e6e73;
-  --color-accent: #ff3366;
+  --color-surface-elevated: #ffffff;
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-border-subtle: rgba(0, 0, 0, 0.05);
+  --color-muted: #8e8e93;
+  --color-accent: #007aff;
   --color-accent-foreground: #ffffff;
-  --color-success: #1c7a3a;
-  --color-warning: #b45309;
-  --color-error: #c0392b;
+  --color-success: #34c759;
+  --color-warning: #ffcc00;
+  --color-error: #ff3b30;
 }
 
 /* ============================================================
@@ -60,10 +60,8 @@ html:not(.dark) {
 
 html {
   min-height: 100%;
-  /* Prevent font size inflation on iOS */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  /* Smooth scroll (but not for animations — prefers-reduced-motion respected) */
   scroll-behavior: smooth;
 }
 
@@ -72,49 +70,10 @@ body {
   min-height: 100dvh;
   background-color: var(--color-background);
   color: var(--color-foreground);
-  /* Prevent overscroll bounce on iOS (allow in specific scroll containers) */
   overscroll-behavior: none;
-  /* Touch-action optimization */
   touch-action: pan-y;
-}
-
-/* Dark mode rich background */
-.dark body {
-  background-color: #080808;
-  background-image:
-    radial-gradient(
-      ellipse at 15% 10%,
-      rgba(0, 212, 255, 0.055) 0px,
-      transparent 45%
-    ),
-    radial-gradient(
-      ellipse at 85% 85%,
-      rgba(124, 58, 237, 0.05) 0px,
-      transparent 45%
-    ),
-    radial-gradient(
-      ellipse at 50% 0%,
-      rgba(255, 51, 102, 0.03) 0px,
-      transparent 35%
-    );
-  background-attachment: fixed;
-}
-
-/* Light mode background */
-html:not(.dark) body {
-  background-color: #f5f5f7;
-  background-image:
-    radial-gradient(
-      ellipse at 15% 10%,
-      rgba(0, 212, 255, 0.04) 0px,
-      transparent 45%
-    ),
-    radial-gradient(
-      ellipse at 85% 85%,
-      rgba(124, 58, 237, 0.03) 0px,
-      transparent 45%
-    );
-  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -148,14 +107,12 @@ button:not(:disabled):active {
   transform: scale(0.96);
 }
 
-/* Better focus visible */
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
   border-radius: 8px;
 }
 
-/* Momentum scroll on iOS for scroll containers */
 .scroll-momentum {
   -webkit-overflow-scrolling: touch;
   overflow-y: auto;
@@ -189,45 +146,59 @@ button:not(:disabled):active {
    ============================================================ */
 
 @layer components {
-  /* --- Glass card surfaces --- */
+  /* --- Enterprise Pro Card Surface --- 
+     Removes harsh solid borders and relies on light refraction (inner shadows) 
+     and deep blurring to create an expensive, physical glass feel. */
+  .premium-card {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(40px) saturate(150%);
+    -webkit-backdrop-filter: blur(40px) saturate(150%);
+    box-shadow:
+      0 4px 24px -8px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+  }
+
+  html.dark .premium-card {
+    background: rgba(20, 20, 20, 0.6);
+    backdrop-filter: blur(40px) saturate(150%);
+    -webkit-backdrop-filter: blur(40px) saturate(150%);
+    box-shadow:
+      0 12px 40px -10px rgba(0, 0, 0, 0.8),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  }
+
+  /* --- Glass card surfaces (Legacy) --- */
   .glass {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    background: rgba(28, 28, 30, 0.7);
+    border: 0.5px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  html:not(.dark) .glass {
+    background: rgba(255, 255, 255, 0.7);
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
   }
 
   .glass-strong {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(40px) saturate(200%);
-    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    background: rgba(28, 28, 30, 0.85);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(30px) saturate(200%);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
   }
 
-  .glass-light {
-    background: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
+  html:not(.dark) .glass-strong {
+    background: rgba(255, 255, 255, 0.85);
+    border: 0.5px solid rgba(0, 0, 0, 0.15);
   }
 
   /* --- Gradient text --- */
-  .text-gradient-cyan {
-    background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
+  .text-gradient-cyan,
+  .text-gradient-brand,
   .text-gradient-rose {
-    background: linear-gradient(135deg, #ff3366 0%, #ff6b35 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .text-gradient-brand {
-    background: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
+    background: var(--color-accent);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -259,26 +230,22 @@ button:not(:disabled):active {
   /* --- Premium divider --- */
   .divider {
     height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      var(--color-border) 20%,
-      var(--color-border) 80%,
-      transparent 100%
-    );
+    background: var(--color-border-subtle);
   }
 
   /* --- Haptic button press (no JS) --- */
   .press {
     @apply active:scale-[0.96];
-    transition: transform var(--motion-micro-duration) var(--motion-ease-standard);
+    transition: transform var(--motion-micro-duration)
+      var(--motion-ease-standard);
     transform-origin: center;
   }
 
   .tap-feedback {
     transition:
       transform var(--motion-micro-duration) var(--motion-ease-standard),
-      background-color var(--motion-feedback-duration) var(--motion-ease-standard),
+      background-color var(--motion-feedback-duration)
+        var(--motion-ease-standard),
       border-color var(--motion-feedback-duration) var(--motion-ease-standard),
       box-shadow var(--motion-feedback-duration) var(--motion-ease-standard),
       color var(--motion-feedback-duration) var(--motion-ease-standard),
@@ -292,7 +259,7 @@ button:not(:disabled):active {
 
   /* --- Label / eyebrow style --- */
   .label-xs {
-    @apply font-mono text-[10px] font-black uppercase tracking-[0.12em];
+    @apply font-sans text-[11px] font-semibold tracking-wide text-muted;
   }
 }
 
@@ -301,7 +268,6 @@ button:not(:disabled):active {
    ============================================================ */
 
 @layer utilities {
-  /* Safe area padding */
   .safe-pt {
     padding-top: env(safe-area-inset-top, 0px);
   }
@@ -319,30 +285,22 @@ button:not(:disabled):active {
       var(--nav-height) + env(safe-area-inset-bottom, 0px) + 1.5rem
     );
   }
-
-  /* Full device height (handles dynamic viewport on mobile) */
   .h-screen-dvh {
     height: 100dvh;
   }
   .min-h-screen-dvh {
     min-height: 100dvh;
   }
-
-  /* Prevent text selection on interactive elements */
   .no-select {
     user-select: none;
     -webkit-user-select: none;
   }
-
-  /* Smooth color transitions */
   .transition-theme {
     transition:
       background-color 300ms ease,
       color 300ms ease,
       border-color 300ms ease;
   }
-
-  /* Hide scrollbar visually (but keep functionality) */
   .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -350,8 +308,6 @@ button:not(:disabled):active {
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
-
-  /* Text clamp utilities */
   .line-clamp-1 {
     overflow: hidden;
     display: -webkit-box;
@@ -364,39 +320,7 @@ button:not(:disabled):active {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
-
-  /* Glow effects */
-  .glow-cyan {
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.25);
-  }
-  .glow-rose {
-    box-shadow: 0 0 20px rgba(255, 51, 102, 0.25);
-  }
-  .glow-violet {
-    box-shadow: 0 0 20px rgba(124, 58, 237, 0.25);
-  }
-
-  /* Animation delays for staggered entrances */
-  .delay-75 {
-    animation-delay: 75ms;
-  }
-  .delay-150 {
-    animation-delay: 150ms;
-  }
-  .delay-225 {
-    animation-delay: 225ms;
-  }
-  .delay-300 {
-    animation-delay: 300ms;
-  }
-  .delay-400 {
-    animation-delay: 400ms;
-  }
 }
-
-/* ============================================================
-   REDUCED MOTION — Accessibility
-   ============================================================ */
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -408,10 +332,6 @@ button:not(:disabled):active {
     scroll-behavior: auto !important;
   }
 }
-
-/* ============================================================
-   KEYFRAMES (used by Tailwind animation utilities)
-   ============================================================ */
 
 @keyframes shimmer {
   0% {

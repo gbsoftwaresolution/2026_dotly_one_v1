@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 
@@ -31,6 +32,14 @@ export class PersonasController {
     @Body() createPersonaDto: CreatePersonaDto,
   ) {
     return this.personasService.create(user.id, createPersonaDto);
+  }
+
+  @Get("availability/username")
+  checkUsernameAvailability(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query("username") username: string,
+  ) {
+    return this.personasService.checkUsernameAvailability(user.id, username);
   }
 
   @Get()

@@ -269,10 +269,10 @@ function getInstantConnectErrorMessage(error: ApiError): string {
 
 function SmartCardHeroShell({ children }: { children: React.ReactNode }) {
   return (
-    <Card className="overflow-hidden border-border/50 bg-white/95 p-0 shadow-[0_24px_80px_rgba(15,23,42,0.12)] dark:bg-surface1/95 dark:shadow-[0_28px_90px_rgba(0,0,0,0.42)]">
+    <Card className="overflow-hidden bg-white/95 p-0 shadow-[0_24px_80px_rgba(15,23,42,0.12)] dark:bg-zinc-950/95 dark:shadow-[0_28px_90px_rgba(0,0,0,0.42)]">
       <div className="relative overflow-hidden px-5 py-6 sm:px-6 sm:py-7">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.92),rgba(255,255,255,0.72)_45%,rgba(248,250,252,0.94)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(17,24,39,0.96),rgba(15,23,42,0.9)_48%,rgba(2,6,23,0.96)_100%)]" />
-        <div className="absolute inset-x-10 top-0 h-28 rounded-full bg-brandRose/10 blur-3xl dark:bg-brandCyan/12" />
+        <div className="absolute inset-x-10 top-0 h-28 rounded-full bg-black/6 blur-3xl dark:bg-white/[0.08]" />
         <div className="relative z-10">{children}</div>
       </div>
     </Card>
@@ -992,7 +992,7 @@ export function PublicSmartCard({
           <PrimaryButton
             fullWidth
             size="lg"
-            className="h-16 rounded-[22px] text-base font-semibold shadow-[0_22px_50px_rgba(244,63,94,0.24)] dark:shadow-[0_20px_46px_rgba(34,211,238,0.22)]"
+            className="h-16 rounded-[22px] text-base font-semibold shadow-[0_22px_50px_rgba(15,23,42,0.14)] dark:shadow-[0_20px_46px_rgba(0,0,0,0.34)]"
             isLoading={primaryCtaState.status === "loading"}
             isSuccess={
               primaryCtaState.status === "success" ||
@@ -1089,7 +1089,7 @@ export function PublicSmartCard({
                   setSelectedPersonaId(event.target.value);
                   setShowCustomizeOptions(false);
                 }}
-                className="w-full rounded-[20px] border border-black/8 bg-white/82 px-4 py-3 text-sm text-foreground shadow-[0_12px_30px_rgba(15,23,42,0.05)] outline-none transition focus:border-brandRose/35 dark:border-white/10 dark:bg-white/[0.04] dark:focus:border-brandCyan/35 dark:shadow-none"
+                className="w-full rounded-[20px] bg-white/82 px-4 py-3 text-sm text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition focus:bg-white/92 focus:ring-2 focus:ring-foreground/15 dark:bg-white/[0.04] dark:ring-white/10 dark:focus:bg-white/[0.07] dark:shadow-none"
               >
                 {initialPersonas.map((persona) => (
                   <option key={persona.id} value={persona.id}>
@@ -1162,7 +1162,7 @@ export function PublicSmartCard({
                     ? "Saving..."
                     : action.label;
                 const actionClassName = cn(
-                  "flex min-h-[88px] items-center justify-center rounded-[22px] border border-black/6 bg-white/88 px-3 py-4 text-center transition-transform duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brandRose/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] dark:border-white/8 dark:bg-white/[0.04] dark:focus-visible:ring-brandCyan/35 dark:focus-visible:ring-offset-surface1",
+                  "flex min-h-[88px] items-center justify-center rounded-[22px] bg-white/88 px-3 py-4 text-center shadow-inner ring-1 ring-inset ring-black/5 transition-transform duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] dark:bg-white/[0.04] dark:ring-white/10 dark:focus-visible:ring-offset-black",
                   "hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(15,23,42,0.08)] dark:hover:shadow-[0_14px_28px_rgba(0,0,0,0.28)]",
                 );
 
@@ -1178,7 +1178,7 @@ export function PublicSmartCard({
                       data-tap-feedback="true"
                     >
                       <span className="flex flex-col items-center gap-2">
-                        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brandRose/10 text-brandRose dark:bg-brandCyan/12 dark:text-brandCyan">
+                        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/[0.045] text-foreground dark:bg-white/[0.08] dark:text-white">
                           <Icon className="h-5 w-5" />
                         </span>
                         <span className="text-sm font-medium text-foreground">
@@ -1207,7 +1207,7 @@ export function PublicSmartCard({
                     )}
                   >
                     <span className="flex flex-col items-center gap-2">
-                      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brandRose/10 text-brandRose dark:bg-brandCyan/12 dark:text-brandCyan">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/[0.045] text-foreground dark:bg-white/[0.08] dark:text-white">
                         <Icon className="h-5 w-5" />
                       </span>
                       <span className="text-sm font-medium text-foreground">

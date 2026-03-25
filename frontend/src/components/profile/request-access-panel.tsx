@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { Card } from "@/components/shared/card";
+import { CustomSelect } from "@/components/shared/custom-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
@@ -274,9 +275,9 @@ export function RequestAccessPanel({
 
   if (!supportsRequestAccess) {
     return (
-      <Card className="space-y-4 border-cyan-200 bg-cyan-50/70 dark:border-brandCyan/25 dark:bg-brandCyan/10">
+      <Card className="space-y-4 bg-foreground/[0.03] shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
         <div className="space-y-2">
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-cyan-700 dark:text-brandCyan">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
             Profile access
           </p>
           <h2 className="font-sans text-lg font-semibold text-foreground">
@@ -330,7 +331,7 @@ export function RequestAccessPanel({
   return (
     <Card className="space-y-5">
       <div className="space-y-2">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-brandRose dark:text-brandCyan">
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
           Connect
         </p>
         <h2 className="font-sans text-lg font-semibold text-foreground">
@@ -366,7 +367,7 @@ export function RequestAccessPanel({
                   Send from
                 </label>
                 {selectedPersona ? (
-                  <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
+                  <div className="rounded-2xl bg-foreground/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
                     <p className="text-sm font-semibold text-foreground">
                       {selectedPersona.fullName}
                     </p>
@@ -375,19 +376,17 @@ export function RequestAccessPanel({
                     </p>
                   </div>
                 ) : null}
-                <select
+                <CustomSelect
                   id="fromPersonaId"
-                  className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 font-sans text-sm text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+                  className="min-h-[48px] w-full rounded-2xl bg-foreground/[0.03] px-4 font-sans text-sm text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]"
                   value={selectedPersonaId}
-                  onChange={(event) => setSelectedPersonaId(event.target.value)}
+                  onChange={(value) => setSelectedPersonaId(value)}
                   disabled={isSubmitting || Boolean(successMessage)}
-                >
-                  {initialPersonas.map((persona) => (
-                    <option key={persona.id} value={persona.id}>
-                      {persona.fullName} - @{persona.username}
-                    </option>
-                  ))}
-                </select>
+                  options={initialPersonas.map((persona) => ({
+                    value: persona.id,
+                    label: `${persona.fullName} - @${persona.username}`,
+                  }))}
+                />
               </div>
             ) : null}
 
@@ -402,7 +401,7 @@ export function RequestAccessPanel({
                 id="reason"
                 maxLength={280}
                 rows={3}
-                className="w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 font-sans text-sm text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+                className="w-full resize-none rounded-2xl bg-foreground/[0.03] px-4 py-3 font-sans text-sm text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]"
                 placeholder="Add a note they will recognize later (optional)"
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
@@ -413,7 +412,7 @@ export function RequestAccessPanel({
         ) : null}
 
         {error ? (
-          <div className="rounded-2xl border border-rose-500 bg-rose-500/10 px-4 py-3">
+          <div className="rounded-2xl bg-rose-500/5 px-4 py-3 ring-1 ring-inset ring-rose-500/20">
             <p className="font-mono text-sm text-rose-500">{error}</p>
           </div>
         ) : null}

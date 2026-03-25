@@ -97,7 +97,7 @@ function LoginPrompt({
   const loginUrl = `${routes.public.login}?next=${encodeURIComponent(`/q/${code}`)}`;
 
   return (
-    <Card className="space-y-5 rounded-[2rem] border-border/70 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+    <Card className="space-y-5 rounded-[2rem] shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
           Connect
@@ -119,13 +119,13 @@ function LoginPrompt({
       <div className="space-y-3">
         <a
           href={loginUrl}
-          className="inline-flex w-full items-center justify-center rounded-2xl bg-brandRose py-5 px-5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 dark:bg-brandCyan dark:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-brandRose dark:focus:ring-brandCyan focus:ring-offset-2"
+          className="inline-flex w-full items-center justify-center rounded-2xl bg-foreground px-5 py-5 text-sm font-bold text-background transition-all duration-200 hover:scale-[0.995] hover:opacity-96 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-foreground/15 focus:ring-offset-2"
         >
           Log in to continue
         </a>
         <a
           href={`${routes.public.signup}?next=${encodeURIComponent(`/q/${code}`)}`}
-          className="inline-flex w-full items-center justify-center rounded-2xl border border-border bg-white py-5 px-5 text-sm font-semibold text-foreground transition-all hover:bg-slate-50 active:scale-95 dark:bg-zinc-950 dark:hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-border focus:ring-offset-2"
+          className="inline-flex w-full items-center justify-center rounded-2xl bg-foreground/[0.03] px-5 py-5 text-sm font-semibold text-foreground shadow-inner ring-1 ring-inset ring-black/5 transition-all duration-200 hover:scale-[0.995] hover:bg-foreground/[0.045] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-foreground/15 focus:ring-offset-2 dark:bg-white/[0.045] dark:ring-white/10 dark:hover:bg-white/[0.07]"
         >
           Create profile
         </a>
@@ -136,7 +136,7 @@ function LoginPrompt({
 
 function NoPersonasPrompt() {
   return (
-    <Card className="space-y-4 rounded-[2rem] border-border/70 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+    <Card className="space-y-4 rounded-[2rem] shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
           Connect
@@ -150,7 +150,7 @@ function NoPersonasPrompt() {
       </div>
       <a
         href={routes.app.createPersona}
-        className="inline-flex w-full items-center justify-center rounded-2xl bg-brandRose py-5 px-5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 dark:bg-brandCyan dark:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-brandRose dark:focus:ring-brandCyan focus:ring-offset-2"
+        className="inline-flex w-full items-center justify-center rounded-2xl bg-foreground px-5 py-5 text-sm font-bold text-background transition-all duration-200 hover:scale-[0.995] hover:opacity-96 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-foreground/15 focus:ring-offset-2"
       >
         Create profile
       </a>

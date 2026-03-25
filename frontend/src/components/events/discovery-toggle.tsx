@@ -24,8 +24,8 @@ export function DiscoveryToggle({
           {/* Live pulse indicator — only shown when broadcasting */}
           {enabled && !isLoading ? (
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brandRose opacity-75 dark:bg-brandCyan" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-brandRose dark:bg-brandCyan" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-foreground/60 opacity-75 dark:bg-white/70" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-foreground/75 dark:bg-white" />
             </span>
           ) : null}
         </div>
@@ -47,11 +47,11 @@ export function DiscoveryToggle({
           "relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent",
           "transition-colors duration-200 ease-in-out",
           "focus:outline-none focus:ring-2 focus:ring-offset-2",
-          "focus:ring-brandRose dark:focus:ring-brandCyan",
+          "focus:ring-foreground/15 dark:focus:ring-white/20",
           "dark:focus:ring-offset-bgOnyx",
           "disabled:cursor-not-allowed disabled:opacity-50",
           enabled
-            ? "bg-brandRose dark:bg-brandCyan"
+            ? "bg-foreground dark:bg-white"
             : "bg-slate-200 dark:bg-zinc-700",
         ]
           .filter(Boolean)
@@ -64,7 +64,7 @@ export function DiscoveryToggle({
             "transition-transform duration-200 ease-in-out",
             // Thumb color: white when ON (against brand bg), zinc when OFF
             enabled
-              ? "translate-x-6 bg-white"
+              ? "translate-x-6 bg-white dark:bg-zinc-950"
               : "translate-x-0 bg-white dark:bg-zinc-300",
           ]
             .filter(Boolean)

@@ -52,7 +52,7 @@ export default async function SettingsPage() {
   ] as const;
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-5 sm:space-y-6">
       <PageHeader
         title="Settings"
         description="Manage account trust, appearance, and the controls behind how you share your identity."
@@ -60,53 +60,76 @@ export default async function SettingsPage() {
 
       <ConnectionProgressNote analytics={analytics} />
 
-      <div className="glass rounded-3xl border border-border bg-surface p-5">
-        <div className="space-y-1.5">
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
-            More tools
-          </h2>
-          <p className="text-sm leading-6 text-muted">
-            Keep your main identity controls close. Reach the rest from here.
-          </p>
-        </div>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {shortcuts.map((shortcut) => (
-            <Link
-              key={shortcut.href}
-              href={shortcut.href}
-              className="rounded-[1.4rem] border border-border bg-background/70 px-4 py-4 transition-colors hover:border-brandRose/30 hover:bg-brandRose/5 dark:hover:border-brandCyan/30 dark:hover:bg-brandCyan/5"
-            >
-              <p className="text-sm font-semibold text-foreground">
-                {shortcut.label}
+      <div className="premium-card rounded-[2rem] p-4 sm:rounded-3xl sm:p-6">
+        <div className="space-y-5 sm:space-y-6">
+          <section className="space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                Step 1
               </p>
-              <p className="mt-1 text-sm leading-6 text-muted">
-                {shortcut.description}
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                More tools
+              </h2>
+              <p className="text-sm leading-6 text-muted">
+                Keep your main identity controls close. Reach the rest from
+                here.
               </p>
-            </Link>
-          ))}
-        </div>
-      </div>
+            </div>
 
-      <AccountSecuritySettings user={user} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              {shortcuts.map((shortcut) => (
+                <Link
+                  key={shortcut.href}
+                  href={shortcut.href}
+                  className="rounded-[1.4rem] bg-white px-4 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 transition-all hover:scale-[0.995] hover:bg-foreground/[0.02] dark:bg-zinc-950 dark:ring-white/[0.06] dark:hover:bg-white/[0.04]"
+                >
+                  <p className="text-sm font-semibold text-foreground">
+                    {shortcut.label}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-muted">
+                    {shortcut.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
 
-      <div className="glass rounded-3xl border border-border bg-surface p-5">
-        <div className="mb-4 space-y-1">
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
-            Appearance
-          </h2>
-          <p className="text-sm leading-6 text-muted">
-            Choose the mode that feels clearest for everyday use.
-          </p>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-0.5">
-            <p className="text-sm font-semibold text-foreground">Theme</p>
-            <p className="text-sm text-muted">
-              Onyx (dark) or Luminous (light)
-            </p>
-          </div>
-          <ThemeSwitcher />
+          <section className="space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                Step 2
+              </p>
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                Account security
+              </h2>
+            </div>
+
+            <AccountSecuritySettings user={user} />
+          </section>
+
+          <section className="space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                Step 3
+              </p>
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                Appearance
+              </h2>
+              <p className="text-sm leading-6 text-muted">
+                Choose the mode that feels clearest for everyday use.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-2xl bg-white px-4 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06]">
+              <div className="space-y-0.5">
+                <p className="text-sm font-semibold text-foreground">Theme</p>
+                <p className="text-sm text-muted">
+                  Onyx (dark) or Luminous (light)
+                </p>
+              </div>
+              <ThemeSwitcher />
+            </div>
+          </section>
         </div>
       </div>
     </section>

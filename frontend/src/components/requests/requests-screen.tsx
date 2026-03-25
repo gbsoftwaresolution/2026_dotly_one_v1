@@ -79,40 +79,43 @@ export function RequestsScreen() {
     writeSessionCache(REQUESTS_CACHE_KEY, { incoming, outgoing });
   }, [incoming, outgoing]);
 
-  const loadRequests = useCallback(async (withLoading = true) => {
-    if (withLoading) {
-      setIsLoading(true);
-    }
-
-    setLoadError(null);
-
-    try {
-      const [nextIncoming, nextOutgoing] = await Promise.all([
-        requestApi.listIncoming(),
-        requestApi.listOutgoing(),
-      ]);
-
-      setIncoming(nextIncoming);
-      setOutgoing(nextOutgoing);
-    } catch (error) {
-      if (isExpiredSessionError(error)) {
-        router.replace(
-          `/login?next=${encodeURIComponent(routes.app.requests)}&reason=expired`,
-        );
-        return;
-      }
-
-      setLoadError(
-        error instanceof ApiError
-          ? error.message
-          : "We could not load your requests right now.",
-      );
-    } finally {
+  const loadRequests = useCallback(
+    async (withLoading = true) => {
       if (withLoading) {
-        setIsLoading(false);
+        setIsLoading(true);
       }
-    }
-  }, [router]);
+
+      setLoadError(null);
+
+      try {
+        const [nextIncoming, nextOutgoing] = await Promise.all([
+          requestApi.listIncoming(),
+          requestApi.listOutgoing(),
+        ]);
+
+        setIncoming(nextIncoming);
+        setOutgoing(nextOutgoing);
+      } catch (error) {
+        if (isExpiredSessionError(error)) {
+          router.replace(
+            `/login?next=${encodeURIComponent(routes.app.requests)}&reason=expired`,
+          );
+          return;
+        }
+
+        setLoadError(
+          error instanceof ApiError
+            ? error.message
+            : "We could not load your requests right now.",
+        );
+      } finally {
+        if (withLoading) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [router],
+  );
 
   useEffect(() => {
     void loadRequests(initialCacheRef.current === null);
@@ -162,39 +165,49 @@ export function RequestsScreen() {
 
   return (
     <section className="space-y-4">
-      {/* Tab switcher */}
-      <div className="rounded-[1.75rem] border border-border bg-surface/80 p-1 shadow-sm">
-        <div className="grid grid-cols-2 gap-1">
-          {(
-            [
-              ["incoming", "Incoming"],
-              ["outgoing", "Outgoing"],
-            ] as const
-          ).map(([tab, label]) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                "min-h-12 rounded-[1.25rem] px-4 font-mono text-[11px] font-semibold uppercase tracking-widest transition-all",
-                activeTab === tab
-                  ? "bg-brandRose text-white shadow-sm dark:bg-brandCyan dark:text-zinc-950"
-                  : "text-muted hover:bg-slate-100 hover:text-foreground dark:hover:bg-zinc-800",
-              )}
-            >
-              {label}
-            </button>
-          ))}
+      <div className="rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+        <div className="mb-4 space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+            Step 1
+          </p>
+          <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+            Request lanes
+          </h2>
+        </div>
+
+        <div className="rounded-[1.75rem] bg-foreground/[0.03] p-1 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+          <div className="grid grid-cols-2 gap-1">
+            {(
+              [
+                ["incoming", "Incoming"],
+                ["outgoing", "Outgoing"],
+              ] as const
+            ).map(([tab, label]) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={cn(
+                  "min-h-12 rounded-[1.25rem] px-4 font-mono text-[11px] font-semibold uppercase tracking-widest transition-all",
+                  activeTab === tab
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted hover:bg-foreground/[0.05] hover:text-foreground dark:hover:bg-white/[0.06]",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {feedback ? (
         <div
           className={cn(
-            "rounded-2xl px-4 py-3",
+            "rounded-2xl px-4 py-3 ring-1 ring-inset",
             feedback.tone === "success"
-              ? "border border-emerald-500/30 bg-emerald-500/10"
-              : "border border-rose-500/30 bg-rose-500/10",
+              ? "bg-emerald-500/5 ring-emerald-500/20"
+              : "bg-rose-500/5 ring-rose-500/20",
           )}
         >
           <p
@@ -211,7 +224,7 @@ export function RequestsScreen() {
       ) : null}
 
       {isLoading ? (
-        <div className="space-y-3">
+        <div className="space-y-3 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />

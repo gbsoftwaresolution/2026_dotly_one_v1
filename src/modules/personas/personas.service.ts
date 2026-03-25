@@ -49,6 +49,10 @@ import {
   buildPublicPersonaTrustSignals,
   buildStoredPersonaTrustState,
 } from "./persona-trust";
+import {
+  PERSONA_USERNAME_STANDARD_MIN_LENGTH,
+  validatePersonaUsernameCandidate,
+} from "./persona-username";
 
 interface PersonaSmartDefaultsTarget {
   id: string;
@@ -199,6 +203,14 @@ export class PersonasService {
   ) {}
 
   async create(userId: string, createPersonaDto: CreatePersonaDto) {
+    const usernameValidation = validatePersonaUsernameCandidate(
+      createPersonaDto.username,
+    );
+
+    if (!usernameValidation.available) {
+      throw new BadRequestException(usernameValidation.message);
+    }
+
     try {
       const user = this.prismaService.user
         ? await this.prismaService.user.findUnique({
@@ -464,6 +476,38 @@ export class PersonasService {
     this.setCachedValue(this.myFastSharePayloadCache, userId, response);
 
     return response;
+  }
+
+  async checkUsernameAvailability(userId: string, rawUsername: string) {
+    void userId;
+
+    const validation = validatePersonaUsernameCandidate(rawUsername);
+
+    if (!validation.available) {
+      return validation;
+    }
+
+    const existingPersona = await this.prismaService.persona.findFirst({
+      where: {
+        username: validation.username,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (existingPersona) {
+      return {
+        username: validation.username,
+        available: false,
+        code: "taken" as const,
+        message: "This username is already taken.",
+        requiresClaim:
+          validation.username.length < PERSONA_USERNAME_STANDARD_MIN_LENGTH,
+      };
+    }
+
+    return validation;
   }
 
   async findOwnedPersonaIdentity(userId: string, personaId: string) {

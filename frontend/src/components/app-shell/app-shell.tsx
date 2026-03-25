@@ -38,37 +38,35 @@ export function AppShell({ children, headerAction, session }: AppShellProps) {
         {isShareRoute ? <div className="safe-pt" /> : null}
 
         {!isShareRoute ? (
-          <header
-            className={[
-              "sticky top-0 z-header",
-              "dark:bg-bgOnyx/75 bg-white/75 backdrop-blur-2xl",
-              "border-b dark:border-white/[0.06] border-black/[0.06]",
-            ].join(" ")}
-          >
-            <div className="safe-pt" />
-
-            <div className="safe-pl safe-pr flex items-center justify-between gap-3 px-5 py-3.5">
-              <div className="min-w-0 space-y-1">
-                <div className="flex items-center gap-2 text-xs font-medium text-muted">
-                  <span className="rounded-full bg-foreground/6 px-2.5 py-1 text-foreground/80 dark:bg-white/6 dark:text-white/80">
+          <div className="sticky top-0 z-[100] px-4 pt-4 md:pt-6 pb-2 pointer-events-none w-full max-w-[800px] mx-auto flex justify-center">
+            <header
+              className={[
+                "pointer-events-auto flex w-full items-center justify-between px-3 h-[60px] rounded-[1.5rem] premium-card transition-all",
+                "shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:ring-white/10 dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+              ].join(" ")}
+            >
+              <div className="flex flex-col justify-center min-w-0 pl-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-bold tracking-wide text-foreground">
                     Dotly
                   </span>
-                  <span>{sectionLabel}</span>
-                </div>
-                <p className="text-sm leading-5 text-muted">
-                  {sectionDescription}
-                </p>
-                <div className="min-h-5">
-                  <SessionStatus />
+                  <span className="text-[13px] font-semibold text-muted tracking-wide truncate">
+                    / {sectionLabel}
+                  </span>
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-2 pt-1">
-                <NotificationBadge />
-                {headerAction ?? null}
+              <div className="flex shrink-0 items-center gap-3 pr-1">
+                <div className="hidden sm:block min-w-0 pr-3 border-r border-border-subtle">
+                  <SessionStatus />
+                </div>
+                <div className="flex items-center gap-2">
+                  <NotificationBadge />
+                  {headerAction ?? null}
+                </div>
               </div>
-            </div>
-          </header>
+            </header>
+          </div>
         ) : null}
 
         <main

@@ -22,9 +22,9 @@ export function SecondaryButton({
   ...props
 }: SecondaryButtonProps) {
   const sizeClasses = {
-    sm: "h-10 px-4 text-xs rounded-xl",
-    md: "h-14 px-6 text-sm rounded-2xl",
-    lg: "h-16 px-8 text-base rounded-2xl",
+    sm: "h-10 px-4 text-[13px] rounded-full",
+    md: "h-12 px-6 text-[15px] rounded-full",
+    lg: "h-[56px] px-8 text-[17px] rounded-full",
   };
 
   return (
@@ -32,36 +32,31 @@ export function SecondaryButton({
       disabled={disabled || isLoading}
       className={cn(
         // Base
-        "relative inline-flex items-center justify-center font-bold tracking-tight overflow-hidden",
-        "select-none no-select",
+        "relative inline-flex items-center justify-center font-medium tracking-wide overflow-hidden backdrop-blur-xl",
+        "select-none no-select tap-feedback",
         // Size
         sizeClasses[size],
         // Width
         fullWidth && "w-full",
-        // Default state
+        // Default state - Premium subtle card feel
         !isSuccess &&
           !isLoading && [
-            // Dark mode: glass surface
-            "dark:bg-white/[0.06] dark:border dark:border-white/[0.08] dark:text-white",
-            "dark:hover:bg-white/[0.10] dark:hover:border-white/[0.12]",
-            // Light mode: white surface
-            "bg-white border border-black/[0.08] text-slate-900",
-            "hover:bg-slate-50 hover:border-black/[0.12]",
-            // Shared interactions
-            "tap-feedback transition-[transform,background-color,border-color,box-shadow,color,opacity] duration-[140ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
-            "hover:-translate-y-px active:translate-y-0",
+            "bg-foreground/[0.03] dark:bg-foreground/[0.05] text-foreground",
+            "ring-1 ring-black/5 dark:ring-white/10 shadow-sm",
+            "hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.08] hover:scale-[0.98]",
+            "transition-all duration-[140ms] ease-[0.16,1,0.3,1]",
+            "active:scale-[0.96] active:shadow-none",
             "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:focus-visible:ring-offset-bgOnyx",
           ],
         // Loading state
         isLoading && [
-          "dark:bg-white/[0.04] dark:border dark:border-white/[0.06] dark:text-white/40",
-          "bg-slate-100 border border-black/[0.06] text-slate-400",
+          "bg-foreground/[0.02] text-foreground/40 ring-1 ring-black/5 dark:ring-white/5",
           "cursor-not-allowed",
         ],
         // Success state
         isSuccess && [
-          "border border-status-success/30 bg-status-success/10 text-status-success",
-          "tap-feedback transition-[transform,background-color,border-color,box-shadow,color,opacity] duration-[180ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "ring-1 ring-status-success/30 bg-status-success/10 text-status-success",
+          "transition-all duration-[180ms] ease-[0.16,1,0.3,1]",
         ],
         // Disabled
         disabled && !isLoading && "opacity-40 cursor-not-allowed",
@@ -69,11 +64,6 @@ export function SecondaryButton({
       )}
       {...props}
     >
-      {/* Inner highlight */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent"
-      />
       {isLoading ? (
         <span className="flex items-center gap-2">
           <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />

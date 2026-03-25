@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 
 import { PersonaSharingSettingsForm } from "@/components/personas/persona-sharing-settings-form";
-import { Card } from "@/components/shared/card";
 import { PageHeader } from "@/components/shared/page-header";
 import { ApiError, apiRequest } from "@/lib/api/client";
 import { requireServerSession } from "@/lib/auth/protected-route";
@@ -14,7 +13,9 @@ export default async function PersonaSharingSettingsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { accessToken } = await requireServerSession(routes.app.personaSettings(id));
+  const { accessToken } = await requireServerSession(
+    routes.app.personaSettings(id),
+  );
 
   let persona: PersonaSummary | null = null;
   let loadError: string | null = null;
@@ -39,19 +40,19 @@ export default async function PersonaSharingSettingsPage({
 
   if (loadError) {
     return (
-      <section className="space-y-4">
+      <section className="space-y-5 sm:space-y-6">
         <PageHeader
           title="Sharing settings unavailable"
           description="This persona cannot be loaded right now."
         />
-        <Card className="space-y-2 border-rose-200 bg-rose-50/80 dark:border-rose-900 dark:bg-rose-950/30">
-          <h2 className="font-sans text-lg font-semibold text-rose-700 dark:text-rose-300">
+        <div className="space-y-2 rounded-[2rem] bg-rose-500/5 px-5 py-5 ring-1 ring-inset ring-rose-500/20 sm:rounded-3xl sm:px-6">
+          <h2 className="text-lg font-semibold tracking-tight text-rose-700 dark:text-rose-300">
             Unable to load sharing settings
           </h2>
-          <p className="font-sans text-sm leading-6 text-rose-700 dark:text-rose-300">
+          <p className="text-sm leading-6 text-rose-700 dark:text-rose-300">
             {loadError}
           </p>
-        </Card>
+        </div>
       </section>
     );
   }
@@ -61,15 +62,24 @@ export default async function PersonaSharingSettingsPage({
   }
 
   return (
-    <section className="space-y-4 pb-24">
+    <section className="space-y-5 pb-24 sm:space-y-6">
       <PageHeader
         title="How people can access you"
         description={`Decide how ${persona.fullName} is introduced first, and what people can do from the public card.`}
       />
 
-      <Card className="overflow-visible">
+      <div className="premium-card overflow-visible rounded-[2rem] p-4 sm:rounded-3xl sm:p-6">
+        <div className="mb-5 space-y-1 sm:mb-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+            Sharing system
+          </p>
+          <p className="text-sm leading-6 text-muted">
+            Tune the first impression, contact actions, and Smart Card behavior
+            for this persona.
+          </p>
+        </div>
         <PersonaSharingSettingsForm persona={persona} />
-      </Card>
+      </div>
     </section>
   );
 }

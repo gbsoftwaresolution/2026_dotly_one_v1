@@ -74,25 +74,35 @@ function FastQrShell({
   const hasCachedShare = sharePayload !== null;
 
   return (
-    <section className="relative isolate overflow-hidden rounded-[2.9rem] border border-black/[0.06] bg-[linear-gradient(180deg,rgba(255,255,255,0.97)_0%,rgba(247,249,252,0.99)_100%)] p-3 shadow-[0_36px_120px_rgba(15,23,42,0.12)] dark:border-white/[0.08] dark:bg-[linear-gradient(180deg,rgba(18,18,20,0.96)_0%,rgba(8,8,9,0.98)_100%)] sm:p-4">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[2.9rem]">
-        <div className="absolute -left-12 top-0 h-40 w-40 rounded-full bg-brandRose/12 blur-3xl dark:bg-brandCyan/10" />
-        <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-brandViolet/12 blur-3xl dark:bg-brandCyan/8" />
-      </div>
+    <section className="premium-card motion-safe:animate-[fade-in_420ms_ease-out] relative isolate overflow-hidden rounded-[2rem] p-3 sm:rounded-3xl sm:p-4">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-white/40 to-white/10 dark:from-white/5 dark:to-transparent" />
 
       <div className="relative z-10 flex min-h-[calc(100dvh-0.75rem)] flex-col gap-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] sm:min-h-[calc(100dvh-1rem)] sm:gap-4">
+        <div className="space-y-1 rounded-[1.75rem] bg-foreground/[0.02] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:px-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+            Step 1
+          </p>
+          <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+            Ready share
+          </h2>
+          <p className="text-sm leading-6 text-muted">
+            Keep one large QR ready to scan, even when the network needs a
+            moment to catch up.
+          </p>
+        </div>
+
         {sharePayload ? (
-          <div className="flex min-w-0 items-center gap-3 rounded-[1.8rem] border border-black/[0.06] bg-white/82 px-3.5 py-3 shadow-[0_14px_40px_rgba(15,23,42,0.06)] dark:border-white/[0.08] dark:bg-white/[0.045] sm:px-4 sm:py-3.5">
+          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-foreground/[0.03] px-3.5 py-3 shadow-inner dark:bg-white/[0.045] sm:px-4 sm:py-3.5">
             {sharePayload.profilePhotoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={sharePayload.profilePhotoUrl}
                 alt={sharePayload.fullName}
-                className="h-11 w-11 rounded-[1rem] object-cover sm:h-12 sm:w-12"
+                className="h-11 w-11 rounded-xl object-cover sm:h-12 sm:w-12"
               />
             ) : (
               <div
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] text-sm font-semibold text-white sm:h-12 sm:w-12"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-semibold text-white sm:h-12 sm:w-12"
                 style={{
                   background: avatarGradient(sharePayload.fullName),
                 }}
@@ -122,9 +132,7 @@ function FastQrShell({
 
         <div className="flex flex-1 flex-col justify-center gap-4">
           <div className="mx-auto flex w-full flex-1 items-center justify-center">
-            <div className="relative w-full rounded-[2.85rem] border border-black/[0.08] bg-white px-3 py-4 shadow-[0_38px_100px_rgba(15,23,42,0.13)] dark:border-white/[0.08] dark:bg-zinc-950 sm:px-4 sm:py-5">
-              <div className="pointer-events-none absolute inset-x-8 top-1/2 h-32 -translate-y-1/2 rounded-full bg-brandRose/10 blur-3xl dark:bg-brandCyan/10" />
-
+            <div className="relative w-full rounded-3xl bg-white px-3 py-4 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04] dark:bg-zinc-950 dark:ring-white/[0.04] sm:px-4 sm:py-5">
               {sharePayload ? (
                 <div className="flex min-h-[26rem] items-center justify-center sm:min-h-[28rem]">
                   <QRCodeSVG
@@ -139,7 +147,7 @@ function FastQrShell({
                 </div>
               ) : (
                 <div className="flex min-h-[26rem] flex-col items-center justify-center gap-4 sm:min-h-[28rem]">
-                  <div className="skeleton h-[22.5rem] w-full max-w-[22.5rem] rounded-[2.1rem] sm:h-[23.5rem] sm:max-w-[23.5rem]" />
+                  <div className="skeleton h-[22.5rem] w-full max-w-[22.5rem] rounded-3xl sm:h-[23.5rem] sm:max-w-[23.5rem]" />
                 </div>
               )}
             </div>
@@ -168,7 +176,7 @@ function FastQrShell({
         </div>
 
         {error ? (
-          <div className="rounded-[1.75rem] border border-amber-500/20 bg-amber-500/5 px-4 py-4 sm:px-5">
+          <div className="rounded-2xl bg-amber-500/5 ring-1 ring-inset ring-amber-500/20 px-4 py-4 sm:px-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
@@ -460,7 +468,7 @@ export function InstantShareExperience({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 sm:space-y-5">
       <ConnectionProgressNote analytics={analytics} />
       <FastQrShell
         sharePayload={cachedSharePayload}

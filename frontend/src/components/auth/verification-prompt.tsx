@@ -118,10 +118,13 @@ export function VerificationPrompt({
             Resend verification email
           </SecondaryButton>
 
-          <Link href={buildVerifyHref(email)} className={cn(compact ? "sm:w-auto" : "sm:flex-1")}>
+          <Link
+            href={buildVerifyHref(email)}
+            className={cn(compact ? "sm:w-auto" : "sm:flex-1")}
+          >
             <span
               className={cn(
-                "inline-flex w-full items-center justify-center rounded-2xl border border-border bg-white/80 px-5 font-semibold text-foreground transition-all hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]",
+                "inline-flex w-full items-center justify-center rounded-2xl bg-foreground/[0.03] px-5 font-semibold text-foreground shadow-inner ring-1 ring-inset ring-black/5 transition-all duration-200 hover:scale-[0.995] hover:bg-foreground/[0.045] active:scale-[0.98] dark:bg-white/[0.045] dark:ring-white/10 dark:hover:bg-white/[0.07]",
                 compact ? "h-10 text-xs" : "h-14 text-sm",
               )}
             >

@@ -24,7 +24,7 @@ export function AppLoadingShell() {
 
       <main className="safe-pl safe-pr flex-1 px-5 py-5 pb-nav">
         <div className="space-y-4">
-          <div className="min-h-[116px] rounded-3xl border border-border/60 bg-background/70 p-6 shadow-sm backdrop-blur">
+          <div className="min-h-[116px] rounded-3xl bg-foreground/[0.03] p-6 shadow-inner ring-1 ring-inset ring-black/5 backdrop-blur dark:bg-white/[0.045] dark:ring-white/5">
             <div className="space-y-3">
               <div className="h-8 w-40 animate-pulse rounded-2xl bg-border/50" />
               <div className="h-4 w-64 animate-pulse rounded-xl bg-border/40" />
@@ -32,7 +32,7 @@ export function AppLoadingShell() {
                 {Array.from({ length: 3 }).map((_, index) => (
                   <div
                     key={index}
-                    className="h-20 animate-pulse rounded-[1.3rem] border border-border bg-background/70"
+                    className="h-20 animate-pulse rounded-[1.3rem] bg-background/80 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-black/10 dark:ring-white/10"
                   />
                 ))}
               </div>

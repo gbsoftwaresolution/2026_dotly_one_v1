@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Shield, Sparkles } from "lucide-react";
 
 import { AuthPageShell } from "@/components/layout/auth-page-shell";
 import { PrimaryButton } from "@/components/shared/primary-button";
@@ -59,7 +60,8 @@ export default function ResetPasswordPage() {
         setError(submissionError.message);
       } else if (
         submissionError instanceof ApiError &&
-        (submissionError.status === 429 || /wait|too many/i.test(submissionError.message))
+        (submissionError.status === 429 ||
+          /wait|too many/i.test(submissionError.message))
       ) {
         setErrorTone("warning");
         setError(
@@ -78,106 +80,151 @@ export default function ResetPasswordPage() {
     }
   }
 
+  const BackgroundGlow = () => (
+    <div className="fixed inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden">
+      <div className="absolute top-[0%] right-[-10%] h-[800px] w-[800px] rounded-full bg-accent/5 blur-[130px] mix-blend-normal opacity-60" />
+      <div className="absolute bottom-[-10%] left-[-10%] h-[600px] w-[600px] rounded-full bg-accent/5 blur-[120px] mix-blend-normal opacity-40" />
+    </div>
+  );
+
   if (viewState === "missing") {
     return (
-      <AuthPageShell
-        title="Invalid reset link"
-        description="This reset link is missing what it needs to continue. Request a new one and try again."
-      >
-        <div className="glass rounded-[28px] border border-border bg-surface p-6 text-center">
-          <Link
-            href={routes.public.forgotPassword}
-            className="mt-4 inline-flex text-sm font-semibold text-brandRose transition-colors hover:text-brandRose/80 dark:text-brandCyan dark:hover:text-brandCyan/80"
-          >
-            Request another reset link
-          </Link>
-        </div>
-      </AuthPageShell>
+      <>
+        <BackgroundGlow />
+        <AuthPageShell
+          title="Invalid link."
+          description="This reset link is missing what it needs to continue. Request a new one and try again."
+        >
+          <div className="premium-card rounded-[2.5rem] p-8 md:p-12 relative z-10 text-center shadow-[0_12px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_40px_-10px_rgba(0,0,0,0.5)]">
+            <Link
+              href={routes.public.forgotPassword}
+              className="inline-flex h-14 items-center rounded-full bg-foreground px-8 text-[15px] font-semibold text-background transition-transform hover:scale-[0.98] shadow-md tap-feedback"
+            >
+              Request another reset link
+            </Link>
+          </div>
+        </AuthPageShell>
+      </>
     );
   }
 
   if (viewState === "expired") {
     return (
-      <AuthPageShell
-        title="Reset link expired"
-        description={
-          error ??
-          "This reset link is no longer valid. Request a fresh one to keep going."
-        }
-      >
-        <div className="glass rounded-[28px] border border-border bg-surface p-6 text-center">
-          <Link
-            href={routes.public.forgotPassword}
-            className="mt-4 inline-flex text-sm font-semibold text-brandRose transition-colors hover:text-brandRose/80 dark:text-brandCyan dark:hover:text-brandCyan/80"
-          >
-            Request another reset link
-          </Link>
-        </div>
-      </AuthPageShell>
+      <>
+        <BackgroundGlow />
+        <AuthPageShell
+          title="Link expired."
+          description={
+            error ??
+            "This reset link is no longer valid. Request a fresh one to keep going."
+          }
+        >
+          <div className="premium-card rounded-[2.5rem] p-8 md:p-12 relative z-10 text-center shadow-[0_12px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_40px_-10px_rgba(0,0,0,0.5)]">
+            <Link
+              href={routes.public.forgotPassword}
+              className="inline-flex h-14 items-center rounded-full bg-foreground px-8 text-[15px] font-semibold text-background transition-transform hover:scale-[0.98] shadow-md tap-feedback"
+            >
+              Request another reset link
+            </Link>
+          </div>
+        </AuthPageShell>
+      </>
     );
   }
 
   return (
-    <AuthPageShell
-      title="Choose a new password"
-      description="This reset link is single-use and signs every device out when the reset completes."
-    >
-      <form
-        className="glass space-y-4 rounded-[28px] border border-border bg-surface p-6"
-        onSubmit={handleSubmit}
+    <>
+      <BackgroundGlow />
+      <AuthPageShell
+        title="Secure your account."
+        description="This reset link is single-use and signs every device out when the reset completes."
       >
-        <div className="space-y-2">
-          <label
-            className="text-sm font-semibold text-foreground"
-            htmlFor="reset-password"
-          >
-            New password
-          </label>
-          <input
-            id="reset-password"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="min-h-[54px] w-full rounded-[16px] border border-black/10 bg-white/60 px-4 text-sm text-foreground outline-none transition focus:border-brandRose focus:ring-[3px] focus:ring-brandRose/15 dark:border-white/10 dark:bg-white/[0.03] dark:focus:border-brandCyan dark:focus:ring-brandCyan/15"
-            placeholder="Create a stronger password"
-            required
-          />
-          <p className="text-xs leading-5 text-muted">Strength: {strength}</p>
-        </div>
-
-        {message ? (
-          <div className="rounded-[20px] border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm leading-6 text-foreground/85">
-            {message}
+        <form
+          className="premium-card space-y-6 rounded-[2rem] md:rounded-[2.5rem] p-6 sm:p-8 md:p-12 relative z-10 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_40px_-10px_rgba(0,0,0,0.5)]"
+          onSubmit={handleSubmit}
+        >
+          <div className="flex justify-center mb-6">
+            <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-foreground/[0.03] dark:bg-foreground/[0.05] ring-1 ring-black/5 dark:ring-white/10">
+              <Shield className="h-6 w-6 text-foreground" strokeWidth={1.5} />
+            </div>
           </div>
-        ) : null}
 
-        {error ? (
-          <div
-            className={
-              errorTone === "warning"
-                ? "rounded-[20px] border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-foreground/85"
-                : "rounded-[20px] border border-rose-500/25 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-foreground/85"
-            }
-          >
-            {error}
+          <div className="space-y-2">
+            <label
+              className="text-[13px] font-medium text-muted ml-4"
+              htmlFor="reset-password"
+            >
+              New password
+            </label>
+            <input
+              id="reset-password"
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="min-h-[56px] w-full rounded-[16px] bg-foreground/[0.03] px-4 pt-1 text-[16px] font-medium text-foreground outline-none transition-all duration-300 shadow-inner ring-1 ring-black/5 placeholder:text-muted/50 focus:bg-foreground/[0.045] focus:ring-2 focus:ring-foreground/15 focus:shadow-md dark:bg-white/[0.045] dark:ring-white/10 dark:focus:bg-white/[0.07]"
+              placeholder="Create a stronger password"
+              required
+            />
+            <div className="flex justify-between items-center px-2 pt-1">
+              <p className="text-[13px] text-muted">
+                Must be at least 6 characters.
+              </p>
+              {password.length > 0 && (
+                <p
+                  className={`text-[12px] font-bold uppercase tracking-wider ${strength === "Strong" ? "text-status-success" : strength === "Good" ? "text-accent" : "text-status-warning"}`}
+                >
+                  {strength}
+                </p>
+              )}
+            </div>
           </div>
-        ) : null}
 
-        <PrimaryButton type="submit" fullWidth isLoading={isSubmitting}>
-          Reset password
-        </PrimaryButton>
+          {message ? (
+            <div className="rounded-[16px] bg-status-success/10 px-5 py-4 ring-1 ring-status-success/20">
+              <p className="text-[14px] leading-relaxed font-medium text-status-success">
+                {message}
+              </p>
+            </div>
+          ) : null}
 
-        <p className="text-center text-sm text-muted">
-          Need a new link?{" "}
-          <Link
-            href={routes.public.forgotPassword}
-            className="font-semibold text-brandRose transition-colors hover:text-brandRose/80 dark:text-brandCyan dark:hover:text-brandCyan/80"
-          >
-            Request another reset email
-          </Link>
-        </p>
-      </form>
-    </AuthPageShell>
+          {error ? (
+            <div
+              className={
+                errorTone === "warning"
+                  ? "rounded-[16px] bg-status-warning/10 px-5 py-4 ring-1 ring-status-warning/20"
+                  : "rounded-[16px] bg-status-error/10 px-5 py-4 ring-1 ring-status-error/20"
+              }
+            >
+              <p
+                className={
+                  errorTone === "warning"
+                    ? "text-[14px] leading-relaxed font-medium text-status-warning"
+                    : "text-[14px] leading-relaxed font-medium text-status-error"
+                }
+              >
+                {error}
+              </p>
+            </div>
+          ) : null}
+
+          <div className="pt-2">
+            <PrimaryButton type="submit" fullWidth isLoading={isSubmitting}>
+              Reset password
+            </PrimaryButton>
+          </div>
+
+          <p className="text-center text-[15px] font-medium text-muted pt-2">
+            Need a new link?{" "}
+            <Link
+              href={routes.public.forgotPassword}
+              className="font-semibold text-foreground transition-colors hover:text-accent ml-1"
+            >
+              Request another email
+            </Link>
+          </p>
+        </form>
+      </AuthPageShell>
+    </>
   );
 }

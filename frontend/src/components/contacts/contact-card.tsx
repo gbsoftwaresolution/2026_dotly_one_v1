@@ -103,11 +103,11 @@ export function ContactCard({
   return (
     <Link
       href={routes.app.contactDetail(relationshipId)}
-      className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-brandRose dark:focus-visible:ring-brandCyan rounded-3xl"
+      className="block rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15"
     >
       <Card
         className={cn(
-          "space-y-4 transition-all hover:bg-slate-50/50 active:scale-[0.99] dark:hover:bg-zinc-900/50",
+          "space-y-4 transition-all duration-500 ease-[0.16,1,0.3,1] hover:scale-[0.995] hover:bg-foreground/[0.02] active:scale-[0.99] dark:hover:bg-white/[0.04] motion-safe:animate-[fade-in_420ms_ease-out]",
           nearExpiry &&
             "border-amber-400/40 dark:border-amber-500/30 shadow-[0_0_20px_rgba(251,191,36,0.12)]",
           !nearExpiry &&
@@ -123,7 +123,7 @@ export function ContactCard({
             !resolvedPriorityTone &&
             hasPassiveReminder &&
             !nearExpiry &&
-            "border-cyan-200/80 bg-cyan-50/40 dark:border-brandCyan/20 dark:bg-brandCyan/[0.07]",
+            "border-black/5 bg-foreground/[0.04] dark:border-white/10 dark:bg-white/[0.06]",
         )}
       >
         <div className="flex items-start gap-4">
@@ -187,7 +187,7 @@ export function ContactCard({
         </div>
 
         {memory.note ? (
-          <div className="rounded-2xl border border-border/80 bg-surface/70 px-4 py-3">
+          <div className="rounded-2xl bg-foreground/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
               Private note
             </p>
@@ -197,8 +197,8 @@ export function ContactCard({
           </div>
         ) : null}
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-slate-600 dark:bg-white/[0.06] dark:text-white/60">
+        <div className="flex flex-wrap items-center gap-2 border-t border-black/5 pt-3 dark:border-white/10">
+          <span className="rounded-full bg-foreground/[0.04] px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-muted dark:bg-white/[0.06] dark:text-white/60">
             Connected {relationshipAgeLabel}
           </span>
           <span className="font-sans text-xs text-muted">

@@ -3,8 +3,8 @@ export default function LoadingQrPage() {
     <section className="mx-auto flex min-h-screen-dvh w-full max-w-none flex-col justify-center px-2 py-2 sm:px-4 sm:py-4">
       <div className="relative isolate overflow-hidden rounded-[2.9rem] border border-black/[0.06] bg-[linear-gradient(180deg,rgba(255,255,255,0.97)_0%,rgba(247,249,252,0.99)_100%)] p-3 shadow-[0_36px_120px_rgba(15,23,42,0.12)] dark:border-white/[0.08] dark:bg-[linear-gradient(180deg,rgba(18,18,20,0.96)_0%,rgba(8,8,9,0.98)_100%)] sm:p-4">
         <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[2.9rem]">
-          <div className="absolute -left-12 top-0 h-40 w-40 rounded-full bg-brandRose/12 blur-3xl dark:bg-brandCyan/10" />
-          <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-brandViolet/12 blur-3xl dark:bg-brandCyan/8" />
+          <div className="absolute -left-12 top-0 h-40 w-40 rounded-full bg-black/6 blur-3xl dark:bg-white/[0.08]" />
+          <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-black/5 blur-3xl dark:bg-white/[0.06]" />
         </div>
 
         <div className="relative z-10 flex min-h-[calc(100dvh-0.75rem)] flex-col gap-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] sm:min-h-[calc(100dvh-1rem)] sm:gap-4">

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { CustomSelect } from "@/components/shared/custom-select";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { eventApi } from "@/lib/api/event-api";
@@ -27,7 +28,7 @@ import { EventCard } from "./event-card";
 // Shared input class
 // ---------------------------------------------------------------------------
 const inputCls =
-  "min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20";
+  "min-h-[52px] w-full rounded-2xl bg-foreground/[0.03] px-4 text-[15px] font-medium text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06] dark:focus:ring-white/10";
 
 const EVENTS_CACHE_KEY = "dotly.events-screen";
 
@@ -123,7 +124,7 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
       {!isOpen ? (
         <button
           onClick={() => setIsOpen(true)}
-          className="flex w-full items-center justify-between rounded-3xl border border-dashed border-border bg-surface/50 px-5 py-5 text-sm font-semibold text-muted transition-all hover:border-brandRose hover:text-brandRose dark:hover:border-brandCyan dark:hover:text-brandCyan active:scale-[0.98]"
+          className="flex w-full items-center justify-between rounded-3xl bg-foreground/[0.03] px-5 py-5 text-sm font-semibold text-muted shadow-inner ring-1 ring-inset ring-black/5 transition-all hover:bg-foreground/[0.05] hover:text-foreground dark:bg-white/[0.045] dark:ring-white/5 dark:hover:bg-white/[0.06] active:scale-[0.98]"
         >
           <span>Join an event</span>
           <span className="font-mono text-xs tracking-widest">
@@ -131,7 +132,7 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
           </span>
         </button>
       ) : (
-        <div className="glass rounded-3xl border border-border bg-surface p-5">
+        <div className="rounded-3xl bg-foreground/[0.02] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <label htmlFor="event-code" className="label-xs text-muted">
@@ -156,30 +157,28 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
                 Attend as
               </label>
               {personasLoading ? (
-                <div className="h-12 animate-pulse rounded-2xl bg-surface" />
+                <div className="h-12 animate-pulse rounded-2xl bg-foreground/[0.03] dark:bg-white/[0.045]" />
               ) : personas.length === 0 ? (
                 <p className="text-xs text-muted">
                   No personas found. Create one first.
                 </p>
               ) : (
-                <select
+                <CustomSelect
                   id="event-persona"
                   value={selectedPersonaId}
-                  onChange={(e) => setSelectedPersonaId(e.target.value)}
+                  onChange={(value) => setSelectedPersonaId(value)}
                   className={inputCls}
-                >
-                  {personas.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.fullName} · {p.jobTitle}
-                    </option>
-                  ))}
-                </select>
+                  options={personas.map((p) => ({
+                    value: p.id,
+                    label: `${p.fullName} · ${p.jobTitle}`,
+                  }))}
+                />
               )}
             </div>
 
             {error ? (
-              <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
-                <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
+              <div className="rounded-2xl bg-rose-500/5 px-4 py-3 ring-1 ring-inset ring-rose-500/20">
+                <p className="font-mono text-sm text-rose-600 dark:text-rose-400">
                   {error}
                 </p>
               </div>
@@ -200,7 +199,7 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
                   setEventCode("");
                   setError(null);
                 }}
-                className="rounded-2xl border border-border px-5 py-3 text-sm font-semibold text-muted transition-all hover:text-foreground hover:border-foreground/20 active:scale-95"
+                className="rounded-2xl bg-foreground/[0.04] px-5 py-3 text-sm font-semibold text-muted shadow-inner ring-1 ring-black/5 transition-all hover:bg-foreground/[0.06] hover:text-foreground active:scale-95 dark:bg-white/[0.05] dark:ring-white/10"
               >
                 Cancel
               </button>
@@ -218,7 +217,9 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
 
 export function EventsScreen({ user }: { user: UserProfile }) {
   const router = useRouter();
-  const initialCacheRef = useRef(readSessionCache<EventSummary[]>(EVENTS_CACHE_KEY));
+  const initialCacheRef = useRef(
+    readSessionCache<EventSummary[]>(EVENTS_CACHE_KEY),
+  );
   const [events, setEvents] = useState<EventSummary[]>(
     () => initialCacheRef.current ?? [],
   );
@@ -288,7 +289,7 @@ export function EventsScreen({ user }: { user: UserProfile }) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4 sm:gap-5">
       <JoinPanel onJoined={handleJoined} user={user} />
 
       {events.length === 0 ? (

@@ -10,10 +10,10 @@ import { routes } from "@/lib/constants/routes";
 import { classifyAuthError } from "@/lib/utils/auth-errors";
 
 const INPUT_CLASSES =
-  "peer min-h-[54px] w-full rounded-[16px] border border-black/10 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] px-4 pt-4 pb-1.5 text-[15px] font-medium text-foreground outline-none backdrop-blur-2xl transition-all duration-300 hover:border-black/20 dark:hover:border-white/20 hover:bg-white/70 dark:hover:bg-white/[0.05] focus:bg-white dark:focus:bg-black focus:border-brandRose focus:ring-[3px] focus:ring-brandRose/15 dark:focus:border-brandCyan dark:focus:ring-brandCyan/15 placeholder:text-transparent shadow-sm";
+  "peer min-h-[56px] w-full rounded-[16px] bg-foreground/[0.03] px-4 pt-5 pb-2 text-[16px] font-medium text-foreground outline-none transition-all duration-300 shadow-inner ring-1 ring-black/5 placeholder:text-transparent focus:bg-foreground/[0.045] focus:ring-2 focus:ring-foreground/15 focus:shadow-md dark:bg-white/[0.045] dark:ring-white/10 dark:focus:bg-white/[0.07]";
 
 const LABEL_CLASSES =
-  "absolute left-4 top-4 z-10 origin-[0] -translate-y-2.5 scale-[0.85] transform text-[13px] text-muted-foreground duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-[0.85] peer-focus:text-brandRose dark:peer-focus:text-brandCyan pointer-events-none";
+  "absolute left-4 top-4 z-10 origin-[0] -translate-y-2 scale-[0.80] transform text-[13px] font-medium text-muted transition-all duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:text-muted/70 peer-focus:-translate-y-2 peer-focus:scale-[0.80] peer-focus:text-accent pointer-events-none";
 
 function getResendErrorMessage(error: unknown): string {
   if (classifyAuthError(error).kind === "throttled") {
@@ -68,9 +68,7 @@ export function VerifyEmailFlow({
         }
 
         setStatus("invalid");
-        setError(
-          "This link is invalid or expired. Request a fresh one below.",
-        );
+        setError("This link is invalid or expired. Request a fresh one below.");
       });
 
     return () => {
@@ -135,77 +133,85 @@ export function VerifyEmailFlow({
           : "Enter your email address and Dotly will send another verification link if you still need one.";
 
   return (
-    <AuthPageShell title={title} description={description}>
-      <div className="glass rounded-3xl border border-border/60 p-6 shadow-shell sm:p-7">
-        {status === "verifying" ? (
-          <div className="space-y-4 text-center">
-            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-current border-t-transparent text-brandRose dark:text-brandCyan" />
-          </div>
-        ) : status === "success" ? (
-          <div className="space-y-4 text-center">
-            <Link href={loginHref} className="block">
-              <PrimaryButton className="w-full rounded-2xl">Open Dotly</PrimaryButton>
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {error ? (
-              <div className="rounded-[1rem] border border-rose-500/20 bg-rose-500/5 px-4 py-3">
-                <p className="text-[13px] font-medium text-rose-600 dark:text-rose-400">
-                  {error}
-                </p>
-              </div>
-            ) : null}
-
-            {feedback ? (
-              <div className="rounded-[1rem] border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
-                <p className="text-[13px] font-medium text-emerald-600 dark:text-emerald-400">
-                  {feedback}
-                </p>
-              </div>
-            ) : null}
-
-            <form className="space-y-4" onSubmit={handleResend}>
-              <div className="relative">
-                <input
-                  id="verification-email"
-                  required
-                  autoComplete="email"
-                  placeholder="name@example.com"
-                  type="email"
-                  value={email}
-                  onChange={(event) => {
-                    setEmail(event.target.value);
-                    if (error) setError(null);
-                  }}
-                  className={INPUT_CLASSES}
-                />
-                <label htmlFor="verification-email" className={LABEL_CLASSES}>
-                  Email address
-                </label>
-              </div>
-
-              <PrimaryButton
-                type="submit"
-                className="w-full rounded-2xl"
-                disabled={isResending}
-                isLoading={isResending}
-              >
-                Resend link
-              </PrimaryButton>
-            </form>
-
-            <p className="text-center text-sm text-muted">
-              <Link
-                href={routes.public.login}
-                className="font-semibold text-brandRose transition-colors hover:text-brandRose/80 dark:text-brandCyan dark:hover:text-brandCyan/80"
-              >
-                Back to login
-              </Link>
-            </p>
-          </div>
-        )}
+    <>
+      <div className="fixed inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden">
+        <div className="absolute top-[-10%] h-[600px] w-[600px] rounded-full bg-accent/5 blur-[120px] mix-blend-normal opacity-50" />
       </div>
-    </AuthPageShell>
+
+      <AuthPageShell title={title} description={description}>
+        <div className="premium-card rounded-[2rem] p-8 md:p-10 relative z-10">
+          {status === "verifying" ? (
+            <div className="space-y-4 text-center py-6">
+              <div className="mx-auto h-10 w-10 animate-spin rounded-full border-[3px] border-current border-t-transparent text-accent" />
+            </div>
+          ) : status === "success" ? (
+            <div className="space-y-4 text-center">
+              <Link href={loginHref} className="block tap-feedback">
+                <PrimaryButton className="w-full">Open Dotly</PrimaryButton>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {error ? (
+                <div className="rounded-[16px] bg-status-error/10 px-4 py-3.5 ring-1 ring-status-error/20">
+                  <p className="text-[14px] font-medium text-status-error">
+                    {error}
+                  </p>
+                </div>
+              ) : null}
+
+              {feedback ? (
+                <div className="rounded-[16px] bg-status-success/10 px-4 py-3.5 ring-1 ring-status-success/20">
+                  <p className="text-[14px] font-medium text-status-success">
+                    {feedback}
+                  </p>
+                </div>
+              ) : null}
+
+              <form className="space-y-6" onSubmit={handleResend}>
+                <div className="relative group">
+                  <input
+                    id="verification-email"
+                    required
+                    autoComplete="email"
+                    placeholder="name@example.com"
+                    type="email"
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      if (error) setError(null);
+                    }}
+                    className={INPUT_CLASSES}
+                  />
+                  <label htmlFor="verification-email" className={LABEL_CLASSES}>
+                    Email address
+                  </label>
+                </div>
+
+                <div className="pt-2">
+                  <PrimaryButton
+                    type="submit"
+                    className="w-full"
+                    disabled={isResending}
+                    isLoading={isResending}
+                  >
+                    Resend link
+                  </PrimaryButton>
+                </div>
+              </form>
+
+              <p className="text-center text-[15px] font-medium text-muted pt-2">
+                <Link
+                  href={routes.public.login}
+                  className="font-semibold text-foreground transition-colors hover:text-accent"
+                >
+                  Back to login
+                </Link>
+              </p>
+            </div>
+          )}
+        </div>
+      </AuthPageShell>
+    </>
   );
 }

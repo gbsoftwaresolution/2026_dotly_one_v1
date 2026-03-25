@@ -29,13 +29,13 @@ export function BottomNav() {
       aria-label="Primary navigation"
       className={cn(
         "fixed bottom-0 inset-x-0 z-nav",
-        "dark:bg-bgOnyx/80 bg-white/80",
+        "dark:bg-bgOnyx/85 bg-white/85",
         "border-t border-black/[0.06] backdrop-blur-2xl dark:border-white/[0.06]",
-        "shadow-nav safe-pb",
+        "shadow-[0_-8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_-8px_32px_rgba(0,0,0,0.2)] safe-pb",
       )}
     >
       <div className="safe-pl safe-pr mx-auto max-w-app">
-        <ul className="grid grid-cols-5 gap-1 px-2 py-1.5">
+        <ul className="grid grid-cols-5 gap-1 px-2 py-1.5 pb-2">
           {appNavItems.map((item) => {
             const isActive =
               pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -46,12 +46,12 @@ export function BottomNav() {
                 <Link
                   href={item.href}
                   className={cn(
-                    "relative flex min-h-[60px] w-full flex-col items-center justify-center gap-1.5 rounded-[1.25rem] px-2 py-2.5",
-                    "transition-all duration-200 ease-spring active:scale-[0.9]",
+                    "relative flex min-h-[60px] w-full flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2",
+                    "transition-all duration-300 ease-[0.16,1,0.3,1] active:scale-[0.92] tap-feedback",
                     "no-select",
                     isActive
-                      ? "bg-foreground/[0.05] text-accent dark:bg-white/[0.06] dark:text-brandCyan"
-                      : "text-slate-500 hover:bg-black/[0.03] hover:text-slate-700 dark:text-zinc-500 dark:hover:bg-white/[0.04] dark:hover:text-zinc-300",
+                      ? "bg-foreground/[0.06] text-foreground dark:bg-white/[0.08] dark:text-white"
+                      : "text-muted hover:bg-black/[0.03] dark:hover:bg-white/[0.04] hover:text-foreground",
                   )}
                   aria-current={isActive ? "page" : undefined}
                   aria-label={item.label}
@@ -59,14 +59,17 @@ export function BottomNav() {
                   {isActive ? (
                     <span
                       aria-hidden
-                      className="absolute left-1/2 top-1.5 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-accent dark:bg-brandCyan"
+                      className="absolute top-1.5 left-1/2 h-[3px] w-[3px] -translate-x-1/2 rounded-full bg-foreground dark:bg-white"
                     />
                   ) : null}
 
-                  <span className="relative flex h-7 w-7 items-center justify-center">
+                  <span className="relative flex h-7 w-7 items-center justify-center mt-1">
                     <Icon
-                      className="h-[19px] w-[19px]"
-                      strokeWidth={isActive ? 2.2 : 1.9}
+                      className={cn(
+                        "h-[22px] w-[22px]",
+                        isActive ? "opacity-100" : "opacity-80",
+                      )}
+                      strokeWidth={isActive ? 2.5 : 2}
                       aria-hidden
                     />
                   </span>

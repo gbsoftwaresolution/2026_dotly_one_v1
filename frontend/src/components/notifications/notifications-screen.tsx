@@ -184,7 +184,7 @@ export function NotificationsScreen() {
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
         {[...Array(4)].map((_, i) => (
           <SkeletonCard key={i} />
         ))}
@@ -219,8 +219,16 @@ export function NotificationsScreen() {
   }
 
   return (
-    <div className="space-y-3">
-      {/* Mark all as read */}
+    <div className="space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+      <div className="space-y-1">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+          Step 1
+        </p>
+        <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+          Read the stream
+        </h2>
+      </div>
+
       {unreadCount > 0 ? (
         <div className="flex items-center justify-between">
           <p className="font-mono text-xs text-muted dark:text-zinc-500">
@@ -230,7 +238,7 @@ export function NotificationsScreen() {
             type="button"
             onClick={handleMarkAll}
             disabled={isMarkingAll}
-            className="font-mono text-xs font-medium text-brandRose transition-opacity hover:opacity-70 disabled:opacity-40 dark:text-brandCyan"
+            className="font-mono text-xs font-medium text-foreground transition-opacity hover:opacity-70 disabled:opacity-40"
           >
             {isMarkingAll ? "Marking…" : "Mark all as read"}
           </button>

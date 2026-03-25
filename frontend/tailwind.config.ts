@@ -6,24 +6,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // --- Brand accent palette ---
-        brandCyan: "#00D4FF", // Electric cyan — dark mode primary CTA
-        brandRose: "#FF3366", // Hot rose — light mode primary CTA
-        brandViolet: "#7C3AED", // Deep violet — secondary accent
+        // --- Pure Apple System Colors ---
 
-        // --- Dark surface hierarchy (Google Material You) ---
-        bgOnyx: "#080808", // True near-black base
-        surface1: "#0f0f0f", // Card layer 1
-        surface2: "#161616", // Card layer 2 / elevated
-        surface3: "#1e1e1e", // Tooltip / overlay
+        // Dark Mode Base
+        bgOnyx: "#000000",
+        surface1: "#1C1C1E", // Apple System Gray 6 Dark
+        surface2: "#2C2C2E", // Apple System Gray 5 Dark
+        surface3: "#3A3A3C", // Apple System Gray 4 Dark
 
-        // --- Light surface hierarchy (Apple-inspired) ---
-        bgLuminous: "#F5F5F7", // Apple grey-white
+        // Light Mode Base
+        bgLuminous: "#F2F2F7", // Apple Grouped Background
         surfaceLight1: "#FFFFFF",
-        surfaceLight2: "#F2F2F7", // Apple grouped secondary
-        surfaceLight3: "#E5E5EA", // Apple separator
+        surfaceLight2: "#F2F2F7",
+        surfaceLight3: "#E5E5EA",
 
-        // --- Semantic tokens (backed by CSS vars) ---
+        // Semantic tokens backing
         background: "var(--color-background)",
         foreground: "var(--color-foreground)",
         surface: "var(--color-surface)",
@@ -34,83 +31,87 @@ const config: Config = {
         success: "var(--color-success)",
         warning: "var(--color-warning)",
 
-        // --- Status colors ---
-        "status-success": "#30D158", // Apple green
-        "status-warning": "#FFD60A", // Apple yellow
-        "status-error": "#FF453A", // Apple red
-        "status-info": "#0A84FF", // Apple blue
+        // --- Status colors (Apple standard) ---
+        "status-success": "#34C759", // Apple green
+        "status-warning": "#FFCC00", // Apple yellow
+        "status-error": "#FF3B30", // Apple red
+        "status-info": "#007AFF", // Apple blue
       },
 
       fontFamily: {
+        // Pure Apple typography stack
         sans: [
-          "var(--font-plus-jakarta-sans)",
-          "system-ui",
           "-apple-system",
+          "BlinkMacSystemFont",
+          "SF Pro Text",
+          "SF Pro Icons",
+          "Helvetica Neue",
+          "Helvetica",
+          "Arial",
           "sans-serif",
         ],
-        mono: ["var(--font-jetbrains-mono)", "ui-monospace", "monospace"],
+        mono: [
+          "SF Mono",
+          "ui-monospace",
+          "Menlo",
+          "Monaco",
+          "Consolas",
+          "monospace",
+        ],
       },
 
       fontSize: {
         "2xs": [
-          "0.625rem",
-          { lineHeight: "0.875rem", letterSpacing: "0.08em" },
+          "0.6875rem",
+          { lineHeight: "0.875rem", letterSpacing: "0.01em" },
         ],
-        label: ["0.6875rem", { lineHeight: "1rem", letterSpacing: "0.08em" }],
+        label: ["0.75rem", { lineHeight: "1rem", letterSpacing: "0.01em" }],
       },
 
       boxShadow: {
+        // Apple-style soft drop shadows
         shell:
-          "0 20px 60px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06) inset",
-        card: "0 1px 0 rgba(255,255,255,0.05) inset, 0 0 0 1px rgba(255,255,255,0.04)",
+          "0 10px 40px -10px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,0.05) inset",
+        card: "0 1px 2px rgba(0,0,0,0.05), 0 0 0 0.5px rgba(0,0,0,0.05)",
         "card-lg":
-          "0 8px 32px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.06) inset",
-        glow: "0 0 24px rgba(0,212,255,0.18), 0 0 48px rgba(0,212,255,0.08)",
-        "glow-rose":
-          "0 0 24px rgba(255,51,102,0.24), 0 0 48px rgba(255,51,102,0.10)",
-        float: "0 4px 24px rgba(0,0,0,0.32), 0 1px 4px rgba(0,0,0,0.20)",
-        nav: "0 -1px 0 rgba(255,255,255,0.04), 0 -20px 60px rgba(0,0,0,0.4)",
+          "0 8px 30px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.05) inset",
+        glow: "0 0 20px rgba(10,132,255,0.15)",
+        "glow-rose": "0 0 20px rgba(255,59,48,0.15)",
+        float: "0 8px 30px rgba(0,0,0,0.12)",
+        nav: "0 -0.5px 0 rgba(0,0,0,0.1)",
         // Light mode shadows
         "shell-light":
-          "0 4px 24px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+          "0 10px 40px -10px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
         "card-light":
-          "0 1px 3px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.9) inset",
+          "0 1px 2px rgba(0,0,0,0.04), 0 0 0 0.5px rgba(0,0,0,0.04)",
       },
 
       borderRadius: {
-        shell: "1.5rem",
-        card: "1.25rem",
-        chip: "0.625rem",
+        shell: "24px", // Apple standard for modals/large cards
+        card: "16px", // Apple standard continuous curve
+        chip: "8px",
         pill: "9999px",
       },
 
       maxWidth: {
-        app: "28rem", // tighter mobile-first max
+        app: "28rem",
       },
 
       backgroundImage: {
-        // Dark mesh gradient — the "alive" background
-        "mesh-dark":
-          "radial-gradient(at 20% 20%, rgba(0,212,255,0.06) 0px, transparent 50%), " +
-          "radial-gradient(at 80% 80%, rgba(124,58,237,0.06) 0px, transparent 50%), " +
-          "radial-gradient(at 50% 0%, rgba(255,51,102,0.04) 0px, transparent 40%)",
-        // Light mesh gradient
-        "mesh-light":
-          "radial-gradient(at 20% 20%, rgba(0,212,255,0.05) 0px, transparent 50%), " +
-          "radial-gradient(at 80% 80%, rgba(124,58,237,0.04) 0px, transparent 50%)",
-        // Accent gradients
-        "gradient-cyan": "linear-gradient(135deg, #00D4FF 0%, #0099FF 100%)",
-        "gradient-rose": "linear-gradient(135deg, #FF3366 0%, #FF6B35 100%)",
-        "gradient-violet": "linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)",
-        "gradient-gold": "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
-        // Card shimmer
+        // Removed heavy mesh gradients for pure flat/subtle Apple look
+        "mesh-dark": "none",
+        "mesh-light": "none",
+        "gradient-cyan": "linear-gradient(135deg, #0A84FF 0%, #007AFF 100%)",
+        "gradient-rose": "linear-gradient(135deg, #FF453A 0%, #FF3B30 100%)",
+        "gradient-violet": "linear-gradient(135deg, #5E5CE6 0%, #5856D6 100%)",
+        "gradient-gold": "linear-gradient(135deg, #FFD60A 0%, #FFCC00 100%)",
         shimmer:
           "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)",
       },
 
       keyframes: {
         "fade-up": {
-          "0%": { opacity: "0", transform: "translateY(16px)" },
+          "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "fade-in": {
@@ -118,7 +119,7 @@ const config: Config = {
           "100%": { opacity: "1" },
         },
         "scale-in": {
-          "0%": { opacity: "0", transform: "scale(0.94)" },
+          "0%": { opacity: "0", transform: "scale(0.96)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
         "slide-up": {
@@ -135,40 +136,22 @@ const config: Config = {
         },
         pulse: {
           "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.4" },
-        },
-        "glow-pulse": {
-          "0%, 100%": { boxShadow: "0 0 8px rgba(0,212,255,0.3)" },
-          "50%": {
-            boxShadow:
-              "0 0 24px rgba(0,212,255,0.6), 0 0 48px rgba(0,212,255,0.2)",
-          },
-        },
-        "spin-slow": {
-          "0%": { transform: "rotate(0deg)" },
-          "100%": { transform: "rotate(360deg)" },
-        },
-        float: {
-          "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-4px)" },
+          "50%": { opacity: "0.5" },
         },
       },
 
       animation: {
-        "fade-up": "fade-up 0.4s cubic-bezier(0.34,1.56,0.64,1) both",
+        "fade-up": "fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both",
         "fade-in": "fade-in 0.3s ease-out both",
-        "scale-in": "scale-in 0.3s cubic-bezier(0.34,1.56,0.64,1) both",
-        "slide-up": "slide-up 0.4s cubic-bezier(0.34,1.56,0.64,1) both",
-        "slide-down": "slide-down 0.3s cubic-bezier(0.34,1.56,0.64,1) both",
+        "scale-in": "scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "slide-up": "slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "slide-down": "slide-down 0.3s cubic-bezier(0.16, 1, 0.3, 1) both",
         shimmer: "shimmer 2s linear infinite",
-        "glow-pulse": "glow-pulse 3s ease-in-out infinite",
-        "spin-slow": "spin-slow 8s linear infinite",
-        float: "float 3s ease-in-out infinite",
       },
 
       transitionTimingFunction: {
-        spring: "cubic-bezier(0.34, 1.56, 0.64, 1)",
-        smooth: "cubic-bezier(0.4, 0, 0.2, 1)",
+        spring: "cubic-bezier(0.25, 1, 0.5, 1)",
+        smooth: "cubic-bezier(0.16, 1, 0.3, 1)",
         "expo-out": "cubic-bezier(0.16, 1, 0.3, 1)",
       },
 
@@ -180,8 +163,8 @@ const config: Config = {
       },
 
       backdropBlur: {
-        xs: "2px",
-        "4xl": "80px",
+        xs: "4px",
+        "4xl": "60px", // Standard Apple vibrant blur
       },
 
       spacing: {

@@ -19,21 +19,12 @@ export function Card({
   return (
     <div
       className={cn(
-        // Base structure
-        "relative rounded-card overflow-hidden",
-        // Dark mode: glass surface on deep background
-        "dark:bg-surface1 dark:border dark:border-white/[0.06]",
-        // Light mode: clean white card with soft shadow
-        "bg-white border border-black/[0.06]",
-        // Elevation variants
+        "relative overflow-hidden rounded-card bg-white/88 ring-1 ring-black/[0.05] dark:bg-zinc-950/88 dark:ring-white/[0.06]",
         elevated &&
-          "dark:bg-surface2 dark:border-white/[0.08] shadow-card-lg dark:shadow-card-lg",
-        !elevated &&
-          "shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_0_rgba(255,255,255,0.9)] dark:shadow-card",
-        // Interactive hover states
+          "shadow-[0_10px_34px_rgba(0,0,0,0.10)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.30)]",
+        !elevated && "shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
         interactive &&
-          "transition-all duration-250 ease-smooth cursor-pointer hover:dark:border-white/[0.10] hover:dark:shadow-card-lg hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 active:scale-[0.99] active:translate-y-0",
-        // Inner highlight line (Apple material feel)
+          "cursor-pointer transition-all duration-300 ease-[0.16,1,0.3,1] hover:scale-[0.995] hover:shadow-[0_10px_24px_rgba(0,0,0,0.08)] active:scale-[0.99]",
         "before:absolute before:inset-x-0 before:top-0 before:h-px",
         "before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent",
         "dark:before:via-white/[0.08]",

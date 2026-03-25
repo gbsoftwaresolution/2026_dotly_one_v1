@@ -17,9 +17,12 @@ export default function Loading() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border">
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-black/5 ring-1 ring-inset ring-black/5 dark:bg-white/10 dark:ring-white/10">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="space-y-2 bg-surface p-4">
+            <div
+              key={index}
+              className="space-y-2 bg-white/80 p-4 dark:bg-zinc-950/80"
+            >
               <div className="h-3 w-20 animate-pulse rounded-xl bg-slate-200 dark:bg-zinc-800" />
               <div className="h-4 w-24 animate-pulse rounded-xl bg-slate-200 dark:bg-zinc-800" />
             </div>

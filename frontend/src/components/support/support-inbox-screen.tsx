@@ -67,7 +67,7 @@ export function SupportInboxScreen() {
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
         {[...Array(3)].map((_, index) => (
           <SkeletonCard key={index} />
         ))}
@@ -83,22 +83,33 @@ export function SupportInboxScreen() {
 
   return (
     <section className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {(["all", "open", "resolved"] as const).map((value) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => setFilter(value)}
-            className={[
-              "rounded-pill border px-4 py-2 text-sm font-semibold transition-colors",
-              filter === value
-                ? "border-brandRose/40 bg-brandRose/10 text-foreground dark:border-brandCyan/40 dark:bg-brandCyan/10"
-                : "border-border bg-surface text-muted hover:text-foreground",
-            ].join(" ")}
-          >
-            {value === "all" ? "All" : value === "open" ? "Open" : "Resolved"}
-          </button>
-        ))}
+      <div className="rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+        <div className="mb-4 space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+            Step 1
+          </p>
+          <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+            Queue filters
+          </h2>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {(["all", "open", "resolved"] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setFilter(value)}
+              className={[
+                "rounded-pill px-4 py-2 text-sm font-semibold transition-colors ring-1",
+                filter === value
+                  ? "bg-foreground text-background ring-black/10 dark:bg-white dark:text-slate-950 dark:ring-white/10"
+                  : "bg-foreground/[0.03] text-muted ring-black/5 hover:text-foreground dark:bg-white/[0.045] dark:ring-white/10",
+              ].join(" ")}
+            >
+              {value === "all" ? "All" : value === "open" ? "Open" : "Resolved"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {requests.length === 0 ? (
@@ -117,7 +128,7 @@ export function SupportInboxScreen() {
           {requests.map((request) => (
             <article
               key={request.id}
-              className="glass rounded-[28px] border border-border bg-surface p-5"
+              className="rounded-[28px] bg-white/80 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 transition-all duration-500 ease-[0.16,1,0.3,1] hover:scale-[0.995] motion-safe:animate-[fade-in_420ms_ease-out] dark:bg-zinc-950/80 dark:ring-white/[0.06]"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-2">
@@ -162,7 +173,7 @@ export function SupportInboxScreen() {
                     type="button"
                     disabled={updatingId === request.id}
                     onClick={() => void toggleStatus(request)}
-                    className="rounded-pill border border-border px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-background disabled:opacity-50"
+                    className="rounded-pill bg-foreground/[0.04] px-4 py-2 text-sm font-semibold text-foreground shadow-inner ring-1 ring-black/5 transition-colors hover:bg-foreground/[0.06] disabled:opacity-50 dark:bg-white/[0.05] dark:ring-white/10"
                   >
                     {updatingId === request.id
                       ? "Updating..."

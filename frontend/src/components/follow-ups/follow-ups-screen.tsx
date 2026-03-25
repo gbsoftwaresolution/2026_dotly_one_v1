@@ -379,53 +379,66 @@ export function FollowUpsScreen() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((filter) => {
-          const isActive = filter.key === selectedStatus;
-
-          return (
-            <button
-              key={filter.key}
-              type="button"
-              onClick={() => setSelectedStatus(filter.key)}
-              className={cn(
-                "min-h-11 rounded-full border px-4 text-sm font-semibold transition-colors",
-                isActive
-                  ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-950"
-                  : "border-border bg-surface/70 text-foreground hover:border-black/10 hover:bg-white dark:hover:border-white/15 dark:hover:bg-white/[0.08]",
-              )}
-              aria-pressed={isActive}
-            >
-              {filter.label}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="space-y-1 px-1">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="font-sans text-lg font-semibold text-foreground">
-            {activeFilter.label}
-          </h2>
-          {!showSkeleton ? (
-            <span className="font-mono text-[10px] uppercase tracking-widest text-muted">
-              {followUps.length}
-            </span>
-          ) : null}
-        </div>
-        <p className="text-sm text-muted">{activeFilter.description}</p>
-        <div className="min-h-5">
-          {isRefreshing ? (
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-              Syncing follow-ups...
+      <div className="rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+              Step 1
             </p>
-          ) : null}
+            <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+              Follow-up lanes
+            </h2>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {FILTERS.map((filter) => {
+              const isActive = filter.key === selectedStatus;
+
+              return (
+                <button
+                  key={filter.key}
+                  type="button"
+                  onClick={() => setSelectedStatus(filter.key)}
+                  className={cn(
+                    "min-h-11 rounded-full px-4 text-sm font-semibold transition-colors ring-1",
+                    isActive
+                      ? "bg-foreground text-background ring-black/10 dark:bg-white dark:text-slate-950 dark:ring-white/10"
+                      : "bg-foreground/[0.03] text-foreground ring-black/5 hover:bg-foreground/[0.05] dark:bg-white/[0.045] dark:ring-white/10 dark:hover:bg-white/[0.06]",
+                  )}
+                  aria-pressed={isActive}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="space-y-1 px-1">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-sans text-lg font-semibold text-foreground">
+                {activeFilter.label}
+              </h2>
+              {!showSkeleton ? (
+                <span className="font-mono text-[10px] uppercase tracking-widest text-muted">
+                  {followUps.length}
+                </span>
+              ) : null}
+            </div>
+            <p className="text-sm text-muted">{activeFilter.description}</p>
+            <div className="min-h-5">
+              {isRefreshing ? (
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
+                  Syncing follow-ups...
+                </p>
+              ) : null}
+            </div>
+          </div>
         </div>
       </div>
 
       {selectedStatus === "pending" && passiveReminderCount >= 6 ? (
-        <div className="rounded-2xl border border-cyan-200/80 bg-cyan-50/70 px-4 py-3 dark:border-brandCyan/20 dark:bg-brandCyan/[0.08]">
-          <p className="text-sm leading-6 text-cyan-900 dark:text-white/85">
+        <div className="rounded-2xl bg-foreground/[0.03] px-4 py-3 ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+          <p className="text-sm leading-6 text-foreground/80">
             {passiveReminderCount} passive reminders are grouped here. Focus on
             the first few instead of clearing everything at once.
           </p>
@@ -433,7 +446,7 @@ export function FollowUpsScreen() {
       ) : null}
 
       {actionError ? (
-        <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-3">
+        <div className="rounded-2xl bg-rose-500/5 px-4 py-3 ring-1 ring-inset ring-rose-500/20">
           <p className="font-sans text-sm text-rose-600 dark:text-rose-400">
             {actionError}
           </p>
@@ -448,7 +461,10 @@ export function FollowUpsScreen() {
       ) : selectedStatus === "pending" ? (
         <div className="space-y-5">
           {pendingSections.map((section) => (
-            <div key={section.key} className="space-y-3">
+            <div
+              key={section.key}
+              className="space-y-3 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5"
+            >
               <div className="space-y-1 px-1">
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="font-sans text-base font-semibold text-foreground">
@@ -480,9 +496,9 @@ export function FollowUpsScreen() {
                         exitingIds[followUp.id]
                           ? "translate-y-2 opacity-0"
                           : "translate-y-0 opacity-100",
-                        "rounded-card border border-black/[0.06] bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_0_rgba(255,255,255,0.9)] dark:border-white/[0.06] dark:bg-surface1 dark:shadow-card sm:p-5",
+                        "rounded-card bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06] sm:p-5",
                         isPassiveReminder &&
-                          "border-cyan-200/80 bg-cyan-50/50 dark:border-brandCyan/20 dark:bg-brandCyan/[0.06]",
+                          "border-black/5 bg-foreground/[0.04] dark:border-white/10 dark:bg-white/[0.06]",
                         section.key === "overdue"
                           ? "border-rose-200/80 dark:border-rose-900/60"
                           : section.key === "due"
@@ -494,7 +510,7 @@ export function FollowUpsScreen() {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0 space-y-1">
                             {isPassiveReminder ? (
-                              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-cyan-700 dark:text-brandCyan">
+                              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
                                 {getPassiveReminderBadgeLabel()}
                               </p>
                             ) : null}
@@ -502,7 +518,7 @@ export function FollowUpsScreen() {
                               href={routes.app.contactDetail(
                                 followUp.relationshipId,
                               )}
-                              className="block text-base font-semibold text-foreground transition-colors hover:text-brandRose dark:hover:text-brandCyan"
+                              className="block text-base font-semibold text-foreground transition-colors hover:opacity-70"
                             >
                               {isPassiveReminder
                                 ? getPassiveReminderHeadline()
@@ -538,8 +554,8 @@ export function FollowUpsScreen() {
                           className={cn(
                             "rounded-2xl border px-4 py-3",
                             isPassiveReminder
-                              ? "border-cyan-200/80 bg-cyan-50/80 dark:border-brandCyan/20 dark:bg-brandCyan/[0.08]"
-                              : "border-border bg-surface/60",
+                              ? "bg-foreground/[0.04] ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10"
+                              : "bg-foreground/[0.03] ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5",
                           )}
                         >
                           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
@@ -558,7 +574,7 @@ export function FollowUpsScreen() {
                         </div>
 
                         {followUp.note ? (
-                          <div className="rounded-2xl border border-border bg-background/70 px-4 py-3">
+                          <div className="rounded-2xl bg-foreground/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
                             <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
                               Note
                             </p>
@@ -588,7 +604,7 @@ export function FollowUpsScreen() {
                               href={routes.app.contactDetail(
                                 followUp.relationshipId,
                               )}
-                              className="inline-flex min-h-[60px] w-full items-center justify-center rounded-2xl border border-border bg-transparent px-5 py-4 text-sm font-semibold text-foreground transition-all hover:bg-slate-50 hover:border-border active:scale-95 dark:hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-border focus:ring-offset-2"
+                              className="inline-flex min-h-[60px] w-full items-center justify-center rounded-2xl bg-foreground/[0.04] px-5 py-4 text-sm font-semibold text-foreground shadow-inner ring-1 ring-black/5 transition-all hover:bg-foreground/[0.06] active:scale-95 dark:bg-white/[0.05] dark:ring-white/10 dark:hover:bg-white/[0.07]"
                             >
                               Set follow-up
                             </Link>
@@ -616,7 +632,7 @@ export function FollowUpsScreen() {
           ))}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
           {followUps.map((followUp) => {
             const isWorking = actionState?.id === followUp.id;
             const isPassiveReminder = isPassiveInactivityFollowUp(followUp);
@@ -634,9 +650,9 @@ export function FollowUpsScreen() {
                   exitingIds[followUp.id]
                     ? "translate-y-2 opacity-0"
                     : "translate-y-0 opacity-100",
-                  "rounded-card border border-black/[0.06] bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_0_rgba(255,255,255,0.9)] dark:border-white/[0.06] dark:bg-surface1 dark:shadow-card sm:p-5",
+                  "rounded-card bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06] sm:p-5",
                   isPassiveReminder &&
-                    "border-cyan-200/80 bg-cyan-50/50 dark:border-brandCyan/20 dark:bg-brandCyan/[0.06]",
+                    "border-black/5 bg-foreground/[0.04] dark:border-white/10 dark:bg-white/[0.06]",
                   followUp.status !== "pending" ? "opacity-90" : "",
                 )}
               >
@@ -644,13 +660,13 @@ export function FollowUpsScreen() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 space-y-1">
                       {isPassiveReminder ? (
-                        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-cyan-700 dark:text-brandCyan">
+                        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
                           {getPassiveReminderBadgeLabel()}
                         </p>
                       ) : null}
                       <Link
                         href={routes.app.contactDetail(followUp.relationshipId)}
-                        className="block text-base font-semibold text-foreground transition-colors hover:text-brandRose dark:hover:text-brandCyan"
+                        className="block text-base font-semibold text-foreground transition-colors hover:opacity-70"
                       >
                         {isPassiveReminder
                           ? getPassiveReminderHeadline()
@@ -684,8 +700,8 @@ export function FollowUpsScreen() {
                     className={cn(
                       "rounded-2xl border px-4 py-3",
                       isPassiveReminder
-                        ? "border-cyan-200/80 bg-cyan-50/80 dark:border-brandCyan/20 dark:bg-brandCyan/[0.08]"
-                        : "border-border bg-surface/60",
+                        ? "bg-foreground/[0.04] ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10"
+                        : "bg-foreground/[0.03] ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5",
                     )}
                   >
                     <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
@@ -713,7 +729,7 @@ export function FollowUpsScreen() {
                   </div>
 
                   {followUp.note ? (
-                    <div className="rounded-2xl border border-border bg-background/70 px-4 py-3">
+                    <div className="rounded-2xl bg-foreground/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
                       <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
                         Note
                       </p>
@@ -744,7 +760,7 @@ export function FollowUpsScreen() {
                           href={routes.app.contactDetail(
                             followUp.relationshipId,
                           )}
-                          className="inline-flex min-h-[60px] w-full items-center justify-center rounded-2xl border border-border bg-transparent px-5 py-4 text-sm font-semibold text-foreground transition-all hover:bg-slate-50 hover:border-border active:scale-95 dark:hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-border focus:ring-offset-2"
+                          className="inline-flex min-h-[60px] w-full items-center justify-center rounded-2xl bg-foreground/[0.04] px-5 py-4 text-sm font-semibold text-foreground shadow-inner ring-1 ring-black/5 transition-all hover:bg-foreground/[0.06] active:scale-95 dark:bg-white/[0.05] dark:ring-white/10 dark:hover:bg-white/[0.07]"
                         >
                           Set follow-up
                         </Link>

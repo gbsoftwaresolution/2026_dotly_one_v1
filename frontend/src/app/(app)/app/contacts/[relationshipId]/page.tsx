@@ -210,7 +210,7 @@ function ConnectionSection({
           </h2>
         </div>
 
-        <div className="rounded-2xl border border-border/80 bg-surface/50 px-4 py-4">
+        <div className="rounded-2xl bg-foreground/[0.03] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <div className="space-y-2">
             <ConnectionLine>{summary}</ConnectionLine>
             <ConnectionLine>{connectedLine}</ConnectionLine>
@@ -248,7 +248,7 @@ function ActivitySection({
         ) : events.length === 0 ? (
           <p className="font-sans text-sm text-muted">No activity yet</p>
         ) : (
-          <ul className="divide-y divide-border/70 rounded-2xl border border-border/80 bg-surface/40 px-4">
+          <ul className="divide-y divide-black/5 rounded-2xl bg-foreground/[0.03] px-4 shadow-inner ring-1 ring-inset ring-black/5 dark:divide-white/10 dark:bg-white/[0.045] dark:ring-white/5">
             {events.map((event) => (
               <li
                 key={event.id}
@@ -392,16 +392,16 @@ export default async function ContactDetailPage({
       />
 
       {state === "instant_access" && !isExpired && (
-        <div className="rounded-2xl border border-brandRose/50 bg-brandRose/10 px-4 py-3 dark:border-brandCyan/50 dark:bg-brandCyan/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 animate-pulse">
-          <p className="font-mono text-xs font-bold text-brandRose dark:text-brandCyan uppercase tracking-widest flex items-center gap-2">
+        <div className="flex flex-col justify-between gap-2 rounded-2xl bg-foreground/[0.04] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 animate-pulse dark:bg-white/[0.05] dark:ring-white/10 sm:flex-row sm:items-center">
+          <p className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-foreground/80">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brandRose dark:bg-brandCyan opacity-75"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-brandRose dark:bg-brandCyan"></span>
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-foreground/60 opacity-75 dark:bg-white/70"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-foreground/75 dark:bg-white"></span>
             </span>
             Live connection window
           </p>
           {accessEndAt && (
-            <p className="font-mono text-[11px] text-brandRose/80 dark:text-brandCyan/80 font-medium">
+            <p className="font-mono text-[11px] font-medium text-muted">
               Expires {formatTimestamp(accessEndAt)}
             </p>
           )}

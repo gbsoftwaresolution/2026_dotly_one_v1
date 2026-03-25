@@ -17,6 +17,23 @@ import {
 import { PersonasService } from "../src/modules/personas/personas.service";
 
 describe("PersonasService sharing mode", () => {
+  it("blocks reserved brand usernames from availability checks", async () => {
+    const service = new PersonasService({
+      persona: {
+        findFirst: async () => null,
+      },
+    } as never);
+
+    const result = await service.checkUsernameAvailability(
+      "user-1",
+      "kfc_uae",
+    );
+
+    assert.equal(result.available, false);
+    assert.equal(result.code, "reserved_brand");
+    assert.equal(result.requiresClaim, true);
+  });
+
   it("builds action-ready public smart card links only for enabled safe actions", () => {
     assert.deepEqual(
       buildPublicSmartCardActions({
@@ -156,8 +173,8 @@ describe("PersonasService sharing mode", () => {
         create: async () => ({
           id: "persona-1",
           type: "PERSONAL",
-          username: "alice",
-          publicUrl: "dotly.id/alice",
+          username: "alice-demo",
+          publicUrl: "dotly.id/alice-demo",
           fullName: "Alice Demo",
           jobTitle: "Founder",
           companyName: "Dotly",
@@ -179,8 +196,8 @@ describe("PersonasService sharing mode", () => {
         findUnique: async () => ({
           id: "persona-1",
           type: "PERSONAL",
-          username: "alice",
-          publicUrl: "dotly.id/alice",
+          username: "alice-demo",
+          publicUrl: "dotly.id/alice-demo",
           fullName: "Alice Demo",
           jobTitle: "Founder",
           companyName: "Dotly",
@@ -248,7 +265,7 @@ describe("PersonasService sharing mode", () => {
 
     const result = await service.create("user-1", {
       type: PersonaType.Personal,
-      username: "alice",
+      username: "alice-demo",
       fullName: "Alice Demo",
       jobTitle: "Founder",
       companyName: "Dotly",
@@ -261,7 +278,10 @@ describe("PersonasService sharing mode", () => {
     assert.equal(result.smartCardConfig, null);
     assert.equal(persistedConfig, null);
     assert.equal(result.sharingCapabilities?.hasActiveProfileQr, true);
-    assert.equal(result.sharingCapabilities?.primaryActions.instantConnect, true);
+    assert.equal(
+      result.sharingCapabilities?.primaryActions.instantConnect,
+      true,
+    );
     assert.equal(createdProfileQrCount, 1);
   });
 
@@ -317,7 +337,10 @@ describe("PersonasService sharing mode", () => {
     const result = await service.findOneById("user-1", "persona-1");
 
     assert.equal(result.sharingCapabilities?.hasActiveProfileQr, true);
-    assert.equal(result.sharingCapabilities?.primaryActions.instantConnect, true);
+    assert.equal(
+      result.sharingCapabilities?.primaryActions.instantConnect,
+      true,
+    );
     assert.equal(createdProfileQrCount, 1);
   });
 
@@ -369,7 +392,10 @@ describe("PersonasService sharing mode", () => {
 
     assert.equal(result.length, 1);
     assert.equal(result[0].sharingCapabilities?.hasActiveProfileQr, true);
-    assert.equal(result[0].sharingCapabilities?.primaryActions.instantConnect, true);
+    assert.equal(
+      result[0].sharingCapabilities?.primaryActions.instantConnect,
+      true,
+    );
     assert.equal(createdProfileQrCount, 1);
   });
 

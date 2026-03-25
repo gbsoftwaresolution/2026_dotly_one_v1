@@ -3,7 +3,7 @@ import { Card } from "@/components/shared/card";
 export default function LoadingPublicSmartCard() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md items-center px-4 py-8 sm:px-6">
-      <Card className="w-full overflow-hidden p-0 border-border/60">
+      <Card className="w-full overflow-hidden p-0">
         <div className="space-y-6 bg-[linear-gradient(160deg,#111827_0%,#0f172a_48%,#020617_100%)] px-6 py-7">
           <div className="flex items-start gap-4">
             <div className="h-20 w-20 animate-pulse rounded-[26px] bg-white/10" />
@@ -19,10 +19,10 @@ export default function LoadingPublicSmartCard() {
 
         <div className="space-y-4 px-6 py-6">
           <div className="grid grid-cols-2 gap-3">
-            <div className="h-24 animate-pulse rounded-[24px] bg-surface/70" />
-            <div className="h-24 animate-pulse rounded-[24px] bg-surface/70" />
+            <div className="h-24 animate-pulse rounded-[24px] bg-foreground/[0.03] shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5" />
+            <div className="h-24 animate-pulse rounded-[24px] bg-foreground/[0.03] shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5" />
           </div>
-          <div className="h-24 animate-pulse rounded-[24px] bg-surface/60" />
+          <div className="h-24 animate-pulse rounded-[24px] bg-foreground/[0.03] shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5" />
         </div>
       </Card>
     </main>

@@ -53,10 +53,8 @@ export function ConfirmModal({
       {/* Modal sheet */}
       <div
         className={cn(
-          "w-full max-w-sm mx-4 mb-4 sm:mb-0 rounded-[1.75rem] overflow-hidden",
-          // Glass surface
-          "dark:bg-surface2 dark:border dark:border-white/[0.10]",
-          "bg-white border border-black/[0.08]",
+          "w-full max-w-sm mx-4 mb-4 overflow-hidden rounded-[1.75rem] sm:mb-0",
+          "bg-white/92 border border-black/[0.08] backdrop-blur-2xl dark:border-white/[0.10] dark:bg-zinc-950/92",
           "shadow-[0_24px_80px_rgba(0,0,0,0.5)]",
           "animate-slide-up sm:animate-scale-in",
         )}
@@ -88,16 +86,14 @@ export function ConfirmModal({
                 "disabled:opacity-50 disabled:cursor-not-allowed",
                 destructive
                   ? [
-                      "dark:bg-status-error/15 dark:text-status-error dark:border dark:border-status-error/30",
-                      "bg-rose-50 text-rose-600 border border-rose-200",
-                      "hover:dark:bg-status-error/25 hover:bg-rose-100",
-                      "focus-visible:ring-status-error dark:focus-visible:ring-offset-surface2",
+                      "border border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-400/20 dark:bg-rose-400/[0.12] dark:text-rose-300",
+                      "hover:bg-rose-100 dark:hover:bg-rose-400/[0.18]",
+                      "focus-visible:ring-status-error dark:focus-visible:ring-offset-black",
                     ]
                   : [
-                      "dark:bg-gradient-cyan dark:text-bgOnyx",
-                      "bg-gradient-rose text-white",
-                      "hover:opacity-90",
-                      "focus-visible:ring-accent dark:focus-visible:ring-offset-surface2",
+                      "bg-foreground text-background dark:bg-white dark:text-zinc-950",
+                      "hover:opacity-92",
+                      "focus-visible:ring-foreground/15 dark:focus-visible:ring-offset-black",
                     ],
               )}
             >
@@ -119,8 +115,8 @@ export function ConfirmModal({
                 "inline-flex h-12 items-center justify-center rounded-2xl px-5 text-sm font-medium",
                 "transition-all duration-250 ease-spring",
                 "text-muted hover:text-foreground",
-                "hover:dark:bg-white/[0.06] hover:bg-slate-100",
-                "active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border",
+                "hover:bg-slate-100 dark:hover:bg-white/[0.06]",
+                "active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
               )}
             >

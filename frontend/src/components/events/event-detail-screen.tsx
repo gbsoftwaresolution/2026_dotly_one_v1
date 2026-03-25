@@ -63,19 +63,22 @@ function formatDateRange(startsAt: string, endsAt: string): string {
 // ---------------------------------------------------------------------------
 function StealthShield() {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-dashed border-border">
+    <div className="relative overflow-hidden rounded-3xl bg-foreground/[0.03] shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
       {/* Blurred ghost rows to hint at content underneath */}
       <div
         className="pointer-events-none select-none space-y-3 p-4 blur-sm"
         aria-hidden
       >
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-20 rounded-2xl bg-surface" />
+          <div
+            key={i}
+            className="h-20 rounded-2xl bg-foreground/[0.05] dark:bg-white/[0.06]"
+          />
         ))}
       </div>
       {/* Overlay label */}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-bg/70 backdrop-blur-[2px]">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground/[0.05] shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.06] dark:ring-white/10">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -267,7 +270,7 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
   return (
     <div className="flex flex-col gap-5">
       {/* ── Event info card ─────────────────────────────────────────────── */}
-      <div className="glass rounded-3xl border border-border bg-surface p-5">
+      <div className="rounded-3xl bg-white/82 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.05] dark:bg-zinc-950/82 dark:ring-white/[0.06]">
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-3">
             <h2 className="text-lg font-semibold text-foreground">
@@ -300,7 +303,7 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
 
       {/* ── Discovery Signal card (joined only) ─────────────────────────── */}
       {hasJoined ? (
-        <div className="glass rounded-3xl border border-border bg-surface p-5">
+        <div className="rounded-3xl bg-white/82 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.05] dark:bg-zinc-950/82 dark:ring-white/[0.06]">
           <DiscoveryToggle
             enabled={isDiscoverable}
             onToggle={handleDiscoveryToggle}
@@ -318,13 +321,13 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
             </div>
           ) : null}
           {discoveryError ? (
-            <div className="mt-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
+            <div className="mt-3 rounded-2xl bg-rose-500/5 px-4 py-3 ring-1 ring-inset ring-rose-500/20">
               <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
                 {discoveryError}
               </p>
             </div>
           ) : null}
-          <div className="mt-3 border-t border-border pt-3">
+          <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
             <p className="font-mono text-xs text-muted">
               Attending as{" "}
               <span className="font-medium capitalize text-foreground">
@@ -377,7 +380,7 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
 
       {/* ── Upcoming — discovery window not open yet ─────────────────────── */}
       {hasJoined && event.status === "upcoming" ? (
-        <div className="rounded-3xl border border-dashed border-border p-5">
+        <div className="rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <p className="text-center font-mono text-xs text-muted">
             Participant discovery opens when the event goes live.
           </p>
@@ -386,7 +389,7 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
 
       {/* ── Ended ────────────────────────────────────────────────────────── */}
       {hasJoined && event.status === "ended" ? (
-        <div className="rounded-3xl border border-dashed border-border p-5">
+        <div className="rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <p className="text-center font-mono text-xs text-muted">
             This event has ended. Discovery is closed.
           </p>

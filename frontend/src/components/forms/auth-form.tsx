@@ -28,10 +28,10 @@ interface AuthFormProps {
 }
 
 const INPUT_CLASSES =
-  "peer min-h-[54px] w-full rounded-[16px] border border-black/10 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] px-4 pt-4 pb-1.5 text-[15px] font-medium text-foreground outline-none backdrop-blur-2xl transition-all duration-300 hover:border-black/20 dark:hover:border-white/20 hover:bg-white/70 dark:hover:bg-white/[0.05] focus:bg-white dark:focus:bg-black focus:border-brandRose focus:ring-[3px] focus:ring-brandRose/15 dark:focus:border-brandCyan dark:focus:ring-brandCyan/15 placeholder:text-transparent shadow-sm";
+  "peer min-h-[56px] w-full rounded-[16px] bg-foreground/[0.03] px-4 pt-5 pb-2 text-[16px] font-medium text-foreground outline-none transition-all duration-300 shadow-inner ring-1 ring-black/5 placeholder:text-transparent focus:bg-foreground/[0.045] focus:ring-2 focus:ring-foreground/15 focus:shadow-md dark:bg-white/[0.045] dark:ring-white/10 dark:focus:bg-white/[0.07]";
 
 const LABEL_CLASSES =
-  "absolute left-4 top-4 z-10 origin-[0] -translate-y-2.5 scale-[0.85] transform text-[13px] text-muted-foreground duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-[0.85] peer-focus:text-brandRose dark:peer-focus:text-brandCyan pointer-events-none";
+  "absolute left-4 top-4 z-10 origin-[0] -translate-y-2 scale-[0.80] transform text-[13px] font-medium text-muted transition-all duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:text-muted/70 peer-focus:-translate-y-2 peer-focus:scale-[0.80] peer-focus:text-accent pointer-events-none";
 
 const SIGNUP_PASSWORD_HELPER =
   "Recommended: use 12+ characters with a mix of letters, numbers, and symbols. Avoid reusing a password from another service.";
@@ -64,22 +64,21 @@ function getPasswordStrength(password: string): {
     return {
       label: "Needs work",
       className:
-        "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-300",
+        "border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-300",
     };
   }
 
   if (score <= 4) {
     return {
       label: "Good",
-      className:
-        "border-brandRose/25 bg-brandRose/10 text-brandRose dark:border-brandCyan/25 dark:bg-brandCyan/10 dark:text-brandCyan",
+      className: "border border-accent/20 bg-accent/10 text-accent",
     };
   }
 
   return {
     label: "Strong",
     className:
-      "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
+      "border border-status-success/30 bg-status-success/10 text-status-success",
   };
 }
 
@@ -197,8 +196,8 @@ export function AuthForm({
     <motion.form
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6 form-apple"
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className="space-y-6"
       onSubmit={handleSubmit}
     >
       <div className="relative group">
@@ -243,7 +242,7 @@ export function AuthForm({
                     </span>
                     <span
                       className={cn(
-                        "inline-flex rounded-full border px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em]",
+                        "inline-flex rounded-full px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-[0.12em]",
                         passwordStrength.className,
                       )}
                     >
@@ -252,9 +251,7 @@ export function AuthForm({
                   </div>
                 ) : null}
               </div>
-            ) : (
-              <p>Use the password for your Dotly account.</p>
-            )
+            ) : null
           }
           onChange={(nextPassword) => {
             resetFormFeedback();
@@ -307,10 +304,10 @@ export function AuthForm({
       ) : null}
 
       {mode === "login" ? (
-        <div className="-mt-2 flex justify-end">
+        <div className="-mt-1 flex justify-end">
           <Link
             href={routes.public.forgotPassword}
-            className="text-sm font-semibold text-brandRose transition-colors hover:text-brandRose/80 dark:text-brandCyan dark:hover:text-brandCyan/80"
+            className="text-sm font-medium text-accent transition-colors hover:text-accent/80"
           >
             Forgot password?
           </Link>
@@ -323,11 +320,9 @@ export function AuthForm({
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="rounded-2xl border border-rose-500/20 bg-rose-500/5 px-4 py-3.5 shadow-sm backdrop-blur-md"
+            className="rounded-[16px] bg-status-error/10 px-4 py-3.5 ring-1 ring-status-error/20 backdrop-blur-md"
           >
-            <p className="text-[14px] font-medium text-rose-600 dark:text-rose-400">
-              {error}
-            </p>
+            <p className="text-[14px] font-medium text-status-error">{error}</p>
           </motion.div>
         ) : null}
 
@@ -336,19 +331,19 @@ export function AuthForm({
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3.5 shadow-sm backdrop-blur-md"
+            className="rounded-[16px] bg-status-success/10 px-4 py-3.5 ring-1 ring-status-success/20 backdrop-blur-md"
           >
-            <p className="text-[14px] font-medium text-emerald-600 dark:text-emerald-400">
+            <p className="text-[14px] font-medium text-status-success">
               {successMessage}
             </p>
           </motion.div>
         ) : null}
       </AnimatePresence>
 
-      <div className="pt-2">
+      <div className="pt-4">
         <PrimaryButton
           type="submit"
-          className="w-full h-[52px] rounded-[14px] text-[15px] font-semibold tracking-wide shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-[1px] active:translate-y-[1px] active:shadow-sm"
+          className="w-full h-[56px] rounded-full text-[17px] font-semibold bg-foreground text-background transition-transform hover:scale-[0.98] tap-feedback shadow-float"
           disabled={isSubmitting}
           isLoading={isSubmitting}
           isSuccess={Boolean(successMessage) && !isSubmitting}
@@ -364,19 +359,19 @@ export function AuthForm({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-center text-[13px] leading-relaxed text-muted-foreground"
+          className="text-center text-[13px] leading-relaxed text-muted mt-6"
         >
           By creating an account, you agree to Dotly&apos;s{" "}
           <Link
             href={routes.public.terms}
-            className="font-semibold text-brandRose hover:text-brandRose/80 underline-offset-4 hover:underline dark:text-brandCyan dark:hover:text-brandCyan/80 transition-colors"
+            className="font-medium text-foreground hover:text-accent underline-offset-4 hover:underline transition-colors"
           >
             Terms
           </Link>{" "}
           and acknowledge the{" "}
           <Link
             href={routes.public.privacy}
-            className="font-semibold text-brandRose hover:text-brandRose/80 underline-offset-4 hover:underline dark:text-brandCyan dark:hover:text-brandCyan/80 transition-colors"
+            className="font-medium text-foreground hover:text-accent underline-offset-4 hover:underline transition-colors"
           >
             Privacy Policy
           </Link>
@@ -384,11 +379,11 @@ export function AuthForm({
         </motion.p>
       ) : null}
 
-      <p className="text-center text-[14px] font-medium text-muted-foreground pt-4">
+      <p className="text-center text-[15px] font-medium text-muted pt-4">
         {content.alternateLabel}{" "}
         <Link
           href={content.alternateHref}
-          className="font-semibold text-foreground hover:text-brandRose dark:hover:text-brandCyan transition-colors"
+          className="font-semibold text-foreground hover:text-accent transition-colors ml-1"
         >
           {content.alternateAction}
         </Link>

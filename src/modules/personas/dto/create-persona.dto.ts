@@ -18,6 +18,7 @@ import {
   PERSONA_USERNAME_MAX_LENGTH,
   PERSONA_USERNAME_MIN_LENGTH,
   PERSONA_USERNAME_PATTERN,
+  PERSONA_USERNAME_STANDARD_MIN_LENGTH,
   normalizePersonaUsername,
 } from "../persona-username";
 
@@ -38,6 +39,10 @@ export class CreatePersonaDto {
   @IsString()
   @MinLength(PERSONA_USERNAME_MIN_LENGTH)
   @Matches(PERSONA_USERNAME_PATTERN)
+  @MinLength(PERSONA_USERNAME_STANDARD_MIN_LENGTH, {
+    message:
+      "Standard usernames require at least 6 characters. Shorter usernames are reserved for premium claims.",
+  })
   @MaxLength(PERSONA_USERNAME_MAX_LENGTH)
   username!: string;
 

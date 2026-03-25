@@ -485,7 +485,7 @@ export function ContactFollowUpForm({
           </button>
         ) : (
           <form
-            className="flex flex-col gap-2 rounded-2xl border border-border bg-surface/50 p-3 sm:flex-row"
+            className="flex flex-col gap-2 rounded-2xl bg-foreground/[0.03] p-3 shadow-inner ring-1 ring-inset ring-black/5 sm:flex-row dark:bg-white/[0.045] dark:ring-white/5"
             onSubmit={(event) => {
               void handleCustomDateSubmit(event);
             }}
@@ -502,7 +502,7 @@ export function ContactFollowUpForm({
                   setCustomDate(event.target.value);
                   setError(null);
                 }}
-                className="min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm text-foreground outline-none transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20"
+                className="min-h-12 w-full rounded-2xl bg-background/80 px-4 text-sm text-foreground outline-none transition-all shadow-inner ring-1 ring-inset ring-black/5 focus:bg-background focus:ring-2 focus:ring-foreground/15 dark:bg-black/10 dark:ring-white/10 dark:focus:bg-black/20"
               />
             </label>
 
@@ -556,7 +556,7 @@ export function ContactFollowUpForm({
               ? "border-rose-200 bg-rose-50/80 dark:border-rose-900 dark:bg-rose-950/20"
               : followUpSummaryState?.tone === "warning"
                 ? "border-amber-200 bg-amber-50/80 dark:border-amber-900 dark:bg-amber-950/20"
-                : "border-border bg-surface/70",
+                : "border-black/5 bg-foreground/[0.03] dark:border-white/10 dark:bg-white/[0.045]",
           )}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -602,7 +602,7 @@ export function ContactFollowUpForm({
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-border bg-surface/40 px-4 py-4 text-sm text-muted">
+        <div className="rounded-2xl border border-dashed border-black/10 bg-foreground/[0.03] px-4 py-4 text-sm text-muted dark:border-white/10 dark:bg-white/[0.04]">
           Keep the next conversation easy to pick back up.
         </div>
       )}

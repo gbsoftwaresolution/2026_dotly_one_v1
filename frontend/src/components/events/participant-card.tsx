@@ -19,14 +19,12 @@ function getInitials(fullName: string): string {
     .slice(0, 2);
 }
 
-function roleTone(
-  role: EventParticipantRole,
-): "brandRose" | "brandCyan" | "muted" {
+function roleTone(role: EventParticipantRole): "strong" | "soft" | "muted" {
   switch (role) {
     case "organizer":
-      return "brandRose";
+      return "strong";
     case "speaker":
-      return "brandCyan";
+      return "soft";
     default:
       return "muted";
   }
@@ -46,7 +44,7 @@ export function ParticipantCard({
   const tone = roleTone(participant.role);
 
   return (
-    <div className="glass rounded-3xl border border-border bg-surface p-5 transition-all">
+    <div className="rounded-3xl bg-white/80 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 transition-all duration-500 ease-[0.16,1,0.3,1] hover:scale-[0.995] motion-safe:animate-[fade-in_420ms_ease-out] dark:bg-zinc-950/80 dark:ring-white/[0.06]">
       <div className="flex items-start gap-4">
         {/* Avatar */}
         <div className="shrink-0">
@@ -77,10 +75,10 @@ export function ParticipantCard({
           <p
             className={cn(
               "font-mono text-xs font-medium uppercase tracking-widest",
-              tone === "brandRose"
-                ? "text-brandRose"
-                : tone === "brandCyan"
-                  ? "text-brandCyan"
+              tone === "strong"
+                ? "text-foreground"
+                : tone === "soft"
+                  ? "text-foreground/70"
                   : "text-muted",
             )}
           >

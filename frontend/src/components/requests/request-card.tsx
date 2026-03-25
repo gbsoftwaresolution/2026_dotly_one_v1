@@ -50,7 +50,7 @@ export function IncomingRequestCard({
   onReject,
 }: IncomingRequestCardProps) {
   return (
-    <Card className="space-y-4">
+    <Card className="space-y-4 transition-all duration-500 ease-[0.16,1,0.3,1] motion-safe:animate-[fade-in_420ms_ease-out] hover:scale-[0.995]">
       <div className="flex items-start gap-3">
         {request.fromPersona.profilePhotoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -90,7 +90,7 @@ export function IncomingRequestCard({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
+      <div className="rounded-2xl bg-foreground/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
         <p className="label-xs text-muted">Reason</p>
         <p className="mt-2 text-sm leading-6 text-foreground">
           {request.reason?.trim() || "No reason added."}
@@ -99,14 +99,14 @@ export function IncomingRequestCard({
 
       <div className="flex gap-3">
         <button
-          className="flex h-[60px] flex-1 items-center justify-center rounded-2xl border border-border bg-transparent px-5 text-sm font-bold text-foreground transition-all hover:bg-slate-50 active:scale-95 disabled:opacity-50 dark:hover:bg-zinc-800"
+          className="flex h-[60px] flex-1 items-center justify-center rounded-2xl bg-foreground/[0.04] px-5 text-sm font-bold text-foreground shadow-inner ring-1 ring-black/5 transition-all hover:bg-foreground/[0.06] active:scale-95 disabled:opacity-50 dark:bg-white/[0.05] dark:ring-white/10 dark:hover:bg-white/[0.07]"
           disabled={isApproving || isRejecting}
           onClick={() => onReject(request.id)}
         >
           {isRejecting ? "Rejecting..." : "Reject"}
         </button>
         <button
-          className="flex h-[60px] flex-1 items-center justify-center rounded-2xl bg-brandRose px-5 text-sm font-bold text-white transition-all hover:bg-brandRose/90 active:scale-95 disabled:opacity-50 dark:bg-brandCyan dark:text-zinc-950 dark:hover:bg-brandCyan/90"
+          className="flex h-[60px] flex-1 items-center justify-center rounded-2xl bg-foreground px-5 text-sm font-bold text-background transition-all hover:scale-[0.995] active:scale-95 disabled:opacity-50"
           disabled={isApproving || isRejecting}
           onClick={() => onApprove(request.id)}
         >
@@ -123,7 +123,7 @@ interface OutgoingRequestCardProps {
 
 export function OutgoingRequestCard({ request }: OutgoingRequestCardProps) {
   return (
-    <Card className="space-y-4">
+    <Card className="space-y-4 transition-all duration-500 ease-[0.16,1,0.3,1] motion-safe:animate-[fade-in_420ms_ease-out] hover:scale-[0.995]">
       <div className="flex items-start gap-3">
         {request.toPersona.profilePhotoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -166,7 +166,7 @@ export function OutgoingRequestCard({ request }: OutgoingRequestCardProps) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-surface/60 px-4 py-3">
+      <div className="rounded-2xl bg-foreground/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
         <p className="label-xs text-muted">Reason</p>
         <p className="mt-2 text-sm leading-6 text-foreground">
           {request.reason?.trim() || "No reason added."}

@@ -46,7 +46,7 @@ export function EventCard({ event }: EventCardProps) {
 
   return (
     <Link href={routes.app.eventDetail(event.id)} className="block">
-      <div className="glass rounded-3xl border border-border bg-surface p-5 transition-all hover:border-brandRose/40 dark:hover:border-brandCyan/40 active:scale-[0.98]">
+      <div className="rounded-3xl bg-white/80 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 transition-all duration-500 ease-[0.16,1,0.3,1] hover:scale-[0.995] hover:bg-foreground/[0.02] active:scale-[0.98] motion-safe:animate-[fade-in_420ms_ease-out] dark:bg-zinc-950/80 dark:ring-white/[0.06] dark:hover:bg-white/[0.04]">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 space-y-1">
             <p className="truncate text-base font-semibold text-foreground">
@@ -65,16 +65,14 @@ export function EventCard({ event }: EventCardProps) {
         </div>
 
         {event.myParticipation ? (
-          <div className="mt-3 border-t border-border pt-3">
+          <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
             <p className="font-mono text-xs text-muted">
               Attending as{" "}
               <span className="font-medium capitalize text-foreground">
                 {event.myParticipation.role}
               </span>
               {event.myParticipation.discoverable ? (
-                <span className="ml-2 text-brandRose dark:text-brandCyan">
-                  · Broadcasting
-                </span>
+                <span className="ml-2 text-foreground/80">· Broadcasting</span>
               ) : (
                 <span className="ml-2 text-muted">· Stealth</span>
               )}

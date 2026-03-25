@@ -37,10 +37,10 @@ export function NotificationItem({
       }}
       disabled={isRead || isMarkingRead}
       className={cn(
-        "w-full rounded-3xl border p-6 text-left transition-all",
+        "w-full rounded-3xl p-6 text-left transition-all duration-500 ease-[0.16,1,0.3,1] motion-safe:animate-[fade-in_420ms_ease-out]",
         isRead
-          ? "border-slate-100/50 bg-transparent opacity-60 dark:border-zinc-900/50"
-          : "border-slate-200 bg-white shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:border-brandRose dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-brandCyan",
+          ? "bg-foreground/[0.02] opacity-60 ring-1 ring-black/5 dark:bg-white/[0.03] dark:ring-white/[0.06]"
+          : "bg-white shadow-[0_4px_20px_rgb(0,0,0,0.06)] ring-1 ring-black/5 hover:scale-[0.995] hover:bg-foreground/[0.02] dark:bg-zinc-950 dark:ring-white/[0.06] dark:hover:bg-white/[0.04]",
         isMarkingRead && "opacity-60",
       )}
     >
@@ -52,7 +52,7 @@ export function NotificationItem({
               "h-2 w-2 rounded-full transition-colors",
               isRead
                 ? "bg-slate-200 dark:bg-zinc-800"
-                : "animate-pulse bg-brandRose shadow-[0_0_8px_rgba(244,63,94,0.6)] dark:bg-brandCyan dark:shadow-[0_0_8px_rgba(34,211,238,0.6)]",
+                : "animate-pulse bg-foreground shadow-[0_0_8px_rgba(17,17,17,0.28)] dark:bg-white dark:shadow-[0_0_8px_rgba(255,255,255,0.22)]",
             )}
           />
         </div>

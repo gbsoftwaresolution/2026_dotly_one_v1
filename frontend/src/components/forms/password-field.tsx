@@ -9,7 +9,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 const INPUT_CLASSES =
-  "min-h-12 w-full rounded-2xl border border-border bg-surface px-4 pr-12 text-sm font-medium text-foreground outline-none backdrop-blur-xl transition-all focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20 placeholder:text-muted/50";
+  "min-h-[56px] w-full rounded-[16px] bg-foreground/[0.03] px-4 pr-12 pt-1 text-[16px] font-medium text-foreground outline-none transition-all duration-300 shadow-inner ring-1 ring-black/5 placeholder:text-muted/50 focus:bg-foreground/[0.045] focus:ring-2 focus:ring-foreground/15 focus:shadow-md dark:bg-white/[0.045] dark:ring-white/10 dark:focus:bg-white/[0.07]";
 
 interface PasswordFieldProps {
   id: string;
@@ -44,8 +44,8 @@ export function PasswordField({
     .join(" ");
 
   return (
-    <div className="space-y-1.5">
-      <label className="label-xs" htmlFor={id}>
+    <div className="space-y-2">
+      <label className="text-[13px] font-medium text-muted ml-4" htmlFor={id}>
         {label}
       </label>
 
@@ -59,7 +59,7 @@ export function PasswordField({
           className={cn(
             INPUT_CLASSES,
             error &&
-              "border-rose-500/60 focus:border-rose-500 focus:ring-rose-500/20 dark:focus:border-rose-400 dark:focus:ring-rose-400/20",
+              "bg-status-error/5 ring-status-error/40 focus:ring-status-error",
           )}
           placeholder={placeholder}
           type={isVisible ? "text" : "password"}
@@ -72,21 +72,31 @@ export function PasswordField({
         <button
           type="button"
           aria-label={`${isVisible ? "Hide" : "Show"} ${label.toLowerCase()}`}
-          className="absolute inset-y-0 right-0 inline-flex items-center justify-center px-4 text-muted transition-colors hover:text-foreground"
+          className="absolute inset-y-0 right-0 inline-flex items-center justify-center px-4 text-muted/70 transition-colors hover:text-foreground tap-feedback"
           onClick={() => setIsVisible((current) => !current)}
         >
-          {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {isVisible ? (
+            <EyeOff className="h-5 w-5" strokeWidth={1.5} />
+          ) : (
+            <Eye className="h-5 w-5" strokeWidth={1.5} />
+          )}
         </button>
       </div>
 
       {footer ? (
-        <div id={footerId} className="text-xs leading-5 text-muted">
+        <div
+          id={footerId}
+          className="text-[13px] leading-relaxed text-muted px-1"
+        >
           {footer}
         </div>
       ) : null}
 
       {error ? (
-        <p id={errorId} className="text-xs font-medium text-rose-500 dark:text-rose-400">
+        <p
+          id={errorId}
+          className="text-[13px] font-medium text-status-error px-1"
+        >
           {error}
         </p>
       ) : null}

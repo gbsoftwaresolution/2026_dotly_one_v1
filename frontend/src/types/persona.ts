@@ -132,6 +132,27 @@ export interface CreatePersonaInput {
   isVerified?: boolean;
 }
 
+export type PersonaUsernameAvailabilityCode =
+  | "available"
+  | "too_short"
+  | "premium_short"
+  | "too_long"
+  | "invalid_characters"
+  | "must_start_with_letter"
+  | "cannot_end_with_separator"
+  | "repeated_separator"
+  | "reserved_system"
+  | "reserved_brand"
+  | "taken";
+
+export interface PersonaUsernameAvailability {
+  username: string;
+  available: boolean;
+  code: PersonaUsernameAvailabilityCode;
+  message: string;
+  requiresClaim: boolean;
+}
+
 export interface UpdatePersonaInput {
   fullName?: string;
   jobTitle?: string;

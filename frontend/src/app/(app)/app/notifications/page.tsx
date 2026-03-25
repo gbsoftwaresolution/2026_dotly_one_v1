@@ -7,12 +7,23 @@ export default async function NotificationsPage() {
   await requireServerSession(routes.app.notifications);
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-5 sm:space-y-6">
       <PageHeader
         title="Notifications"
         description="Stay up to date with requests, connections, and events."
       />
-      <NotificationsScreen />
+      <div className="premium-card rounded-[2rem] p-4 sm:rounded-3xl sm:p-6">
+        <div className="mb-5 space-y-1 sm:mb-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+            Notification stream
+          </p>
+          <p className="text-sm leading-6 text-muted">
+            Keep account activity readable, prioritize unread alerts, and clear
+            noise without losing important changes.
+          </p>
+        </div>
+        <NotificationsScreen />
+      </div>
     </section>
   );
 }

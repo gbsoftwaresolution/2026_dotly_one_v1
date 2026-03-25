@@ -17,22 +17,26 @@ export function PageHeader({
   large,
 }: PageHeaderProps) {
   return (
-    <header className="flex items-start justify-between gap-4 pb-1">
+    <header className="flex flex-col gap-3 pb-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <div className="space-y-1 min-w-0">
         <h1
           className={cn(
             "font-bold tracking-tight text-foreground leading-tight",
-            large ? "text-3xl" : "text-2xl",
+            large ? "text-3xl sm:text-3xl" : "text-[1.75rem] sm:text-2xl",
           )}
         >
           {title}
         </h1>
         {description ? (
-          <p className="text-sm text-muted leading-relaxed">{description}</p>
+          <p className="max-w-2xl text-sm text-muted leading-relaxed">
+            {description}
+          </p>
         ) : null}
       </div>
       {action ? (
-        <div className="shrink-0 flex items-center">{action}</div>
+        <div className="flex w-full items-center sm:w-auto sm:shrink-0">
+          {action}
+        </div>
       ) : null}
     </header>
   );

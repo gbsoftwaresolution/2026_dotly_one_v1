@@ -39,8 +39,8 @@ export function ThemeSwitcher() {
         style={{
           left: isDark ? "calc(100% - 25px)" : "3px",
           background: isDark
-            ? "linear-gradient(135deg, #00D4FF 0%, #7C3AED 100%)"
-            : "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
+            ? "linear-gradient(135deg, #F5F5F5 0%, #CFCFCF 100%)"
+            : "linear-gradient(135deg, #1F1F1F 0%, #4A4A4A 100%)",
         }}
       >
         {/* Sun icon (light mode) */}

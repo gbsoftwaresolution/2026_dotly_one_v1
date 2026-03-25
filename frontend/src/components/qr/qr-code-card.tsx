@@ -21,7 +21,7 @@ function isQuickConnectQr(
 
 export function QrCodeCard({ persona, qr, modeLabel }: QrCodeCardProps) {
   return (
-    <Card className="overflow-hidden p-0 rounded-3xl border-border/60 shadow-shell">
+    <Card className="overflow-hidden p-0 rounded-3xl shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
       {/* Header band */}
       <div className="bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 px-6 py-8 text-white dark:from-zinc-950 dark:via-zinc-900 dark:to-black">
         <p className="label-xs text-white/60">{modeLabel}</p>
@@ -37,7 +37,7 @@ export function QrCodeCard({ persona, qr, modeLabel }: QrCodeCardProps) {
 
       {/* QR + details body */}
       <div className="space-y-6 px-6 py-8">
-        <div className="mx-auto flex w-full max-w-[18rem] justify-center rounded-3xl border border-border bg-white p-6 shadow-sm">
+        <div className="mx-auto flex w-full max-w-[18rem] justify-center rounded-3xl bg-white p-6 shadow-inner ring-1 ring-inset ring-black/5">
           <QRCodeSVG
             value={qr.url}
             size={240}
@@ -49,7 +49,7 @@ export function QrCodeCard({ persona, qr, modeLabel }: QrCodeCardProps) {
           />
         </div>
 
-        <div className="space-y-4 rounded-3xl border border-border bg-surface/60 p-5">
+        <div className="space-y-4 rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <div>
             <p className="label-xs text-muted">Share link</p>
             <p className="mt-2 break-all text-sm leading-6 text-foreground font-mono">

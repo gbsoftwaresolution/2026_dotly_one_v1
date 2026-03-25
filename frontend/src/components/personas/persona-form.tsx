@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { PersonaSharingSummary } from "@/components/personas/persona-sharing-summary";
+import { CustomSelect } from "@/components/shared/custom-select";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { personaApi } from "@/lib/api";
@@ -14,7 +15,11 @@ import {
   personaAccessModeOptions,
   personaTypeOptions,
 } from "@/lib/persona/labels";
-import type { CreatePersonaInput, PersonaSummary } from "@/types/persona";
+import type {
+  CreatePersonaInput,
+  PersonaSummary,
+  PersonaUsernameAvailability,
+} from "@/types/persona";
 
 const initialFormState: CreatePersonaInput = {
   type: "professional",
@@ -28,6 +33,30 @@ const initialFormState: CreatePersonaInput = {
   isVerified: false,
 };
 
+const USERNAME_STANDARD_MIN_LENGTH = 6;
+
+function normalizeUsername(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function getUsernameTone(
+  availability: PersonaUsernameAvailability | null,
+): "neutral" | "success" | "warning" | "danger" {
+  if (!availability) {
+    return "neutral";
+  }
+
+  if (availability.available) {
+    return "success";
+  }
+
+  if (availability.requiresClaim) {
+    return "warning";
+  }
+
+  return "danger";
+}
+
 export function PersonaForm() {
   const router = useRouter();
   const [formState, setFormState] =
@@ -37,6 +66,10 @@ export function PersonaForm() {
   );
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [usernameAvailability, setUsernameAvailability] =
+    useState<PersonaUsernameAvailability | null>(null);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [isUsernameHelpExpanded, setIsUsernameHelpExpanded] = useState(false);
 
   function updateField<K extends keyof CreatePersonaInput>(
     key: K,
@@ -48,9 +81,89 @@ export function PersonaForm() {
     }));
   }
 
+  const normalizedUsername = useMemo(
+    () => normalizeUsername(formState.username),
+    [formState.username],
+  );
+
+  useEffect(() => {
+    if (!normalizedUsername) {
+      setUsernameAvailability(null);
+      setIsCheckingUsername(false);
+      return;
+    }
+
+    if (normalizedUsername.length < 3) {
+      setUsernameAvailability({
+        username: normalizedUsername,
+        available: false,
+        code: "too_short",
+        message:
+          "Use at least 3 characters to check a username. Standard usernames require 6 or more characters.",
+        requiresClaim: false,
+      });
+      setIsCheckingUsername(false);
+      return;
+    }
+
+    let isCancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      setIsCheckingUsername(true);
+      void personaApi
+        .checkUsernameAvailability(normalizedUsername)
+        .then((result) => {
+          if (!isCancelled) {
+            setUsernameAvailability(result);
+          }
+        })
+        .catch(() => {
+          if (!isCancelled) {
+            setUsernameAvailability({
+              username: normalizedUsername,
+              available: false,
+              code: "too_short",
+              message:
+                "We could not verify availability right now. Try again in a moment.",
+              requiresClaim: false,
+            });
+          }
+        })
+        .finally(() => {
+          if (!isCancelled) {
+            setIsCheckingUsername(false);
+          }
+        });
+    }, 300);
+
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [normalizedUsername]);
+
+  useEffect(() => {
+    if (!normalizedUsername) {
+      setIsUsernameHelpExpanded(false);
+      return;
+    }
+
+    if (usernameAvailability && !usernameAvailability.available) {
+      setIsUsernameHelpExpanded(true);
+    }
+  }, [normalizedUsername, usernameAvailability]);
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+
+    if (!usernameAvailability?.available) {
+      setError(
+        usernameAvailability?.message ??
+          "Choose an available username before creating your persona.",
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -82,16 +195,35 @@ export function PersonaForm() {
   }
 
   const inputCls =
-    "min-h-12 w-full rounded-2xl border border-border bg-surface px-4 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20";
+    "min-h-[54px] w-full rounded-2xl bg-foreground/[0.03] px-4 text-[16px] font-medium text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06] dark:focus:ring-white/10 sm:min-h-[52px] sm:text-[15px]";
+  const sectionCls =
+    "space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:space-y-5 sm:rounded-3xl sm:p-5";
+  const usernameTone = getUsernameTone(usernameAvailability);
+  const usernameInputCls =
+    usernameTone === "success"
+      ? `${inputCls} ring-emerald-500/20 focus:ring-emerald-500/30`
+      : usernameTone === "warning"
+        ? `${inputCls} ring-amber-500/20 focus:ring-amber-500/30`
+        : usernameTone === "danger"
+          ? `${inputCls} ring-rose-500/20 focus:ring-rose-500/30`
+          : inputCls;
+  const usernameStatusClassName =
+    usernameTone === "success"
+      ? "text-sm font-medium text-emerald-600 dark:text-emerald-400"
+      : usernameTone === "warning"
+        ? "text-sm font-medium text-amber-700 dark:text-amber-300"
+        : usernameTone === "danger"
+          ? "text-sm font-medium text-rose-600 dark:text-rose-400"
+          : "text-sm font-medium text-muted";
 
   if (createdPersona) {
     return (
-      <div className="space-y-5">
-        <section className="space-y-2 rounded-3xl border border-border bg-surface/45 p-5">
+      <div className="space-y-4 sm:space-y-5">
+        <section className="space-y-2 rounded-[1.75rem] bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5 sm:rounded-3xl sm:p-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
             Ready to share
           </p>
-          <h2 className="text-xl font-semibold text-foreground">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
             Your persona is ready to share
           </h2>
           <p className="text-sm leading-6 text-muted">
@@ -115,13 +247,17 @@ export function PersonaForm() {
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link className="sm:flex-1" href={routes.app.personas}>
-            <PrimaryButton fullWidth>View personas</PrimaryButton>
+            <PrimaryButton className="min-h-[54px] sm:min-h-12" fullWidth>
+              View personas
+            </PrimaryButton>
           </Link>
           <Link
             className="sm:flex-1"
             href={routes.app.personaSettings(createdPersona.id)}
           >
-            <SecondaryButton fullWidth>Edit sharing settings</SecondaryButton>
+            <SecondaryButton className="min-h-[54px] sm:min-h-12" fullWidth>
+              Edit sharing settings
+            </SecondaryButton>
           </Link>
         </div>
       </div>
@@ -129,197 +265,295 @@ export function PersonaForm() {
   }
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
-      {/* Identity type + access mode */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <label className="label-xs" htmlFor="persona-type">
-            Type
-          </label>
-          <select
-            id="persona-type"
-            className={inputCls}
-            value={formState.type}
-            onChange={(event) =>
-              updateField(
-                "type",
-                event.target.value as CreatePersonaInput["type"],
-              )
-            }
-          >
-            {personaTypeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+    <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
+      <section className={sectionCls}>
+        <div className="space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+            Step 1
+          </p>
+          <h3 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+            Handle and access
+          </h3>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="label-xs" htmlFor="persona-access">
-            Profile visibility
-          </label>
-          <select
-            id="persona-access"
-            className={inputCls}
-            value={formState.accessMode}
-            onChange={(event) =>
-              updateField(
-                "accessMode",
-                event.target.value as CreatePersonaInput["accessMode"],
-              )
-            }
-          >
-            {personaAccessModeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2 sm:space-y-1.5 z-20">
+            <label className="label-xs" htmlFor="persona-type">
+              Type
+            </label>
+            <CustomSelect
+              id="persona-type"
+              className={inputCls}
+              value={formState.type}
+              onChange={(value) =>
+                updateField("type", value as CreatePersonaInput["type"])
+              }
+              options={personaTypeOptions}
+            />
+          </div>
+
+          <div className="space-y-2 sm:space-y-1.5 z-10">
+            <label className="label-xs" htmlFor="persona-access">
+              Profile visibility
+            </label>
+            <CustomSelect
+              id="persona-access"
+              className={inputCls}
+              value={formState.accessMode}
+              onChange={(value) =>
+                updateField(
+                  "accessMode",
+                  value as CreatePersonaInput["accessMode"],
+                )
+              }
+              options={personaAccessModeOptions}
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Username */}
-      <div className="space-y-1.5">
-        <label className="label-xs" htmlFor="persona-username">
-          Username
-        </label>
-        <input
-          id="persona-username"
-          required
-          minLength={3}
-          maxLength={30}
-          pattern="^[a-z0-9_-]+$"
-          className={inputCls}
-          placeholder="jane-doe"
-          value={formState.username}
-          onChange={(event) => updateField("username", event.target.value)}
-        />
-        <p className="text-sm leading-6 text-muted">
-          This becomes your public Dotly link when the persona is shareable.
-        </p>
-      </div>
-
-      {/* Full name */}
-      <div className="space-y-1.5">
-        <label className="label-xs" htmlFor="persona-fullname">
-          Full name
-        </label>
-        <input
-          id="persona-fullname"
-          required
-          minLength={1}
-          maxLength={120}
-          className={inputCls}
-          placeholder="Jane Doe"
-          value={formState.fullName}
-          onChange={(event) => updateField("fullName", event.target.value)}
-        />
-      </div>
-
-      {/* Job + Company */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <label className="label-xs" htmlFor="persona-jobtitle">
-            Role
+        <div className="space-y-2 sm:space-y-1.5">
+          <label className="label-xs" htmlFor="persona-username">
+            Username
           </label>
           <input
-            id="persona-jobtitle"
+            id="persona-username"
+            required
+            minLength={USERNAME_STANDARD_MIN_LENGTH}
+            maxLength={30}
+            pattern="^[a-z0-9_-]+$"
+            className={usernameInputCls}
+            placeholder="jane-doe"
+            value={formState.username}
+            onChange={(event) => updateField("username", event.target.value)}
+          />
+          <div className="space-y-2 rounded-2xl bg-foreground/[0.02] px-4 py-3.5 ring-1 ring-inset ring-black/5 dark:ring-white/5 sm:hidden">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm leading-6 text-muted">
+                  This becomes your public Dotly link when the persona is
+                  shareable.
+                </p>
+                <p className="text-xs leading-5 text-muted">
+                  6-30 chars, starts with a letter, lowercase only.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsUsernameHelpExpanded((current) => !current)}
+                className="shrink-0 rounded-full bg-foreground/[0.04] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground shadow-inner ring-1 ring-black/5 dark:bg-white/[0.08] dark:ring-white/10"
+              >
+                {isUsernameHelpExpanded ? "Less" : "Rules"}
+              </button>
+            </div>
+            {normalizedUsername ? (
+              <p className={usernameStatusClassName}>
+                {isCheckingUsername
+                  ? "Checking availability..."
+                  : usernameAvailability?.message}
+              </p>
+            ) : null}
+            {isUsernameHelpExpanded ? (
+              <div className="space-y-2 border-t border-black/5 pt-2.5 dark:border-white/10">
+                <p className="text-sm leading-6 text-muted">
+                  Strong rules: start with a letter, use lowercase letters,
+                  numbers, hyphens, or underscores, avoid double separators, and
+                  keep it between 6 and 30 characters.
+                </p>
+                <p className="text-sm leading-6 text-muted">
+                  Usernames below 6 characters are premium inventory. Protected
+                  brand names like kfc or kfc_india require a verified claim
+                  through support.
+                </p>
+                {usernameAvailability?.requiresClaim ? (
+                  <p className="text-sm leading-6 text-muted">
+                    Need this name? Email support@dotly.one with your brand,
+                    region, and proof of ownership to begin a reserved username
+                    claim.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+          <div className="hidden space-y-1.5 rounded-2xl bg-foreground/[0.02] px-4 py-3 ring-1 ring-inset ring-black/5 dark:ring-white/5 sm:block">
+            <p className="text-sm leading-6 text-muted">
+              This becomes your public Dotly link when the persona is shareable.
+            </p>
+            <p className="text-sm leading-6 text-muted">
+              Strong rules: start with a letter, use lowercase letters, numbers,
+              hyphens, or underscores, avoid double separators, and keep it
+              between 6 and 30 characters.
+            </p>
+            <p className="text-sm leading-6 text-muted">
+              Usernames below 6 characters are premium inventory. Protected
+              brand names like kfc or kfc_india require a verified claim through
+              support.
+            </p>
+            {normalizedUsername ? (
+              <p className={usernameStatusClassName}>
+                {isCheckingUsername
+                  ? "Checking availability..."
+                  : usernameAvailability?.message}
+              </p>
+            ) : null}
+            {usernameAvailability?.requiresClaim ? (
+              <p className="text-sm leading-6 text-muted">
+                Need this name? Email support@dotly.one with your brand, region,
+                and proof of ownership to begin a reserved username claim.
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
+      <section className={sectionCls}>
+        <div className="space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+            Step 2
+          </p>
+          <h3 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+            Public identity
+          </h3>
+        </div>
+
+        <div className="space-y-2 sm:space-y-1.5">
+          <label className="label-xs" htmlFor="persona-fullname">
+            Full name
+          </label>
+          <input
+            id="persona-fullname"
             required
             minLength={1}
             maxLength={120}
             className={inputCls}
-            placeholder="Product designer"
-            value={formState.jobTitle}
-            onChange={(event) => updateField("jobTitle", event.target.value)}
+            placeholder="Jane Doe"
+            value={formState.fullName}
+            onChange={(event) => updateField("fullName", event.target.value)}
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label className="label-xs" htmlFor="persona-company">
-            Company
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2 sm:space-y-1.5">
+            <label className="label-xs" htmlFor="persona-jobtitle">
+              Role
+            </label>
+            <input
+              id="persona-jobtitle"
+              required
+              minLength={1}
+              maxLength={120}
+              className={inputCls}
+              placeholder="Product designer"
+              value={formState.jobTitle}
+              onChange={(event) => updateField("jobTitle", event.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2 sm:space-y-1.5">
+            <label className="label-xs" htmlFor="persona-company">
+              Company
+            </label>
+            <input
+              id="persona-company"
+              required
+              minLength={1}
+              maxLength={120}
+              className={inputCls}
+              placeholder="Dotly"
+              value={formState.companyName}
+              onChange={(event) =>
+                updateField("companyName", event.target.value)
+              }
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2 sm:space-y-1.5">
+          <label className="label-xs" htmlFor="persona-tagline">
+            What should people remember?
           </label>
-          <input
-            id="persona-company"
-            required
-            minLength={1}
+          <textarea
+            id="persona-tagline"
             maxLength={120}
-            className={inputCls}
-            placeholder="Dotly"
-            value={formState.companyName}
-            onChange={(event) => updateField("companyName", event.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Tagline */}
-      <div className="space-y-1.5">
-        <label className="label-xs" htmlFor="persona-tagline">
-          What should people remember?
-        </label>
-        <textarea
-          id="persona-tagline"
-          maxLength={120}
-          rows={3}
-          className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm font-normal text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/20 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20 resize-none"
-          placeholder="Designing thoughtful identity experiences for modern teams."
-          value={formState.tagline}
-          onChange={(event) => updateField("tagline", event.target.value)}
-        />
-        <p className="text-sm leading-6 text-muted">
-          Keep it short enough that someone can recognize you later.
-        </p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-        <div className="space-y-1.5">
-          <label className="label-xs" htmlFor="persona-website-url">
-            Website
-          </label>
-          <input
-            id="persona-website-url"
-            type="url"
-            inputMode="url"
-            maxLength={500}
-            className={inputCls}
-            placeholder="https://your-site.com"
-            value={formState.websiteUrl ?? ""}
-            onChange={(event) => updateField("websiteUrl", event.target.value)}
+            rows={3}
+            className="w-full rounded-2xl bg-foreground/[0.03] px-4 py-3.5 text-[16px] font-medium text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06] dark:focus:ring-white/10 resize-none sm:text-[15px]"
+            placeholder="Designing thoughtful identity experiences for modern teams."
+            value={formState.tagline}
+            onChange={(event) => updateField("tagline", event.target.value)}
           />
           <p className="text-sm leading-6 text-muted">
-            Optional. Adds one clean external link to your public card.
+            Keep it short enough that someone can recognize you later.
           </p>
         </div>
+      </section>
 
-        <label className="flex items-start gap-3 rounded-2xl border border-border bg-surface px-4 py-3 cursor-pointer sm:min-w-[220px]">
-          <input
-            type="checkbox"
-            className="mt-0.5 h-4 w-4 rounded accent-brandRose dark:accent-brandCyan"
-            checked={formState.isVerified ?? false}
-            onChange={(event) =>
-              updateField("isVerified", event.target.checked)
-            }
-          />
-          <span className="space-y-0.5">
-            <span className="block text-sm font-medium text-foreground">
-              Show verified badge
+      <section className={sectionCls}>
+        <div className="space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+            Step 3
+          </p>
+          <h3 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+            Trust and links
+          </h3>
+        </div>
+
+        <div className="space-y-4 sm:space-y-0 sm:grid sm:gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div className="space-y-2 sm:space-y-1.5">
+            <label className="label-xs" htmlFor="persona-website-url">
+              Website
+            </label>
+            <input
+              id="persona-website-url"
+              type="url"
+              inputMode="url"
+              maxLength={500}
+              className={inputCls}
+              placeholder="https://your-site.com"
+              value={formState.websiteUrl ?? ""}
+              onChange={(event) =>
+                updateField("websiteUrl", event.target.value)
+              }
+            />
+            <p className="text-sm leading-6 text-muted">
+              Optional. Adds one clean external link to your public card.
+            </p>
+          </div>
+
+          <label className="flex w-full items-start justify-between gap-4 rounded-2xl bg-foreground/[0.03] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 cursor-pointer transition-colors hover:bg-foreground/[0.05] dark:bg-white/[0.045] dark:ring-white/5 hover:dark:bg-white/[0.06] sm:min-w-[220px] sm:max-w-[280px]">
+            <span className="min-w-0 space-y-1 pr-2">
+              <span className="block text-sm font-medium text-foreground">
+                Show verified badge
+              </span>
+              <span className="block text-xs leading-5 text-muted">
+                Adds a visible trust cue to the public profile when enabled.
+              </span>
             </span>
-            <span className="block text-xs text-muted">
-              Adds a visible trust cue to the public profile when enabled.
-            </span>
-          </span>
-        </label>
-      </div>
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 shrink-0 rounded accent-black dark:accent-white"
+              checked={formState.isVerified ?? false}
+              onChange={(event) =>
+                updateField("isVerified", event.target.checked)
+              }
+            />
+          </label>
+        </div>
+      </section>
 
       {error ? (
-        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
-          <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
+        <div className="rounded-2xl bg-rose-500/5 px-4 py-3.5 ring-1 ring-inset ring-rose-500/20">
+          <p className="font-mono text-sm text-rose-600 dark:text-rose-400">
             {error}
           </p>
         </div>
       ) : null}
 
-      <PrimaryButton type="submit" className="w-full" disabled={isSubmitting}>
+      <PrimaryButton
+        type="submit"
+        className="min-h-[54px] w-full sm:min-h-12"
+        disabled={
+          isSubmitting || isCheckingUsername || !usernameAvailability?.available
+        }
+      >
         {isSubmitting ? "Creating persona..." : "Create persona"}
       </PrimaryButton>
     </form>

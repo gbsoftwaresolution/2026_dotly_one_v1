@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
+  checkUsernameAvailability: vi.fn(),
   replace: vi.fn(),
   refresh: vi.fn(),
 }));
@@ -20,6 +21,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/api", () => ({
   personaApi: {
     create: mocks.create,
+    checkUsernameAvailability: mocks.checkUsernameAvailability,
   },
 }));
 
@@ -28,8 +30,21 @@ import { PersonaForm } from "./persona-form";
 describe("PersonaForm", () => {
   beforeEach(() => {
     mocks.create.mockReset();
+    mocks.checkUsernameAvailability.mockReset();
     mocks.replace.mockReset();
     mocks.refresh.mockReset();
+    mocks.checkUsernameAvailability.mockImplementation(
+      async (username: string) => ({
+        username,
+        available: username.length >= 6,
+        code: username.length >= 6 ? "available" : "premium_short",
+        message:
+          username.length >= 6
+            ? "Username is available."
+            : "Usernames under 6 characters are reserved for premium claims.",
+        requiresClaim: username.length < 6,
+      }),
+    );
   });
 
   it("shows a lightweight sharing summary after create succeeds", async () => {
@@ -71,6 +86,10 @@ describe("PersonaForm", () => {
     );
     await user.type(screen.getByLabelText(/^website$/i), "https://dotly.one");
     await user.click(screen.getByLabelText(/show verified badge/i));
+    await waitFor(() => {
+      expect(screen.getByText(/username is available/i)).toBeInTheDocument();
+    });
+
     await user.click(screen.getByRole("button", { name: /create persona/i }));
 
     await waitFor(() => {
@@ -96,5 +115,29 @@ describe("PersonaForm", () => {
       screen.getByRole("link", { name: /edit sharing settings/i }),
     ).toHaveAttribute("href", "/app/personas/settings/persona-1");
     expect(mocks.replace).not.toHaveBeenCalledWith("/app/personas");
+  });
+
+  it("blocks premium short usernames and shows claim guidance", async () => {
+    mocks.checkUsernameAvailability.mockResolvedValue({
+      username: "jane",
+      available: false,
+      code: "premium_short",
+      message: "Usernames under 6 characters are reserved for premium claims.",
+      requiresClaim: true,
+    });
+
+    const user = userEvent.setup();
+
+    render(React.createElement(PersonaForm));
+
+    await user.type(screen.getByLabelText(/username/i), "jane");
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/reserved for premium claims/i),
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/support@dotly.one/i)).toBeInTheDocument();
   });
 });

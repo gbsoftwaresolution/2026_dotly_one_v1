@@ -277,7 +277,7 @@ export function QuickConnectFlow({
     const target = result.targetPersona;
 
     return (
-      <div className="glass rounded-3xl border border-border bg-surface p-6 space-y-6">
+      <div className="rounded-3xl bg-white/82 p-6 space-y-6 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.05] dark:bg-zinc-950/82 dark:ring-white/[0.06]">
         <div className="flex flex-col items-center gap-3 pt-2 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-3xl border border-emerald-500/30 bg-emerald-500/10">
             <svg
@@ -297,7 +297,7 @@ export function QuickConnectFlow({
           <div className="space-y-1">
             <StatusBadge label="Connected" tone="success" />
             <h2 className="pt-1 text-xl font-bold text-foreground">
-              You're connected
+              You&apos;re connected
             </h2>
             <p className="text-sm text-muted">
               {target.jobTitle} at {target.companyName}
@@ -308,7 +308,7 @@ export function QuickConnectFlow({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface/60 p-4 space-y-3">
+        <div className="rounded-2xl bg-foreground/[0.03] p-4 space-y-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <p className="label-xs text-muted">Connection window</p>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="space-y-0.5">
@@ -328,7 +328,7 @@ export function QuickConnectFlow({
 
         <a
           href={routes.app.contactDetail(result.relationshipId)}
-          className="inline-flex w-full items-center justify-center rounded-2xl bg-brandRose py-5 px-5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brandRose/40 dark:bg-brandCyan dark:text-zinc-950 dark:focus:ring-brandCyan/40"
+          className="inline-flex w-full items-center justify-center rounded-2xl bg-foreground py-5 px-5 text-sm font-bold text-background transition-all hover:scale-[0.995] active:scale-95 focus:outline-none focus:ring-2 focus:ring-foreground/20"
         >
           Open contact
         </a>
@@ -338,7 +338,7 @@ export function QuickConnectFlow({
 
   if (flowState.type === "error") {
     return (
-      <div className="glass rounded-3xl border border-rose-500/30 bg-rose-500/10 p-6 space-y-4">
+      <div className="rounded-3xl bg-rose-500/5 p-6 space-y-4 ring-1 ring-inset ring-rose-500/20">
         <div className="space-y-2">
           <h2 className="text-lg font-semibold text-rose-500 dark:text-rose-400">
             {flowState.title}
@@ -350,7 +350,7 @@ export function QuickConnectFlow({
         <button
           type="button"
           onClick={handleRetry}
-          className="inline-flex w-full items-center justify-center rounded-2xl border border-rose-500/30 bg-transparent py-4 px-5 text-sm font-semibold text-rose-500 transition-all hover:bg-rose-500/10 active:scale-95 dark:text-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-400/40"
+          className="inline-flex w-full items-center justify-center rounded-2xl bg-foreground/[0.04] py-4 px-5 text-sm font-semibold text-foreground shadow-inner ring-1 ring-black/5 transition-all hover:bg-foreground/[0.06] active:scale-95 dark:bg-white/[0.05] dark:ring-white/10"
         >
           Try again
         </button>
@@ -363,9 +363,9 @@ export function QuickConnectFlow({
   const isBusy = isConnecting || isSettling;
 
   return (
-    <div className="glass rounded-[2rem] border border-border bg-surface p-6 sm:p-7 space-y-7">
+    <div className="rounded-[2rem] bg-white/82 p-6 sm:p-7 space-y-7 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.05] dark:bg-zinc-950/82 dark:ring-white/[0.06]">
       <div className="space-y-5">
-        <div className="rounded-[30px] border border-border/70 bg-background/85 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.07)] dark:bg-surface/60 dark:shadow-none">
+        <div className="rounded-[30px] bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <div className="flex items-center gap-4 text-left">
             <div
               className="flex h-[3.75rem] w-[3.75rem] shrink-0 items-center justify-center rounded-[1.35rem] text-lg font-bold text-white"
@@ -374,9 +374,7 @@ export function QuickConnectFlow({
               {hostName.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 space-y-1">
-              <p className="label-xs text-brandRose dark:text-brandCyan">
-                Connect
-              </p>
+              <p className="label-xs text-muted">Connect</p>
               <h2 className="text-[1.15rem] font-semibold tracking-tight text-foreground">
                 {hostName}
               </h2>
@@ -390,7 +388,7 @@ export function QuickConnectFlow({
           </p>
         </div>
 
-        <div className="space-y-1 rounded-[1.4rem] border border-border bg-surface/50 px-4 py-3.5">
+        <div className="space-y-1 rounded-[1.4rem] bg-foreground/[0.03] px-4 py-3.5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <p className="label-xs text-muted">What Connect does</p>
           <p className="text-left text-sm leading-6 text-muted">
             Uses the selected profile below and saves this contact instantly.
@@ -414,7 +412,7 @@ export function QuickConnectFlow({
           ) : null}
         </div>
         {selectedPersona ? (
-          <div className="rounded-[1.4rem] border border-border bg-surface/70 px-4 py-3.5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] dark:shadow-none">
+          <div className="rounded-[1.4rem] bg-foreground/[0.03] px-4 py-3.5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
             <div className="flex items-center gap-3">
               <div
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] text-sm font-bold text-white"
@@ -447,10 +445,10 @@ export function QuickConnectFlow({
                     setSelectedPersonaId(persona.id);
                     setShowPersonaOptions(false);
                   }}
-                  className={`w-full rounded-2xl border px-4 py-3 text-left transition-all focus:outline-none focus:ring-2 focus:ring-brandRose dark:focus:ring-brandCyan focus:ring-offset-2 ${
+                  className={`w-full rounded-2xl px-4 py-3 text-left transition-all ring-1 focus:outline-none focus:ring-2 focus:ring-foreground/15 ${
                     isSelected
-                      ? "border-brandRose bg-brandRose/5 dark:border-brandCyan dark:bg-brandCyan/5"
-                      : "border-border bg-surface hover:bg-surface/80"
+                      ? "bg-foreground/[0.05] ring-black/10 dark:bg-white/[0.08] dark:ring-white/10"
+                      : "bg-foreground/[0.03] ring-black/5 hover:bg-foreground/[0.05] dark:bg-white/[0.045] dark:ring-white/5 dark:hover:bg-white/[0.06]"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -475,7 +473,7 @@ export function QuickConnectFlow({
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20"
                         fill="currentColor"
-                        className="h-5 w-5 shrink-0 text-brandRose dark:text-brandCyan"
+                        className="h-5 w-5 shrink-0 text-foreground"
                       >
                         <path
                           fillRule="evenodd"

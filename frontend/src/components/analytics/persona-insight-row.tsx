@@ -27,7 +27,7 @@ export function PersonaInsightRow({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full flex-col space-y-4 rounded-3xl border border-border bg-surface p-5 text-left shadow-sm transition-all active:scale-[0.98] hover:border-brandRose/30 hover:bg-brandRose/5 dark:hover:border-brandCyan/30 dark:hover:bg-brandCyan/5"
+      className="flex w-full flex-col space-y-4 rounded-3xl bg-white/80 p-5 text-left shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 transition-all duration-500 ease-[0.16,1,0.3,1] active:scale-[0.98] hover:scale-[0.995] hover:bg-foreground/[0.02] motion-safe:animate-[fade-in_420ms_ease-out] dark:bg-zinc-950/80 dark:ring-white/[0.06] dark:hover:bg-white/[0.04]"
     >
       <div className="flex items-start justify-between">
         <div>
@@ -73,7 +73,7 @@ export function PersonaInsightRow({
             </div>
             <div>
               <p className="label-xs text-muted">Conv.</p>
-              <p className="mt-1 font-mono text-lg font-bold text-brandRose dark:text-brandCyan">
+              <p className="mt-1 font-mono text-lg font-bold text-foreground">
                 {conversionRate}%
               </p>
             </div>
@@ -95,9 +95,9 @@ export function PersonaInsightRow({
           </div>
 
           {/* Performance Bar */}
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-black/8 dark:bg-white/10">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-brandRose to-brandRose/70 transition-all duration-700 dark:from-brandCyan dark:to-brandCyan/70"
+              className="h-full rounded-full bg-foreground transition-all duration-700"
               style={{ width: `${Math.min(conversionNum, 100)}%` }}
             />
           </div>

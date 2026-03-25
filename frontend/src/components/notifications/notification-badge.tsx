@@ -65,7 +65,7 @@ export function NotificationBadge() {
     >
       <span
         key={unreadCount}
-        className="flex h-5 min-w-5 items-center justify-center rounded-pill bg-brandRose dark:bg-brandCyan px-1.5 font-mono text-[9px] font-black text-white dark:text-bgOnyx animate-scale-in"
+        className="flex h-5 min-w-5 items-center justify-center rounded-pill bg-foreground px-1.5 font-mono text-[9px] font-black text-background animate-scale-in dark:bg-white dark:text-zinc-950"
       >
         {unreadCount > 99 ? "99+" : unreadCount}
       </span>

@@ -3,6 +3,7 @@ import type {
   MyFastSharePayload,
   PersonaFastSharePayload,
   PersonaSummary,
+  PersonaUsernameAvailability,
   UpdatePersonaInput,
   UpdatePersonaSharingInput,
 } from "@/types/persona";
@@ -56,6 +57,15 @@ export const personaApi = {
       baseUrl: "",
       credentials: "same-origin",
     }),
+
+  checkUsernameAvailability: (username: string) =>
+    apiRequest<PersonaUsernameAvailability>(
+      `/api/personas/availability/username?username=${encodeURIComponent(username)}`,
+      {
+        baseUrl: "",
+        credentials: "same-origin",
+      },
+    ),
 
   update: (personaId: string, input: UpdatePersonaInput) =>
     apiRequest<PersonaSummary>(`/api/personas/${personaId}`, {

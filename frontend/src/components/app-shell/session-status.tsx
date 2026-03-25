@@ -7,7 +7,11 @@ export function SessionStatus() {
   const session = useAuthState();
 
   if (session.isLoading) {
-    return <p className="text-xs text-muted">Checking session...</p>;
+    return (
+      <p className="text-[12px] font-semibold text-muted">
+        Checking session...
+      </p>
+    );
   }
 
   if (!session.isAuthenticated) {
@@ -15,10 +19,17 @@ export function SessionStatus() {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-      <p>Signed in as {session.user?.email ?? "your account"}</p>
+    <div className="flex flex-wrap items-center gap-2 text-[12px] font-semibold text-muted">
+      <p className="truncate max-w-[150px]">
+        {session.user?.email ?? "your account"}
+      </p>
       {session.user ? (
-        <VerificationStatusBadge compact isVerified={session.user.isVerified} />
+        <div className="scale-90 origin-left">
+          <VerificationStatusBadge
+            compact
+            isVerified={session.user.isVerified}
+          />
+        </div>
       ) : null}
     </div>
   );

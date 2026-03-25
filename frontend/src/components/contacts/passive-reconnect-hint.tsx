@@ -45,17 +45,17 @@ export function PassiveReconnectHint({
   }
 
   return (
-    <div className="rounded-2xl border border-cyan-200/80 bg-cyan-50/70 px-4 py-4 dark:border-brandCyan/20 dark:bg-brandCyan/[0.08]">
-      <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-cyan-700 dark:text-brandCyan">
+    <div className="rounded-2xl bg-foreground/[0.04] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
+      <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
         {getPassiveReminderBadgeLabel()}
       </p>
-      <h3 className="mt-1 font-sans text-sm font-semibold text-cyan-950 dark:text-foreground">
+      <h3 className="mt-1 font-sans text-sm font-semibold text-foreground">
         {getPassiveReminderDetailTitle()}
       </h3>
-      <p className="mt-1 font-sans text-sm leading-6 text-cyan-900/90 dark:text-white/78">
+      <p className="mt-1 font-sans text-sm leading-6 text-foreground/80">
         {getPassiveReminderBody()}
       </p>
-      <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-cyan-700/80 dark:text-brandCyan/80">
+      <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-muted">
         {getPassiveReminderScheduleLabel()}
       </p>
     </div>

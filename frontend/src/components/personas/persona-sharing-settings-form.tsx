@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { PersonaSharingSummary } from "@/components/personas/persona-sharing-summary";
+import { CustomSelect } from "@/components/shared/custom-select";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { personaApi } from "@/lib/api";
@@ -407,7 +408,9 @@ export function PersonaSharingSettingsForm({
   }
 
   const inputCls =
-    "min-h-14 w-full rounded-2xl border border-border bg-background px-4 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted/50 focus:border-brandRose focus:ring-2 focus:ring-brandRose/15 dark:focus:border-brandCyan dark:focus:ring-brandCyan/20";
+    "min-h-[54px] w-full rounded-2xl bg-foreground/[0.03] px-4 text-[15px] font-medium text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06] dark:focus:ring-white/10";
+  const sectionCls =
+    "space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:space-y-5 sm:rounded-3xl sm:p-5";
 
   const smartCardSelected = formState.sharingMode === "smart_card";
   const validationErrors = getValidationErrors(formState);
@@ -422,7 +425,16 @@ export function PersonaSharingSettingsForm({
   return (
     <>
       <form className="space-y-6" onSubmit={handleSubmit}>
-        <div className="space-y-4">
+        <section className={sectionCls}>
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+              Step 1
+            </p>
+            <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+              Current sharing posture
+            </h2>
+          </div>
+
           <PersonaSharingSummary
             sharingMode={formState.sharingMode}
             primaryAction={formState.primaryAction}
@@ -445,12 +457,21 @@ export function PersonaSharingSettingsForm({
               {isExpanded ? "Hide settings" : "Customize"}
             </SecondaryButton>
           </div>
-        </div>
+        </section>
 
         {isExpanded ? (
           <>
-            <fieldset className="space-y-3">
+            <fieldset className={sectionCls}>
               <legend className="sr-only">How people can access you</legend>
+
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                  Step 2
+                </p>
+                <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+                  Choose the introduction mode
+                </h2>
+              </div>
 
               <div className="flex flex-col gap-3">
                 {personaSharingModeOptions.map((option) => {
@@ -460,16 +481,16 @@ export function PersonaSharingSettingsForm({
                     <label
                       key={option.value}
                       className={cn(
-                        "flex min-h-[4.75rem] cursor-pointer items-start gap-4 rounded-3xl border px-4 py-4 transition-all focus-within:ring-2 focus-within:ring-brandRose/20 dark:focus-within:ring-brandCyan/30",
+                        "flex min-h-[4.75rem] cursor-pointer items-start gap-4 rounded-3xl px-4 py-4 transition-all focus-within:ring-2 focus-within:ring-black/10",
                         isSelected
-                          ? "border-brandRose/40 bg-brandRose/8 shadow-[0_12px_30px_rgba(255,51,102,0.08)] dark:border-brandCyan/50 dark:bg-brandCyan/10"
-                          : "border-border bg-background hover:border-border/80",
+                          ? "bg-foreground/[0.05] shadow-inner ring-1 ring-black/10 dark:bg-white/[0.08] dark:ring-white/10"
+                          : "bg-foreground/[0.03] ring-1 ring-black/5 hover:bg-foreground/[0.05] dark:bg-white/[0.04] dark:ring-white/10 dark:hover:bg-white/[0.06]",
                       )}
                     >
                       <input
                         type="radio"
                         name="sharing-mode"
-                        className="mt-1 h-5 w-5 accent-brandRose dark:accent-brandCyan"
+                        className="mt-1 h-5 w-5 accent-black dark:accent-white"
                         checked={isSelected}
                         onChange={() => setSharingMode(option.value)}
                       />
@@ -489,9 +510,12 @@ export function PersonaSharingSettingsForm({
             </fieldset>
 
             {smartCardSelected ? (
-              <section className="space-y-5 rounded-3xl border border-border bg-surface/40 p-4 sm:p-5">
+              <section className={sectionCls}>
                 <div className="space-y-1">
-                  <h2 className="text-base font-semibold text-foreground">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                    Step 3
+                  </p>
+                  <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
                     Smart Card config
                   </h2>
                   <p className="text-sm leading-6 text-muted">
@@ -508,34 +532,20 @@ export function PersonaSharingSettingsForm({
                   >
                     Primary Action
                   </label>
-                  <select
+                  <CustomSelect
                     id="primary-action"
                     className={inputCls}
                     value={formState.primaryAction}
-                    onChange={(event) => {
-                      updateField(
-                        "primaryAction",
-                        event.target.value as PrimaryActionValue,
-                      );
+                    onChange={(value) => {
+                      updateField("primaryAction", value as PrimaryActionValue);
                     }}
-                    aria-invalid={
-                      validationErrors.primaryAction ? "true" : "false"
-                    }
-                    aria-describedby={
-                      validationErrors.primaryAction
-                        ? "primary-action-error"
-                        : undefined
-                    }
-                  >
-                    {primaryActionOptions.length > 1 ? (
-                      <option value="">Select primary action</option>
-                    ) : null}
-                    {primaryActionOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      ...(primaryActionOptions.length > 1
+                        ? [{ value: "", label: "Select primary action" }]
+                        : []),
+                      ...primaryActionOptions,
+                    ]}
+                  />
                   {primaryActionHint ? (
                     <p className="text-sm text-muted">{primaryActionHint}</p>
                   ) : null}
@@ -549,7 +559,7 @@ export function PersonaSharingSettingsForm({
                   ) : null}
                 </div>
 
-                <div className="space-y-3 rounded-2xl border border-border/80 bg-background/80 p-4">
+                <div className="space-y-3 rounded-2xl bg-white/80 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950/80 dark:ring-white/[0.06]">
                   <div className="space-y-1">
                     <h3 className="text-sm font-semibold text-foreground">
                       Public contact values
@@ -694,14 +704,14 @@ export function PersonaSharingSettingsForm({
                     {smartCardToggleOptions.map((option) => (
                       <label
                         key={option.key}
-                        className="flex min-h-16 cursor-pointer items-center justify-between gap-4 rounded-2xl border border-border bg-background px-4 py-3"
+                        className="flex min-h-16 cursor-pointer items-center justify-between gap-4 rounded-2xl bg-foreground/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5"
                       >
                         <span className="text-sm font-medium text-foreground">
                           {option.label}
                         </span>
                         <input
                           type="checkbox"
-                          className="h-5 w-5 accent-brandRose dark:accent-brandCyan"
+                          className="h-5 w-5 accent-black dark:accent-white"
                           checked={formState[option.key]}
                           onChange={(event) =>
                             updateField(option.key, event.target.checked)
@@ -721,14 +731,14 @@ export function PersonaSharingSettingsForm({
             ) : null}
 
             {error ? (
-              <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
-                <p className="font-mono text-sm text-rose-500 dark:text-rose-400">
+              <div className="rounded-2xl bg-rose-500/5 px-4 py-3 ring-1 ring-inset ring-rose-500/20">
+                <p className="font-mono text-sm text-rose-600 dark:text-rose-400">
                   {error}
                 </p>
               </div>
             ) : null}
 
-            <div className="sticky bottom-0 z-10 -mx-5 border-t border-border/70 bg-background/95 px-5 pb-[calc(env(safe-area-inset-bottom,0px)+0.25rem)] pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <div className="sticky bottom-0 z-10 -mx-4 rounded-t-[1.75rem] border-t border-black/5 bg-background/95 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6 dark:border-white/10">
               {smartCardSelected ? (
                 <p className="mb-3 text-sm text-muted">
                   Keep this focused. The best Smart Cards lead with one obvious
@@ -754,7 +764,7 @@ export function PersonaSharingSettingsForm({
           <div
             role="status"
             aria-live="polite"
-            className="w-full max-w-sm rounded-2xl border border-emerald-500/25 bg-emerald-500 px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_48px_rgba(16,185,129,0.28)]"
+            className="w-full max-w-sm rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_48px_rgba(16,185,129,0.28)] ring-1 ring-emerald-400/30"
           >
             {successMessage}
           </div>

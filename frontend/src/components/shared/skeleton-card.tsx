@@ -44,7 +44,7 @@ export function SkeletonCard({
   return (
     <div
       className={cn(
-        "rounded-card border border-white/[0.06] dark:border-white/[0.05] bg-surface1/50 dark:bg-surface1/50 p-5",
+        "rounded-card bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5",
         "animate-pulse",
         className,
       )}
