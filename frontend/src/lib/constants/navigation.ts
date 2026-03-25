@@ -1,6 +1,7 @@
 import { routes } from "./routes";
 
 export type AppNavIconKey =
+  | "home"
   | "qr"
   | "requests"
   | "contacts"
@@ -8,7 +9,7 @@ export type AppNavIconKey =
   | "settings";
 
 export const appNavItems = [
-  { href: routes.app.qr, label: "Share", icon: "qr" },
+  { href: routes.app.home, label: "Home", icon: "home" },
   { href: routes.app.requests, label: "Requests", icon: "requests" },
   { href: routes.app.contacts, label: "Connections", icon: "contacts" },
   { href: routes.app.followUps, label: "Follow-ups", icon: "followUps" },
@@ -16,7 +17,7 @@ export const appNavItems = [
 ] as const;
 
 export const appSectionItems = [
-  { href: routes.app.home, label: "Share" },
+  { href: routes.app.home, label: "Home" },
   { href: routes.app.qr, label: "Share" },
   { href: routes.app.personas, label: "Dotlys" },
   { href: routes.app.requests, label: "Requests" },
@@ -30,7 +31,11 @@ export const appSectionItems = [
 ] as const;
 
 export function getAppSectionDescription(pathname: string): string {
-  if (pathname === routes.app.qr || pathname === routes.app.home) {
+  if (pathname === routes.app.home) {
+    return "Your central hub for connections and sharing.";
+  }
+
+  if (pathname === routes.app.qr) {
     return "Open one screen and share with confidence.";
   }
 

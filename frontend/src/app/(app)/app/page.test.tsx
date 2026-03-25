@@ -2,15 +2,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   requireServerSession: vi.fn(),
-  redirect: vi.fn(),
+  userApi: {
+    meAnalytics: vi.fn(),
+  },
 }));
 
 vi.mock("@/lib/auth/protected-route", () => ({
   requireServerSession: mocks.requireServerSession,
 }));
 
-vi.mock("next/navigation", () => ({
-  redirect: mocks.redirect,
+vi.mock("@/lib/api/user-api", () => ({
+  userApi: mocks.userApi,
 }));
 
 import AppHomePage from "./page";
@@ -18,7 +20,7 @@ import AppHomePage from "./page";
 describe("AppHomePage", () => {
   beforeEach(() => {
     mocks.requireServerSession.mockReset();
-    mocks.redirect.mockReset();
+    mocks.userApi.meAnalytics.mockReset();
 
     mocks.requireServerSession.mockResolvedValue({
       accessToken: "token",
@@ -28,12 +30,18 @@ describe("AppHomePage", () => {
         isVerified: true,
       },
     });
+
+    mocks.userApi.meAnalytics.mockResolvedValue({
+      totalConnections: 10,
+      connectionsThisMonth: 2,
+    });
   });
 
-  it("redirects authenticated users straight into the QR share flow", async () => {
-    await AppHomePage();
+  it("loads the dashboard with user analytics", async () => {
+    const result = await AppHomePage();
 
     expect(mocks.requireServerSession).toHaveBeenCalledWith("/app");
-    expect(mocks.redirect).toHaveBeenCalledWith("/app/qr");
+    expect(mocks.userApi.meAnalytics).toHaveBeenCalledWith("token");
+    expect(result).toBeTruthy();
   });
 });

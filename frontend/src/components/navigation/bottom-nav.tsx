@@ -2,6 +2,7 @@
 
 import {
   Clock3,
+  LayoutGrid,
   MessageSquareMore,
   QrCode,
   Settings2,
@@ -14,6 +15,7 @@ import { appNavItems, type AppNavIconKey } from "@/lib/constants/navigation";
 import { cn } from "@/lib/utils/cn";
 
 const navIcons: Record<AppNavIconKey, typeof QrCode> = {
+  home: LayoutGrid,
   qr: QrCode,
   requests: MessageSquareMore,
   contacts: Users,
