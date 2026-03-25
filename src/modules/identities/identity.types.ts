@@ -134,19 +134,29 @@ export type PermissionMergeReasonCode =
   | "TRUST_PROMOTED"
   | "TRUST_RESTRICTED"
   | "TRUST_BLOCKED"
-  | "TRUST_LIMITS_MERGED";
+  | "TRUST_LIMITS_MERGED"
+  | "OVERRIDE_NO_CHANGE"
+  | "OVERRIDE_APPLIED"
+  | "OVERRIDE_LIMITS_MERGED"
+  | "OVERRIDE_BLOCKED_BY_GUARDRAIL"
+  | "OVERRIDE_SKIPPED_HARD_DENY"
+  | "OVERRIDE_PRESERVED_SYSTEM_PERMISSION";
 
-export interface PermissionMergeTraceEntry {
+export interface PermissionResolutionStageTrace {
   baseEffect: PermissionEffect;
   adjustmentEffect: PermissionEffect | null;
+  postTrustEffect: PermissionEffect;
+  manualOverrideEffect: PermissionEffect | null;
   finalEffect: PermissionEffect;
   mergeMode: MergeMode;
+  overrideApplied: boolean;
   reasonCode: PermissionMergeReasonCode;
 }
 
-export type PermissionMergeTrace = Record<
-  CoreConnectionTemplatePermissionKey,
-  PermissionMergeTraceEntry
+export type PermissionMergeTraceEntry = PermissionResolutionStageTrace;
+
+export type PermissionMergeTrace = Partial<
+  Record<PermissionKey, PermissionMergeTraceEntry>
 >;
 
 export interface TrustStateAdjustmentDefinition {
@@ -161,7 +171,41 @@ export interface ResolvedPermissionValueLite extends PermissionTemplateValue {
   trace: PermissionMergeTraceEntry;
 }
 
+export interface ResolvedPermissionValueStageful extends PermissionTemplateValue {
+  postTrustEffect: PermissionEffect;
+  manualOverrideEffect: PermissionEffect | null;
+  finalEffect: PermissionEffect;
+  trace: PermissionResolutionStageTrace;
+}
+
+export interface ManualOverrideValue {
+  permissionKey: PermissionKey;
+  effect: PermissionEffect;
+  limits?: PermissionLimits | ConnectionPolicyTemplateLimits | null;
+  reason?: string | null;
+  createdAt: Date;
+  createdByIdentityId: string;
+}
+
+export type ManualOverrideMap = Partial<
+  Record<PermissionKey, ManualOverrideValue>
+>;
+
+export interface ManualOverrideGuardrailDecision {
+  blocked: boolean;
+  reasonCode:
+    | "OVERRIDE_BLOCKED_BY_GUARDRAIL"
+    | "OVERRIDE_SKIPPED_HARD_DENY"
+    | "OVERRIDE_PRESERVED_SYSTEM_PERMISSION"
+    | null;
+}
+
 export interface TrustAdjustedPermissionsResult {
+  mergedPermissions: ConnectionPolicyTemplatePermissions;
+  mergeTrace: PermissionMergeTrace;
+}
+
+export interface OverrideAdjustedPermissionsResult {
   mergedPermissions: ConnectionPolicyTemplatePermissions;
   mergeTrace: PermissionMergeTrace;
 }
@@ -185,5 +229,42 @@ export interface PreviewPermissionsWithTrustStateResult {
   >;
   trustState: TrustState;
   mergedPermissions: ConnectionPolicyTemplatePermissions;
+  mergeTrace: PermissionMergeTrace;
+}
+
+export interface ConnectionPermissionOverrideRecord {
+  permissionKey: PermissionKey;
+  effect: PermissionEffect;
+  limits: PermissionLimits | ConnectionPolicyTemplateLimits | null;
+  reason: string | null;
+  createdAt: Date;
+  createdByIdentityId: string;
+}
+
+export interface PreviewResolvedPermissionsForConnectionResult {
+  connection: {
+    id: string;
+    sourceIdentityId: string;
+    targetIdentityId: string;
+    connectionType: ConnectionType;
+    trustState: TrustState;
+    status: string;
+  };
+  template: Pick<
+    ConnectionPolicyTemplateRecord,
+    | "id"
+    | "sourceIdentityType"
+    | "connectionType"
+    | "templateKey"
+    | "displayName"
+    | "description"
+    | "policyVersion"
+  >;
+  trustState: TrustState;
+  overrides: {
+    count: number;
+    items: ConnectionPermissionOverrideRecord[];
+  };
+  finalPermissions: ConnectionPolicyTemplatePermissions;
   mergeTrace: PermissionMergeTrace;
 }

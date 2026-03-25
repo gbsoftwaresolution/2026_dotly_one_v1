@@ -163,19 +163,19 @@ describe("trust-state adjustments", () => {
     );
 
     assert.equal(
-      result.mergeTrace[PERMISSION_KEYS.calling.voiceStart].baseEffect,
+      result.mergeTrace[PERMISSION_KEYS.calling.voiceStart]?.baseEffect,
       PermissionEffect.RequestApproval,
     );
     assert.equal(
-      result.mergeTrace[PERMISSION_KEYS.calling.voiceStart].adjustmentEffect,
+      result.mergeTrace[PERMISSION_KEYS.calling.voiceStart]?.adjustmentEffect,
       PermissionEffect.Allow,
     );
     assert.equal(
-      result.mergeTrace[PERMISSION_KEYS.calling.voiceStart].finalEffect,
+      result.mergeTrace[PERMISSION_KEYS.calling.voiceStart]?.finalEffect,
       PermissionEffect.Allow,
     );
     assert.equal(
-      result.mergeTrace[PERMISSION_KEYS.calling.voiceStart].reasonCode,
+      result.mergeTrace[PERMISSION_KEYS.calling.voiceStart]?.reasonCode,
       "TRUST_PROMOTED",
     );
   });
@@ -187,7 +187,7 @@ describe("trust-state adjustments", () => {
     );
 
     assert.equal(
-      result.mergeTrace[PERMISSION_KEYS.calling.voiceStart].reasonCode,
+      result.mergeTrace[PERMISSION_KEYS.calling.voiceStart]?.reasonCode,
       "TEMPLATE_BASE",
     );
   });
@@ -232,7 +232,7 @@ describe("trust-state adjustments", () => {
       PermissionEffect.Allow,
     );
     assert.equal(
-      result.mergeTrace[PERMISSION_KEYS.messaging.documentSend].reasonCode,
+      result.mergeTrace[PERMISSION_KEYS.messaging.documentSend]?.reasonCode,
       "TRUST_NO_CHANGE",
     );
   });
@@ -290,7 +290,7 @@ describe("IdentitiesService trust preview", () => {
     );
     assert.equal(
       result.mergeTrace[PERMISSION_KEYS.actions.paymentRequestCreate]
-        .reasonCode,
+        ?.reasonCode,
       "TRUST_RESTRICTED",
     );
   });

@@ -30,19 +30,25 @@ import { CreateIdentityDto } from "./dto/create-identity.dto";
 import { GetConnectionByIdDto } from "./dto/get-connection-by-id.dto";
 import { GetConnectionPolicyTemplateDto } from "./dto/get-connection-policy-template.dto";
 import { ListConnectionsForIdentityDto } from "./dto/list-connections-for-identity.dto";
+import { ListPermissionOverridesForConnectionDto } from "./dto/list-permission-overrides-for-connection.dto";
+import { PreviewResolvedPermissionsForConnectionDto } from "./dto/preview-resolved-permissions-for-connection.dto";
 import { PreviewPermissionsWithTrustStateDto } from "./dto/preview-permissions-with-trust-state.dto";
 import { SetPermissionOverrideDto } from "./dto/set-permission-override.dto";
 import { UpdateConnectionStatusDto } from "./dto/update-connection-status.dto";
 import { UpdateConnectionTypeDto } from "./dto/update-connection-type.dto";
 import { UpdateTrustStateDto } from "./dto/update-trust-state.dto";
 import type {
+  ConnectionPermissionOverrideRecord,
   ConnectionPolicyTemplateLimits,
   ConnectionPolicyTemplatePermissions,
   ConnectionPolicyTemplateRecord,
   ConnectionPolicyTemplateSeedDefinition,
+  ManualOverrideMap,
+  PreviewResolvedPermissionsForConnectionResult,
   PreviewPermissionsWithTrustStateResult,
   TrustStateAdjustmentDefinition,
 } from "./identity.types";
+import { applyManualOverrides } from "./manual-override-merge";
 import {
   applyTrustStateAdjustment,
   getTrustStateAdjustment as getTrustStateAdjustmentDefinition,
@@ -368,6 +374,114 @@ export class IdentitiesService {
     };
   }
 
+  async listPermissionOverridesForConnection(
+    listOverridesDto: ListPermissionOverridesForConnectionDto,
+  ): Promise<ConnectionPermissionOverrideRecord[]> {
+    const overrides =
+      await this.prismaService.connectionPermissionOverride.findMany({
+        where: {
+          connectionId: listOverridesDto.connectionId,
+        },
+        orderBy: [{ permissionKey: "asc" }, { createdAt: "asc" }],
+      });
+
+    return overrides
+      .map(mapConnectionPermissionOverrideRecord)
+      .sort((left, right) => {
+        const permissionKeyComparison = left.permissionKey.localeCompare(
+          right.permissionKey,
+        );
+
+        if (permissionKeyComparison !== 0) {
+          return permissionKeyComparison;
+        }
+
+        return left.createdAt.getTime() - right.createdAt.getTime();
+      });
+  }
+
+  async previewResolvedPermissionsForConnection(
+    previewDto: PreviewResolvedPermissionsForConnectionDto,
+  ): Promise<PreviewResolvedPermissionsForConnectionResult> {
+    const connection = await this.requireConnection(previewDto.connectionId);
+    const sourceIdentity = await this.prismaService.identity.findUnique({
+      where: {
+        id: connection.sourceIdentityId,
+      },
+      select: {
+        id: true,
+        identityType: true,
+      },
+    });
+
+    if (!sourceIdentity) {
+      throw new NotFoundException("Source identity not found");
+    }
+
+    const resolvedTrustState = toApiTrustState(connection.trustState);
+    const template = await this.getConnectionPolicyTemplate({
+      sourceIdentityType: toApiIdentityType(sourceIdentity.identityType),
+      connectionType: toApiConnectionType(connection.connectionType),
+    });
+    const trustAdjustedPermissions = applyTrustStateAdjustment(
+      template.permissionsJson,
+      resolvedTrustState,
+    );
+    const overrideItems = await this.listPermissionOverridesForConnection({
+      connectionId: previewDto.connectionId,
+    });
+    const overridesByPermissionKey = mapOverridesByPermissionKey(overrideItems);
+    const overrideAdjustedPermissions =
+      this.applyOverridePreviewToPermissionSet(
+        trustAdjustedPermissions.mergedPermissions,
+        overridesByPermissionKey,
+        {
+          trustState: resolvedTrustState,
+          templateKey: template.templateKey,
+          mergeTrace: trustAdjustedPermissions.mergeTrace,
+        },
+      );
+
+    return {
+      connection: {
+        id: connection.id,
+        sourceIdentityId: connection.sourceIdentityId,
+        targetIdentityId: connection.targetIdentityId,
+        connectionType: toApiConnectionType(connection.connectionType),
+        trustState: resolvedTrustState,
+        status: toApiConnectionStatus(connection.status),
+      },
+      template: {
+        id: template.id,
+        sourceIdentityType: template.sourceIdentityType,
+        connectionType: template.connectionType,
+        templateKey: template.templateKey,
+        displayName: template.displayName,
+        description: template.description,
+        policyVersion: template.policyVersion,
+      },
+      trustState: resolvedTrustState,
+      overrides: {
+        count: overrideItems.length,
+        items: overrideItems,
+      },
+      finalPermissions: overrideAdjustedPermissions.mergedPermissions,
+      mergeTrace: overrideAdjustedPermissions.mergeTrace,
+    };
+  }
+
+  private applyOverridePreviewToPermissionSet(
+    basePermissions: ConnectionPolicyTemplatePermissions,
+    overrides: ManualOverrideMap,
+    options: {
+      trustState: TrustState;
+      templateKey: string;
+      mergeTrace: PreviewPermissionsWithTrustStateResult["mergeTrace"];
+    },
+  ) {
+    return applyManualOverrides(basePermissions, overrides, options);
+  }
+
   private async requireConnection(
     connectionId: string,
   ): Promise<IdentityConnectionRecord> {
@@ -647,6 +761,23 @@ function toPrismaPermissionEffect(
   throw new Error("Unsupported permission effect");
 }
 
+function toApiPermissionEffect(
+  effect: PrismaPermissionEffect,
+): PermissionEffect {
+  switch (effect) {
+    case PrismaPermissionEffect.ALLOW:
+      return PermissionEffect.Allow;
+    case PrismaPermissionEffect.DENY:
+      return PermissionEffect.Deny;
+    case PrismaPermissionEffect.REQUEST_APPROVAL:
+      return PermissionEffect.RequestApproval;
+    case PrismaPermissionEffect.ALLOW_WITH_LIMITS:
+      return PermissionEffect.AllowWithLimits;
+  }
+
+  throw new Error("Unsupported permission effect");
+}
+
 function toNullableJsonInput(
   value: object | null | undefined,
 ): Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue {
@@ -679,6 +810,42 @@ function toConnectionPolicyTemplateRecord(
     createdAt: template.createdAt,
     updatedAt: template.updatedAt,
   };
+}
+
+function mapConnectionPermissionOverrideRecord(override: {
+  permissionKey: string;
+  effect: PrismaPermissionEffect;
+  limitsJson: Prisma.JsonValue | null;
+  reason: string | null;
+  createdAt: Date;
+  createdByIdentityId: string;
+}): ConnectionPermissionOverrideRecord {
+  return {
+    permissionKey:
+      override.permissionKey as ConnectionPermissionOverrideRecord["permissionKey"],
+    effect: toApiPermissionEffect(override.effect),
+    limits: override.limitsJson as ConnectionPermissionOverrideRecord["limits"],
+    reason: override.reason,
+    createdAt: override.createdAt,
+    createdByIdentityId: override.createdByIdentityId,
+  };
+}
+
+function mapOverridesByPermissionKey(
+  overrides: ConnectionPermissionOverrideRecord[],
+): ManualOverrideMap {
+  return overrides.reduce<ManualOverrideMap>((accumulator, override) => {
+    accumulator[override.permissionKey] = {
+      permissionKey: override.permissionKey,
+      effect: override.effect,
+      limits: override.limits,
+      reason: override.reason,
+      createdAt: override.createdAt,
+      createdByIdentityId: override.createdByIdentityId,
+    };
+
+    return accumulator;
+  }, {});
 }
 
 export function buildTemplateUpsertPayload(

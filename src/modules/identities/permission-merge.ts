@@ -196,8 +196,11 @@ function createTraceEntry(
   return {
     baseEffect,
     adjustmentEffect,
+    postTrustEffect: finalEffect,
+    manualOverrideEffect: null,
     finalEffect,
     mergeMode,
+    overrideApplied: false,
     reasonCode,
   };
 }
