@@ -1,5 +1,6 @@
 "use client";
 
+import { Bell } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -55,20 +56,21 @@ export function NotificationBadge() {
     };
   }, []);
 
-  if (unreadCount === 0) return null;
-
   return (
     <Link
       href={routes.app.notifications}
-      className="relative inline-flex items-center justify-center rounded-pill px-2 py-0.5 transition-all duration-200 active:scale-90 no-select"
+      className="relative p-1 text-foreground/80 transition-colors hover:text-foreground no-select"
       aria-label={`${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`}
     >
-      <span
-        key={unreadCount}
-        className="flex h-5 min-w-5 items-center justify-center rounded-pill bg-foreground px-1.5 font-mono text-[9px] font-black text-background animate-scale-in dark:bg-white dark:text-zinc-950"
-      >
-        {unreadCount > 99 ? "99+" : unreadCount}
-      </span>
+      <Bell className="h-6 w-6" />
+      {unreadCount > 0 ? (
+        <span
+          key={unreadCount}
+          className="absolute right-0 top-0 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-foreground px-1 font-mono text-[9px] font-black text-background ring-2 ring-background animate-scale-in dark:bg-white dark:text-zinc-950 dark:ring-bgOnyx"
+        >
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
+      ) : null}
     </Link>
   );
 }
