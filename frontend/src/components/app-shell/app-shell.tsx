@@ -47,7 +47,7 @@ export function AppShell({ children, session }: AppShellProps) {
           >
             <div className="safe-pt" />
 
-            <div className="safe-pl safe-pr flex h-14 items-center justify-between px-5">
+            <div className="flex h-14 items-center justify-between px-4 sm:px-5">
               <div className="flex w-1/3 items-center justify-start gap-2">
                 <button
                   type="button"
@@ -82,8 +82,8 @@ export function AppShell({ children, session }: AppShellProps) {
 
         <main
           className={cn(
-            "safe-pl safe-pr flex-1",
-            isShareRoute ? "px-0 py-0" : "px-5 py-5 pb-nav",
+            "flex-1",
+            isShareRoute ? "px-0 py-0" : "px-4 py-5 sm:px-5 pb-nav",
           )}
         >
           <div className={cn(isShareRoute ? "min-h-screen-dvh" : "space-y-4")}>

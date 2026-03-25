@@ -5,7 +5,7 @@ export function AppLoadingShell() {
     <div className="mx-auto flex min-h-screen-dvh max-w-app flex-col bg-transparent">
       <header className="sticky top-0 z-header border-b border-black/[0.06] bg-white/75 backdrop-blur-2xl dark:border-white/[0.06] dark:bg-bgOnyx/75">
         <div className="safe-pt" />
-        <div className="safe-pl safe-pr flex items-center justify-between gap-3 px-5 py-3.5">
+        <div className="flex h-14 items-center justify-between px-4 sm:px-5">
           <div className="min-w-0 flex-1 space-y-2">
             <div className="flex items-center gap-2">
               <div className="h-6 w-16 animate-pulse rounded-full bg-foreground/8 dark:bg-white/10" />
@@ -22,7 +22,7 @@ export function AppLoadingShell() {
         </div>
       </header>
 
-      <main className="safe-pl safe-pr flex-1 px-5 py-5 pb-nav">
+      <main className="flex-1 px-4 py-5 sm:px-5 pb-nav">
         <div className="space-y-4">
           <div className="min-h-[116px] rounded-3xl bg-foreground/[0.03] p-6 shadow-inner ring-1 ring-inset ring-black/5 backdrop-blur dark:bg-white/[0.045] dark:ring-white/5">
             <div className="space-y-3">
