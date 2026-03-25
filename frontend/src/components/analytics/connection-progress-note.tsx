@@ -21,7 +21,7 @@ export function ConnectionProgressNote({
   return (
     <div
       className={cn(
-        "rounded-[1.5rem] border border-black/[0.06] bg-white/72 px-4 py-3 text-center shadow-[0_12px_32px_rgba(15,23,42,0.05)] dark:border-white/[0.08] dark:bg-white/[0.04]",
+        "rounded-[1.5rem] bg-white/40 px-4 py-3 text-center shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/40 dark:ring-white/10 backdrop-blur-md",
         className,
       )}
     >

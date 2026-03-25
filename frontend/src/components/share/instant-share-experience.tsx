@@ -63,6 +63,7 @@ function FastQrShell({
   onRetry,
   isVerified,
   isOnline,
+  analytics,
 }: {
   sharePayload: PersonaFastSharePayload | null;
   isRefreshing: boolean;
@@ -70,27 +71,27 @@ function FastQrShell({
   onRetry: () => void;
   isVerified: boolean;
   isOnline: boolean;
+  analytics?: import("@/types/analytics").CurrentUserAnalytics | null;
 }) {
   const hasCachedShare = sharePayload !== null;
 
   return (
     <div className="space-y-6 motion-safe:animate-[fade-in_420ms_ease-out]">
-      <div className="rounded-[1.25rem] bg-foreground/[0.02] backdrop-blur-[40px] saturate-[200%] ring-[0.5px] ring-black/5 dark:bg-white/[0.03] dark:ring-white/10 shadow-sm p-4 sm:p-5 flex flex-col gap-6">
-        <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-            Step 1
-          </p>
-          <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-            Ready share
+      <div className="rounded-[2rem] bg-white/40 backdrop-blur-[40px] saturate-[200%] ring-1 ring-black/5 dark:bg-zinc-900/40 dark:ring-white/10 shadow-2xl p-5 sm:p-8 flex flex-col gap-8 relative overflow-hidden">
+        {/* Subtle gradient glow behind the card content */}
+        <div className="absolute -inset-1/2 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
+
+        <div className="space-y-2 relative z-10 text-center">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+            Ready to Connect
           </h2>
-          <p className="text-sm leading-6 text-muted">
-            Keep one large QR ready to scan, even when the network needs a
-            moment to catch up.
+          <p className="text-sm leading-relaxed text-muted max-w-[280px] mx-auto">
+            Scan to instantly access my profile and contact information.
           </p>
         </div>
 
         {sharePayload ? (
-          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-foreground/[0.03] px-3.5 py-3 shadow-inner dark:bg-white/[0.045] sm:px-4 sm:py-3.5">
+          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-white/50 px-4 py-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 sm:px-5 relative z-10 backdrop-blur-md">
             {sharePayload.profilePhotoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -128,9 +129,14 @@ function FastQrShell({
           </div>
         ) : null}
 
-        <div className="flex flex-1 flex-col justify-center gap-4">
+        <div className="flex flex-1 flex-col justify-center gap-6 relative z-10">
+          <ConnectionProgressNote
+            analytics={analytics ?? null}
+            className="mx-auto w-full max-w-md"
+          />
+
           <div className="mx-auto flex w-full flex-1 items-center justify-center">
-            <div className="relative w-full rounded-3xl bg-white px-3 py-4 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04] dark:bg-zinc-950 dark:ring-white/[0.04] sm:px-4 sm:py-5">
+            <div className="relative w-full rounded-3xl bg-white px-4 py-5 shadow-xl ring-1 ring-black/10 dark:bg-zinc-950 dark:ring-white/10 sm:px-5 sm:py-6">
               {sharePayload ? (
                 <div className="flex min-h-[26rem] items-center justify-center sm:min-h-[28rem]">
                   <QRCodeSVG
@@ -151,8 +157,8 @@ function FastQrShell({
             </div>
           </div>
 
-          <div className="space-y-1.5 text-center">
-            <p className="text-base font-semibold text-foreground">
+          <div className="space-y-2 text-center relative z-10">
+            <p className="text-lg font-semibold tracking-tight text-foreground">
               {getShareInstruction(sharePayload?.preferredShareType)}
             </p>
             {isRefreshing && hasCachedShare ? (
@@ -332,48 +338,53 @@ export function InstantShareExperience({
 
   if (!isBootstrapping && user && personas && personas.length === 0) {
     return (
-      <div className="flex min-h-[calc(100dvh-8rem)] flex-col justify-center gap-6">
-        <div className="space-y-2">
-          <p className="label-xs text-muted">Share</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            Show your QR
-          </h1>
-          <p className="max-w-md text-sm leading-6 text-muted">
-            {isOnline
-              ? "Open one screen and hand over a large, scannable QR in seconds."
-              : "You are offline and no cached QR is available yet."}
-          </p>
-        </div>
+      <div className="flex w-full flex-col justify-center">
+        <div className="rounded-[2rem] bg-white/40 backdrop-blur-[40px] saturate-[200%] ring-1 ring-black/5 dark:bg-zinc-900/40 dark:ring-white/10 shadow-2xl p-6 sm:p-8 flex flex-col gap-8 relative overflow-hidden text-center">
+          <div className="absolute -inset-1/2 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
 
-        <EmptyState
-          title={
-            isOnline
-              ? "Create a profile to start sharing"
-              : "No offline QR available"
-          }
-          description={
-            isOnline
-              ? "Create your first profile so you can share a live QR for meetings, events, and introductions."
-              : "Reconnect once to load your ready QR, then Dotly can keep it available if the network drops."
-          }
-          action={
-            isOnline ? (
-              <Link href={routes.app.createPersona}>
-                <SecondaryButton className="h-[60px] w-full active:scale-95">
-                  Create profile
-                </SecondaryButton>
-              </Link>
-            ) : (
-              <SecondaryButton
-                type="button"
-                className="h-[60px] w-full active:scale-95"
-                onClick={() => setReloadNonce((current) => current + 1)}
-              >
-                Retry when online
-              </SecondaryButton>
-            )
-          }
-        />
+          <div className="space-y-2 relative z-10">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Show your QR
+            </h1>
+            <p className="text-sm leading-relaxed text-muted max-w-[280px] mx-auto">
+              {isOnline
+                ? "Open one screen and hand over a large, scannable QR in seconds."
+                : "You are offline and no cached QR is available yet."}
+            </p>
+          </div>
+
+          <div className="relative z-10">
+            <EmptyState
+              title={
+                isOnline
+                  ? "Create a profile to start sharing"
+                  : "No offline QR available"
+              }
+              description={
+                isOnline
+                  ? "Create your first profile so you can share a live QR for meetings, events, and introductions."
+                  : "Reconnect once to load your ready QR, then Dotly can keep it available if the network drops."
+              }
+              action={
+                isOnline ? (
+                  <Link href={routes.app.createPersona}>
+                    <SecondaryButton className="h-[60px] w-full active:scale-95">
+                      Create profile
+                    </SecondaryButton>
+                  </Link>
+                ) : (
+                  <SecondaryButton
+                    type="button"
+                    className="h-[60px] w-full active:scale-95"
+                    onClick={() => setReloadNonce((current) => current + 1)}
+                  >
+                    Retry when online
+                  </SecondaryButton>
+                )
+              }
+            />
+          </div>
+        </div>
       </div>
     );
   }
@@ -401,30 +412,35 @@ export function InstantShareExperience({
     }
 
     return (
-      <div className="flex min-h-[calc(100dvh-8rem)] flex-col justify-center gap-6">
-        <div className="space-y-2">
-          <p className="label-xs text-muted">Share</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            Show your QR
-          </h1>
-          <p className="max-w-md text-sm leading-6 text-muted">
-            Open one screen and hand over a large, scannable QR in seconds.
-          </p>
-        </div>
+      <div className="flex w-full flex-col justify-center">
+        <div className="rounded-[2rem] bg-white/40 backdrop-blur-[40px] saturate-[200%] ring-1 ring-black/5 dark:bg-zinc-900/40 dark:ring-white/10 shadow-2xl p-6 sm:p-8 flex flex-col gap-8 relative overflow-hidden text-center">
+          <div className="absolute -inset-1/2 bg-gradient-to-br from-rose-500/10 via-orange-500/10 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
 
-        <EmptyState
-          title="Share unavailable"
-          description={loadError}
-          action={
-            <SecondaryButton
-              type="button"
-              className="h-[60px] w-full active:scale-95"
-              onClick={() => setReloadNonce((current) => current + 1)}
-            >
-              Try again
-            </SecondaryButton>
-          }
-        />
+          <div className="space-y-2 relative z-10">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Share unavailable
+            </h1>
+            <p className="text-sm leading-relaxed text-muted max-w-[280px] mx-auto">
+              Open one screen and hand over a large, scannable QR in seconds.
+            </p>
+          </div>
+
+          <div className="relative z-10">
+            <EmptyState
+              title="Connection error"
+              description={loadError}
+              action={
+                <SecondaryButton
+                  type="button"
+                  className="h-[60px] w-full active:scale-95"
+                  onClick={() => setReloadNonce((current) => current + 1)}
+                >
+                  Try again
+                </SecondaryButton>
+              }
+            />
+          </div>
+        </div>
       </div>
     );
   }
@@ -437,37 +453,41 @@ export function InstantShareExperience({
     !hasResolvedFastShare
   ) {
     return (
-      <div className="flex min-h-[calc(100dvh-8rem)] flex-col justify-center gap-6">
-        <div className="space-y-2">
-          <p className="label-xs text-muted">Share</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            Show your QR
-          </h1>
-          <p className="max-w-md text-sm leading-6 text-muted">
-            Dotly could not resolve your ready share yet.
-          </p>
-        </div>
+      <div className="flex w-full flex-col justify-center">
+        <div className="rounded-[2rem] bg-white/40 backdrop-blur-[40px] saturate-[200%] ring-1 ring-black/5 dark:bg-zinc-900/40 dark:ring-white/10 shadow-2xl p-6 sm:p-8 flex flex-col gap-8 relative overflow-hidden text-center">
+          <div className="absolute -inset-1/2 bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
 
-        <EmptyState
-          title="Share unavailable"
-          description="Your share card is not ready right now. Try again or review this persona's share settings."
-          action={
-            <SecondaryButton
-              type="button"
-              className="h-[60px] w-full active:scale-95"
-              onClick={() => setReloadNonce((current) => current + 1)}
-            >
-              Try again
-            </SecondaryButton>
-          }
-        />
+          <div className="space-y-2 relative z-10">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              QR not ready
+            </h1>
+            <p className="text-sm leading-relaxed text-muted max-w-[280px] mx-auto">
+              Dotly could not resolve your ready share yet.
+            </p>
+          </div>
+
+          <div className="relative z-10">
+            <EmptyState
+              title="Share unavailable"
+              description="Your share card is not ready right now. Try again or review this persona's share settings."
+              action={
+                <SecondaryButton
+                  type="button"
+                  className="h-[60px] w-full active:scale-95"
+                  onClick={() => setReloadNonce((current) => current + 1)}
+                >
+                  Try again
+                </SecondaryButton>
+              }
+            />
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <ConnectionProgressNote analytics={analytics} />
       <FastQrShell
         sharePayload={cachedSharePayload}
         isRefreshing={isBootstrapping}
@@ -475,6 +495,7 @@ export function InstantShareExperience({
         onRetry={() => setReloadNonce((current) => current + 1)}
         isVerified={initialUser?.security.trustBadge === "verified"}
         isOnline={isOnline}
+        analytics={analytics}
       />
     </div>
   );

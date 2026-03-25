@@ -399,25 +399,31 @@ export function QrGeneratorPanel({
 
   return (
     <div className="space-y-6 motion-safe:animate-[fade-in_420ms_ease-out]">
-      <div className="rounded-[1.25rem] bg-foreground/[0.02] backdrop-blur-[40px] saturate-[200%] ring-[0.5px] ring-black/5 dark:bg-white/[0.03] dark:ring-white/10 shadow-sm p-4 sm:p-5 flex flex-col gap-6">
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-              Step 2
-            </p>
-            <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-              Active share persona
+      <div className="rounded-[2rem] bg-white/40 backdrop-blur-[40px] saturate-[200%] ring-1 ring-black/5 dark:bg-zinc-900/40 dark:ring-white/10 shadow-2xl p-5 sm:p-8 flex flex-col gap-8 relative overflow-hidden">
+        {/* Subtle gradient glow behind the card content */}
+        <div className="absolute -inset-1/2 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
+
+        <div className="space-y-4 relative z-10">
+          <div className="space-y-2 text-center">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+              Your Active Persona
             </h2>
+            <p className="text-sm leading-relaxed text-muted max-w-[280px] mx-auto">
+              Scan to instantly connect or share this profile.
+            </p>
           </div>
 
           {personas.length > 1 ? (
-            <div className="space-y-1.5">
-              <label className="label-xs" htmlFor="qr-persona-select">
-                Persona
+            <div className="space-y-1.5 relative z-10">
+              <label
+                className="label-xs text-muted"
+                htmlFor="qr-persona-select"
+              >
+                Sharing as
               </label>
               <CustomSelect
                 id="qr-persona-select"
-                className="min-h-[54px] w-full rounded-2xl bg-foreground/[0.03] px-4 text-[15px] font-medium text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06] dark:focus:ring-white/10"
+                className="min-h-[54px] w-full rounded-2xl bg-white/50 px-4 text-[15px] font-medium text-foreground shadow-sm ring-1 ring-inset ring-black/5 outline-none transition-all focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/80 backdrop-blur-md"
                 value={selectedPersonaId ?? ""}
                 onChange={(value) => setSelectedPersonaId(value)}
                 options={personaOptions}
@@ -425,9 +431,9 @@ export function QrGeneratorPanel({
             </div>
           ) : null}
 
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 relative z-10">
             {selectedPersona ? (
-              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-foreground/[0.03] px-3.5 py-3 shadow-inner dark:bg-white/[0.045] sm:px-4 sm:py-3.5">
+              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-white/50 px-4 py-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 sm:px-5 backdrop-blur-md">
                 {selectedPersona.profilePhotoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -480,25 +486,16 @@ export function QrGeneratorPanel({
           </div>
         </div>
 
-        <div className="h-px bg-black/5 dark:bg-white/5 -mx-4 sm:-mx-5" />
+        <div className="h-px bg-black/5 dark:bg-white/5 -mx-5 sm:-mx-8 relative z-10" />
 
-        <div className="flex flex-1 flex-col gap-4">
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-              Step 3
-            </p>
-            <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-              Share-ready code
-            </h2>
-          </div>
-
+        <div className="flex flex-1 flex-col gap-6 relative z-10">
           <div className="flex flex-1 flex-col justify-center gap-4">
             <ConnectionProgressNote
               analytics={analytics}
               className="mx-auto w-full max-w-md"
             />
 
-            <div className="mx-auto flex w-full flex-1 items-center justify-center">
+            <div className="mx-auto flex w-full flex-1 items-center justify-center relative z-10">
               {shareLocked ? (
                 <VerificationPrompt
                   email={user.email}
@@ -508,7 +505,7 @@ export function QrGeneratorPanel({
                   className="w-full"
                 />
               ) : error && !generatedQr ? (
-                <div className="flex min-h-[24rem] w-full flex-col items-center justify-center rounded-3xl bg-rose-500/5 ring-1 ring-inset ring-rose-500/20 p-6 text-center">
+                <div className="flex min-h-[24rem] w-full flex-col items-center justify-center rounded-3xl bg-rose-500/5 ring-1 ring-inset ring-rose-500/20 p-6 text-center shadow-inner backdrop-blur-md">
                   <p className="label-xs text-rose-600 dark:text-rose-400">
                     Share unavailable
                   </p>
@@ -530,7 +527,7 @@ export function QrGeneratorPanel({
                   </SecondaryButton>
                 </div>
               ) : (
-                <div className="relative w-full rounded-3xl bg-white px-3 py-4 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.04] dark:bg-zinc-950 dark:ring-white/[0.04] sm:px-4 sm:py-5">
+                <div className="relative w-full rounded-3xl bg-white px-4 py-5 shadow-xl ring-1 ring-black/10 dark:bg-zinc-950 dark:ring-white/10 sm:px-5 sm:py-6">
                   {isLoadingQr ? (
                     generatedQr ? (
                       <div className="flex min-h-[26rem] items-center justify-center sm:min-h-[28rem]">
@@ -566,7 +563,7 @@ export function QrGeneratorPanel({
               )}
             </div>
 
-            <div className="space-y-1.5 text-center">
+            <div className="space-y-2 text-center relative z-10">
               <p className="text-lg font-semibold tracking-tight text-foreground">
                 {getShareInstruction(sharePayload?.preferredShareType)}
               </p>
@@ -589,19 +586,10 @@ export function QrGeneratorPanel({
           </div>
         </div>
 
-        <div className="h-px bg-black/5 dark:bg-white/5 -mx-4 sm:-mx-5" />
+        <div className="h-px bg-black/5 dark:bg-white/5 -mx-5 sm:-mx-8 relative z-10" />
 
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-              Step 4
-            </p>
-            <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-              Share actions
-            </h2>
-          </div>
-
-          <div className="rounded-2xl bg-foreground/[0.03] p-2 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+        <div className="space-y-4 relative z-10">
+          <div className="rounded-2xl bg-white/50 p-2 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md relative z-10">
             <div className="grid grid-cols-2 gap-2">
               <SecondaryButton
                 type="button"

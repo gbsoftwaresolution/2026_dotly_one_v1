@@ -31,14 +31,19 @@ export function PersonaCard({ persona }: PersonaCardProps) {
   return (
     <article
       className={cn(
-        "p-5 transition-colors hover:bg-black/[0.02] active:bg-black/5 dark:hover:bg-white/[0.02] dark:active:bg-white/5"
+        "relative overflow-hidden rounded-[2rem] bg-white/40 p-5 sm:p-6 backdrop-blur-[40px] saturate-[200%] shadow-sm ring-1 ring-black/5 transition-all hover:bg-white/50 dark:bg-zinc-900/40 dark:ring-white/10 dark:hover:bg-zinc-800/50",
       )}
     >
-      <div className="space-y-4 sm:space-y-5">
+      {/* Optional subtle glow behind content for active or open personas */}
+      {isOpen && (
+        <div className="absolute -inset-1/2 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
+      )}
+
+      <div className="relative z-10 space-y-5 sm:space-y-6">
         <div className="flex items-start gap-4">
           <div
             className={cn(
-              "flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-foreground/[0.06] shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.08] dark:ring-white/10",
+              "flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-white/60 shadow-sm ring-1 ring-inset ring-black/5 dark:bg-zinc-800/60 dark:ring-white/10 backdrop-blur-md",
             )}
             aria-hidden
           >
@@ -83,7 +88,7 @@ export function PersonaCard({ persona }: PersonaCardProps) {
         {persona.jobTitle || companyName || websiteUrl ? (
           <dl className="grid gap-2 sm:grid-cols-2 sm:gap-3">
             {persona.jobTitle ? (
-              <div className="rounded-2xl bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06]">
+              <div className="rounded-2xl bg-white/50 px-4 py-3.5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
                 <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Role
                 </dt>
@@ -93,7 +98,7 @@ export function PersonaCard({ persona }: PersonaCardProps) {
               </div>
             ) : null}
             {companyName ? (
-              <div className="rounded-2xl bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06]">
+              <div className="rounded-2xl bg-white/50 px-4 py-3.5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
                 <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Company
                 </dt>
@@ -103,7 +108,7 @@ export function PersonaCard({ persona }: PersonaCardProps) {
               </div>
             ) : null}
             {websiteUrl ? (
-              <div className="rounded-2xl bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06] sm:col-span-2">
+              <div className="rounded-2xl bg-white/50 px-4 py-3.5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md sm:col-span-2">
                 <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
                   Website
                 </dt>
@@ -125,11 +130,11 @@ export function PersonaCard({ persona }: PersonaCardProps) {
           </dl>
         ) : null}
 
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-3">
           <Link
             href={routes.app.personaDetail(persona.id)}
             className={cn(
-              "inline-flex h-12 w-full items-center justify-center rounded-2xl bg-foreground/[0.04] text-sm font-semibold text-foreground shadow-inner ring-1 ring-black/5 transition-all hover:bg-foreground/[0.06] active:scale-[0.98] dark:bg-white/[0.06] dark:ring-white/10",
+              "inline-flex h-[52px] w-full items-center justify-center rounded-2xl bg-white/50 text-[15px] font-medium text-foreground shadow-sm ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-white/80 active:scale-[0.98] dark:bg-zinc-800/50 dark:ring-white/10 dark:hover:bg-zinc-800/80",
             )}
           >
             Edit Persona
@@ -139,7 +144,7 @@ export function PersonaCard({ persona }: PersonaCardProps) {
             <Link
               href={`/${persona.username}`}
               className={cn(
-                "inline-flex h-12 w-full items-center justify-center rounded-2xl bg-foreground text-sm font-semibold text-background shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition-all hover:scale-[0.995] active:scale-[0.98]",
+                "inline-flex h-[52px] w-full items-center justify-center rounded-2xl bg-foreground text-[15px] font-medium text-background shadow-xl transition-all hover:scale-[0.995] active:scale-[0.98]",
               )}
             >
               View Public Profile
@@ -147,7 +152,7 @@ export function PersonaCard({ persona }: PersonaCardProps) {
           ) : (
             <div
               className={cn(
-                "inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-foreground/[0.03] text-sm font-medium text-muted ring-1 ring-black/5 dark:bg-white/[0.04] dark:ring-white/10",
+                "inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-white/30 text-[15px] font-medium text-muted ring-1 ring-black/5 backdrop-blur-md dark:bg-zinc-800/30 dark:ring-white/10",
               )}
             >
               <svg

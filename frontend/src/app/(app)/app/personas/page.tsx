@@ -52,8 +52,9 @@ export default async function PersonasPage() {
           title="Personas"
           description="Manage the Dotly identities you share in real life."
         />
-        <div className="rounded-[2rem] bg-rose-500/5 px-5 py-5 ring-1 ring-inset ring-rose-500/20 sm:rounded-3xl sm:px-6">
-          <p className="text-sm leading-6 text-rose-700 dark:text-rose-300">
+        <div className="rounded-[2rem] bg-white/40 px-5 py-6 backdrop-blur-[40px] saturate-[200%] shadow-sm ring-1 ring-rose-500/20 dark:bg-zinc-900/40 sm:p-8 relative overflow-hidden">
+          <div className="absolute -inset-1/2 bg-gradient-to-br from-rose-500/10 via-red-500/10 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
+          <p className="relative z-10 text-sm leading-6 text-rose-700 dark:text-rose-300">
             We could not load your personas right now. Refresh the page and try
             again in a moment.
           </p>
