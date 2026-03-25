@@ -2,6 +2,8 @@
 
 import type { PropsWithChildren, ReactNode } from "react";
 
+import { Menu, QrCode } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
@@ -17,7 +19,6 @@ import { routes } from "@/lib/constants/routes";
 import { cn } from "@/lib/utils/cn";
 import type { SessionSnapshot } from "@/types/auth";
 import { AppPrefetchBootstrap } from "./app-prefetch-bootstrap";
-import { SessionStatus } from "./session-status";
 
 interface AppShellProps extends PropsWithChildren {
   headerAction?: ReactNode;
@@ -47,23 +48,33 @@ export function AppShell({ children, headerAction, session }: AppShellProps) {
           >
             <div className="safe-pt" />
 
-            <div className="safe-pl safe-pr flex items-center justify-between gap-3 px-5 py-3.5">
-              <div className="min-w-0 space-y-1">
-                <div className="flex items-center gap-2 text-xs font-medium text-muted">
-                  <span className="rounded-full bg-foreground/6 px-2.5 py-1 text-foreground/80 dark:bg-white/6 dark:text-white/80">
-                    Dotly
-                  </span>
-                  <span>{sectionLabel}</span>
-                </div>
-                <p className="text-sm leading-5 text-muted">
-                  {sectionDescription}
-                </p>
-                <div className="min-h-5">
-                  <SessionStatus />
-                </div>
+            <div className="safe-pl safe-pr flex h-14 items-center justify-between px-5">
+              <div className="flex w-1/3 items-center justify-start gap-2">
+                <button
+                  type="button"
+                  className="-ml-1 p-1 text-foreground/80 transition-colors hover:text-foreground"
+                >
+                  <Menu className="h-6 w-6" />
+                </button>
+                <Link
+                  href={routes.app.home}
+                  className="font-bold tracking-tight text-foreground"
+                >
+                  Dotly
+                </Link>
               </div>
 
-              <div className="flex shrink-0 items-center gap-2 pt-1">
+              <div className="flex w-1/3 items-center justify-center truncate font-semibold">
+                {sectionLabel}
+              </div>
+
+              <div className="flex w-1/3 shrink-0 items-center justify-end gap-3">
+                <Link
+                  href={routes.app.qr}
+                  className="p-1 text-foreground/80 transition-colors hover:text-foreground"
+                >
+                  <QrCode className="h-6 w-6" />
+                </Link>
                 <NotificationBadge />
                 {headerAction ?? null}
               </div>
