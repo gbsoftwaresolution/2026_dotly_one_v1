@@ -1,6 +1,7 @@
 import type { ConnectionType } from "../../common/enums/connection-type.enum";
 import type { IdentityType } from "../../common/enums/identity-type.enum";
 import type { PermissionEffect } from "../../common/enums/permission-effect.enum";
+import type { TrustState } from "../../common/enums/trust-state.enum";
 
 import type { PermissionKey } from "./permission-keys";
 import { PERMISSION_KEYS } from "./permission-keys";
@@ -38,6 +39,17 @@ export interface ConnectionPolicyTemplateLimits {
   requiresCallScheduling?: boolean;
   requiresMutualConsent?: boolean;
   allowsProtectedMode?: boolean;
+}
+
+export interface TrustStateAdjustmentFlags {
+  forceRestrictedProfileFields?: boolean;
+  disableCalls?: boolean;
+  disablePayments?: boolean;
+  forceProtectedMediaLimited?: boolean;
+  denyExport?: boolean;
+  denyReshare?: boolean;
+  aiDisabled?: boolean;
+  markAsHighRisk?: boolean;
 }
 
 export interface PermissionTemplateValue {
@@ -112,4 +124,66 @@ export interface ConnectionPolicyTemplateRecord {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export type MergeMode = "RESTRICTIVE" | "PERMISSIVE";
+
+export type PermissionMergeReasonCode =
+  | "TEMPLATE_BASE"
+  | "TRUST_NO_CHANGE"
+  | "TRUST_PROMOTED"
+  | "TRUST_RESTRICTED"
+  | "TRUST_BLOCKED"
+  | "TRUST_LIMITS_MERGED";
+
+export interface PermissionMergeTraceEntry {
+  baseEffect: PermissionEffect;
+  adjustmentEffect: PermissionEffect | null;
+  finalEffect: PermissionEffect;
+  mergeMode: MergeMode;
+  reasonCode: PermissionMergeReasonCode;
+}
+
+export type PermissionMergeTrace = Record<
+  CoreConnectionTemplatePermissionKey,
+  PermissionMergeTraceEntry
+>;
+
+export interface TrustStateAdjustmentDefinition {
+  trustState: TrustState;
+  mergeMode: MergeMode;
+  permissions: Partial<Record<PermissionKey, PermissionTemplateValue>>;
+  limits?: ConnectionPolicyTemplateLimits | null;
+  flags?: TrustStateAdjustmentFlags;
+}
+
+export interface ResolvedPermissionValueLite extends PermissionTemplateValue {
+  trace: PermissionMergeTraceEntry;
+}
+
+export interface TrustAdjustedPermissionsResult {
+  mergedPermissions: ConnectionPolicyTemplatePermissions;
+  mergeTrace: PermissionMergeTrace;
+}
+
+export interface PreviewPermissionsWithTrustStateInput {
+  sourceIdentityType?: IdentityType | null;
+  connectionType: ConnectionType;
+  trustState: TrustState;
+}
+
+export interface PreviewPermissionsWithTrustStateResult {
+  template: Pick<
+    ConnectionPolicyTemplateRecord,
+    | "id"
+    | "sourceIdentityType"
+    | "connectionType"
+    | "templateKey"
+    | "displayName"
+    | "description"
+    | "policyVersion"
+  >;
+  trustState: TrustState;
+  mergedPermissions: ConnectionPolicyTemplatePermissions;
+  mergeTrace: PermissionMergeTrace;
 }

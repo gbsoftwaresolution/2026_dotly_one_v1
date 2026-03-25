@@ -30,6 +30,7 @@ import { CreateIdentityDto } from "./dto/create-identity.dto";
 import { GetConnectionByIdDto } from "./dto/get-connection-by-id.dto";
 import { GetConnectionPolicyTemplateDto } from "./dto/get-connection-policy-template.dto";
 import { ListConnectionsForIdentityDto } from "./dto/list-connections-for-identity.dto";
+import { PreviewPermissionsWithTrustStateDto } from "./dto/preview-permissions-with-trust-state.dto";
 import { SetPermissionOverrideDto } from "./dto/set-permission-override.dto";
 import { UpdateConnectionStatusDto } from "./dto/update-connection-status.dto";
 import { UpdateConnectionTypeDto } from "./dto/update-connection-type.dto";
@@ -39,10 +40,15 @@ import type {
   ConnectionPolicyTemplatePermissions,
   ConnectionPolicyTemplateRecord,
   ConnectionPolicyTemplateSeedDefinition,
+  PreviewPermissionsWithTrustStateResult,
+  TrustStateAdjustmentDefinition,
 } from "./identity.types";
 import {
+  applyTrustStateAdjustment,
+  getTrustStateAdjustment as getTrustStateAdjustmentDefinition,
+} from "./permission-merge";
+import {
   CONNECTION_POLICY_TEMPLATE_SEEDS,
-  resolveTemplateKeyCandidates,
   validateTemplatePermissions,
 } from "./policy-template-seeds";
 
@@ -325,6 +331,41 @@ export class IdentitiesService {
     }
 
     return toConnectionPolicyTemplateRecord(template);
+  }
+
+  getTrustStateAdjustment(
+    trustState: TrustState,
+  ): TrustStateAdjustmentDefinition {
+    return getTrustStateAdjustmentDefinition(trustState);
+  }
+
+  async previewPermissionsWithTrustState(
+    previewDto: PreviewPermissionsWithTrustStateDto,
+  ): Promise<PreviewPermissionsWithTrustStateResult> {
+    const template = await this.getConnectionPolicyTemplate({
+      sourceIdentityType: previewDto.sourceIdentityType ?? null,
+      connectionType: previewDto.connectionType,
+    });
+
+    const trustAdjustedPermissions = applyTrustStateAdjustment(
+      template.permissionsJson,
+      previewDto.trustState,
+    );
+
+    return {
+      template: {
+        id: template.id,
+        sourceIdentityType: template.sourceIdentityType,
+        connectionType: template.connectionType,
+        templateKey: template.templateKey,
+        displayName: template.displayName,
+        description: template.description,
+        policyVersion: template.policyVersion,
+      },
+      trustState: previewDto.trustState,
+      mergedPermissions: trustAdjustedPermissions.mergedPermissions,
+      mergeTrace: trustAdjustedPermissions.mergeTrace,
+    };
   }
 
   private async requireConnection(
