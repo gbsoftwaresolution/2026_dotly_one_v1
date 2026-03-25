@@ -84,7 +84,7 @@ export function AppShell({ children, session }: AppShellProps) {
             "flex-1",
             isShareRoute
               ? "px-0 py-0"
-              : "px-4 py-5 sm:px-5 pb-[calc(env(safe-area-inset-bottom,0px)+80px)]",
+              : "px-4 py-5 sm:px-5 pb-[calc(env(safe-area-inset-bottom,0px)+140px)]",
           )}
         >
           <div className={cn(isShareRoute ? "min-h-screen-dvh" : "space-y-4")}>

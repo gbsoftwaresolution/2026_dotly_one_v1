@@ -1,0 +1,442 @@
+/* Life Docs (apps/life-docs/*) — premium UI polish.
+   Scoped classnames to avoid affecting other apps.
+*/
+
+.lifeDocsPage {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+  color: var(--text-primary);
+}
+
+.lifeDocsPage--narrow {
+  max-width: 760px;
+}
+
+/* Hero / page header */
+.lifeDocsHero {
+  position: relative;
+  border-radius: calc(var(--radius-xl) + 4px);
+  border: 1px solid color-mix(in srgb, var(--border-primary) 70%, transparent);
+  background:
+    radial-gradient(1200px 500px at 20% -20%, color-mix(in srgb, var(--accent-primary) 22%, transparent), transparent 55%),
+    radial-gradient(900px 420px at 90% 10%, color-mix(in srgb, var(--accent-secondary) 18%, transparent), transparent 55%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-elevated) 72%, transparent), var(--bg-secondary));
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.lifeDocsHero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--bg-primary) 40%, transparent));
+}
+
+.lifeDocsHeroInner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-8);
+}
+
+.lifeDocsHero--compact .lifeDocsHeroInner {
+  padding: var(--space-6);
+}
+
+.lifeDocsHeroTitle {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.lifeDocsHeroSubtitle {
+  margin: var(--space-2) 0 0;
+  max-width: 64ch;
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+}
+
+.lifeDocsHeroActions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Segmented tabs */
+.lifeDocsTabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: var(--radius-full);
+  border: 1px solid color-mix(in srgb, var(--border-primary) 70%, transparent);
+  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  margin: var(--space-6) 0 var(--space-8);
+  flex-wrap: wrap;
+}
+
+.lifeDocsTab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+  transition: all var(--transition-fast);
+}
+
+.lifeDocsTab:hover {
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+  border-color: color-mix(in srgb, var(--border-primary) 70%, transparent);
+}
+
+.lifeDocsTab--active {
+  background: var(--accent-primary);
+  color: #000;
+  border-color: color-mix(in srgb, var(--accent-primary) 55%, var(--border-primary));
+  box-shadow: 0 10px 22px -14px rgba(0, 212, 255, 0.75);
+}
+
+/* Back link */
+.lifeDocsBackLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-tertiary);
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.lifeDocsBackLink:hover {
+  color: var(--text-primary);
+}
+
+/* Forms */
+.lifeDocsSectionHeader {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  margin: 0 0 var(--space-3);
+  font-weight: 900;
+}
+
+.lifeDocsDropzone {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  border: 1px dashed color-mix(in srgb, var(--border-primary) 85%, transparent);
+  background: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
+  transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.lifeDocsDropzone:hover {
+  border-color: color-mix(in srgb, var(--accent-primary) 55%, var(--border-primary));
+  background: color-mix(in srgb, var(--bg-elevated) 78%, transparent);
+  transform: translateY(-1px);
+}
+
+.lifeDocsCategoryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.lifeDocsCategoryCard {
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--border-primary) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-secondary) 85%, transparent);
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.lifeDocsCategoryCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: color-mix(in srgb, var(--border-hover) 70%, transparent);
+}
+
+.lifeDocsCategoryCard--active {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Detail layout */
+.lifeDocDetailHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.lifeDocDetailMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--text-tertiary);
+  font-weight: 700;
+}
+
+.lifeDocDetailActions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .lifeDocsHeroInner {
+    padding: var(--space-6);
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .lifeDocsHeroActions {
+    width: 100%;
+  }
+
+  .lifeDocDetailActions {
+    width: 100%;
+  }
+}
+
+/* Enhanced Life Docs Premium Styles */
+
+.lifeDocsGrid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+}
+
+.lifeDocsMainColumn {
+  grid-column: span 12;
+}
+
+@media (min-width: 900px) {
+  .lifeDocsMainColumn {
+    grid-column: span 8;
+  }
+  .lifeDocsSideColumn {
+    grid-column: span 4;
+  }
+}
+
+.lifeDocsSideColumn {
+  grid-column: span 12;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.lifeDocsCard {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-secondary);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-8);
+  transition: all var(--transition-base);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.lifeDocsCard:hover {
+  border-color: var(--border-primary);
+  box-shadow: var(--shadow-lg);
+}
+
+.lifeDocsCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.lifeDocsCardTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.lifeDocsDataGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-6);
+}
+
+.lifeDocsDataGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.lifeDocsDataLabel {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.lifeDocsDataValue {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.lifeDocsDataValue--highlight {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.lifeDocsMaskedContent {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.lifeDocsMaskedOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.lifeDocsMaskedOverlayMessage {
+  background: var(--bg-elevated);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  border: 1px solid var(--border-secondary);
+}
+
+.lifeDocsInputGroup {
+  margin-bottom: var(--space-4);
+}
+
+.lifeDocsInputLabel {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+  color: var(--text-primary);
+}
+
+.lifeDocsInput {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast);
+}
+
+.lifeDocsInput:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-primary-light);
+}
+
+.lifeDocsCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.lifeDocsCheckbox:hover {
+  background: var(--bg-tertiary);
+}
+
+.lifeDocsFileCard {
+  background: linear-gradient(135deg, var(--bg-elevated), var(--bg-secondary));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-10) var(--space-6);
+  min-height: 240px;
+}
+
+.lifeDocsFileIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+  background: var(--bg-primary);
+  color: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-md);
+}
+
+.lifeDocsVersionItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  border: 1px solid transparent;
+  margin-bottom: var(--space-3);
+  transition: all var(--transition-fast);
+}
+
+.lifeDocsVersionItem:hover {
+  border-color: var(--border-primary);
+  background: var(--bg-tertiary);
+}

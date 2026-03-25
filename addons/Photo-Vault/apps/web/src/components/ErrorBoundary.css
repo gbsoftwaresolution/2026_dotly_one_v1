@@ -1,0 +1,136 @@
+.error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.error-boundary-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 40px;
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+.error-boundary h1 {
+  color: #333;
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+.error-message {
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.error-details {
+  margin: 30px 0;
+  text-align: left;
+}
+
+.error-details summary {
+  cursor: pointer;
+  color: #667eea;
+  font-weight: 600;
+  padding: 10px;
+  background: #f7f7f7;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.error-details summary:hover {
+  background: #f0f0f0;
+}
+
+.error-details pre {
+  background: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 15px;
+  overflow: auto;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #333;
+  margin-top: 10px;
+}
+
+.error-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin: 30px 0;
+  flex-wrap: wrap;
+}
+
+.error-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 200px;
+}
+
+.error-button-reload {
+  background: #667eea;
+  color: white;
+}
+
+.error-button-reload:hover {
+  background: #5a67d8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.error-button-logout {
+  background: #f56565;
+  color: white;
+}
+
+.error-button-logout:hover {
+  background: #e53e3e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 101, 101, 0.4);
+}
+
+.error-help {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+  color: #777;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.error-help p {
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .error-boundary-content {
+    padding: 30px 20px;
+  }
+
+  .error-boundary h1 {
+    font-size: 2rem;
+  }
+
+  .error-actions {
+    flex-direction: column;
+  }
+
+  .error-button {
+    min-width: 100%;
+  }
+}

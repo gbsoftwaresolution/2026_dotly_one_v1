@@ -1,0 +1,8 @@
+export const AuditEventType = {
+  RECOVERY_RISK_ACCEPTED: "RECOVERY_RISK_ACCEPTED",
+  UPLOAD_BLOCKED_RECOVERY_REQUIRED: "UPLOAD_BLOCKED_RECOVERY_REQUIRED",
+  PASSWORD_RESET_WITHOUT_RECOVERY: "PASSWORD_RESET_WITHOUT_RECOVERY",
+} as const;
+
+export type AuditEventType =
+  (typeof AuditEventType)[keyof typeof AuditEventType];

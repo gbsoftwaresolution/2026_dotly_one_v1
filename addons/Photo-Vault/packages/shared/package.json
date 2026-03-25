@@ -1,0 +1,47 @@
+{
+  "name": "@booster-vault/shared",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared types and utilities for Booster Vault",
+  "keywords": [],
+  "author": "Booster Vault Team",
+  "license": "UNLICENSED",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js"
+    },
+    "./life-docs/types": {
+      "types": "./dist/types/life-docs/life-docs.types.d.ts",
+      "require": "./dist/cjs/life-docs/life-docs.types.js",
+      "import": "./dist/esm/life-docs/life-docs.types.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "pnpm clean && pnpm build:types && pnpm build:cjs && pnpm build:esm",
+    "build:types": "tsc -p tsconfig.types.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "clean": "rm -rf dist",
+    "dev": "tsc -w -p tsconfig.json",
+    "type-check": "tsc --noEmit",
+    "prepare": "pnpm build"
+  },
+  "devDependencies": {
+    "@booster-vault/config": "workspace:*",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "zod": "^3.22.0",
+    "class-validator": "^0.14.0",
+    "class-transformer": "^0.5.0"
+  }
+}

@@ -1,0 +1,972 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+  DOCUMENT
+}
+
+enum ExportStatus {
+  QUEUED
+  RUNNING
+  READY
+  FAILED
+  EXPIRED
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum PlanCode {
+  P6M_25
+  Y1_100
+  Y1_199
+  Y5_500
+  Y1_1000
+}
+
+enum CryptoInvoiceStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELED
+}
+
+enum CardContactGate {
+  OPEN
+  REQUEST_REQUIRED
+  HIDDEN
+}
+
+enum CardContactRequestStatus {
+  PENDING
+  APPROVED
+  DENIED
+  EXPIRED
+  REVOKED
+}
+
+enum CardAttachmentKind {
+  ALBUM
+  MEDIA
+  LIFE_DOC
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String
+  isEmailVerified Boolean   @default(false)
+  emailVerifiedAt DateTime?
+  displayName     String?
+  locale          String    @default("en")
+  timezone        String    @default("Asia/Kolkata")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Recovery enforcement (soft-mandatory)
+  // NULL: user has not accepted the risk of no recovery
+  // non-NULL: user explicitly accepted the risk without recovery
+  acceptedVaultRecoveryRiskAt DateTime?
+
+  // Relations
+  sessions       UserSession[]
+  keyBundle      VaultKeyBundle?
+  subscription   Subscription?
+  usage          UserUsage?
+  albums         Album[]
+  media          Media[]
+  albumItems     AlbumItem[]
+  exports        Export[]
+  auditEvents    AuditEvent[]
+  cryptoInvoices CryptoInvoice[]
+  tokens         Token[]
+  recoveryBundle RecoveryBundle?  // New relation
+  sharedAlbums   SharedAlbum[]    // Added for sharing
+  idempotencyKeys IdempotencyKey[]
+  lifeDocs        LifeDoc[]
+  notificationEvents NotificationEvent[]
+  continuityPacks      ContinuityPack[]
+  releasePolicies      ReleasePolicy[]
+  continuityRecipients ContinuityRecipient[]
+  personalCard         PersonalCard?
+
+  @@index([acceptedVaultRecoveryRiskAt])
+  @@map("users")
+}
+
+model PersonalCard {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  publicId  String   @unique @map("public_id")
+
+  // Premium: vanity username for routing (optional). Never used as identity/foreign key.
+  username          String?   @unique
+  usernameUpdatedAt DateTime? @map("username_updated_at")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  modes CardMode[]
+
+  @@index([publicId])
+  @@map("personal_cards")
+}
+
+model CardMode {
+  id   String @id @default(uuid())
+
+  cardId String @map("card_id")
+
+  // display
+  name     String
+  slug     String
+  headline String?
+  bio      String?
+
+  // mode policy
+  contactGate     CardContactGate @default(REQUEST_REQUIRED) @map("contact_gate")
+  indexingEnabled Boolean         @default(false) @map("indexing_enabled")
+
+  // theme (optional stub for later)
+  themeKey String? @map("theme_key")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  card            PersonalCard          @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  contactRequests CardContactRequest[]
+  contactGrants   CardContactGrant[]
+  attachments     CardAttachment[]
+  analytics       CardModeAnalytics?
+
+  @@unique([cardId, slug])
+  @@index([cardId])
+  @@map("card_modes")
+}
+
+model CardModeAnalytics {
+  modeId String @id @map("mode_id")
+
+  viewsTotal   BigInt    @default(0) @map("views_total")
+  lastViewedAt DateTime? @map("last_viewed_at")
+
+  contactRequestsTotal BigInt @default(0) @map("contact_requests_total")
+  approvalsTotal       BigInt @default(0) @map("approvals_total")
+  denialsTotal         BigInt @default(0) @map("denials_total")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  mode CardMode @relation(fields: [modeId], references: [id], onDelete: Cascade)
+
+  @@map("card_mode_analytics")
+}
+
+model CardContactRequest {
+  id     String @id @default(uuid())
+  modeId String @map("mode_id")
+  status CardContactRequestStatus @default(PENDING)
+
+  requesterName  String  @map("requester_name")
+  requesterEmail String  @map("requester_email")
+  requesterPhone String? @map("requester_phone")
+  message        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mode  CardMode          @relation(fields: [modeId], references: [id], onDelete: Cascade)
+  grant CardContactGrant?
+
+  @@index([modeId, createdAt])
+  @@index([status])
+  @@map("card_contact_requests")
+}
+
+model CardContactGrant {
+  id        String @id @default(uuid())
+  modeId    String @map("mode_id")
+  requestId String? @unique @map("request_id")
+
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mode    CardMode            @relation(fields: [modeId], references: [id], onDelete: Cascade)
+  request CardContactRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+
+  @@index([modeId, expiresAt])
+  @@index([revokedAt])
+  @@map("card_contact_grants")
+}
+
+model CardAttachment {
+  id     String @id @default(uuid())
+  modeId String @map("mode_id")
+  kind   CardAttachmentKind
+  refId  String @map("ref_id")
+  label  String?
+
+  sortOrder Int @default(0) @map("sort_order")
+
+  expiresAt DateTime? @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mode CardMode @relation(fields: [modeId], references: [id], onDelete: Cascade)
+
+  @@index([modeId, sortOrder])
+  @@index([kind, refId])
+  @@map("card_attachments")
+}
+
+model UserSession {
+  id               String   @id @default(uuid())
+  userId           String
+  refreshTokenHash String
+  userAgent        String?
+  ipAddress        String? // Prisma doesn't have INET type, use String
+  deviceName       String? // User-defined name for the device
+  lastSeenAt       DateTime @default(now())
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  revokedAt        DateTime? // When the session was manually revoked
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([userId, revokedAt, expiresAt])
+  @@index([userId, lastSeenAt])
+  @@map("user_sessions")
+}
+
+model VaultKeyBundle {
+  userId              String   @id @default(uuid())
+  encryptedMasterKey  Bytes
+  iv                  Bytes
+  kdfAlgo             String   @default("pbkdf2")
+  kdfParams           Json
+  bundleVersion       Int      @default(1)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("vault_key_bundles")
+}
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  userId               String             @unique
+  status               SubscriptionStatus @default(TRIAL)
+  plan                 PlanCode           @default(P6M_25)
+  trialStartedAt       DateTime           @default(now())
+  trialEndsAt          DateTime?
+  trialMediaLimit      Int                @default(50)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([plan])
+  @@map("subscriptions")
+}
+
+model UserUsage {
+  userId            String   @id @default(uuid())
+  totalMediaCount   BigInt   @default(0)
+  totalPhotoCount   BigInt   @default(0)
+  totalVideoCount   BigInt   @default(0)
+  trashedMediaCount BigInt   @default(0)
+  updatedAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_usage")
+}
+
+model Album {
+  id           String    @id @default(uuid())
+  userId       String
+  name         String
+  description  String?
+  coverMediaId String?
+  isDeleted    Boolean   @default(false)
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coverMedia     Media?        @relation("AlbumCoverMedia", fields: [coverMediaId], references: [id])
+  items          AlbumItem[]
+  exportsAsScope Export[]      @relation("ExportScopeAlbum")
+  sharedAlbums   SharedAlbum[] // Added for sharing
+
+  @@index([userId])
+  @@index([userId, isDeleted])
+  @@map("albums")
+}
+
+model Media {
+  id               String    @id @default(uuid())
+  userId           String
+  type             MediaType
+  objectKey        String    @unique
+  byteSize         BigInt
+  contentType      String
+  encAlgo          String    @default("xchacha20poly1305")
+  encMeta          Json
+
+  // Optional encrypted thumbnail stored as a separate object.
+  // Thumbnail is generated client-side from plaintext, then encrypted before upload.
+  // It is encrypted with the same per-media key (different IV), so it remains zero-knowledge.
+  thumbObjectKey   String?
+  thumbByteSize    BigInt?
+  thumbContentType String?
+  thumbEncMeta     Json?
+  thumbUploadedAt  DateTime?
+
+  originalFilename String?
+  sha256Ciphertext Bytes?
+  exifTakenAt      DateTime?
+  exifLat          Float?
+  exifLng          Float?
+  title            String?
+  note             String?
+  takenAt          DateTime?
+  locationText     String?
+  uploadedAt       DateTime?
+  isTrashed        Boolean   @default(false)
+  trashedAt        DateTime?
+  purgeAfter       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  albumItems     AlbumItem[]
+  coverForAlbums Album[]     @relation("AlbumCoverMedia")
+
+  @@index([userId])
+  @@index([userId, takenAt], name: "idx_media_user_taken_at")
+  @@index([userId, isTrashed, purgeAfter], name: "idx_media_user_trashed")
+  @@index([uploadedAt])
+  // Note: Full-text search column 'search_tsv' is a generated column in SQL;
+  // Prisma cannot create generated columns directly. We'll rely on raw SQL for that.
+  @@map("media")
+}
+
+model AlbumItem {
+  albumId  String
+  mediaId  String
+  userId   String
+  position BigInt
+  addedAt  DateTime @default(now())
+
+  album Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([albumId, mediaId])
+  @@index([albumId, position])
+  @@index([userId])
+  @@map("album_items")
+}
+
+model Export {
+  id              String       @id @default(uuid())
+  userId          String
+  scopeType       String // 'VAULT' | 'ALBUM' | 'DATE_RANGE'
+  scopeAlbumId    String?
+  scopeFrom       DateTime?
+  scopeTo         DateTime?
+  status          ExportStatus @default(QUEUED)
+  errorMessage    String?
+  outputObjectKey String?
+  outputByteSize  BigInt?
+  readyAt         DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scopeAlbum Album? @relation("ExportScopeAlbum", fields: [scopeAlbumId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt], name: "idx_exports_user_created")
+  @@index([status])
+  @@map("exports")
+}
+
+// Worker liveness/observability. Written by the worker process.
+// Used by the API for health endpoints and operational visibility.
+model WorkerHeartbeat {
+  kind       String
+  instanceId String
+  startedAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  meta       Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@id([kind, instanceId])
+  @@index([kind, lastSeenAt])
+  @@map("worker_heartbeats")
+}
+
+model Token {
+  id        String    @id @default(uuid())
+  userId    String
+  type      String // "EMAIL_VERIFICATION", "PASSWORD_RESET"
+  hash      String
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([hash])
+  @@index([expiresAt])
+  @@map("tokens")
+}
+
+model AuditEvent {
+  id         String   @id @default(uuid())
+  userId     String
+  eventType  String
+  entityType String?
+  entityId   String?
+  meta       Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("audit_events")
+}
+
+model CryptoInvoice {
+  id              String              @id @default(uuid())
+  userId          String
+  planCode        PlanCode
+  baseAmountCents Int
+  currency        String              @default("USD")
+  paymentAddress  String
+  status          CryptoInvoiceStatus @default(PENDING)
+  txHash          String?
+  expiresAt       DateTime
+  paidAt          DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, expiresAt])
+  @@map("crypto_invoices")
+}
+
+model RecoveryBundle {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  encryptedMasterKey  Bytes
+  iv                  Bytes
+  kdfParams           Json
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("recovery_bundles")
+}
+
+model StripeEvent {
+  id          String    @id @default(uuid())
+  eventId     String    @unique
+  type        String
+  payload     Json
+  processed   Boolean   @default(false)
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@map("stripe_events")
+}
+
+model SharedAlbum {
+  id                 String   @id @default(uuid())
+  ownerUserId        String
+  albumId            String
+  encryptedAlbumKey  Bytes?
+  encryptedMediaKeys Json?    // JSON array of encrypted media keys
+  iv                 Bytes?
+  kdfAlgo            String   @default("pbkdf2")
+  kdfParams          Json?
+  bundleUploadedAt   DateTime?
+  expiresAt          DateTime
+  revokedAt          DateTime?
+  viewCount          Int      @default(0)
+  lastViewedAt       DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  owner User  @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  album Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  shareAccessTokens ShareAccessToken[]
+
+  @@unique([albumId, ownerUserId])
+  @@index([albumId])
+  @@index([ownerUserId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@index([lastViewedAt])
+  @@map("shared_albums")
+}
+
+model ShareAccessToken {
+  id         String   @id @default(uuid())
+  shareId    String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  share SharedAlbum @relation(fields: [shareId], references: [id], onDelete: Cascade)
+
+  @@index([shareId, expiresAt])
+  @@index([tokenHash])
+  @@index([revokedAt])
+  @@map("share_access_tokens")
+}
+
+enum IdempotencyKeyStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+// -----------------------------
+// Booster Life Docs (Phase 1)
+// Structured metadata + reminders on top of Vault Media.
+// No file content parsing, no duplicate storage.
+// -----------------------------
+
+enum LifeDocCategory {
+  IDENTITY_LEGAL
+  MEDICAL
+  EDUCATION_CAREER
+  FINANCIAL_ASSET
+}
+
+enum LifeDocSubcategory {
+  // Identity & Legal
+  PASSPORT
+  NATIONAL_ID
+  DRIVERS_LICENSE
+  VISA
+  RESIDENCY_PERMIT
+  BIRTH_CERTIFICATE
+  MARRIAGE_CERTIFICATE
+  DIVORCE_DECREE
+
+  // Medical (Storage Only)
+  MEDICAL_REPORTS
+  PRESCRIPTIONS
+  VACCINATION_RECORDS
+  INSURANCE_CARDS
+  DISABILITY_DOCUMENTS
+
+  // Education & Career
+  DEGREES
+  CERTIFICATES
+  TRANSCRIPTS
+  PROFESSIONAL_LICENSES
+  EMPLOYMENT_CONTRACTS
+
+  // Financial & Asset (Storage Only)
+  INSURANCE_POLICIES
+  PROPERTY_DEEDS
+  RENTAL_AGREEMENTS
+  LOAN_AGREEMENTS
+  WILLS
+  POWER_OF_ATTORNEY
+
+  // Free-text label stored in LifeDoc.customSubcategory
+  CUSTOM
+}
+
+enum LifeDocReminderSetting {
+  OFF
+  EXPIRY_DEFAULT
+  EXPIRY_DEFAULT_AND_MONTHLY_POST
+}
+
+enum LifeDocVisibility {
+  PRIVATE
+  SHARED_WITH_MEMBERS
+  GUARDIAN_ACCESSIBLE
+}
+
+enum LifeDocAccessRole {
+  VIEWER
+  MANAGER
+  OWNER
+}
+
+enum LifeDocStatus {
+  ACTIVE
+  EXPIRING_SOON
+  EXPIRED
+  ARCHIVED
+  REPLACED
+}
+
+enum LifeDocReminderKind {
+  D90
+  D30
+  D7
+  ON_EXPIRY
+  POST_EXPIRY_MONTHLY
+  CUSTOM
+}
+
+enum LifeDocRenewalState {
+  NOT_REQUIRED
+  UPCOMING
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
+
+enum LifeDocAccessGrantKind {
+  SHARED
+  GUARDIAN
+}
+
+model IdempotencyKey {
+  id           String               @id @default(uuid())
+  userId       String
+  key          String
+  endpoint     String
+  requestHash  String
+  status       IdempotencyKeyStatus
+  responseCode Int?
+  responseBody Json?
+  createdAt    DateTime             @default(now())
+  completedAt  DateTime?
+  expiresAt    DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key, endpoint])
+  @@index([createdAt])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}
+
+model LifeDoc {
+  id              String               @id @default(uuid())
+
+  // Encrypted reference to Vault object (server-side sealed JSON).
+  vaultObjectId   Json                 @map("vault_object_id")
+
+  ownerId         String               @map("owner_id")
+  category        LifeDocCategory
+  subcategory     LifeDocSubcategory
+  customSubcategory String?            @map("custom_subcategory")
+  title           String
+  issuingAuthority String?             @map("issuing_authority")
+  issueDate       DateTime?            @map("issue_date")
+  expiryDate      DateTime?            @map("expiry_date")
+  renewalRequired Boolean              @default(false) @map("renewal_required")
+  renewalState    LifeDocRenewalState  @default(NOT_REQUIRED) @map("renewal_state")
+  reminderSetting LifeDocReminderSetting @default(EXPIRY_DEFAULT) @map("reminder_setting")
+
+  // Phase 2 reminder controls (metadata-only).
+  reminderCustomDays Int[]             @default([]) @map("reminder_custom_days")
+  quietHoursStart    String?           @map("quiet_hours_start") // HH:mm
+  quietHoursEnd      String?           @map("quiet_hours_end")   // HH:mm
+  notifySharedMembers Boolean          @default(false) @map("notify_shared_members")
+  lastRemindedAt     DateTime?         @map("last_reminded_at")
+
+  // Phase 2 ultra-privacy (masked mode is UI + access gate only).
+  maskedMode       Boolean             @default(false) @map("masked_mode")
+  maskedHideExpiry Boolean             @default(true) @map("masked_hide_expiry")
+  aliasTitle       String?             @map("alias_title")
+  visibility      LifeDocVisibility    @default(PRIVATE)
+
+  // Encrypted ACL (server-side sealed JSON). Not shared by default.
+  accessRoles     Json                 @default("{}") @map("access_roles")
+
+  // Stored status is for manual state (ARCHIVED); non-archived states are still computed.
+  status          LifeDocStatus        @default(ACTIVE)
+
+  // Used for replacement chains. Latest doc in group is considered current.
+  versionGroupId  String               @map("version_group_id")
+
+  // Integrity metadata from Vault Media (hash of ciphertext).
+  fileHash        String               @map("file_hash")
+  uploadTimestamp DateTime             @map("upload_timestamp")
+
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  owner           User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  accessGrants    LifeDocAccessGrant[]
+  remindersSent   LifeDocReminderSent[]
+  reminderEvents  LifeDocReminderEvent[]
+  continuityItems ContinuityPackItem[]
+
+  @@index([ownerId, createdAt])
+  @@index([ownerId, category])
+  @@index([expiryDate])
+  @@index([versionGroupId, uploadTimestamp])
+  @@map("life_docs")
+}
+
+// Phase 2 reminder event storage for idempotency + quiet-hours deferral.
+// Each event represents one scheduled reminder per recipient + channel.
+model LifeDocReminderEvent {
+  id              String            @id @default(uuid()) @map("reminder_event_id")
+  lifeDocId       String            @map("life_doc_id")
+  recipientUserId String            @map("recipient_user_id")
+  kind            LifeDocReminderKind
+  daysBeforeExpiry Int?             @map("days_before_expiry")
+  scheduledFor    DateTime          @map("scheduled_for")
+  sentAt          DateTime?         @map("sent_at")
+  channel         String            @map("channel")
+  dedupeKey       String            @unique @map("dedupe_key")
+  createdAt       DateTime          @default(now()) @map("created_at")
+
+  lifeDoc LifeDoc @relation(fields: [lifeDocId], references: [id], onDelete: Cascade)
+
+  @@index([lifeDocId, scheduledFor])
+  @@index([recipientUserId, scheduledFor])
+  @@map("life_doc_reminder_events")
+}
+
+// Index for who can access a doc, without storing the full ACL in plaintext.
+// granteeHash is an HMAC(userId) computed server-side with a secret.
+model LifeDocAccessGrant {
+  lifeDocId   String
+  kind        LifeDocAccessGrantKind
+  granteeHash String               @map("grantee_hash")
+  role        LifeDocAccessRole
+  createdAt   DateTime             @default(now()) @map("created_at")
+
+  lifeDoc     LifeDoc              @relation(fields: [lifeDocId], references: [id], onDelete: Cascade)
+
+  @@id([lifeDocId, kind, granteeHash])
+  @@index([granteeHash])
+  @@map("life_doc_access_grants")
+}
+
+// Reminder dedupe log to prevent duplicate reminders across cron runs.
+model LifeDocReminderSent {
+  id            String             @id @default(uuid())
+  lifeDocId     String             @map("life_doc_id")
+  recipientUserId String           @map("recipient_user_id")
+  kind          LifeDocReminderKind
+  scheduledFor  String             @map("scheduled_for") // ISO date (YYYY-MM-DD) in owner's timezone
+  notificationEventId String?      @map("notification_event_id")
+  createdAt     DateTime           @default(now()) @map("created_at")
+
+  lifeDoc       LifeDoc            @relation(fields: [lifeDocId], references: [id], onDelete: Cascade)
+
+  @@unique([lifeDocId, recipientUserId, kind, scheduledFor])
+  @@index([recipientUserId, createdAt])
+  @@map("life_doc_reminders_sent")
+}
+
+// Minimal internal notification event storage.
+// Delivery channels are out of scope for Phase 1; this is the secure internal event.
+model NotificationEvent {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String
+  payload   Json
+  createdAt DateTime @default(now()) @map("created_at")
+  deliveredAt DateTime? @map("delivered_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("notification_events")
+}
+
+// Continuity & Inheritance (Phase 3)
+
+enum ContinuityPackStatus {
+  DRAFT
+  ARMED
+  RELEASED
+  REVOKED
+  EXPIRED
+}
+
+enum ContinuityRecipientRole {
+  HEIR_VIEWER
+  TRUSTEE_MANAGER
+}
+
+enum ReleasePolicyType {
+  INACTIVITY
+  MANUAL_EMERGENCY
+  MULTI_PARTY_ATTESTATION
+}
+
+enum ReleaseInstanceStatus {
+  RELEASED
+  REVOKED
+  EXPIRED
+}
+
+model ContinuityPack {
+  id          String               @id @default(uuid())
+  ownerId     String               @map("owner_id")
+  name        String
+  description String?
+  status      ContinuityPackStatus @default(DRAFT)
+  
+  releasePolicyId String           @map("release_policy_id")
+  
+  revealCategory  Boolean @default(false) @map("reveal_category")
+  revealExpiry    Boolean @default(false) @map("reveal_expiry")
+  revealIssuer    Boolean @default(false) @map("reveal_issuer")
+  forceMaskedMode Boolean @default(true)  @map("force_masked_mode")
+  
+  releaseExpiryDays Int?           @map("release_expiry_days")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt      @map("updated_at")
+
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  releasePolicy ReleasePolicy @relation(fields: [releasePolicyId], references: [id])
+  
+  items       ContinuityPackItem[]
+  recipients  ContinuityPackRecipient[]
+  releases    ReleaseInstance[]
+
+  @@index([ownerId])
+  @@map("continuity_packs")
+}
+
+model ContinuityPackItem {
+  id          String @id @default(uuid())
+  packId      String @map("pack_id")
+  
+  lifeDocId   String? @map("life_doc_id") 
+  versionGroupId String? @map("version_group_id")
+  
+  addedAt     DateTime @default(now()) @map("added_at")
+
+  pack        ContinuityPack @relation(fields: [packId], references: [id], onDelete: Cascade)
+  lifeDoc     LifeDoc? @relation(fields: [lifeDocId], references: [id])
+
+  @@index([packId])
+  @@map("continuity_pack_items")
+}
+
+model ReleasePolicy {
+  id          String            @id @default(uuid())
+  ownerId     String            @map("owner_id")
+  type        ReleasePolicyType
+  
+  parameters  Json
+  
+  cooldownPeriod Int   @default(0) @map("cooldown_period")
+  gracePeriod    Int   @default(0) @map("grace_period")
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt      @map("updated_at")
+
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  packs       ContinuityPack[]
+
+  @@index([ownerId])
+  @@map("release_policies")
+}
+
+model ContinuityRecipient {
+  id          String                  @id @default(uuid())
+  ownerId     String                  @map("owner_id")
+  
+  email       String
+  phone       String?
+  name        String
+  
+  accessCodeHash String? @map("access_code_hash")
+  
+  verifiedAt  DateTime? @map("verified_at")
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt      @map("updated_at")
+
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  packAssignments ContinuityPackRecipient[]
+  releases    ReleaseInstance[]
+
+  @@unique([ownerId, email])
+  @@map("continuity_recipients")
+}
+
+model ContinuityPackRecipient {
+  id          String                  @id @default(uuid())
+  packId      String                  @map("pack_id")
+  recipientId String                  @map("recipient_id")
+  
+  role        ContinuityRecipientRole @default(HEIR_VIEWER)
+
+  pack        ContinuityPack @relation(fields: [packId], references: [id], onDelete: Cascade)
+  recipient   ContinuityRecipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@unique([packId, recipientId])
+  @@map("continuity_pack_recipients")
+}
+
+model ReleaseInstance {
+  id          String   @id @default(uuid())
+  packId      String   @map("pack_id")
+  recipientId String   @map("recipient_id")
+  
+  releasedAt  DateTime @default(now()) @map("released_at")
+  expiresAt   DateTime? @map("expires_at")
+  
+  scopeSnapshot Json   @map("scope_snapshot")
+  status      ReleaseInstanceStatus @default(RELEASED)
+  key         String?  @map("key")
+
+  pack        ContinuityPack @relation(fields: [packId], references: [id])
+  recipient   ContinuityRecipient @relation(fields: [recipientId], references: [id])
+
+  @@index([recipientId])
+  @@index([packId])
+  @@map("release_instances")
+}

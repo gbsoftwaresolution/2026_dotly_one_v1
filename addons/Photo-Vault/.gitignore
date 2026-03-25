@@ -1,0 +1,67 @@
+# --- Secrets / env files ---
+.env
+.env.*
+!.env.example
+!.env.template
+
+# --- Node / package managers ---
+node_modules/
+.pnpm-store/
+
+# --- Logs ---
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Build outputs ---
+dist/
+build/
+coverage/
+
+# Workspace build outputs (monorepo)
+apps/**/dist/
+apps/**/build/
+apps/**/.vite/
+apps/**/.cache/
+apps/**/.turbo/
+apps/**/.next/
+apps/**/.output/
+apps/**/.svelte-kit/
+apps/**/.nuxt/
+apps/**/.vercel/
+
+# --- Playwright / test artifacts ---
+playwright-report/
+test-results/
+blob-report/
+
+# --- TypeScript / tooling caches ---
+*.tsbuildinfo
+.eslintcache
+
+# Avoid committing stray declaration outputs next to sources
+packages/shared/src/**/*.d.ts
+packages/shared/src/**/*.d.ts.map
+
+# --- Prisma ---
+prisma/dev.db*
+prisma/*.db*
+
+# --- Editor / OS ---
+.DS_Store
+Thumbs.db
+.idea/
+
+# VS Code (keep common team files)
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# --- Misc ---
+*.swp
+*.swo
+*~

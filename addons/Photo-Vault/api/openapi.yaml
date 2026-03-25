@@ -1,0 +1,4809 @@
+# api/openapi.yaml
+openapi: 3.0.3
+info:
+  title: Booster Vault API (Non-AI MVP)
+  version: 1.0.0
+  description: >
+    Booster Vault – Memory/Photo Vault (Non-AI MVP). Encrypted media blobs; server stores metadata + signed URLs only.
+servers:
+  - url: https://api.boostervault.com
+    description: Production
+  - url: http://localhost:4000
+    description: Local
+
+tags:
+  - name: Auth
+  - name: Recovery
+  - name: Users
+  - name: Devices
+  - name: VaultKey
+  - name: Card
+  - name: Media
+  - name: Albums
+  - name: Exports
+  - name: LifeDocs
+  - name: Continuity
+  - name: Storage
+  - name: Sharing
+  - name: Billing
+  - name: System
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Stable, machine-readable error code.
+          example: VALIDATION_ERROR
+          examples: [VALIDATION_ERROR, RECOVERY_REQUIRED]
+        message:
+          type: string
+          example: Invalid request
+        statusCode:
+          type: number
+          nullable: true
+          description: Optional HTTP status code field (when returned by framework default errors).
+        error:
+          type: string
+          nullable: true
+          description: Optional short error label (when returned by framework default errors).
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+        requestId:
+          type: string
+          nullable: true
+          description: Request correlation id (from x-request-id or generated).
+
+    QueueHealth:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean, example: true }
+        counts:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: integer
+        repeatables:
+          type: array
+          nullable: true
+          items:
+            type: object
+            required: [name]
+            properties:
+              name: { type: string }
+              id: { type: string, nullable: true }
+              every: { type: integer, nullable: true }
+              cron: { type: string, nullable: true }
+              next: { type: integer, nullable: true }
+        error: { type: string, nullable: true }
+
+    Pagination:
+      type: object
+      properties:
+        limit: { type: integer, minimum: 1, maximum: 200, example: 50 }
+        cursor: { type: string, nullable: true, example: "eyJpZCI6Ii4uLiJ9" }
+        nextCursor: { type: string, nullable: true }
+
+    User:
+      type: object
+      required: [id, email, isEmailVerified, locale, timezone, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        isEmailVerified: { type: boolean }
+        displayName: { type: string, nullable: true }
+        locale: { type: string, example: "en" }
+        timezone: { type: string, example: "Asia/Kolkata" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    Session:
+      type: object
+      required: [accessToken, refreshToken, expiresIn]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        expiresIn: { type: integer, example: 3600 }
+
+    Plan:
+      type: object
+      required: [code, name, priceCents, currency, interval, features]
+      properties:
+        code:
+          type: string
+          enum: [P6M_25, Y1_100, Y1_199, Y5_500]
+        name: { type: string, example: "Life Vault – Annual" }
+        priceCents: { type: integer, example: 10000 }
+        currency: { type: string, example: "USD" }
+        interval:
+          type: string
+          enum: [SIX_MONTHS, YEAR, FIVE_YEARS]
+        features:
+          type: array
+          items: { type: string }
+
+    Subscription:
+      type: object
+      required: [status, plan, trialStartedAt, trialEndsAt, trialMediaLimit, cancelAtPeriodEnd]
+      properties:
+        status:
+          type: string
+          enum: [TRIAL, ACTIVE, PAST_DUE, CANCELED, EXPIRED]
+        plan:
+          type: string
+          enum: [P6M_25, Y1_100, Y1_199, Y5_500]
+        trialStartedAt: { type: string, format: date-time }
+        trialEndsAt: { type: string, format: date-time, nullable: true }
+        trialMediaLimit: { type: integer, example: 50 }
+        currentPeriodStart: { type: string, format: date-time, nullable: true }
+        currentPeriodEnd: { type: string, format: date-time, nullable: true }
+        cancelAtPeriodEnd: { type: boolean }
+        stripeCustomerId: { type: string, nullable: true }
+        stripeSubscriptionId: { type: string, nullable: true }
+
+    Usage:
+      type: object
+      required: [totalMediaCount, totalPhotoCount, totalVideoCount, trashedMediaCount, updatedAt]
+      properties:
+        totalMediaCount: { type: integer, example: 123 }
+        totalPhotoCount: { type: integer, example: 120 }
+        totalVideoCount: { type: integer, example: 3 }
+        trashedMediaCount: { type: integer, example: 2 }
+        updatedAt: { type: string, format: date-time }
+
+    Media:
+      type: object
+      required: [id, type, byteSize, contentType, createdAt, updatedAt, isTrashed]
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, enum: [PHOTO, VIDEO, DOCUMENT] }
+        byteSize: { type: integer, format: int64 }
+        contentType: { type: string, example: "image/jpeg" }
+        originalFilename: { type: string, nullable: true }
+        title: { type: string, nullable: true }
+        note: { type: string, nullable: true }
+        takenAt: { type: string, format: date-time, nullable: true }
+        locationText: { type: string, nullable: true }
+        exifTakenAt: { type: string, format: date-time, nullable: true }
+        exifLat: { type: number, nullable: true }
+        exifLng: { type: number, nullable: true }
+        encAlgo: { type: string, example: "xchacha20poly1305" }
+        encMeta:
+          type: object
+          additionalProperties: true
+        thumbObjectKey: { type: string, nullable: true }
+        thumbByteSize: { type: integer, format: int64, nullable: true }
+        thumbContentType: { type: string, nullable: true }
+        thumbEncMeta:
+          type: object
+          nullable: true
+          additionalProperties: true
+        thumbUploadedAt: { type: string, format: date-time, nullable: true }
+        isTrashed: { type: boolean }
+        trashedAt: { type: string, format: date-time, nullable: true }
+        purgeAfter: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    PaginatedMediaResponse:
+      type: object
+      required: [items, hasMore]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Media" }
+        nextCursor: { type: string, nullable: true }
+        hasMore: { type: boolean }
+
+    Album:
+      type: object
+      required: [id, name, createdAt, updatedAt, isDeleted]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        coverMediaId: { type: string, format: uuid, nullable: true }
+        isDeleted: { type: boolean }
+        deletedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    Export:
+      type: object
+      required: [id, userId, scopeType, status, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        scopeType: { type: string, enum: [VAULT, ALBUM, DATE_RANGE] }
+        scopeAlbumId: { type: string, format: uuid, nullable: true }
+        scopeFrom: { type: string, format: date-time, nullable: true }
+        scopeTo: { type: string, format: date-time, nullable: true }
+        status: { type: string, enum: [QUEUED, RUNNING, READY, FAILED, EXPIRED] }
+        errorMessage: { type: string, nullable: true }
+        outputObjectKey: { type: string, nullable: true }
+        outputByteSize: { type: integer, format: int64, nullable: true }
+        readyAt: { type: string, format: date-time, nullable: true }
+        expiresAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    PaginatedExportsResponse:
+      type: object
+      required: [items, hasMore]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Export" }
+        nextCursor: { type: string, nullable: true }
+        hasMore: { type: boolean }
+
+    SignedUrl:
+      type: object
+      required: [url, expiresAt, method, headers]
+      properties:
+        url: { type: string }
+        expiresAt: { type: string, format: date-time }
+        method: { type: string, enum: [PUT, GET] }
+        headers:
+          type: object
+          additionalProperties: true
+
+    MultipartUploadSupport:
+      type: object
+      required: [supported, partSize, minPartSize, maxParts, threshold]
+      properties:
+        supported: { type: boolean }
+        partSize: { type: integer, format: int64, description: "Recommended part size in bytes." }
+        minPartSize: { type: integer, format: int64, description: "Minimum part size in bytes (S3 requires 5MiB except last part)." }
+        maxParts: { type: integer, description: "Maximum number of parts (S3 limit is 10,000)." }
+        threshold: { type: integer, format: int64, description: "Suggested threshold (bytes) to switch from single PUT to multipart." }
+
+    MultipartUploadInitResponse:
+      type: object
+      required: [uploadId, partSize]
+      properties:
+        uploadId: { type: string }
+        partSize: { type: integer, format: int64 }
+
+    MultipartUploadedPart:
+      type: object
+      required: [partNumber, etag]
+      properties:
+        partNumber: { type: integer }
+        etag: { type: string }
+        size: { type: integer, format: int64, nullable: true }
+
+    MultipartUploadStatusResponse:
+      type: object
+      required: [parts]
+      properties:
+        parts:
+          type: array
+          items: { $ref: "#/components/schemas/MultipartUploadedPart" }
+
+    MultipartUploadPartUrlResponse:
+      type: object
+      required: [partNumber, uploadUrl]
+      properties:
+        partNumber: { type: integer }
+        uploadUrl: { $ref: "#/components/schemas/SignedUrl" }
+
+    MultipartCompleteRequest:
+      type: object
+      required: [parts]
+      properties:
+        parts:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [partNumber, etag]
+            properties:
+              partNumber: { type: integer }
+              etag: { type: string }
+
+    CreateShareDto:
+      type: object
+      properties:
+        expiresInDays:
+          type: integer
+          minimum: 1
+          maximum: 365
+          default: 7
+
+    CreateShareRequest:
+      type: object
+      required: [createShareDto, encryptedAlbumKey, encryptedMediaKeys, iv, kdfParams]
+      properties:
+        createShareDto: { $ref: "#/components/schemas/CreateShareDto" }
+        encryptedAlbumKey:
+          type: string
+          description: base64
+        encryptedMediaKeys:
+          type: array
+          items:
+            type: object
+            required: [mediaId, encryptedKey, iv]
+            properties:
+              mediaId: { type: string, format: uuid }
+              encryptedKey: { type: string, description: base64 }
+              iv: { type: string, description: base64 }
+        iv:
+          type: string
+          description: base64
+        kdfParams:
+          type: object
+          required: [iterations, hash, salt]
+          properties:
+            iterations: { type: integer }
+            hash: { type: string }
+            salt: { type: string, description: base64 }
+
+    CreateShareStubRequest:
+      type: object
+      required: [createShareDto]
+      properties:
+        createShareDto: { $ref: "#/components/schemas/CreateShareDto" }
+
+    UploadShareBundleRequest:
+      type: object
+      required: [encryptedAlbumKey, encryptedMediaKeys, iv, kdfParams]
+      properties:
+        encryptedAlbumKey:
+          type: string
+          description: base64
+        encryptedMediaKeys:
+          type: array
+          items:
+            type: object
+            required: [mediaId, encryptedKey, iv]
+            properties:
+              mediaId: { type: string, format: uuid }
+              encryptedKey: { type: string, description: base64 }
+              iv: { type: string, description: base64 }
+        iv:
+          type: string
+          description: base64
+        kdfParams:
+          type: object
+          required: [iterations, hash, salt]
+          properties:
+            iterations: { type: integer }
+            hash: { type: string }
+            salt: { type: string, description: base64 }
+
+    CreateShareResponse:
+      type: object
+      required: [shareId, shareLink, sharePassphrase, expiresAt]
+      properties:
+        shareId: { type: string, format: uuid }
+        shareLink: { type: string }
+        sharePassphrase: { type: string }
+        expiresAt: { type: string, format: date-time }
+
+    SharedAlbumMetadata:
+      type: object
+      required: [shareId, album, expiresAt]
+      properties:
+        shareId: { type: string, format: uuid }
+        album: { $ref: "#/components/schemas/Album" }
+        expiresAt: { type: string, format: date-time }
+        revokedAt: { type: string, format: date-time, nullable: true }
+
+    UnlockShareRequest:
+      type: object
+      required: [passphrase]
+      properties:
+        passphrase: { type: string }
+
+    EncryptedShareBundle:
+      type: object
+      required: [shareId, encryptedAlbumKey, encryptedMediaKeys, iv, kdfParams]
+      properties:
+        shareId: { type: string, format: uuid }
+        encryptedAlbumKey: { type: string, description: base64 }
+        encryptedMediaKeys:
+          type: array
+          items:
+            type: object
+            required: [mediaId, encryptedKey, iv]
+            properties:
+              mediaId: { type: string, format: uuid }
+              encryptedKey: { type: string, description: base64 }
+              iv: { type: string, description: base64 }
+        iv: { type: string, description: base64 }
+        kdfParams:
+          type: object
+          required: [iterations, hash, salt]
+          properties:
+            iterations: { type: integer }
+            hash: { type: string }
+            salt: { type: string, description: base64 }
+        shareAccessToken:
+          type: string
+          nullable: true
+          description: Short-lived token to authorize share-scoped download URLs.
+        tokenExpiresAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    SharedMediaDownloadUrl:
+      type: object
+      required: [url, expiresAt, method]
+      properties:
+        url: { type: string }
+        expiresAt: { type: string, format: date-time }
+        method: { type: string, example: GET }
+        headers:
+          type: object
+          nullable: true
+          additionalProperties: true
+        media:
+          type: object
+          nullable: true
+          required: [id, type, byteSize, contentType, encMeta, createdAt, updatedAt]
+          properties:
+            id: { type: string, format: uuid }
+            type: { type: string, enum: [PHOTO, VIDEO, DOCUMENT] }
+            byteSize: { type: integer, format: int64 }
+            contentType: { type: string }
+            encMeta:
+              type: object
+              additionalProperties: true
+            thumbByteSize: { type: integer, format: int64, nullable: true }
+            thumbContentType: { type: string, nullable: true }
+            thumbEncMeta:
+              type: object
+              nullable: true
+              additionalProperties: true
+            thumbUploadedAt: { type: string, format: date-time, nullable: true }
+            originalFilename: { type: string, nullable: true }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+
+    SharedMediaMetadataItem:
+      type: object
+      required: [id, type, byteSize, contentType, encMeta, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, enum: [PHOTO, VIDEO, DOCUMENT] }
+        byteSize: { type: integer, format: int64 }
+        contentType: { type: string }
+        encMeta:
+          type: object
+          additionalProperties: true
+        thumbByteSize: { type: integer, format: int64, nullable: true }
+        thumbContentType: { type: string, nullable: true }
+        thumbEncMeta:
+          type: object
+          nullable: true
+          additionalProperties: true
+        thumbUploadedAt: { type: string, format: date-time, nullable: true }
+        originalFilename: { type: string, nullable: true }
+        exifTakenAt: { type: string, format: date-time, nullable: true }
+        takenAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    SharedMediaMetadataList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/SharedMediaMetadataItem" }
+        nextCursor:
+          type: integer
+          nullable: true
+          description: Cursor for the next page (index into the snapshot order).
+
+    ShareAnalytics:
+      type: object
+      required: [shareId, viewCount]
+      properties:
+        shareId: { type: string, format: uuid }
+        viewCount: { type: integer, minimum: 0 }
+        lastViewedAt: { type: string, format: date-time, nullable: true }
+
+    CardContactGate:
+      type: string
+      enum: [OPEN, REQUEST_REQUIRED, HIDDEN]
+
+    CardAttachmentKind:
+      type: string
+      enum: [ALBUM, MEDIA, LIFE_DOC]
+
+    CardAttachmentResolvedLink:
+      type: object
+      required: [kind, shareId, shareLink, expiresAt]
+      properties:
+        kind:
+          type: string
+          enum: [SHARED_ALBUM]
+        shareId: { type: string, format: uuid }
+        shareLink: { type: string }
+        expiresAt: { type: string, format: date-time }
+
+    CardContactRequestStatus:
+      type: string
+      enum: [PENDING, APPROVED, DENIED, EXPIRED, REVOKED]
+
+    CardModePublic:
+      type: object
+      required:
+        - modeId
+        - cardPublicId
+        - slug
+        - name
+        - contactGate
+        - indexingEnabled
+        - createdAt
+        - updatedAt
+      properties:
+        modeId: { type: string, format: uuid }
+        cardPublicId: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        headline: { type: string, nullable: true }
+        bio: { type: string, nullable: true }
+        contactGate: { $ref: "#/components/schemas/CardContactGate" }
+        indexingEnabled: { type: boolean }
+        themeKey: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    CreateCardModeDto:
+      type: object
+      required: [name, slug]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 80 }
+        slug:
+          type: string
+          minLength: 2
+          maxLength: 40
+          pattern: "^[a-z0-9-]+$"
+        headline: { type: string, maxLength: 140, nullable: true }
+        bio: { type: string, maxLength: 1000, nullable: true }
+        contactGate: { $ref: "#/components/schemas/CardContactGate" }
+        indexingEnabled: { type: boolean, nullable: true }
+        themeKey: { type: string, maxLength: 40, nullable: true }
+
+    ListCardModesResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CardModePublic" }
+
+    UpdateCardUsernameDto:
+      type: object
+      required: [username]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 24
+          pattern: "^[a-z0-9_]{3,24}$"
+
+    UpdateCardUsernameResponse:
+      type: object
+      required: [username]
+      properties:
+        username: { type: string }
+
+    ResolveUsernameResponse:
+      type: object
+      required: [publicId]
+      properties:
+        publicId: { type: string }
+
+    CardAttachment:
+      type: object
+      required: [id, kind, refId, sortOrder]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { $ref: "#/components/schemas/CardAttachmentKind" }
+        refId: { type: string }
+        label: { type: string, nullable: true }
+        sortOrder: { type: integer }
+        expiresAt: { type: string, format: date-time, nullable: true }
+        revokedAt: { type: string, format: date-time, nullable: true }
+        resolvedLink:
+          nullable: true
+          allOf:
+            - { $ref: "#/components/schemas/CardAttachmentResolvedLink" }
+
+    CreateCardAttachmentDto:
+      type: object
+      required: [kind, refId]
+      properties:
+        kind:
+          type: string
+          enum: [ALBUM]
+        refId: { type: string, format: uuid }
+        label: { type: string, maxLength: 120, nullable: true }
+        sortOrder: { type: integer, minimum: 0, nullable: true }
+
+    ListCardAttachmentsResponse:
+      type: object
+      required: [attachments]
+      properties:
+        attachments:
+          type: array
+          items: { $ref: "#/components/schemas/CardAttachment" }
+
+    ReorderCardAttachmentItemDto:
+      type: object
+      required: [attachmentId, sortOrder]
+      properties:
+        attachmentId: { type: string, format: uuid }
+        sortOrder: { type: integer, minimum: 0 }
+
+    ReorderCardAttachmentsDto:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/ReorderCardAttachmentItemDto" }
+
+    UpdateCardAttachmentDto:
+      type: object
+      properties:
+        label: { type: string, maxLength: 120, nullable: true }
+        sortOrder: { type: integer, minimum: 0, nullable: true }
+        expiresAt: { type: string, format: date-time, nullable: true }
+
+    ReorderCardAttachmentsOrderedDto:
+      type: object
+      required: [attachmentIds]
+      properties:
+        attachmentIds:
+          type: array
+          minItems: 1
+          items: { type: string, format: uuid }
+
+    ReorderCardAttachmentsResponse:
+      type: object
+      required: [attachments]
+      properties:
+        attachments:
+          type: array
+          items: { $ref: "#/components/schemas/CardAttachment" }
+
+    GetPublicCardModeResponse:
+      type: object
+      required: [mode, attachments]
+      properties:
+        mode: { $ref: "#/components/schemas/CardModePublic" }
+        attachments:
+          type: array
+          items: { $ref: "#/components/schemas/CardAttachment" }
+
+    CreateCardContactRequestDto:
+      type: object
+      required: [requesterName, requesterEmail]
+      properties:
+        requesterName: { type: string, minLength: 2, maxLength: 80 }
+        requesterEmail: { type: string, format: email }
+        requesterPhone: { type: string, maxLength: 30, nullable: true }
+        message: { type: string, maxLength: 1000, nullable: true }
+        captchaToken:
+          type: string
+          maxLength: 5000
+          nullable: true
+          description: Turnstile token (required when CAPTCHA is enabled)
+
+    CreateCardContactRequestResponse:
+      type: object
+      required: [requestId, status, createdAt]
+      properties:
+        requestId: { type: string, format: uuid }
+        status: { $ref: "#/components/schemas/CardContactRequestStatus" }
+        createdAt: { type: string, format: date-time }
+
+    ApproveCardContactRequestDto:
+      type: object
+      properties:
+        expiresInDays: { type: integer, minimum: 1, maximum: 365, nullable: true }
+        expiresAt: { type: string, format: date-time, nullable: true }
+
+    ApproveCardContactRequestResponse:
+      type: object
+      required: [grantId, token, expiresAt]
+      properties:
+        grantId: { type: string, format: uuid }
+        token: { type: string }
+        expiresAt: { type: string, format: date-time }
+
+    CardContactRevealResponse:
+      type: object
+      properties:
+        displayName: { type: string, nullable: true }
+        email: { type: string, format: email, nullable: true }
+
+    CardModeAnalyticsResponse:
+      type: object
+      required:
+        - modeId
+        - viewsTotal
+        - contactRequestsTotal
+        - approvalsTotal
+        - denialsTotal
+        - activeGrantsTotal
+      properties:
+        modeId: { type: string, format: uuid }
+        viewsTotal: { type: integer, minimum: 0 }
+        lastViewedAt: { type: string, format: date-time, nullable: true }
+        contactRequestsTotal: { type: integer, minimum: 0 }
+        approvalsTotal: { type: integer, minimum: 0 }
+        denialsTotal: { type: integer, minimum: 0 }
+        activeGrantsTotal: { type: integer, minimum: 0 }
+
+    ListCardModeAnalyticsResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CardModeAnalyticsResponse" }
+
+    SuccessResponse:
+      type: object
+      required: [success]
+      properties:
+        success: { type: boolean, example: true }
+
+    CardContactRequestListItem:
+      type: object
+      required: [id, status, requesterName, requesterEmail, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        status: { $ref: "#/components/schemas/CardContactRequestStatus" }
+        requesterName: { type: string }
+        requesterEmail: { type: string, format: email }
+        requesterPhone: { type: string, nullable: true }
+        message: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    ListCardContactRequestsResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CardContactRequestListItem" }
+        nextCursor: { type: string, nullable: true }
+
+    CreateUploadIntentRequest:
+      type: object
+      required: [type, byteSize, contentType, encAlgo, encMeta]
+      properties:
+        type: { type: string, enum: [PHOTO, VIDEO, DOCUMENT] }
+        byteSize: { type: integer, format: int64 }
+        contentType: { type: string }
+        originalFilename: { type: string, nullable: true }
+        sha256CiphertextB64: { type: string, nullable: true }
+        encAlgo: { type: string, example: "xchacha20poly1305" }
+        encMeta:
+          type: object
+          additionalProperties: true
+        exifTakenAt: { type: string, format: date-time, nullable: true }
+        exifLat: { type: number, nullable: true }
+        exifLng: { type: number, nullable: true }
+        takenAt: { type: string, format: date-time, nullable: true }
+        locationText: { type: string, nullable: true }
+        title: { type: string, nullable: true }
+        note: { type: string, nullable: true }
+
+    CreateUploadIntentResponse:
+      type: object
+      required: [media, signedUploadUrl]
+      properties:
+        media: { $ref: "#/components/schemas/Media" }
+        signedUploadUrl: { $ref: "#/components/schemas/SignedUrl" }
+        signedThumbnailUploadUrl:
+          nullable: true
+          allOf:
+            - { $ref: "#/components/schemas/SignedUrl" }
+        multipart:
+          nullable: true
+          allOf:
+            - { $ref: "#/components/schemas/MultipartUploadSupport" }
+
+    ThumbnailUploadIntentRequest:
+      type: object
+      required: [byteSize, contentType, encMeta]
+      properties:
+        byteSize: { type: integer, format: int64 }
+        contentType: { type: string }
+        encMeta:
+          type: object
+          additionalProperties: true
+
+    ThumbnailUploadIntentResponse:
+      type: object
+      required: [media, signedThumbnailUploadUrl]
+      properties:
+        media: { $ref: "#/components/schemas/Media" }
+        signedThumbnailUploadUrl: { $ref: "#/components/schemas/SignedUrl" }
+
+    CompleteUploadRequest:
+      type: object
+      properties:
+        etag:
+          type: string
+          nullable: true
+          description: "Provider ETag or checksum returned after upload (optional)."
+
+    CreateAlbumRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string, nullable: true }
+        coverMediaId: { type: string, format: uuid, nullable: true }
+
+    UpdateAlbumRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string, nullable: true }
+        coverMediaId: { type: string, format: uuid, nullable: true }
+
+    AddAlbumItemsRequest:
+      type: object
+      required: [mediaIds]
+      properties:
+        mediaIds:
+          type: array
+          minItems: 1
+          items: { type: string, format: uuid }
+
+    ReorderAlbumItemsRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [mediaId, position]
+            properties:
+              mediaId: { type: string, format: uuid }
+              position: { type: integer, format: int64 }
+
+    UpdateMediaRequest:
+      type: object
+      properties:
+        title: { type: string, nullable: true }
+        note: { type: string, nullable: true }
+        takenAt: { type: string, format: date-time, nullable: true }
+        locationText: { type: string, nullable: true }
+
+    CreateExportRequest:
+      type: object
+      required: [scopeType]
+      properties:
+        scopeType: { type: string, enum: [VAULT, ALBUM, DATE_RANGE] }
+        scopeAlbumId: { type: string, format: uuid, nullable: true }
+        scopeFrom: { type: string, format: date-time, nullable: true }
+        scopeTo: { type: string, format: date-time, nullable: true }
+
+    CreateCheckoutSessionRequest:
+      type: object
+      required: [planCode, successUrl, cancelUrl]
+      properties:
+        planCode:
+          type: string
+          description: Exposed plan code
+          enum: [P6M_25, Y1_100, Y1_199]
+        successUrl: { type: string }
+        cancelUrl: { type: string }
+
+    CreateCheckoutSessionResponse:
+      type: object
+      required: [checkoutUrl, sessionId]
+      properties:
+        checkoutUrl: { type: string }
+        sessionId: { type: string }
+
+    KdfParams:
+      type: object
+      required: [iterations, hash, salt]
+      properties:
+        iterations: { type: integer, format: int32, example: 200000 }
+        hash: { type: string, example: "SHA-256" }
+        salt: { type: string, description: Base64-encoded salt }
+
+    EnableRecoveryRequest:
+      type: object
+      required: [encryptedMasterKey, iv, kdfParams]
+      properties:
+        encryptedMasterKey: { type: string, description: Base64-encoded bytes }
+        iv: { type: string, description: Base64-encoded 12-byte IV }
+        kdfParams: { $ref: "#/components/schemas/KdfParams" }
+
+    DisableRecoveryRequest:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string }
+
+    RecoveryBundleRequest:
+      type: object
+      required: [userId]
+      properties:
+        userId: { type: string, format: uuid }
+
+    RecoveryBundleResponse:
+      type: object
+      required: [encryptedMasterKey, iv, kdfParams]
+      properties:
+        encryptedMasterKey: { type: string, description: Base64-encoded bytes }
+        iv: { type: string, description: Base64-encoded 12-byte IV }
+        kdfParams: { $ref: "#/components/schemas/KdfParams" }
+
+    UpsertVaultKeyBundleRequest:
+      type: object
+      required: [encryptedMasterKey, iv, kdfParams]
+      properties:
+        encryptedMasterKey: { type: string, description: Base64-encoded bytes }
+        iv: { type: string, description: Base64-encoded bytes }
+        kdfParams: { $ref: "#/components/schemas/KdfParams" }
+
+    ResetVaultKeyBundleRequest:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string }
+
+    VaultKeyBundleStatus:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+        createdAt: { type: string, format: date-time, nullable: true }
+        updatedAt: { type: string, format: date-time, nullable: true }
+
+    Device:
+      type: object
+      required: [sessionId, deviceName, createdAt, lastSeenAt, isCurrent]
+      properties:
+        sessionId: { type: string }
+        deviceName: { type: string }
+        browser: { type: string, nullable: true }
+        os: { type: string, nullable: true }
+        deviceType: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        lastSeenAt: { type: string, format: date-time }
+        ipAddress: { type: string, nullable: true }
+        isCurrent: { type: boolean }
+
+    DevicesListResponse:
+      type: object
+      required: [devices]
+      properties:
+        devices:
+          type: array
+          items: { $ref: "#/components/schemas/Device" }
+
+    RenameDeviceRequest:
+      type: object
+      required: [deviceName]
+      properties:
+        deviceName: { type: string }
+
+    RevokeDeviceResponse:
+      type: object
+      required: [success]
+      properties:
+        success: { type: boolean, example: true }
+
+    RevokeOthersResponse:
+      type: object
+      required: [revokedCount]
+      properties:
+        revokedCount: { type: integer, format: int32 }
+
+    CreateCryptoInvoiceRequest:
+      type: object
+      required: [planCode]
+      properties:
+        planCode:
+          type: string
+          enum: [P6M_25, Y1_100, Y1_199]
+
+    CryptoInvoiceResponse:
+      type: object
+      required: [invoiceId, amountCents, currency, paymentAddress, expiresAt]
+      properties:
+        invoiceId: { type: string, format: uuid }
+        amountCents: { type: integer, format: int32 }
+        currency: { type: string, example: "USD" }
+        paymentAddress: { type: string }
+        expiresAt: { type: string, format: date-time }
+
+    CryptoInvoiceStatusResponse:
+      type: object
+      required: [invoiceId, status, amountCents, currency, expiresAt]
+      properties:
+        invoiceId: { type: string, format: uuid }
+        status: { type: string, enum: [PENDING, PAID, EXPIRED] }
+        amountCents: { type: integer, format: int32 }
+        currency: { type: string, example: "USD" }
+        expiresAt: { type: string, format: date-time }
+        paidAt: { type: string, format: date-time, nullable: true }
+        txHash: { type: string, nullable: true }
+
+    CryptoWebhookRequest:
+      type: object
+      required: [invoiceId, txHash]
+      properties:
+        invoiceId: { type: string, format: uuid }
+        txHash: { type: string }
+
+    LifeDocCategory:
+      type: string
+      enum: [IDENTITY_LEGAL, MEDICAL, EDUCATION_CAREER, FINANCIAL_ASSET]
+
+    LifeDocSubcategory:
+      type: string
+      enum:
+        - PASSPORT
+        - NATIONAL_ID
+        - DRIVERS_LICENSE
+        - VISA
+        - RESIDENCY_PERMIT
+        - BIRTH_CERTIFICATE
+        - MARRIAGE_CERTIFICATE
+        - DIVORCE_DECREE
+        - MEDICAL_REPORTS
+        - PRESCRIPTIONS
+        - VACCINATION_RECORDS
+        - INSURANCE_CARDS
+        - DISABILITY_DOCUMENTS
+        - DEGREES
+        - CERTIFICATES
+        - TRANSCRIPTS
+        - PROFESSIONAL_LICENSES
+        - EMPLOYMENT_CONTRACTS
+        - INSURANCE_POLICIES
+        - PROPERTY_DEEDS
+        - RENTAL_AGREEMENTS
+        - LOAN_AGREEMENTS
+        - WILLS
+        - POWER_OF_ATTORNEY
+        - CUSTOM
+
+    LifeDocReminderSetting:
+      type: string
+      enum: [OFF, EXPIRY_DEFAULT, EXPIRY_DEFAULT_AND_MONTHLY_POST]
+
+    LifeDocVisibility:
+      type: string
+      enum: [PRIVATE, SHARED_WITH_MEMBERS, GUARDIAN_ACCESSIBLE]
+
+    LifeDocAccessRole:
+      type: string
+      enum: [VIEWER, MANAGER, OWNER]
+
+    LifeDocStatus:
+      type: string
+      enum: [ACTIVE, EXPIRING_SOON, EXPIRED, ARCHIVED, REPLACED]
+
+    LifeDocRenewalState:
+      type: string
+      enum: [NOT_REQUIRED, UPCOMING, IN_PROGRESS, COMPLETED, BLOCKED]
+
+    LifeDocAccessMemberInput:
+      type: object
+      required: [userId, role]
+      properties:
+        userId: { type: string, format: uuid }
+        role: { $ref: "#/components/schemas/LifeDocAccessRole" }
+
+    LifeDocAccessRolesInput:
+      type: object
+      properties:
+        sharedMembers:
+          type: array
+          items: { $ref: "#/components/schemas/LifeDocAccessMemberInput" }
+        guardians:
+          type: array
+          items: { $ref: "#/components/schemas/LifeDocAccessMemberInput" }
+        notifySharedMembers: { type: boolean, nullable: true }
+
+    CreateLifeDocDto:
+      type: object
+      required: [mediaId, category, subcategory, title]
+      properties:
+        mediaId: { type: string, format: uuid }
+        category: { $ref: "#/components/schemas/LifeDocCategory" }
+        subcategory: { $ref: "#/components/schemas/LifeDocSubcategory" }
+        customSubcategory: { type: string, nullable: true }
+        title: { type: string }
+        issuingAuthority: { type: string, nullable: true }
+        issueDate: { type: string, nullable: true, description: ISO date string (YYYY-MM-DD) }
+        expiryDate: { type: string, nullable: true, description: ISO date string (YYYY-MM-DD) }
+        renewalRequired: { type: boolean, nullable: true }
+        reminderSetting: { $ref: "#/components/schemas/LifeDocReminderSetting" }
+        visibility: { $ref: "#/components/schemas/LifeDocVisibility" }
+        accessRoles: { $ref: "#/components/schemas/LifeDocAccessRolesInput" }
+
+    UpdateLifeDocDto:
+      type: object
+      properties:
+        category: { $ref: "#/components/schemas/LifeDocCategory" }
+        subcategory: { $ref: "#/components/schemas/LifeDocSubcategory" }
+        customSubcategory: { type: string, nullable: true }
+        title: { type: string }
+        issuingAuthority: { type: string, nullable: true }
+        issueDate: { type: string, nullable: true }
+        expiryDate: { type: string, nullable: true }
+        renewalRequired: { type: boolean, nullable: true }
+        reminderSetting: { $ref: "#/components/schemas/LifeDocReminderSetting" }
+        visibility: { $ref: "#/components/schemas/LifeDocVisibility" }
+        accessRoles: { $ref: "#/components/schemas/LifeDocAccessRolesInput" }
+
+    ReplaceLifeDocDto:
+      type: object
+      required: [mediaId]
+      properties:
+        mediaId: { type: string, format: uuid }
+        title: { type: string, nullable: true }
+        issuingAuthority: { type: string, nullable: true }
+        issueDate: { type: string, nullable: true }
+        expiryDate: { type: string, nullable: true }
+        reminderSetting: { $ref: "#/components/schemas/LifeDocReminderSetting" }
+        visibility: { $ref: "#/components/schemas/LifeDocVisibility" }
+
+    SetLifeDocRenewalStateDto:
+      type: object
+      required: [state]
+      properties:
+        state: { $ref: "#/components/schemas/LifeDocRenewalState" }
+
+    UpdateLifeDocMaskedPrivacyDto:
+      type: object
+      required: [maskedMode]
+      properties:
+        maskedMode: { type: boolean }
+        maskedHideExpiry: { type: boolean, nullable: true }
+        aliasTitle: { type: string, nullable: true }
+
+    QuietHours:
+      type: object
+      nullable: true
+      properties:
+        start: { type: string, nullable: true, example: "22:00" }
+        end: { type: string, nullable: true, example: "07:00" }
+
+    ReminderChannels:
+      type: object
+      required: [inApp]
+      properties:
+        inApp: { type: boolean }
+        email: { type: boolean, nullable: true }
+        push: { type: boolean, nullable: true }
+
+    UpdateLifeDocRemindersDto:
+      type: object
+      properties:
+        reminderSetting: { $ref: "#/components/schemas/LifeDocReminderSetting" }
+        reminderCustomDays:
+          type: array
+          nullable: true
+          items: { type: integer, format: int32 }
+        quietHours: { $ref: "#/components/schemas/QuietHours" }
+        channels: { $ref: "#/components/schemas/ReminderChannels" }
+        notifySharedMembers: { type: boolean, nullable: true }
+
+    LifeDocResponse:
+      type: object
+      required:
+        - id
+        - ownerId
+        - category
+        - subcategory
+        - title
+        - renewalRequired
+        - reminderSetting
+        - visibility
+        - status
+        - versionGroupId
+        - fileHash
+        - uploadTimestamp
+        - createdAt
+        - updatedAt
+        - vaultMediaId
+        - viewerRole
+      properties:
+        id: { type: string, format: uuid }
+        ownerId: { type: string, format: uuid }
+        ownerDisplayName: { type: string, nullable: true }
+        category: { $ref: "#/components/schemas/LifeDocCategory" }
+        subcategory: { $ref: "#/components/schemas/LifeDocSubcategory" }
+        customSubcategory: { type: string, nullable: true }
+        title: { type: string }
+        issuingAuthority: { type: string, nullable: true }
+        issueDate: { type: string, nullable: true }
+        expiryDate: { type: string, nullable: true }
+        renewalRequired: { type: boolean }
+        renewalState: { $ref: "#/components/schemas/LifeDocRenewalState" }
+        reminderSetting: { $ref: "#/components/schemas/LifeDocReminderSetting" }
+        reminderCustomDays:
+          type: array
+          nullable: true
+          items: { type: integer, format: int32 }
+        quietHours: { $ref: "#/components/schemas/QuietHours" }
+        notifySharedMembers: { type: boolean, nullable: true }
+        lastRemindedAt: { type: string, format: date-time, nullable: true }
+        visibility: { $ref: "#/components/schemas/LifeDocVisibility" }
+        status: { $ref: "#/components/schemas/LifeDocStatus" }
+        versionGroupId: { type: string, format: uuid }
+        fileHash: { type: string }
+        uploadTimestamp: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        vaultMediaId: { type: string, format: uuid }
+        viewerRole: { $ref: "#/components/schemas/LifeDocAccessRole" }
+        maskedMode: { type: boolean, nullable: true }
+        maskedHideExpiry: { type: boolean, nullable: true }
+        aliasTitle: { type: string, nullable: true }
+
+    LifeDocListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/LifeDocResponse" }
+
+    LifeDocsSearchResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/LifeDocResponse" }
+
+    LifeDocsTimelineMonthGroup:
+      type: object
+      required: [month, items]
+      properties:
+        month: { type: string, example: "2026-02" }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/LifeDocResponse" }
+
+    LifeDocsTimelineResponse:
+      type: object
+      required: [months, groups]
+      properties:
+        months: { type: integer, format: int32 }
+        groups:
+          type: array
+          items: { $ref: "#/components/schemas/LifeDocsTimelineMonthGroup" }
+
+    LifeDocsRenewalSummaryResponse:
+      type: object
+      required: [notRequired, upcoming, inProgress, completed, blocked]
+      properties:
+        notRequired: { type: integer, format: int32 }
+        upcoming: { type: integer, format: int32 }
+        inProgress: { type: integer, format: int32 }
+        completed: { type: integer, format: int32 }
+        blocked: { type: integer, format: int32 }
+
+    LifeDocsFamilyOverviewResponse:
+      type: object
+      required: [myExpiringSoon, childrenExpiringSoon, sharedWithMe, needsRenewal]
+      properties:
+        myExpiringSoon: { type: integer, format: int32 }
+        childrenExpiringSoon: { type: integer, format: int32 }
+        sharedWithMe: { type: integer, format: int32 }
+        needsRenewal: { type: integer, format: int32 }
+
+    LifeDocVersionItem:
+      type: object
+      required: [versionId, uploadTimestamp, fileHash, status, isLatest]
+      properties:
+        versionId: { type: string }
+        uploadTimestamp: { type: string, format: date-time }
+        fileHash: { type: string }
+        status: { $ref: "#/components/schemas/LifeDocStatus" }
+        isLatest: { type: boolean }
+
+    LifeDocVersionsResponse:
+      type: object
+      required: [id, versionGroupId, versions]
+      properties:
+        id: { type: string, format: uuid }
+        versionGroupId: { type: string, format: uuid }
+        versions:
+          type: array
+          items: { $ref: "#/components/schemas/LifeDocVersionItem" }
+
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+paths:
+  # =========================
+  # Recovery
+  # =========================
+  /v1/recovery/status:
+    get:
+      tags: [Recovery]
+      summary: Get recovery status for current user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [enabled]
+                properties:
+                  enabled: { type: boolean }
+                  createdAt: { type: string, format: date-time, nullable: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/recovery/accept-risk:
+    post:
+      tags: [Recovery]
+      summary: Explicitly accept risk of proceeding without recovery
+      description: >
+        Idempotent. Sets a server-side timestamp indicating the user explicitly accepted the risk of using the vault
+        without enabling a recovery phrase.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [acceptedAt]
+                properties:
+                  acceptedAt: { type: string, format: date-time }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/recovery/enable:
+    post:
+      tags: [Recovery]
+      summary: Enable recovery phrase for current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EnableRecoveryRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success: { type: boolean, example: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/recovery/disable:
+    delete:
+      tags: [Recovery]
+      summary: Disable recovery phrase for current user
+      description: Requires password re-authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DisableRecoveryRequest" }
+      responses:
+        "204": { description: No Content }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/recovery/bundle:
+    post:
+      tags: [Recovery]
+      security: []
+      summary: Get encrypted recovery bundle (restore flow)
+      description: Rate-limited. Returns the encrypted bundle without JWT auth.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RecoveryBundleRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecoveryBundleResponse" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # =========================
+  # System
+  # =========================
+  /v1/health:
+    get:
+      tags: [System]
+      security: []
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+
+  /v1/queue/health:
+    get:
+      tags: [System]
+      summary: Queue + worker health
+      description: >
+        Operational endpoint reporting Redis connectivity, BullMQ queue counts/repeatable jobs,
+        and worker liveness via Postgres-backed heartbeats.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, requestId, redis, workers, queues]
+                properties:
+                  ok: { type: boolean, example: true }
+                  requestId: { type: string, nullable: true }
+                  redis:
+                    type: object
+                    required: [ok]
+                    properties:
+                      ok: { type: boolean, example: true }
+                      latencyMs: { type: integer, nullable: true, example: 2 }
+                      error: { type: string, nullable: true }
+                  workers:
+                    type: object
+                    required: [ok, staleAfterSeconds, instances]
+                    properties:
+                      ok: { type: boolean, example: true }
+                      staleAfterSeconds: { type: integer, example: 60 }
+                      instances:
+                        type: array
+                        items:
+                          type: object
+                          required: [kind, instanceId, startedAt, lastSeenAt, isStale]
+                          properties:
+                            kind: { type: string, example: bullmq }
+                            instanceId: { type: string, example: "host-1234-abc12345" }
+                            startedAt: { type: string, format: date-time }
+                            lastSeenAt: { type: string, format: date-time }
+                            isStale: { type: boolean, example: false }
+                      error: { type: string, nullable: true }
+                  queues:
+                    type: object
+                    required: [exports, purge, thumbnails]
+                    properties:
+                      exports: { $ref: "#/components/schemas/QueueHealth" }
+                      purge: { $ref: "#/components/schemas/QueueHealth" }
+                      thumbnails: { $ref: "#/components/schemas/QueueHealth" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  # =========================
+  # Auth
+  # =========================
+  /v1/auth/register:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Register with email/password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                displayName: { type: string, nullable: true }
+                locale: { type: string, example: "en" }
+                timezone: { type: string, example: "Asia/Kolkata" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user, session]
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+                  session: { $ref: "#/components/schemas/Session" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Login and obtain tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user, session]
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+                  session: { $ref: "#/components/schemas/Session" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/auth/refresh:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Refresh tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Session" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout (revoke refresh token)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        "204":
+          description: No Content
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/auth/request-email-verification:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Send verification email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "204":
+          description: No Content
+
+  /v1/auth/verify-email:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Verify email with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        "204":
+          description: No Content
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/auth/forgot-password:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Request password reset email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "204":
+          description: No Content
+
+  /v1/auth/reset-password:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Reset password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, newPassword]
+              properties:
+                token: { type: string }
+                newPassword: { type: string, minLength: 8 }
+      responses:
+        "204":
+          description: No Content
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Change password (authenticated)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword: { type: string }
+                newPassword: { type: string, minLength: 8 }
+      responses:
+        "204": { description: No Content }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/auth/verify-password:
+    post:
+      tags: [Auth]
+      summary: Verify password (authenticated)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [valid]
+                properties:
+                  valid: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # =========================
+  # Users / Me
+  # =========================
+  /v1/me:
+    get:
+      tags: [Users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user]
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+    patch:
+      tags: [Users]
+      summary: Update profile (non-sensitive)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName: { type: string, nullable: true }
+                locale: { type: string }
+                timezone: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user]
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/me/usage:
+    get:
+      tags: [Users]
+      summary: Get usage counters (for plan enforcement UI)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [usage]
+                properties:
+                  usage: { $ref: "#/components/schemas/Usage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/me/sessions:
+    get:
+      tags: [Users]
+      summary: Get active sessions (optional)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sessions]
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/me/subscription:
+    get:
+      tags: [Billing]
+      summary: Get subscription status
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Subscription" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  # =========================
+  # Devices
+  # =========================
+  /v1/devices:
+    get:
+      tags: [Devices]
+      summary: List active devices/sessions for current user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DevicesListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/devices/{sessionId}:
+    patch:
+      tags: [Devices]
+      summary: Rename a device/session
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RenameDeviceRequest" }
+      responses:
+        "204": { description: No Content }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/devices/{sessionId}/revoke:
+    post:
+      tags: [Devices]
+      summary: Revoke a specific device/session
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RevokeDeviceResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/devices/revoke-others:
+    post:
+      tags: [Devices]
+      summary: Revoke all other sessions except current
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RevokeOthersResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  # =========================
+  # Vault Key
+  # =========================
+  /v1/vault-key/status:
+    get:
+      tags: [VaultKey]
+      summary: Get vault key bundle status
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VaultKeyBundleStatus" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/vault-key/upsert:
+    post:
+      tags: [VaultKey]
+      summary: Create or update vault key bundle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpsertVaultKeyBundleRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success: { type: boolean, example: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/vault-key/bundle:
+    get:
+      tags: [VaultKey]
+      summary: Get encrypted vault key bundle
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecoveryBundleResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/vault-key/reset:
+    post:
+      tags: [VaultKey]
+      summary: Reset (delete) vault key bundle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResetVaultKeyBundleRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success: { type: boolean, example: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # =========================
+  # Media
+  # =========================
+  /v1/media:
+    get:
+      tags: [Media]
+      summary: List media (Library view)
+      description: >
+        Excludes trashed media by default.
+        If albumId is provided, returns items in album order (by position).
+      parameters:
+        - in: query
+          name: includeTrashed
+          schema: { type: boolean, default: false }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, minimum: 1, maximum: 200 }
+        - in: query
+          name: cursor
+          description: >
+            Pagination cursor returned from the previous page.
+            For library view, this is an opaque cursor.
+            For album view (albumId set), cursor format is "position,mediaId".
+          schema: { type: string, nullable: true }
+        - in: query
+          name: from
+          schema: { type: string, format: date-time, nullable: true }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time, nullable: true }
+        - in: query
+          name: albumId
+          description: >
+            Optional album filter. When set, media is returned in album order.
+            Requires ownership: returns 404 if the album does not exist, and 403 if the album is not owned by the current user.
+          schema: { type: string, format: uuid, nullable: true }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [media]
+                properties:
+                  media: { $ref: "#/components/schemas/PaginatedMediaResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/media/multipart/support:
+    get:
+      tags: [Media]
+      summary: Get multipart upload capabilities
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [multipart]
+                properties:
+                  multipart:
+                    type: object
+                    required: [supported, partSize, minPartSize, maxParts, threshold]
+                    properties:
+                      supported: { type: boolean }
+                      partSize: { type: integer, format: int64 }
+                      minPartSize: { type: integer, format: int64 }
+                      maxParts: { type: integer, format: int32 }
+                      threshold: { type: integer, format: int64 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/media/upload-intents:
+    post:
+      tags: [Media]
+      summary: Create upload intent and receive signed PUT URL
+      description: >
+        Server checks plan limits (trial/time/media count). If allowed, creates a media row and returns signed upload URL.
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          description: >
+            Unique key for ensuring idempotency of this request. If provided and a previous request with the same key succeeded,
+            the same response will be returned. If the request body differs, 409 Conflict will be returned.
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateUploadIntentRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreateUploadIntentResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  # =========================
+  # Continuity Heir Portal
+  # =========================
+  /v1/heir/login:
+    post:
+      tags: [Continuity]
+      summary: Heir portal login
+      description: >
+        Exchanges recipient email + access code for a short-lived heir JWT.
+        This token is distinct from normal user sessions.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, accessCode]
+              properties:
+                email: { type: string, format: email }
+                accessCode: { type: string }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token]
+                properties:
+                  token: { type: string, description: Heir JWT }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /v1/heir/releases:
+    get:
+      tags: [Continuity]
+      summary: List released continuity packs for heir
+      description: Requires an heir JWT in Authorization header.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/heir/releases/{releaseId}:
+    get:
+      tags: [Continuity]
+      summary: Get a specific released pack
+      parameters:
+        - in: path
+          name: releaseId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/heir/releases/{releaseId}/items:
+    get:
+      tags: [Continuity]
+      summary: List items in a released pack snapshot
+      parameters:
+        - in: path
+          name: releaseId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/heir/releases/{releaseId}/items/{itemId}/open:
+    get:
+      tags: [Continuity]
+      summary: Open a released item (returns vault pointer)
+      parameters:
+        - in: path
+          name: releaseId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: path
+          name: itemId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "403":
+          description: Upload blocked (trial expired / plan limits / recovery not enabled)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # =========================
+  # Continuity (Owner)
+  # =========================
+  /v1/continuity/packs:
+    post:
+      tags: [Continuity]
+      summary: Create a continuity pack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+    get:
+      tags: [Continuity]
+      summary: List continuity packs
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/continuity/packs/{id}:
+    get:
+      tags: [Continuity]
+      summary: Get a continuity pack
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    put:
+      tags: [Continuity]
+      summary: Update a continuity pack
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+    delete:
+      tags: [Continuity]
+      summary: Delete a continuity pack
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/continuity/packs/{id}/arm:
+    post:
+      tags: [Continuity]
+      summary: Arm a continuity pack
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/continuity/packs/{id}/items:
+    post:
+      tags: [Continuity]
+      summary: Add an item to a continuity pack
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lifeDocId]
+              properties:
+                lifeDocId: { type: string }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/continuity/packs/{id}/items/{itemId}:
+    delete:
+      tags: [Continuity]
+      summary: Remove an item from a continuity pack
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: path
+          name: itemId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/continuity/packs/{id}/recipients:
+    post:
+      tags: [Continuity]
+      summary: Add a recipient to a continuity pack
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recipientId, role]
+              properties:
+                recipientId: { type: string }
+                role: { type: string }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/continuity/packs/{id}/recipients/{recipientId}:
+    delete:
+      tags: [Continuity]
+      summary: Remove a recipient from a continuity pack
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: path
+          name: recipientId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/continuity/policies:
+    post:
+      tags: [Continuity]
+      summary: Create a continuity release policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+    get:
+      tags: [Continuity]
+      summary: List continuity release policies
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/continuity/policies/{id}:
+    get:
+      tags: [Continuity]
+      summary: Get a continuity release policy
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    put:
+      tags: [Continuity]
+      summary: Update a continuity release policy
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+    delete:
+      tags: [Continuity]
+      summary: Delete a continuity release policy
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/continuity/policies/{id}/check-in:
+    post:
+      tags: [Continuity]
+      summary: Check-in on a release policy
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/continuity/recipients:
+    post:
+      tags: [Continuity]
+      summary: Create a continuity recipient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+    get:
+      tags: [Continuity]
+      summary: List continuity recipients
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/continuity/recipients/{id}:
+    delete:
+      tags: [Continuity]
+      summary: Delete a continuity recipient
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/continuity/releases/execute:
+    post:
+      tags: [Continuity]
+      summary: Execute a continuity release
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [packId]
+              properties:
+                packId: { type: string }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/continuity/releases/{id}/revoke:
+    post:
+      tags: [Continuity]
+      summary: Revoke a continuity release
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/media/{mediaId}/complete-upload:
+    post:
+      tags: [Media]
+      summary: Mark upload complete (finalize metadata + counters)
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: header
+          name: Idempotency-Key
+          required: false
+          description: >
+            Unique key for ensuring idempotency of this request. If provided and a previous request with the same key succeeded,
+            the same response will be returned. If the request body differs, 409 Conflict will be returned.
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CompleteUploadRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [media]
+                properties:
+                  media: { $ref: "#/components/schemas/Media" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/media/{mediaId}/thumbnail-upload-intent:
+    post:
+      tags: [Media]
+      summary: Create encrypted thumbnail upload intent
+      description: Returns a signed PUT URL for client-generated encrypted thumbnail.
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: header
+          name: Idempotency-Key
+          required: false
+          description: >
+            Unique key for ensuring idempotency of this request. If provided and a previous request with the same key succeeded,
+            the same response will be returned. If the request body differs, 409 Conflict will be returned.
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ThumbnailUploadIntentRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ThumbnailUploadIntentResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/media/{mediaId}/complete-thumbnail-upload:
+    post:
+      tags: [Media]
+      summary: Mark thumbnail upload complete
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: header
+          name: Idempotency-Key
+          required: false
+          description: >
+            Unique key for ensuring idempotency of this request. If provided and a previous request with the same key succeeded,
+            the same response will be returned. If the request body differs, 409 Conflict will be returned.
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CompleteUploadRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [media]
+                properties:
+                  media: { $ref: "#/components/schemas/Media" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/media/{mediaId}/multipart/init:
+    post:
+      tags: [Media]
+      summary: Initialize multipart upload (S3/Spaces/MinIO)
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [multipart]
+                properties:
+                  multipart: { $ref: "#/components/schemas/MultipartUploadInitResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/media/{mediaId}/multipart/part-url:
+    post:
+      tags: [Media]
+      summary: Get presigned URL for uploading a multipart part
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: uploadId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: partNumber
+          required: true
+          schema: { type: integer, minimum: 1, maximum: 10000 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [part]
+                properties:
+                  part: { $ref: "#/components/schemas/MultipartUploadPartUrlResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/media/{mediaId}/multipart/status:
+    get:
+      tags: [Media]
+      summary: List already-uploaded parts for resume
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: uploadId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { $ref: "#/components/schemas/MultipartUploadStatusResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/media/{mediaId}/multipart/complete:
+    post:
+      tags: [Media]
+      summary: Complete a multipart upload
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: uploadId
+          required: true
+          schema: { type: string }
+        - in: header
+          name: Idempotency-Key
+          required: false
+          description: >
+            Unique key for ensuring idempotency of this request. If provided and a previous request with the same key succeeded,
+            the same response will be returned. If the request body differs, 409 Conflict will be returned.
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MultipartCompleteRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [result]
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      etag: { type: string, nullable: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/media/{mediaId}/multipart/abort:
+    post:
+      tags: [Media]
+      summary: Abort a multipart upload
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: uploadId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok: { type: boolean, enum: [true] }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/media/{mediaId}:
+    get:
+      tags: [Media]
+      summary: Get media details
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [media]
+                properties:
+                  media: { $ref: "#/components/schemas/Media" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    patch:
+      tags: [Media]
+      summary: Update media fields (title/note/takenAt/locationText)
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateMediaRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [media]
+                properties:
+                  media: { $ref: "#/components/schemas/Media" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+    delete:
+      tags: [Media]
+      summary: Move media to Trash (soft delete)
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [media]
+                properties:
+                  media: { $ref: "#/components/schemas/Media" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/media/{mediaId}/restore:
+    post:
+      tags: [Media]
+      summary: Restore media from Trash
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [media]
+                properties:
+                  media: { $ref: "#/components/schemas/Media" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/media/{mediaId}/purge:
+    post:
+      tags: [Media]
+      summary: Permanently delete media (irreversible)
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: No Content
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/media/{mediaId}/download-url:
+    post:
+      tags: [Media]
+      summary: Get signed GET URL for encrypted blob download
+      parameters:
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [downloadUrl]
+                properties:
+                  downloadUrl: { $ref: "#/components/schemas/SignedUrl" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # =========================
+  # Albums
+  # =========================
+  /v1/albums:
+    get:
+      tags: [Albums]
+      summary: List albums
+      parameters:
+        - in: query
+          name: includeDeleted
+          schema: { type: boolean, default: false }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, minimum: 1, maximum: 200 }
+        - in: query
+          name: cursor
+          schema: { type: string, nullable: true }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, pagination]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Album" }
+                  pagination: { $ref: "#/components/schemas/Pagination" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+    post:
+      tags: [Albums]
+      summary: Create album
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateAlbumRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Album" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/albums/{albumId}:
+    get:
+      tags: [Albums]
+      summary: Get album
+      parameters:
+        - in: path
+          name: albumId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Album" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    patch:
+      tags: [Albums]
+      summary: Update album
+      parameters:
+        - in: path
+          name: albumId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateAlbumRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Album" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+    delete:
+      tags: [Albums]
+      summary: Delete album (soft delete)
+      parameters:
+        - in: path
+          name: albumId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: No Content
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/albums/{albumId}/items:
+    get:
+      tags: [Albums]
+      summary: List album items (ordered)
+      parameters:
+        - in: path
+          name: albumId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100, minimum: 1, maximum: 200 }
+        - in: query
+          name: cursor
+          schema: { type: string, nullable: true }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, pagination]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [media, position, addedAt]
+                      properties:
+                        media: { $ref: "#/components/schemas/Media" }
+                        position: { type: integer, format: int64 }
+                        addedAt: { type: string, format: date-time }
+                  pagination: { $ref: "#/components/schemas/Pagination" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    post:
+      tags: [Albums]
+      summary: Add items to album (app assigns positions)
+      parameters:
+        - in: path
+          name: albumId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AddAlbumItemsRequest" }
+      responses:
+        "204":
+          description: No Content
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+    delete:
+      tags: [Albums]
+      summary: Remove items from album
+      parameters:
+        - in: path
+          name: albumId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: No Content
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/albums/{albumId}/items/reorder:
+    post:
+      tags: [Albums]
+      summary: Reorder album items
+      parameters:
+        - in: path
+          name: albumId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReorderAlbumItemsRequest" }
+      responses:
+        "204":
+          description: No Content
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # =========================
+  # Timeline & Search (views)
+  # =========================
+  /v1/timeline:
+    get:
+      tags: [Media]
+      summary: Timeline view (chronological)
+      parameters:
+        - in: query
+          name: year
+          schema: { type: integer, nullable: true, example: 2026 }
+        - in: query
+          name: albumId
+          schema: { type: string, format: uuid, nullable: true }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, minimum: 1, maximum: 200 }
+        - in: query
+          name: cursor
+          schema: { type: string, nullable: true }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, pagination]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Media" }
+                  pagination: { $ref: "#/components/schemas/Pagination" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/search:
+    get:
+      tags: [Media]
+      summary: Non-AI search across media + album name
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema: { type: string, minLength: 1 }
+        - in: query
+          name: from
+          schema: { type: string, format: date-time, nullable: true }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time, nullable: true }
+        - in: query
+          name: albumId
+          schema: { type: string, format: uuid, nullable: true }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, minimum: 1, maximum: 200 }
+        - in: query
+          name: cursor
+          schema: { type: string, nullable: true }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, pagination]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Media" }
+                  pagination: { $ref: "#/components/schemas/Pagination" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  # =========================
+  # Life Docs
+  # =========================
+  /v1/life-docs/timeline:
+    get:
+      tags: [LifeDocs]
+      summary: Life docs timeline grouping
+      parameters:
+        - in: query
+          name: months
+          schema: { type: integer, default: 12, minimum: 1, maximum: 60 }
+        - in: query
+          name: ownerId
+          schema: { type: string, format: uuid, nullable: true }
+        - in: query
+          name: category
+          schema: { $ref: "#/components/schemas/LifeDocCategory" }
+        - in: query
+          name: status
+          schema: { $ref: "#/components/schemas/LifeDocStatus" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocsTimelineResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/life-docs/search:
+    get:
+      tags: [LifeDocs]
+      summary: Search life docs
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string, default: "" }
+        - in: query
+          name: ownerId
+          schema: { type: string, format: uuid, nullable: true }
+        - in: query
+          name: category
+          schema: { $ref: "#/components/schemas/LifeDocCategory" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocsSearchResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/life-docs/family/overview:
+    get:
+      tags: [LifeDocs]
+      summary: Family overview for life docs
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocsFamilyOverviewResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/life-docs/renewal/summary:
+    get:
+      tags: [LifeDocs]
+      summary: Renewal summary counts
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocsRenewalSummaryResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/life-docs:
+    post:
+      tags: [LifeDocs]
+      summary: Create life doc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateLifeDocDto" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+    get:
+      tags: [LifeDocs]
+      summary: List life docs
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/life-docs/{id}:
+    get:
+      tags: [LifeDocs]
+      summary: Get life doc by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    put:
+      tags: [LifeDocs]
+      summary: Update life doc
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateLifeDocDto" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+    delete:
+      tags: [LifeDocs]
+      summary: Delete life doc
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success: { type: boolean, example: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/life-docs/{id}/versions:
+    get:
+      tags: [LifeDocs]
+      summary: Get life doc versions
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocVersionsResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/life-docs/{id}/versions/restore/{versionId}:
+    post:
+      tags: [LifeDocs]
+      summary: Restore a previous life doc version
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: path
+          name: versionId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/life-docs/{id}/renewal/state:
+    post:
+      tags: [LifeDocs]
+      summary: Set life doc renewal state
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SetLifeDocRenewalStateDto" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/life-docs/{id}/reminders:
+    put:
+      tags: [LifeDocs]
+      summary: Update life doc reminders
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateLifeDocRemindersDto" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/life-docs/{id}/reminders/test:
+    post:
+      tags: [LifeDocs]
+      summary: Send a test reminder notification
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success: { type: boolean, example: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/life-docs/{id}/privacy/masked:
+    put:
+      tags: [LifeDocs]
+      summary: Update masked privacy settings
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateLifeDocMaskedPrivacyDto" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/life-docs/{id}/archive:
+    post:
+      tags: [LifeDocs]
+      summary: Archive life doc
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success: { type: boolean, example: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/life-docs/{id}/replace:
+    post:
+      tags: [LifeDocs]
+      summary: Replace life doc with new media
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceLifeDocDto" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LifeDocResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # =========================
+  # Exports
+  # =========================
+  /v1/exports:
+    get:
+      tags: [Exports]
+      summary: List export jobs
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, minimum: 1, maximum: 200 }
+        - in: query
+          name: cursor
+          schema: { type: string, nullable: true }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [exports]
+                properties:
+                  exports: { $ref: "#/components/schemas/PaginatedExportsResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+    post:
+      tags: [Exports]
+      summary: Create export job
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          description: >
+            Unique key for ensuring idempotency of this request. If provided and a previous request with the same key succeeded,
+            the same response will be returned. If the request body differs, 409 Conflict will be returned.
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateExportRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [export]
+                properties:
+                  export: { $ref: "#/components/schemas/Export" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/exports/{exportId}:
+    get:
+      tags: [Exports]
+      summary: Get export job
+      parameters:
+        - in: path
+          name: exportId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [export]
+                properties:
+                  export: { $ref: "#/components/schemas/Export" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    delete:
+      tags: [Exports]
+      summary: Delete export job
+      parameters:
+        - in: path
+          name: exportId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: No Content }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/exports/{exportId}/download-url:
+    post:
+      tags: [Exports]
+      summary: Get signed download URL for export ZIP
+      parameters:
+        - in: path
+          name: exportId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [downloadUrl]
+                properties:
+                  downloadUrl: { $ref: "#/components/schemas/SignedUrl" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # =========================
+  # Storage
+  # =========================
+  /v1/storage/local-upload:
+    put:
+      tags: [Storage]
+      security: []
+      summary: Local dev upload (token-authorized)
+      description: Raw body upload used in local filesystem storage mode.
+      parameters:
+        - in: query
+          name: key
+          required: true
+          schema: { type: string }
+        - in: query
+          name: token
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          description: OK
+          headers:
+            ETag:
+              description: SHA-256 hex digest
+              schema: { type: string }
+          content:
+            text/plain:
+              schema: { type: string, example: OK }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /v1/storage/local-download:
+    get:
+      tags: [Storage]
+      security: []
+      summary: Local dev download (token-authorized)
+      parameters:
+        - in: query
+          name: key
+          required: true
+          schema: { type: string }
+        - in: query
+          name: token
+          required: true
+          schema: { type: string }
+        - in: query
+          name: filename
+          required: false
+          schema: { type: string, nullable: true }
+        - in: query
+          name: contentType
+          required: false
+          schema: { type: string, nullable: true }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # =========================
+  # Card
+  # =========================
+  /v1/card/modes:
+    get:
+      tags: [Card]
+      summary: List my card modes (owner only)
+      operationId: listMyCardModes
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListCardModesResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+    post:
+      tags: [Card]
+      summary: Create card mode (owner only)
+      operationId: createCardMode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCardModeDto" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mode]
+                properties:
+                  mode: { $ref: "#/components/schemas/CardModePublic" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/card/username:
+    put:
+      tags: [Card]
+      summary: Update card vanity username (premium only)
+      operationId: updateCardUsername
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateCardUsernameDto" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpdateCardUsernameResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/card/resolve-username/{username}:
+    get:
+      tags: [Card]
+      summary: Resolve vanity username to card publicId
+      operationId: resolveCardUsername
+      security: []
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResolveUsernameResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/card/public/{publicId}/modes/{modeSlug}:
+    get:
+      tags: [Card]
+      summary: Get public card mode view
+      operationId: getPublicCardMode
+      security: []
+      parameters:
+        - name: publicId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: modeSlug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Public card mode view
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GetPublicCardModeResponse" }
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /v1/card/public/{publicId}/modes/{modeSlug}/contact-requests:
+    post:
+      tags: [Card]
+      summary: Create public card contact request
+      operationId: createPublicCardContactRequest
+      security: []
+      parameters:
+        - name: publicId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: modeSlug
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCardContactRequestDto" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [request]
+                properties:
+                  request: { $ref: "#/components/schemas/CreateCardContactRequestResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /v1/card/public/{publicId}/modes/{modeSlug}/contact:
+    get:
+      tags: [Card]
+      summary: Reveal contact (grant-token protected)
+      operationId: getPublicCardModeContact
+      security: []
+      parameters:
+        - name: publicId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: modeSlug
+          in: path
+          required: true
+          schema: { type: string }
+        - name: X-Card-Token
+          in: header
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [contact]
+                properties:
+                  contact: { $ref: "#/components/schemas/CardContactRevealResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/card/modes/{modeId}/analytics:
+    get:
+      tags: [Card]
+      summary: Get mode analytics (owner only)
+      operationId: getCardModeAnalytics
+      parameters:
+        - name: modeId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CardModeAnalyticsResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/card/analytics:
+    get:
+      tags: [Card]
+      summary: List analytics for all modes (owner only)
+      operationId: listCardModeAnalytics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListCardModeAnalyticsResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/card/modes/{modeId}/attachments:
+    post:
+      tags: [Card]
+      summary: Create mode attachment (owner only)
+      operationId: createCardModeAttachment
+      parameters:
+        - name: modeId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCardAttachmentDto" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [attachment]
+                properties:
+                  attachment: { $ref: "#/components/schemas/CardAttachment" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+    get:
+      tags: [Card]
+      summary: List mode attachments (owner only)
+      operationId: listCardModeAttachments
+      parameters:
+        - name: modeId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListCardAttachmentsResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/card/modes/{modeId}/attachments/reorder:
+    post:
+      tags: [Card]
+      summary: Reorder mode attachments (owner only)
+      operationId: reorderCardModeAttachments
+      parameters:
+        - name: modeId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReorderCardAttachmentsDto" }
+      responses:
+        "204":
+          description: No Content
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+    put:
+      tags: [Card]
+      summary: Reorder mode attachments (ordered list, owner only)
+      operationId: reorderCardModeAttachmentsOrdered
+      parameters:
+        - name: modeId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReorderCardAttachmentsOrderedDto" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReorderCardAttachmentsResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/card/attachments/{attachmentId}:
+    put:
+      tags: [Card]
+      summary: Update attachment (owner only)
+      operationId: updateCardAttachment
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateCardAttachmentDto" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [attachment]
+                properties:
+                  attachment: { $ref: "#/components/schemas/CardAttachment" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+    delete:
+      tags: [Card]
+      summary: Delete attachment (owner only)
+      operationId: deleteCardAttachment
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/card/attachments/{attachmentId}/revoke:
+    post:
+      tags: [Card]
+      summary: Revoke attachment (owner only)
+      operationId: revokeCardAttachment
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/card/modes/{modeId}/contact-requests:
+    get:
+      tags: [Card]
+      summary: List mode contact requests (owner only)
+      operationId: listCardModeContactRequests
+      parameters:
+        - name: modeId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/CardContactRequestStatus" }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 50 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListCardContactRequestsResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/card/contact-requests/{requestId}/approve:
+    post:
+      tags: [Card]
+      summary: Approve contact request (owner only)
+      operationId: approveCardContactRequest
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApproveCardContactRequestDto" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [grant]
+                properties:
+                  grant: { $ref: "#/components/schemas/ApproveCardContactRequestResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /v1/card/contact-requests/{requestId}/deny:
+    post:
+      tags: [Card]
+      summary: Deny contact request (owner only)
+      operationId: denyCardContactRequest
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /v1/card/contact-grants/{grantId}/revoke:
+    post:
+      tags: [Card]
+      summary: Revoke contact grant (owner only)
+      operationId: revokeCardContactGrant
+      parameters:
+        - name: grantId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SuccessResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/card/vcard:
+    get:
+      tags: [Card]
+      summary: Download vCard (grant-token protected)
+      operationId: getCardVCard
+      security: []
+      parameters:
+        - name: X-Card-Token
+          in: header
+          required: true
+          schema: { type: string }
+        - name: publicId
+          in: query
+          required: true
+          schema: { type: string }
+        - name: modeSlug
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: vCard file
+          headers:
+            Content-Disposition:
+              schema: { type: string }
+              description: attachment filename
+          content:
+            text/vcard:
+              schema: { type: string }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  # =========================
+  # Billing
+  # =========================
+  /v1/billing/plans:
+    get:
+      tags: [Billing]
+      security: []
+      summary: List publicly visible plans
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Plan" }
+
+  /v1/billing/stripe/checkout-session:
+    post:
+      tags: [Billing]
+      summary: Create Stripe checkout session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCheckoutSessionRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreateCheckoutSessionResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/billing/crypto/invoices:
+    post:
+      tags: [Billing]
+      summary: Create a crypto invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCryptoInvoiceRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CryptoInvoiceResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/billing/crypto/invoices/{invoiceId}:
+    get:
+      tags: [Billing]
+      summary: Get crypto invoice status
+      parameters:
+        - in: path
+          name: invoiceId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CryptoInvoiceStatusResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/billing/crypto/webhook:
+    post:
+      tags: [Billing]
+      security: []
+      summary: Crypto payment webhook endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CryptoWebhookRequest" }
+      responses:
+        "204": { description: No Content }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/billing/stripe/webhook:
+    post:
+      tags: [Billing]
+      security: []
+      summary: Stripe webhook endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "204":
+          description: No Content
+
+  # =========================
+  # Sharing
+  # =========================
+  /v1/share/albums/{albumId}:
+    post:
+      tags: [Sharing]
+      summary: Create a read-only share link for an album (owner only)
+      parameters:
+        - in: path
+          name: albumId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateShareRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [share]
+                properties:
+                  share: { $ref: "#/components/schemas/CreateShareResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/share/albums/{albumId}/stub:
+    post:
+      tags: [Sharing]
+      summary: Create a share stub for an album (owner only)
+      parameters:
+        - in: path
+          name: albumId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateShareStubRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [share]
+                properties:
+                  share: { $ref: "#/components/schemas/CreateShareResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/share/{shareId}:
+    get:
+      tags: [Sharing]
+      security: []
+      summary: Get shared album metadata (public)
+      parameters:
+        - in: path
+          name: shareId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [share]
+                properties:
+                  share: { $ref: "#/components/schemas/SharedAlbumMetadata" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/share/{shareId}/unlock:
+    post:
+      tags: [Sharing]
+      security: []
+      summary: Unlock shared album (public; server returns encrypted bundle + short-lived share token)
+      parameters:
+        - in: path
+          name: shareId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnlockShareRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [bundle]
+                properties:
+                  bundle: { $ref: "#/components/schemas/EncryptedShareBundle" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/share/{shareId}/revoke:
+    post:
+      tags: [Sharing]
+      summary: Revoke a share (owner only)
+      parameters:
+        - in: path
+          name: shareId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: No Content }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/share/{shareId}/bundle:
+    post:
+      tags: [Sharing]
+      summary: Upload encrypted share bundle (owner only)
+      parameters:
+        - in: path
+          name: shareId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UploadShareBundleRequest" }
+      responses:
+        "204": { description: No Content }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /v1/share/{shareId}/media:
+    get:
+      tags: [Sharing]
+      security: []
+      summary: List shared media metadata (public; requires X-Share-Token)
+      parameters:
+        - in: path
+          name: shareId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: header
+          name: X-Share-Token
+          required: true
+          schema: { type: string }
+        - in: query
+          name: cursor
+          required: false
+          schema: { type: integer }
+          description: Cursor (0-based index) into the share snapshot order.
+        - in: query
+          name: limit
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 500 }
+          description: Page size (default 200).
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [media]
+                properties:
+                  media: { $ref: "#/components/schemas/SharedMediaMetadataList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /v1/share/{shareId}/view:
+    post:
+      tags: [Sharing]
+      security: []
+      summary: Track a successful share view (public; requires X-Share-Token)
+      parameters:
+        - in: path
+          name: shareId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: header
+          name: X-Share-Token
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: No Content }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/share/{shareId}/analytics:
+    get:
+      tags: [Sharing]
+      summary: Get share analytics (owner only)
+      parameters:
+        - in: path
+          name: shareId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [analytics]
+                properties:
+                  analytics: { $ref: "#/components/schemas/ShareAnalytics" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/share/albums/active:
+    get:
+      tags: [Sharing]
+      summary: List active shares (owner only)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [shares]
+                properties:
+                  shares:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, album, expiresAt, createdAt, viewCount]
+                      properties:
+                        id: { type: string, format: uuid }
+                        album:
+                          type: object
+                          required: [id, name]
+                          properties:
+                            id: { type: string, format: uuid }
+                            name: { type: string }
+                            description: { type: string, nullable: true }
+                            coverMediaId: { type: string, format: uuid, nullable: true }
+                        expiresAt: { type: string, format: date-time }
+                        createdAt: { type: string, format: date-time }
+                        viewCount: { type: integer, minimum: 0 }
+                        lastViewedAt: { type: string, format: date-time, nullable: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/share/{shareId}/media/{mediaId}/download-url:
+    post:
+      tags: [Sharing]
+      security: []
+      summary: Get share-scoped signed download URL for a media item (public; requires X-Share-Token)
+      parameters:
+        - in: path
+          name: shareId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: path
+          name: mediaId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: header
+          name: X-Share-Token
+          required: true
+          schema: { type: string }
+        - in: query
+          name: variant
+          required: false
+          schema:
+            type: string
+            enum: [original, thumb]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [downloadUrl]
+                properties:
+                  downloadUrl: { $ref: "#/components/schemas/SharedMediaDownloadUrl" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+x-notes:
+  upload_workflow: |
+    1) Client encrypts file -> ciphertext bytes.
+    2) POST /v1/media/upload-intents with metadata + encryption meta (no secrets).
+    3) Receive signed PUT URL. Upload ciphertext bytes directly to object storage.
+    4) POST /v1/media/{id}/complete-upload with ETag/checksum.
+    5) Media appears in Library/Timeline/Search (unless trashed).
+  trash_rules: |
+    - DELETE /v1/media/{id} sets is_trashed=true, purge_after=trashed_at+30d.
+    - POST /v1/media/{id}/restore reverses trash flags.
+    - POST /v1/media/{id}/purge permanently deletes blob + metadata.
+  plan_enforcement: |
+    - Server blocks upload-intents when trial expired or limits exceeded.
+    - Viewing and exporting must remain available even when uploads are blocked.

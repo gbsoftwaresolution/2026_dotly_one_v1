@@ -1,0 +1,306 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+}
+
+enum ExportStatus {
+  QUEUED
+  RUNNING
+  READY
+  FAILED
+  EXPIRED
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum PlanCode {
+  P6M_25
+  Y1_100
+  Y1_199
+  Y5_500
+  Y1_1000
+}
+
+enum CryptoInvoiceStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELED
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String
+  isEmailVerified Boolean   @default(false)
+  emailVerifiedAt DateTime?
+  displayName     String?
+  locale          String    @default("en")
+  timezone        String    @default("Asia/Kolkata")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  sessions       UserSession[]
+  keyBundle      UserKeyBundle?
+  subscription   Subscription?
+  usage          UserUsage?
+  albums         Album[]
+  media          Media[]
+  albumItems     AlbumItem[]
+  exports        Export[]
+  auditEvents    AuditEvent[]
+  cryptoInvoices CryptoInvoice[]
+  tokens         Token[]
+
+  @@map("users")
+}
+
+model UserSession {
+  id               String   @id @default(uuid())
+  userId           String
+  refreshTokenHash String
+  userAgent        String?
+  ipAddress        String? // Prisma doesn't have INET type, use String
+  lastSeenAt       DateTime @default(now())
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("user_sessions")
+}
+
+model UserKeyBundle {
+  userId           String   @id @default(uuid())
+  bundleCiphertext Bytes
+  kdfAlgo          String   @default("argon2id")
+  kdfParams        Json
+  bundleVersion    Int      @default(1)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_key_bundles")
+}
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  userId               String             @unique
+  status               SubscriptionStatus @default(TRIAL)
+  plan                 PlanCode           @default(P6M_25)
+  trialStartedAt       DateTime           @default(now())
+  trialEndsAt          DateTime?
+  trialMediaLimit      Int                @default(50)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([plan])
+  @@map("subscriptions")
+}
+
+model UserUsage {
+  userId            String   @id @default(uuid())
+  totalMediaCount   BigInt   @default(0)
+  totalPhotoCount   BigInt   @default(0)
+  totalVideoCount   BigInt   @default(0)
+  trashedMediaCount BigInt   @default(0)
+  updatedAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_usage")
+}
+
+model Album {
+  id           String    @id @default(uuid())
+  userId       String
+  name         String
+  description  String?
+  coverMediaId String?
+  isDeleted    Boolean   @default(false)
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coverMedia     Media?      @relation("AlbumCoverMedia", fields: [coverMediaId], references: [id])
+  items          AlbumItem[]
+  exportsAsScope Export[]    @relation("ExportScopeAlbum")
+
+  @@index([userId])
+  @@index([userId, isDeleted])
+  @@map("albums")
+}
+
+model Media {
+  id               String    @id @default(uuid())
+  userId           String
+  type             MediaType
+  objectKey        String    @unique
+  byteSize         BigInt
+  contentType      String
+  encAlgo          String    @default("xchacha20poly1305")
+  encMeta          Json
+  originalFilename String?
+  sha256Ciphertext Bytes?
+  exifTakenAt      DateTime?
+  exifLat          Float?
+  exifLng          Float?
+  title            String?
+  note             String?
+  takenAt          DateTime?
+  locationText     String?
+  uploadedAt       DateTime?
+  isTrashed        Boolean   @default(false)
+  trashedAt        DateTime?
+  purgeAfter       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  albumItems     AlbumItem[]
+  coverForAlbums Album[]     @relation("AlbumCoverMedia")
+
+  @@index([userId])
+  @@index([userId, takenAt], name: "idx_media_user_taken_at")
+  @@index([userId, isTrashed, purgeAfter], name: "idx_media_user_trashed")
+  @@index([uploadedAt])
+  // Note: Full-text search column 'search_tsv' is a generated column in SQL;
+  // Prisma cannot create generated columns directly. We'll rely on raw SQL for that.
+  @@map("media")
+}
+
+model AlbumItem {
+  albumId  String
+  mediaId  String
+  userId   String
+  position BigInt
+  addedAt  DateTime @default(now())
+
+  album Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([albumId, mediaId])
+  @@index([albumId, position])
+  @@index([userId])
+  @@map("album_items")
+}
+
+model Export {
+  id              String       @id @default(uuid())
+  userId          String
+  scopeType       String // 'VAULT' | 'ALBUM' | 'DATE_RANGE'
+  scopeAlbumId    String?
+  scopeFrom       DateTime?
+  scopeTo         DateTime?
+  status          ExportStatus @default(QUEUED)
+  errorMessage    String?
+  outputObjectKey String?
+  outputByteSize  BigInt?
+  readyAt         DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scopeAlbum Album? @relation("ExportScopeAlbum", fields: [scopeAlbumId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt], name: "idx_exports_user_created")
+  @@index([status])
+  @@map("exports")
+}
+
+model Token {
+  id        String    @id @default(uuid())
+  userId    String
+  type      String // "EMAIL_VERIFICATION", "PASSWORD_RESET"
+  hash      String
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([hash])
+  @@index([expiresAt])
+  @@map("tokens")
+}
+
+model AuditEvent {
+  id         String   @id @default(uuid())
+  userId     String
+  eventType  String
+  entityType String?
+  entityId   String?
+  meta       Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("audit_events")
+}
+
+model CryptoInvoice {
+  id              String              @id @default(uuid())
+  userId          String
+  planCode        PlanCode
+  baseAmountCents Int
+  currency        String              @default("USD")
+  paymentAddress  String
+  status          CryptoInvoiceStatus @default(PENDING)
+  txHash          String?
+  expiresAt       DateTime
+  paidAt          DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, expiresAt])
+  @@map("crypto_invoices")
+}
+
+model StripeEvent {
+  id          String    @id @default(uuid())
+  eventId     String    @unique
+  type        String
+  payload     Json
+  processed   Boolean   @default(false)
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@map("stripe_events")
+}

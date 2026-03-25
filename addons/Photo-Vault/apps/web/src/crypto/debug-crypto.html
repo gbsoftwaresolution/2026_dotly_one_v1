@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BoosterAi.me Crypto Debug</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .pass { background: #d4edda; border-color: #c3e6cb; }
+        .fail { background: #f8d7da; border-color: #f5c6cb; }
+        button { margin: 5px; padding: 8px 16px; }
+        pre { background: #f8f9fa; padding: 10px; border: 1px solid #dee2e6; }
+    </style>
+</head>
+<body>
+    <h1>BoosterAi.me Crypto Debug</h1>
+    <p>This page tests the cryptographic functions used in vault unlock.</p>
+    
+    <div id="tests"></div>
+    
+    <script>
+        const tests = [];
+        
+        async function test(name, fn) {
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test';
+            testDiv.innerHTML = `<h3>${name}</h3><div id="${name}-status">Running...</div>`;
+            document.getElementById('tests').appendChild(testDiv);
+            
+            try {
+                const result = await fn();
+                testDiv.classList.add('pass');
+                document.getElementById(`${name}-status`).innerHTML = `✅ PASS: ${result}`;
+                return true;
+            } catch (error) {
+                testDiv.classList.add('fail');
+                document.getElementById(`${name}-status`).innerHTML = `❌ FAIL: ${error.message}<br><pre>${error.stack}</pre>`;
+                return false;
+            }
+        }
+        
+        async function runAllTests() {
+            console.clear();
+            tests.length = 0;
+            document.getElementById('tests').innerHTML = '';
+            
+            // Test 1: Web Crypto availability
+            await test('Web Crypto API', () => {
+                if (!window.crypto || !window.crypto.subtle) {
+                    throw new Error('Web Crypto API not available');
+                }
+                return 'Web Crypto API available';
+            });
+            
+            // Test 2: Base64 conversions
+            await test('Base64 Conversions', async () => {
+                const testData = new Uint8Array([1, 2, 3, 4, 5]);
+                const base64 = btoa(String.fromCharCode(...testData));
+                const decoded = new Uint8Array(atob(base64).split('').map(c => c.charCodeAt(0)));
+                
+                if (decoded.length !== testData.length) {
+                    throw new Error('Length mismatch');
+                }
+                
+                for (let i = 0; i < testData.length; i++) {
+                    if (decoded[i] !== testData[i]) {
+                        throw new Error('Data mismatch at index ' + i);
+                    }
+                }
+                
+                return 'Base64 conversions work correctly';
+            });
+            
+            // Test 3: Random bytes generation
+            await test('Random Bytes', () => {
+                const array = new Uint8Array(16);
+                crypto.getRandomValues(array);
+                
+                let hasNonZero = false;
+                for (let i = 0; i < array.length; i++) {
+                    if (array[i] !== 0) hasNonZero = true;
+                }
+                
+                if (!hasNonZero) {
+                    throw new Error('Random bytes appear to be all zeros');
+                }
+                
+                return 'Random bytes generated successfully';
+            });
+            
+            // Test 4: PBKDF2 derivation (small iterations for speed)
+            await test('PBKDF2 Derivation', async () => {
+                const password = 'test-password';
+                const salt = crypto.getRandomValues(new Uint8Array(16));
+                const encoder = new TextEncoder();
+                const passwordBuffer = encoder.encode(password);
+                
+                const baseKey = await crypto.subtle.importKey(
+                    'raw',
+                    passwordBuffer,
+                    'PBKDF2',
+                    false,
+                    ['deriveKey']
+                );
+                
+                const derivedKey = await crypto.subtle.deriveKey(
+                    {
+                        name: 'PBKDF2',
+                        salt,
+                        iterations: 1000, // Low for testing
+                        hash: 'SHA-256',
+                    },
+                    baseKey,
+                    {
+                        name: 'AES-GCM',
+                        length: 256,
+                    },
+                    false,
+                    ['encrypt', 'decrypt']
+                );
+                
+                if (!derivedKey) {
+                    throw new Error('Failed to derive key');
+                }
+                
+                return 'PBKDF2 key derivation successful';
+            });
+            
+            // Test 5: AES-GCM key generation
+            await test('AES-GCM Key Generation', async () => {
+                const key = await crypto.subtle.generateKey(
+                    {
+                        name: 'AES-GCM',
+                        length: 256,
+                    },
+                    true,
+                    ['encrypt', 'decrypt']
+                );
+                
+                if (!key) {
+                    throw new Error('Failed to generate key');
+                }
+                
+                return 'AES-GCM key generated successfully';
+            });
+            
+            // Test 6: Key wrapping and unwrapping
+            await test('Key Wrapping', async () => {
+                // Generate a key to wrap
+                const keyToWrap = await crypto.subtle.generateKey(
+                    { name: 'AES-GCM', length: 256 },
+                    true,
+                    ['encrypt', 'decrypt']
+                );
+                
+                // Generate a wrapping key
+                const wrappingKey = await crypto.subtle.generateKey(
+                    { name: 'AES-GCM', length: 256 },
+                    true,
+                    ['encrypt', 'decrypt']
+                );
+                
+                // Export and wrap
+                const rawKey = await crypto.subtle.exportKey('raw', keyToWrap);
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+                
+                const wrappedKey = await crypto.subtle.encrypt(
+                    { name: 'AES-GCM', iv },
+                    wrappingKey,
+                    rawKey
+                );
+                
+                // Unwrap
+                const unwrappedRaw = await crypto.subtle.decrypt(
+                    { name: 'AES-GCM', iv },
+                    wrappingKey,
+                    wrappedKey
+                );
+                
+                const unwrappedKey = await crypto.subtle.importKey(
+                    'raw',
+                    unwrappedRaw,
+                    { name: 'AES-GCM', length: 256 },
+                    true,
+                    ['encrypt', 'decrypt']
+                );
+                
+                if (!unwrappedKey) {
+                    throw new Error('Failed to unwrap key');
+                }
+                
+                return 'Key wrapping/unwrapping successful';
+            });
+            
+            // Summary
+            const testElements = document.querySelectorAll('.test');
+            let passed = 0, failed = 0;
+            testElements.forEach(el => {
+                if (el.classList.contains('pass')) passed++;
+                if (el.classList.contains('fail')) failed++;
+            });
+            
+            const summary = document.createElement('div');
+            summary.className = 'test';
+            summary.style.fontWeight = 'bold';
+            summary.innerHTML = `<h2>Summary: ${passed} passed, ${failed} failed</h2>`;
+            document.getElementById('tests').appendChild(summary);
+            
+            console.log('All tests completed:', { passed, failed });
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const runButton = document.createElement('button');
+            runButton.textContent = 'Run All Tests';
+            runButton.onclick = runAllTests;
+            document.body.appendChild(runButton);
+            
+            // Auto-run on load
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>
