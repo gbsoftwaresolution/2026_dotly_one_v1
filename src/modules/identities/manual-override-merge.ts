@@ -229,6 +229,10 @@ function createOverrideTraceEntry(
     finalEffect,
     mergeMode: existingTrace?.mergeMode ?? "RESTRICTIVE",
     overrideApplied,
+    guardrailApplied:
+      reasonCode === "OVERRIDE_BLOCKED_BY_GUARDRAIL" ||
+      reasonCode === "OVERRIDE_SKIPPED_HARD_DENY" ||
+      reasonCode === "OVERRIDE_PRESERVED_SYSTEM_PERMISSION",
     reasonCode,
   };
 }

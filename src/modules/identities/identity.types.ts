@@ -150,6 +150,7 @@ export interface PermissionResolutionStageTrace {
   finalEffect: PermissionEffect;
   mergeMode: MergeMode;
   overrideApplied: boolean;
+  guardrailApplied: boolean;
   reasonCode: PermissionMergeReasonCode;
 }
 
@@ -267,4 +268,46 @@ export interface PreviewResolvedPermissionsForConnectionResult {
   };
   finalPermissions: ConnectionPolicyTemplatePermissions;
   mergeTrace: PermissionMergeTrace;
+}
+
+export interface ConnectionPermissionResolutionSummary {
+  count: number;
+  overriddenKeys: PermissionKey[];
+}
+
+export interface ResolvedPermissionValue extends PermissionTemplateValue {
+  postTrustEffect: PermissionEffect;
+  manualOverrideEffect: PermissionEffect | null;
+  finalEffect: PermissionEffect;
+  trace: PermissionResolutionStageTrace;
+}
+
+export type ResolvedPermissionMap = Partial<
+  Record<PermissionKey, ResolvedPermissionValue>
+>;
+
+export interface ResolvedConnectionPermissions {
+  connectionId: string;
+  sourceIdentityId: string;
+  targetIdentityId: string;
+  sourceIdentityType: IdentityType;
+  connectionType: ConnectionType;
+  trustState: TrustState;
+  status: string;
+  template: {
+    templateKey: string;
+    policyVersion: number;
+  };
+  overridesSummary: ConnectionPermissionResolutionSummary;
+  permissions: ResolvedPermissionMap;
+  trace: PermissionMergeTrace;
+  resolvedAt: Date;
+}
+
+export interface ConnectionPermissionSnapshotRecord {
+  id: string;
+  connectionId: string;
+  policyVersion: number;
+  permissionsJson: ConnectionPolicyTemplatePermissions;
+  computedAt: Date;
 }

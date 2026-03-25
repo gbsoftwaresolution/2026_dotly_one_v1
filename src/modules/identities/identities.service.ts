@@ -29,15 +29,19 @@ import { CreateConnectionDto } from "./dto/create-connection.dto";
 import { CreateIdentityDto } from "./dto/create-identity.dto";
 import { GetConnectionByIdDto } from "./dto/get-connection-by-id.dto";
 import { GetConnectionPolicyTemplateDto } from "./dto/get-connection-policy-template.dto";
+import { GetLatestPermissionSnapshotDto } from "./dto/get-latest-permission-snapshot.dto";
 import { ListConnectionsForIdentityDto } from "./dto/list-connections-for-identity.dto";
 import { ListPermissionOverridesForConnectionDto } from "./dto/list-permission-overrides-for-connection.dto";
 import { PreviewResolvedPermissionsForConnectionDto } from "./dto/preview-resolved-permissions-for-connection.dto";
 import { PreviewPermissionsWithTrustStateDto } from "./dto/preview-permissions-with-trust-state.dto";
+import { ResolveConnectionPermissionsDto } from "./dto/resolve-connection-permissions.dto";
 import { SetPermissionOverrideDto } from "./dto/set-permission-override.dto";
 import { UpdateConnectionStatusDto } from "./dto/update-connection-status.dto";
 import { UpdateConnectionTypeDto } from "./dto/update-connection-type.dto";
 import { UpdateTrustStateDto } from "./dto/update-trust-state.dto";
 import type {
+  ConnectionPermissionResolutionSummary,
+  ConnectionPermissionSnapshotRecord,
   ConnectionPermissionOverrideRecord,
   ConnectionPolicyTemplateLimits,
   ConnectionPolicyTemplatePermissions,
@@ -46,6 +50,8 @@ import type {
   ManualOverrideMap,
   PreviewResolvedPermissionsForConnectionResult,
   PreviewPermissionsWithTrustStateResult,
+  ResolvedConnectionPermissions,
+  ResolvedPermissionMap,
   TrustStateAdjustmentDefinition,
 } from "./identity.types";
 import { applyManualOverrides } from "./manual-override-merge";
@@ -403,7 +409,128 @@ export class IdentitiesService {
   async previewResolvedPermissionsForConnection(
     previewDto: PreviewResolvedPermissionsForConnectionDto,
   ): Promise<PreviewResolvedPermissionsForConnectionResult> {
-    const connection = await this.requireConnection(previewDto.connectionId);
+    const resolvedPermissions = await this.resolveConnectionPermissions({
+      connectionId: previewDto.connectionId,
+      persistSnapshot: false,
+    });
+
+    return {
+      connection: {
+        id: resolvedPermissions.connectionId,
+        sourceIdentityId: resolvedPermissions.sourceIdentityId,
+        targetIdentityId: resolvedPermissions.targetIdentityId,
+        connectionType: resolvedPermissions.connectionType,
+        trustState: resolvedPermissions.trustState,
+        status: resolvedPermissions.status,
+      },
+      template: {
+        id: `${resolvedPermissions.connectionId}:${resolvedPermissions.template.templateKey}`,
+        sourceIdentityType: resolvedPermissions.sourceIdentityType,
+        connectionType: resolvedPermissions.connectionType,
+        templateKey: resolvedPermissions.template.templateKey,
+        displayName: resolvedPermissions.template.templateKey,
+        description: null,
+        policyVersion: resolvedPermissions.template.policyVersion,
+      },
+      trustState: resolvedPermissions.trustState,
+      overrides: {
+        count: resolvedPermissions.overridesSummary.count,
+        items: await this.listPermissionOverridesForConnection({
+          connectionId: previewDto.connectionId,
+        }),
+      },
+      finalPermissions: toConnectionPolicyTemplatePermissions(
+        resolvedPermissions.permissions,
+      ),
+      mergeTrace: resolvedPermissions.trace,
+    };
+  }
+
+  async resolveConnectionPermissions(
+    resolveInput: string | ResolveConnectionPermissionsDto,
+  ): Promise<ResolvedConnectionPermissions> {
+    const resolveDto = normalizeResolveConnectionPermissionsInput(resolveInput);
+    const resolutionCore = await this.resolveConnectionPermissionsCore(
+      resolveDto.connectionId,
+    );
+
+    if (resolveDto.persistSnapshot === true) {
+      await this.persistResolvedPermissionSnapshot(
+        resolveDto.connectionId,
+        resolutionCore,
+      );
+    }
+
+    return resolutionCore;
+  }
+
+  async persistResolvedPermissionSnapshot(
+    connectionId: string,
+    resolved: ResolvedConnectionPermissions,
+  ): Promise<ConnectionPermissionSnapshotRecord> {
+    const snapshot =
+      await this.prismaService.connectionPermissionSnapshot.create({
+        data: {
+          connectionId,
+          policyVersion: resolved.template.policyVersion,
+          permissionsJson: toRequiredJsonInput(
+            toConnectionPolicyTemplatePermissions(resolved.permissions),
+          ),
+          computedAt: resolved.resolvedAt,
+        },
+      });
+
+    return {
+      id: snapshot.id,
+      connectionId: snapshot.connectionId,
+      policyVersion: snapshot.policyVersion,
+      permissionsJson:
+        snapshot.permissionsJson as unknown as ConnectionPolicyTemplatePermissions,
+      computedAt: snapshot.computedAt,
+    };
+  }
+
+  async getLatestPermissionSnapshot(
+    getLatestSnapshotDto: GetLatestPermissionSnapshotDto,
+  ): Promise<ConnectionPermissionSnapshotRecord | null> {
+    const snapshot =
+      await this.prismaService.connectionPermissionSnapshot.findFirst({
+        where: {
+          connectionId: getLatestSnapshotDto.connectionId,
+        },
+        orderBy: [{ computedAt: "desc" }, { id: "desc" }],
+      });
+
+    if (!snapshot) {
+      return null;
+    }
+
+    return {
+      id: snapshot.id,
+      connectionId: snapshot.connectionId,
+      policyVersion: snapshot.policyVersion,
+      permissionsJson:
+        snapshot.permissionsJson as unknown as ConnectionPolicyTemplatePermissions,
+      computedAt: snapshot.computedAt,
+    };
+  }
+
+  private applyOverridePreviewToPermissionSet(
+    basePermissions: ConnectionPolicyTemplatePermissions,
+    overrides: ManualOverrideMap,
+    options: {
+      trustState: TrustState;
+      templateKey: string;
+      mergeTrace: PreviewPermissionsWithTrustStateResult["mergeTrace"];
+    },
+  ) {
+    return applyManualOverrides(basePermissions, overrides, options);
+  }
+
+  private async resolveConnectionPermissionsCore(
+    connectionId: string,
+  ): Promise<ResolvedConnectionPermissions> {
+    const connection = await this.requireConnection(connectionId);
     const sourceIdentity = await this.prismaService.identity.findUnique({
       where: {
         id: connection.sourceIdentityId,
@@ -418,17 +545,24 @@ export class IdentitiesService {
       throw new NotFoundException("Source identity not found");
     }
 
+    const sourceIdentityType = toApiIdentityType(sourceIdentity.identityType);
+
+    if (!sourceIdentityType) {
+      throw new NotFoundException("Source identity type not found");
+    }
+
     const resolvedTrustState = toApiTrustState(connection.trustState);
+    const connectionType = toApiConnectionType(connection.connectionType);
     const template = await this.getConnectionPolicyTemplate({
-      sourceIdentityType: toApiIdentityType(sourceIdentity.identityType),
-      connectionType: toApiConnectionType(connection.connectionType),
+      sourceIdentityType,
+      connectionType,
     });
     const trustAdjustedPermissions = applyTrustStateAdjustment(
       template.permissionsJson,
       resolvedTrustState,
     );
     const overrideItems = await this.listPermissionOverridesForConnection({
-      connectionId: previewDto.connectionId,
+      connectionId,
     });
     const overridesByPermissionKey = mapOverridesByPermissionKey(overrideItems);
     const overrideAdjustedPermissions =
@@ -443,43 +577,25 @@ export class IdentitiesService {
       );
 
     return {
-      connection: {
-        id: connection.id,
-        sourceIdentityId: connection.sourceIdentityId,
-        targetIdentityId: connection.targetIdentityId,
-        connectionType: toApiConnectionType(connection.connectionType),
-        trustState: resolvedTrustState,
-        status: toApiConnectionStatus(connection.status),
-      },
+      connectionId: connection.id,
+      sourceIdentityId: connection.sourceIdentityId,
+      targetIdentityId: connection.targetIdentityId,
+      sourceIdentityType,
+      connectionType,
+      trustState: resolvedTrustState,
+      status: toApiConnectionStatus(connection.status),
       template: {
-        id: template.id,
-        sourceIdentityType: template.sourceIdentityType,
-        connectionType: template.connectionType,
         templateKey: template.templateKey,
-        displayName: template.displayName,
-        description: template.description,
         policyVersion: template.policyVersion,
       },
-      trustState: resolvedTrustState,
-      overrides: {
-        count: overrideItems.length,
-        items: overrideItems,
-      },
-      finalPermissions: overrideAdjustedPermissions.mergedPermissions,
-      mergeTrace: overrideAdjustedPermissions.mergeTrace,
+      overridesSummary: createOverrideSummary(overrideItems),
+      permissions: toResolvedPermissionMap(
+        overrideAdjustedPermissions.mergedPermissions,
+        overrideAdjustedPermissions.mergeTrace,
+      ),
+      trace: sortTraceEntries(overrideAdjustedPermissions.mergeTrace),
+      resolvedAt: new Date(),
     };
-  }
-
-  private applyOverridePreviewToPermissionSet(
-    basePermissions: ConnectionPolicyTemplatePermissions,
-    overrides: ManualOverrideMap,
-    options: {
-      trustState: TrustState;
-      templateKey: string;
-      mergeTrace: PreviewPermissionsWithTrustStateResult["mergeTrace"];
-    },
-  ) {
-    return applyManualOverrides(basePermissions, overrides, options);
   }
 
   private async requireConnection(
@@ -846,6 +962,107 @@ function mapOverridesByPermissionKey(
 
     return accumulator;
   }, {});
+}
+
+function createOverrideSummary(
+  overrides: ConnectionPermissionOverrideRecord[],
+): ConnectionPermissionResolutionSummary {
+  return {
+    count: overrides.length,
+    overriddenKeys: [
+      ...overrides.map((override) => override.permissionKey),
+    ].sort(),
+  };
+}
+
+function toResolvedPermissionMap(
+  permissions: ConnectionPolicyTemplatePermissions,
+  trace: PreviewPermissionsWithTrustStateResult["mergeTrace"],
+): ResolvedPermissionMap {
+  return Object.keys(permissions)
+    .sort()
+    .reduce<ResolvedPermissionMap>((accumulator, permissionKey) => {
+      const typedPermissionKey =
+        permissionKey as keyof ConnectionPolicyTemplatePermissions;
+      const permissionTraceKey =
+        permissionKey as keyof PreviewPermissionsWithTrustStateResult["mergeTrace"];
+      const permissionValue = permissions[typedPermissionKey];
+      const permissionTrace = trace[permissionTraceKey];
+
+      if (!permissionValue || !permissionTrace) {
+        return accumulator;
+      }
+
+      accumulator[permissionKey as keyof ResolvedPermissionMap] = {
+        effect: permissionValue.effect,
+        ...(permissionValue.limits ? { limits: permissionValue.limits } : {}),
+        postTrustEffect: permissionTrace.postTrustEffect,
+        manualOverrideEffect: permissionTrace.manualOverrideEffect,
+        finalEffect: permissionTrace.finalEffect,
+        trace: permissionTrace,
+      };
+
+      return accumulator;
+    }, {});
+}
+
+function toConnectionPolicyTemplatePermissions(
+  resolvedPermissions: ResolvedPermissionMap,
+): ConnectionPolicyTemplatePermissions {
+  return Object.keys(
+    resolvedPermissions,
+  ).reduce<ConnectionPolicyTemplatePermissions>(
+    (accumulator, permissionKey) => {
+      const typedPermissionKey = permissionKey as keyof ResolvedPermissionMap;
+      const resolvedPermission = resolvedPermissions[typedPermissionKey];
+
+      if (!resolvedPermission) {
+        return accumulator;
+      }
+
+      accumulator[permissionKey as keyof ConnectionPolicyTemplatePermissions] =
+        {
+          effect: resolvedPermission.effect,
+          ...(resolvedPermission.limits
+            ? { limits: resolvedPermission.limits }
+            : {}),
+        };
+
+      return accumulator;
+    },
+    {} as ConnectionPolicyTemplatePermissions,
+  );
+}
+
+function sortTraceEntries(
+  trace: PreviewPermissionsWithTrustStateResult["mergeTrace"],
+) {
+  return Object.keys(trace)
+    .sort()
+    .reduce<PreviewPermissionsWithTrustStateResult["mergeTrace"]>(
+      (accumulator, permissionKey) => {
+        const typedPermissionKey =
+          permissionKey as keyof PreviewPermissionsWithTrustStateResult["mergeTrace"];
+        const traceEntry = trace[typedPermissionKey];
+
+        if (traceEntry) {
+          accumulator[typedPermissionKey] = traceEntry;
+        }
+
+        return accumulator;
+      },
+      {},
+    );
+}
+
+function normalizeResolveConnectionPermissionsInput(
+  resolveInput: string | ResolveConnectionPermissionsDto,
+): ResolveConnectionPermissionsDto {
+  return typeof resolveInput === "string"
+    ? {
+        connectionId: resolveInput,
+      }
+    : resolveInput;
 }
 
 export function buildTemplateUpsertPayload(

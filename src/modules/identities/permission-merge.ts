@@ -201,6 +201,7 @@ function createTraceEntry(
     finalEffect,
     mergeMode,
     overrideApplied: false,
+    guardrailApplied: false,
     reasonCode,
   };
 }
