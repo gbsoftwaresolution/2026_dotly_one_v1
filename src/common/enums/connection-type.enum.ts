@@ -1,0 +1,16 @@
+export enum ConnectionType {
+  Unknown = "unknown",
+  Requested = "requested",
+  Known = "known",
+  Trusted = "trusted",
+  InnerCircle = "inner_circle",
+  Family = "family",
+  Partner = "partner",
+  Colleague = "colleague",
+  Client = "client",
+  Vendor = "vendor",
+  VerifiedBusiness = "verified_business",
+  AdminManaged = "admin_managed",
+  Blocked = "blocked",
+  SuspendedRisky = "suspended_risky",
+}

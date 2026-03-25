@@ -70,7 +70,12 @@ export const ModelName = {
   Notification: 'Notification',
   SupportRequest: 'SupportRequest',
   AnalyticsEvent: 'AnalyticsEvent',
-  PersonaAnalytics: 'PersonaAnalytics'
+  PersonaAnalytics: 'PersonaAnalytics',
+  Identity: 'Identity',
+  IdentityConnection: 'IdentityConnection',
+  ConnectionPermissionOverride: 'ConnectionPermissionOverride',
+  ConnectionPermissionSnapshot: 'ConnectionPermissionSnapshot',
+  ConnectionPolicyTemplate: 'ConnectionPolicyTemplate'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -424,6 +429,83 @@ export const PersonaAnalyticsScalarFieldEnum = {
 } as const
 
 export type PersonaAnalyticsScalarFieldEnum = (typeof PersonaAnalyticsScalarFieldEnum)[keyof typeof PersonaAnalyticsScalarFieldEnum]
+
+
+export const IdentityScalarFieldEnum = {
+  id: 'id',
+  personId: 'personId',
+  identityType: 'identityType',
+  displayName: 'displayName',
+  handle: 'handle',
+  verificationLevel: 'verificationLevel',
+  status: 'status',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityScalarFieldEnum = (typeof IdentityScalarFieldEnum)[keyof typeof IdentityScalarFieldEnum]
+
+
+export const IdentityConnectionScalarFieldEnum = {
+  id: 'id',
+  sourceIdentityId: 'sourceIdentityId',
+  targetIdentityId: 'targetIdentityId',
+  connectionType: 'connectionType',
+  trustState: 'trustState',
+  status: 'status',
+  createdByIdentityId: 'createdByIdentityId',
+  note: 'note',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityConnectionScalarFieldEnum = (typeof IdentityConnectionScalarFieldEnum)[keyof typeof IdentityConnectionScalarFieldEnum]
+
+
+export const ConnectionPermissionOverrideScalarFieldEnum = {
+  id: 'id',
+  connectionId: 'connectionId',
+  permissionKey: 'permissionKey',
+  effect: 'effect',
+  limitsJson: 'limitsJson',
+  reason: 'reason',
+  createdByIdentityId: 'createdByIdentityId',
+  createdAt: 'createdAt'
+} as const
+
+export type ConnectionPermissionOverrideScalarFieldEnum = (typeof ConnectionPermissionOverrideScalarFieldEnum)[keyof typeof ConnectionPermissionOverrideScalarFieldEnum]
+
+
+export const ConnectionPermissionSnapshotScalarFieldEnum = {
+  id: 'id',
+  connectionId: 'connectionId',
+  policyVersion: 'policyVersion',
+  permissionsJson: 'permissionsJson',
+  computedAt: 'computedAt'
+} as const
+
+export type ConnectionPermissionSnapshotScalarFieldEnum = (typeof ConnectionPermissionSnapshotScalarFieldEnum)[keyof typeof ConnectionPermissionSnapshotScalarFieldEnum]
+
+
+export const ConnectionPolicyTemplateScalarFieldEnum = {
+  id: 'id',
+  sourceIdentityType: 'sourceIdentityType',
+  connectionType: 'connectionType',
+  templateKey: 'templateKey',
+  displayName: 'displayName',
+  description: 'description',
+  policyVersion: 'policyVersion',
+  permissionsJson: 'permissionsJson',
+  limitsJson: 'limitsJson',
+  isSystem: 'isSystem',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ConnectionPolicyTemplateScalarFieldEnum = (typeof ConnectionPolicyTemplateScalarFieldEnum)[keyof typeof ConnectionPolicyTemplateScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -203,3 +203,68 @@ export const MobileOtpPurpose = {
 } as const
 
 export type MobileOtpPurpose = (typeof MobileOtpPurpose)[keyof typeof MobileOtpPurpose]
+
+
+export const IdentityType = {
+  PERSONAL: 'PERSONAL',
+  PROFESSIONAL: 'PROFESSIONAL',
+  BUSINESS: 'BUSINESS',
+  COUPLE: 'COUPLE',
+  FAMILY: 'FAMILY'
+} as const
+
+export type IdentityType = (typeof IdentityType)[keyof typeof IdentityType]
+
+
+export const ConnectionType = {
+  UNKNOWN: 'UNKNOWN',
+  REQUESTED: 'REQUESTED',
+  KNOWN: 'KNOWN',
+  TRUSTED: 'TRUSTED',
+  INNER_CIRCLE: 'INNER_CIRCLE',
+  FAMILY: 'FAMILY',
+  PARTNER: 'PARTNER',
+  COLLEAGUE: 'COLLEAGUE',
+  CLIENT: 'CLIENT',
+  VENDOR: 'VENDOR',
+  VERIFIED_BUSINESS: 'VERIFIED_BUSINESS',
+  ADMIN_MANAGED: 'ADMIN_MANAGED',
+  BLOCKED: 'BLOCKED',
+  SUSPENDED_RISKY: 'SUSPENDED_RISKY'
+} as const
+
+export type ConnectionType = (typeof ConnectionType)[keyof typeof ConnectionType]
+
+
+export const TrustState = {
+  UNVERIFIED: 'UNVERIFIED',
+  BASIC_VERIFIED: 'BASIC_VERIFIED',
+  STRONG_VERIFIED: 'STRONG_VERIFIED',
+  TRUSTED_BY_USER: 'TRUSTED_BY_USER',
+  HIGH_RISK: 'HIGH_RISK',
+  RESTRICTED: 'RESTRICTED',
+  BLOCKED: 'BLOCKED'
+} as const
+
+export type TrustState = (typeof TrustState)[keyof typeof TrustState]
+
+
+export const ConnectionStatus = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  RESTRICTED: 'RESTRICTED',
+  BLOCKED: 'BLOCKED',
+  ARCHIVED: 'ARCHIVED'
+} as const
+
+export type ConnectionStatus = (typeof ConnectionStatus)[keyof typeof ConnectionStatus]
+
+
+export const PermissionEffect = {
+  ALLOW: 'ALLOW',
+  DENY: 'DENY',
+  REQUEST_APPROVAL: 'REQUEST_APPROVAL',
+  ALLOW_WITH_LIMITS: 'ALLOW_WITH_LIMITS'
+} as const
+
+export type PermissionEffect = (typeof PermissionEffect)[keyof typeof PermissionEffect]

@@ -403,7 +403,12 @@ export const ModelName = {
   Notification: 'Notification',
   SupportRequest: 'SupportRequest',
   AnalyticsEvent: 'AnalyticsEvent',
-  PersonaAnalytics: 'PersonaAnalytics'
+  PersonaAnalytics: 'PersonaAnalytics',
+  Identity: 'Identity',
+  IdentityConnection: 'IdentityConnection',
+  ConnectionPermissionOverride: 'ConnectionPermissionOverride',
+  ConnectionPermissionSnapshot: 'ConnectionPermissionSnapshot',
+  ConnectionPolicyTemplate: 'ConnectionPolicyTemplate'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -419,7 +424,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "agencyProfile" | "emailVerificationToken" | "passwordResetToken" | "mobileOtpChallenge" | "authSession" | "persona" | "qRAccessToken" | "event" | "eventParticipant" | "contactRequest" | "contactRelationship" | "interaction" | "followUp" | "contactMemory" | "block" | "notification" | "supportRequest" | "analyticsEvent" | "personaAnalytics"
+    modelProps: "user" | "agencyProfile" | "emailVerificationToken" | "passwordResetToken" | "mobileOtpChallenge" | "authSession" | "persona" | "qRAccessToken" | "event" | "eventParticipant" | "contactRequest" | "contactRelationship" | "interaction" | "followUp" | "contactMemory" | "block" | "notification" | "supportRequest" | "analyticsEvent" | "personaAnalytics" | "identity" | "identityConnection" | "connectionPermissionOverride" | "connectionPermissionSnapshot" | "connectionPolicyTemplate"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1903,6 +1908,376 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Identity: {
+      payload: Prisma.$IdentityPayload<ExtArgs>
+      fields: Prisma.IdentityFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IdentityFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IdentityFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityPayload>
+        }
+        findFirst: {
+          args: Prisma.IdentityFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IdentityFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityPayload>
+        }
+        findMany: {
+          args: Prisma.IdentityFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityPayload>[]
+        }
+        create: {
+          args: Prisma.IdentityCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityPayload>
+        }
+        createMany: {
+          args: Prisma.IdentityCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IdentityCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityPayload>[]
+        }
+        delete: {
+          args: Prisma.IdentityDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityPayload>
+        }
+        update: {
+          args: Prisma.IdentityUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityPayload>
+        }
+        deleteMany: {
+          args: Prisma.IdentityDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IdentityUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IdentityUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityPayload>[]
+        }
+        upsert: {
+          args: Prisma.IdentityUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityPayload>
+        }
+        aggregate: {
+          args: Prisma.IdentityAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIdentity>
+        }
+        groupBy: {
+          args: Prisma.IdentityGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IdentityCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityCountAggregateOutputType> | number
+        }
+      }
+    }
+    IdentityConnection: {
+      payload: Prisma.$IdentityConnectionPayload<ExtArgs>
+      fields: Prisma.IdentityConnectionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IdentityConnectionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConnectionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IdentityConnectionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConnectionPayload>
+        }
+        findFirst: {
+          args: Prisma.IdentityConnectionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConnectionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IdentityConnectionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConnectionPayload>
+        }
+        findMany: {
+          args: Prisma.IdentityConnectionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConnectionPayload>[]
+        }
+        create: {
+          args: Prisma.IdentityConnectionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConnectionPayload>
+        }
+        createMany: {
+          args: Prisma.IdentityConnectionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IdentityConnectionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConnectionPayload>[]
+        }
+        delete: {
+          args: Prisma.IdentityConnectionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConnectionPayload>
+        }
+        update: {
+          args: Prisma.IdentityConnectionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConnectionPayload>
+        }
+        deleteMany: {
+          args: Prisma.IdentityConnectionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IdentityConnectionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IdentityConnectionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConnectionPayload>[]
+        }
+        upsert: {
+          args: Prisma.IdentityConnectionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConnectionPayload>
+        }
+        aggregate: {
+          args: Prisma.IdentityConnectionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIdentityConnection>
+        }
+        groupBy: {
+          args: Prisma.IdentityConnectionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityConnectionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IdentityConnectionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityConnectionCountAggregateOutputType> | number
+        }
+      }
+    }
+    ConnectionPermissionOverride: {
+      payload: Prisma.$ConnectionPermissionOverridePayload<ExtArgs>
+      fields: Prisma.ConnectionPermissionOverrideFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ConnectionPermissionOverrideFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionOverridePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ConnectionPermissionOverrideFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionOverridePayload>
+        }
+        findFirst: {
+          args: Prisma.ConnectionPermissionOverrideFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionOverridePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ConnectionPermissionOverrideFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionOverridePayload>
+        }
+        findMany: {
+          args: Prisma.ConnectionPermissionOverrideFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionOverridePayload>[]
+        }
+        create: {
+          args: Prisma.ConnectionPermissionOverrideCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionOverridePayload>
+        }
+        createMany: {
+          args: Prisma.ConnectionPermissionOverrideCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ConnectionPermissionOverrideCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionOverridePayload>[]
+        }
+        delete: {
+          args: Prisma.ConnectionPermissionOverrideDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionOverridePayload>
+        }
+        update: {
+          args: Prisma.ConnectionPermissionOverrideUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionOverridePayload>
+        }
+        deleteMany: {
+          args: Prisma.ConnectionPermissionOverrideDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ConnectionPermissionOverrideUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ConnectionPermissionOverrideUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionOverridePayload>[]
+        }
+        upsert: {
+          args: Prisma.ConnectionPermissionOverrideUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionOverridePayload>
+        }
+        aggregate: {
+          args: Prisma.ConnectionPermissionOverrideAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateConnectionPermissionOverride>
+        }
+        groupBy: {
+          args: Prisma.ConnectionPermissionOverrideGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ConnectionPermissionOverrideGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ConnectionPermissionOverrideCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ConnectionPermissionOverrideCountAggregateOutputType> | number
+        }
+      }
+    }
+    ConnectionPermissionSnapshot: {
+      payload: Prisma.$ConnectionPermissionSnapshotPayload<ExtArgs>
+      fields: Prisma.ConnectionPermissionSnapshotFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ConnectionPermissionSnapshotFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionSnapshotPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ConnectionPermissionSnapshotFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionSnapshotPayload>
+        }
+        findFirst: {
+          args: Prisma.ConnectionPermissionSnapshotFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionSnapshotPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ConnectionPermissionSnapshotFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionSnapshotPayload>
+        }
+        findMany: {
+          args: Prisma.ConnectionPermissionSnapshotFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionSnapshotPayload>[]
+        }
+        create: {
+          args: Prisma.ConnectionPermissionSnapshotCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionSnapshotPayload>
+        }
+        createMany: {
+          args: Prisma.ConnectionPermissionSnapshotCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ConnectionPermissionSnapshotCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionSnapshotPayload>[]
+        }
+        delete: {
+          args: Prisma.ConnectionPermissionSnapshotDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionSnapshotPayload>
+        }
+        update: {
+          args: Prisma.ConnectionPermissionSnapshotUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionSnapshotPayload>
+        }
+        deleteMany: {
+          args: Prisma.ConnectionPermissionSnapshotDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ConnectionPermissionSnapshotUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ConnectionPermissionSnapshotUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionSnapshotPayload>[]
+        }
+        upsert: {
+          args: Prisma.ConnectionPermissionSnapshotUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPermissionSnapshotPayload>
+        }
+        aggregate: {
+          args: Prisma.ConnectionPermissionSnapshotAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateConnectionPermissionSnapshot>
+        }
+        groupBy: {
+          args: Prisma.ConnectionPermissionSnapshotGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ConnectionPermissionSnapshotGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ConnectionPermissionSnapshotCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ConnectionPermissionSnapshotCountAggregateOutputType> | number
+        }
+      }
+    }
+    ConnectionPolicyTemplate: {
+      payload: Prisma.$ConnectionPolicyTemplatePayload<ExtArgs>
+      fields: Prisma.ConnectionPolicyTemplateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ConnectionPolicyTemplateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPolicyTemplatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ConnectionPolicyTemplateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPolicyTemplatePayload>
+        }
+        findFirst: {
+          args: Prisma.ConnectionPolicyTemplateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPolicyTemplatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ConnectionPolicyTemplateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPolicyTemplatePayload>
+        }
+        findMany: {
+          args: Prisma.ConnectionPolicyTemplateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPolicyTemplatePayload>[]
+        }
+        create: {
+          args: Prisma.ConnectionPolicyTemplateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPolicyTemplatePayload>
+        }
+        createMany: {
+          args: Prisma.ConnectionPolicyTemplateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ConnectionPolicyTemplateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPolicyTemplatePayload>[]
+        }
+        delete: {
+          args: Prisma.ConnectionPolicyTemplateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPolicyTemplatePayload>
+        }
+        update: {
+          args: Prisma.ConnectionPolicyTemplateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPolicyTemplatePayload>
+        }
+        deleteMany: {
+          args: Prisma.ConnectionPolicyTemplateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ConnectionPolicyTemplateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ConnectionPolicyTemplateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPolicyTemplatePayload>[]
+        }
+        upsert: {
+          args: Prisma.ConnectionPolicyTemplateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConnectionPolicyTemplatePayload>
+        }
+        aggregate: {
+          args: Prisma.ConnectionPolicyTemplateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateConnectionPolicyTemplate>
+        }
+        groupBy: {
+          args: Prisma.ConnectionPolicyTemplateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ConnectionPolicyTemplateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ConnectionPolicyTemplateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ConnectionPolicyTemplateCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2277,6 +2652,83 @@ export const PersonaAnalyticsScalarFieldEnum = {
 } as const
 
 export type PersonaAnalyticsScalarFieldEnum = (typeof PersonaAnalyticsScalarFieldEnum)[keyof typeof PersonaAnalyticsScalarFieldEnum]
+
+
+export const IdentityScalarFieldEnum = {
+  id: 'id',
+  personId: 'personId',
+  identityType: 'identityType',
+  displayName: 'displayName',
+  handle: 'handle',
+  verificationLevel: 'verificationLevel',
+  status: 'status',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityScalarFieldEnum = (typeof IdentityScalarFieldEnum)[keyof typeof IdentityScalarFieldEnum]
+
+
+export const IdentityConnectionScalarFieldEnum = {
+  id: 'id',
+  sourceIdentityId: 'sourceIdentityId',
+  targetIdentityId: 'targetIdentityId',
+  connectionType: 'connectionType',
+  trustState: 'trustState',
+  status: 'status',
+  createdByIdentityId: 'createdByIdentityId',
+  note: 'note',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityConnectionScalarFieldEnum = (typeof IdentityConnectionScalarFieldEnum)[keyof typeof IdentityConnectionScalarFieldEnum]
+
+
+export const ConnectionPermissionOverrideScalarFieldEnum = {
+  id: 'id',
+  connectionId: 'connectionId',
+  permissionKey: 'permissionKey',
+  effect: 'effect',
+  limitsJson: 'limitsJson',
+  reason: 'reason',
+  createdByIdentityId: 'createdByIdentityId',
+  createdAt: 'createdAt'
+} as const
+
+export type ConnectionPermissionOverrideScalarFieldEnum = (typeof ConnectionPermissionOverrideScalarFieldEnum)[keyof typeof ConnectionPermissionOverrideScalarFieldEnum]
+
+
+export const ConnectionPermissionSnapshotScalarFieldEnum = {
+  id: 'id',
+  connectionId: 'connectionId',
+  policyVersion: 'policyVersion',
+  permissionsJson: 'permissionsJson',
+  computedAt: 'computedAt'
+} as const
+
+export type ConnectionPermissionSnapshotScalarFieldEnum = (typeof ConnectionPermissionSnapshotScalarFieldEnum)[keyof typeof ConnectionPermissionSnapshotScalarFieldEnum]
+
+
+export const ConnectionPolicyTemplateScalarFieldEnum = {
+  id: 'id',
+  sourceIdentityType: 'sourceIdentityType',
+  connectionType: 'connectionType',
+  templateKey: 'templateKey',
+  displayName: 'displayName',
+  description: 'description',
+  policyVersion: 'policyVersion',
+  permissionsJson: 'permissionsJson',
+  limitsJson: 'limitsJson',
+  isSystem: 'isSystem',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ConnectionPolicyTemplateScalarFieldEnum = (typeof ConnectionPolicyTemplateScalarFieldEnum)[keyof typeof ConnectionPolicyTemplateScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2691,6 +3143,76 @@ export type ListEnumAnalyticsEventTypeFieldRefInput<$PrismaModel> = FieldRefInpu
 
 
 /**
+ * Reference to a field of type 'IdentityType'
+ */
+export type EnumIdentityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdentityType'>
+    
+
+
+/**
+ * Reference to a field of type 'IdentityType[]'
+ */
+export type ListEnumIdentityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdentityType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ConnectionType'
+ */
+export type EnumConnectionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ConnectionType'>
+    
+
+
+/**
+ * Reference to a field of type 'ConnectionType[]'
+ */
+export type ListEnumConnectionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ConnectionType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'TrustState'
+ */
+export type EnumTrustStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TrustState'>
+    
+
+
+/**
+ * Reference to a field of type 'TrustState[]'
+ */
+export type ListEnumTrustStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TrustState[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ConnectionStatus'
+ */
+export type EnumConnectionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ConnectionStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'ConnectionStatus[]'
+ */
+export type ListEnumConnectionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ConnectionStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'PermissionEffect'
+ */
+export type EnumPermissionEffectFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PermissionEffect'>
+    
+
+
+/**
+ * Reference to a field of type 'PermissionEffect[]'
+ */
+export type ListEnumPermissionEffectFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PermissionEffect[]'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -2818,6 +3340,11 @@ export type GlobalOmitConfig = {
   supportRequest?: Prisma.SupportRequestOmit
   analyticsEvent?: Prisma.AnalyticsEventOmit
   personaAnalytics?: Prisma.PersonaAnalyticsOmit
+  identity?: Prisma.IdentityOmit
+  identityConnection?: Prisma.IdentityConnectionOmit
+  connectionPermissionOverride?: Prisma.ConnectionPermissionOverrideOmit
+  connectionPermissionSnapshot?: Prisma.ConnectionPermissionSnapshotOmit
+  connectionPolicyTemplate?: Prisma.ConnectionPolicyTemplateOmit
 }
 
 /* Types for Logging */

@@ -142,6 +142,56 @@ enum MobileOtpPurpose {
   ENROLLMENT @map("enrollment")
 }
 
+enum IdentityType {
+  PERSONAL     @map("personal")
+  PROFESSIONAL @map("professional")
+  BUSINESS     @map("business")
+  COUPLE       @map("couple")
+  FAMILY       @map("family")
+}
+
+enum ConnectionType {
+  UNKNOWN           @map("unknown")
+  REQUESTED         @map("requested")
+  KNOWN             @map("known")
+  TRUSTED           @map("trusted")
+  INNER_CIRCLE      @map("inner_circle")
+  FAMILY            @map("family")
+  PARTNER           @map("partner")
+  COLLEAGUE         @map("colleague")
+  CLIENT            @map("client")
+  VENDOR            @map("vendor")
+  VERIFIED_BUSINESS @map("verified_business")
+  ADMIN_MANAGED     @map("admin_managed")
+  BLOCKED           @map("blocked")
+  SUSPENDED_RISKY   @map("suspended_risky")
+}
+
+enum TrustState {
+  UNVERIFIED      @map("unverified")
+  BASIC_VERIFIED  @map("basic_verified")
+  STRONG_VERIFIED @map("strong_verified")
+  TRUSTED_BY_USER @map("trusted_by_user")
+  HIGH_RISK       @map("high_risk")
+  RESTRICTED      @map("restricted")
+  BLOCKED         @map("blocked")
+}
+
+enum ConnectionStatus {
+  PENDING    @map("pending")
+  ACTIVE     @map("active")
+  RESTRICTED @map("restricted")
+  BLOCKED    @map("blocked")
+  ARCHIVED   @map("archived")
+}
+
+enum PermissionEffect {
+  ALLOW              @map("allow")
+  DENY               @map("deny")
+  REQUEST_APPROVAL   @map("request_approval")
+  ALLOW_WITH_LIMITS  @map("allow_with_limits")
+}
+
 model User {
   id                      String                @id @default(uuid()) @db.Uuid
   email                   String                @unique
@@ -575,4 +625,100 @@ model PersonaAnalytics {
   persona          Persona  @relation(fields: [personaId], references: [id], onDelete: Cascade)
 
   @@index([updatedAt])
+}
+
+model Identity {
+  id                                String                         @id @default(uuid()) @db.Uuid
+  personId                          String?                        @db.Uuid
+  identityType                      IdentityType
+  displayName                       String                         @db.VarChar(160)
+  handle                            String?                        @unique @db.VarChar(80)
+  verificationLevel                 String                         @db.VarChar(64)
+  status                            String                         @db.VarChar(64)
+  metadataJson                      Json?
+  createdAt                         DateTime                       @default(now())
+  updatedAt                         DateTime                       @updatedAt
+  outgoingConnections               IdentityConnection[]           @relation("IdentityConnectionSource")
+  incomingConnections               IdentityConnection[]           @relation("IdentityConnectionTarget")
+  createdConnections                IdentityConnection[]           @relation("IdentityConnectionCreatedBy")
+  createdPermissionOverrides        ConnectionPermissionOverride[] @relation("ConnectionPermissionOverrideCreatedBy")
+
+  @@index([identityType])
+  @@index([personId])
+}
+
+model IdentityConnection {
+  id                    String                         @id @default(uuid()) @db.Uuid
+  sourceIdentityId      String                         @db.Uuid
+  targetIdentityId      String                         @db.Uuid
+  connectionType        ConnectionType
+  trustState            TrustState
+  status                ConnectionStatus
+  createdByIdentityId   String                         @db.Uuid
+  note                  String?                        @db.VarChar(500)
+  metadataJson          Json?
+  createdAt             DateTime                       @default(now())
+  updatedAt             DateTime                       @updatedAt
+  sourceIdentity        Identity                       @relation("IdentityConnectionSource", fields: [sourceIdentityId], references: [id], onDelete: Cascade)
+  targetIdentity        Identity                       @relation("IdentityConnectionTarget", fields: [targetIdentityId], references: [id], onDelete: Cascade)
+  createdByIdentity     Identity                       @relation("IdentityConnectionCreatedBy", fields: [createdByIdentityId], references: [id], onDelete: Cascade)
+  permissionOverrides   ConnectionPermissionOverride[]
+  permissionSnapshots   ConnectionPermissionSnapshot[]
+
+  @@unique([sourceIdentityId, targetIdentityId])
+  @@index([sourceIdentityId])
+  @@index([targetIdentityId])
+  @@index([connectionType])
+  @@index([trustState])
+  @@index([status])
+  @@index([sourceIdentityId, status])
+  @@index([targetIdentityId, status])
+}
+
+model ConnectionPermissionOverride {
+  id                  String             @id @default(uuid()) @db.Uuid
+  connectionId        String             @db.Uuid
+  permissionKey       String             @db.VarChar(120)
+  effect              PermissionEffect
+  limitsJson          Json?
+  reason              String?            @db.VarChar(280)
+  createdByIdentityId String             @db.Uuid
+  createdAt           DateTime           @default(now())
+  connection          IdentityConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  createdByIdentity   Identity           @relation("ConnectionPermissionOverrideCreatedBy", fields: [createdByIdentityId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, permissionKey])
+}
+
+model ConnectionPermissionSnapshot {
+  id              String             @id @default(uuid()) @db.Uuid
+  connectionId    String             @db.Uuid
+  policyVersion   Int
+  permissionsJson Json
+  computedAt      DateTime
+  connection      IdentityConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId])
+  @@index([connectionId, policyVersion])
+}
+
+model ConnectionPolicyTemplate {
+  id                 String        @id @default(uuid()) @db.Uuid
+  sourceIdentityType IdentityType?
+  connectionType     ConnectionType
+  templateKey        String        @unique @db.VarChar(120)
+  displayName        String        @db.VarChar(160)
+  description        String?       @db.Text
+  policyVersion      Int           @default(1)
+  permissionsJson    Json
+  limitsJson         Json?
+  isSystem           Boolean       @default(true)
+  isActive           Boolean       @default(true)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([sourceIdentityType])
+  @@index([connectionType])
+  @@index([isActive])
+  @@index([sourceIdentityType, connectionType, isActive])
 }

@@ -139,3 +139,28 @@ export type AnalyticsEvent = Prisma.AnalyticsEventModel
  * 
  */
 export type PersonaAnalytics = Prisma.PersonaAnalyticsModel
+/**
+ * Model Identity
+ * 
+ */
+export type Identity = Prisma.IdentityModel
+/**
+ * Model IdentityConnection
+ * 
+ */
+export type IdentityConnection = Prisma.IdentityConnectionModel
+/**
+ * Model ConnectionPermissionOverride
+ * 
+ */
+export type ConnectionPermissionOverride = Prisma.ConnectionPermissionOverrideModel
+/**
+ * Model ConnectionPermissionSnapshot
+ * 
+ */
+export type ConnectionPermissionSnapshot = Prisma.ConnectionPermissionSnapshotModel
+/**
+ * Model ConnectionPolicyTemplate
+ * 
+ */
+export type ConnectionPolicyTemplate = Prisma.ConnectionPolicyTemplateModel
