@@ -9,7 +9,6 @@ import { usePathname } from "next/navigation";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { NotificationBadge } from "@/components/notifications/notification-badge";
-import { ShareFloatingButton } from "@/components/share/share-floating-button";
 import { AuthSessionProvider } from "@/context/AuthSessionContext";
 import {
   getAppSectionDescription,
@@ -83,7 +82,9 @@ export function AppShell({ children, session }: AppShellProps) {
         <main
           className={cn(
             "flex-1",
-            isShareRoute ? "px-0 py-0" : "px-4 py-5 sm:px-5 pb-nav",
+            isShareRoute
+              ? "px-0 py-0"
+              : "px-4 py-5 sm:px-5 pb-[calc(env(safe-area-inset-bottom,0px)+80px)]",
           )}
         >
           <div className={cn(isShareRoute ? "min-h-screen-dvh" : "space-y-4")}>
@@ -92,7 +93,6 @@ export function AppShell({ children, session }: AppShellProps) {
           </div>
         </main>
 
-        {!isShareRoute ? <ShareFloatingButton /> : null}
         {!isShareRoute ? <BottomNav /> : null}
       </div>
     </AuthSessionProvider>
