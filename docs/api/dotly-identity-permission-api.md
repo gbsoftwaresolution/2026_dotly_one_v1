@@ -1,6 +1,12 @@
 # Dotly Identity & Permission API Contract
 
-This document outlines the REST API surface for the Identities and Permissions backend from a frontend-consumption perspective. It focuses on the endpoints required to resolve, preview, enforce, and debug permissions within identities, connections, and conversations.
+This document outlines the REST API surface for the Identities and Permissions backend from a frontend-consumption perspective. It focuses on the endpoints required to create identities and connections, resolve permissions, manage conversation context, preview enforcement decisions, and inspect internal permission debug data.
+
+## Production Exposure Note
+
+- These endpoints are wired behind `JwtAuthGuard` in the controller layer.
+- Before any public or admin rollout, verify ownership/actor scoping for each route and confirm which endpoints should stay internal-only, especially explain/diff/audit endpoints.
+- Recommended: keep audit/debug routes limited to internal tooling even after auth is enabled.
 
 ## Frontend Integration Order
 
@@ -14,148 +20,368 @@ This document outlines the REST API surface for the Identities and Permissions b
 
 ---
 
-## Connections & Base Permissions
+## Identities & Connections
 
-### `GET /api/connections/:connectionId/permissions`
+### `POST /v1/identities`
 
-**Description:** Resolves and returns the fully evaluated permission map for a connection.
+Creates an identity record.
 
-- **Request Params:**
-  - `connectionId` (UUID)
-- **Query Params:**
-  - `forceRefresh` (boolean, optional) - Bypass the cache to force a fresh recompute.
-  - `preferCache` (boolean, optional) - Attempt to use fast memory cache first.
-  - `preferSnapshot` (boolean, optional) - Attempt to use stored snapshot if cache misses.
-  - `applyRiskOverlay` (boolean, optional) - Apply dynamic risk engine evaluation on top of rules.
-- **Response:**
+- Request body:
+  - `personId?` UUID
+  - `identityType` enum
+  - `displayName` string
+  - `handle?` string
+  - `verificationLevel` string
+  - `status` string
+  - `metadataJson?` object
+- Key response fields:
+  - `id`, `personId`, `identityType`, `displayName`, `handle`, `verificationLevel`, `status`, `metadataJson`
+- Validation / errors:
+  - invalid UUIDs return `400`
+  - invalid enums return `400`
+
+### `POST /v1/identity-connections`
+
+Creates a directional identity connection.
+
+- Request body:
+  - `sourceIdentityId` UUID
+  - `targetIdentityId` UUID
+  - `connectionType` enum
+  - `trustState` enum
+  - `relationshipType?` enum
+  - `status` enum
+  - `createdByIdentityId` UUID
+  - `note?` string
+  - `metadataJson?` object
+- Key response fields:
+  - `id`, `sourceIdentityId`, `targetIdentityId`, `connectionType`, `relationshipType`, `trustState`, `status`
+
+### `GET /v1/identity-connections/:connectionId`
+
+Returns one connection by id.
+
+- Path params:
+  - `connectionId` UUID
+
+### `GET /v1/identities/:identityId/connections`
+
+Lists all inbound/outbound connections for one identity.
+
+- Path params:
+  - `identityId` UUID
+- Query params:
+  - `status?` connection status enum
+
+### `PATCH /v1/identity-connections/:connectionId/type`
+
+Updates `connectionType`.
+
+- Path params:
+  - `connectionId` UUID
+- Request body:
+  - `connectionType` enum
+
+### `PATCH /v1/identity-connections/:connectionId/trust-state`
+
+Updates `trustState`.
+
+- Path params:
+  - `connectionId` UUID
+- Request body:
+  - `trustState` enum
+
+### `PATCH /v1/identity-connections/:connectionId/relationship-type`
+
+Updates `relationshipType`.
+
+- Path params:
+  - `connectionId` UUID
+- Request body:
+  - `relationshipType` enum
+
+### `PUT /v1/identity-connections/:connectionId/permission-overrides/:permissionKey`
+
+Upserts a manual permission override.
+
+- Path params:
+  - `connectionId` UUID
+  - `permissionKey` must match a known permission key
+- Request body:
+  - `effect` permission effect enum
+  - `limitsJson?` object
+  - `reason?` string
+  - `createdByIdentityId` UUID
+
+### `GET /v1/identity-connections/:connectionId/permission-overrides`
+
+Lists overrides for one connection in deterministic key order.
+
+- Path params:
+  - `connectionId` UUID
+
+---
+
+## Resolved Permissions
+
+### `GET /v1/identity-connections/:connectionId/resolved-permissions`
+
+Resolves and returns the fully evaluated permission map for a connection.
+
+- Path params:
+  - `connectionId` UUID
+- Query params:
+  - `forceRefresh?` boolean
+  - `preferCache?` boolean
+  - `preferSnapshot?` boolean
+  - `persistSnapshot?` boolean
+  - `applyRiskOverlay?` boolean
+- Key response fields:
   - `connectionId`, `sourceIdentityId`, `targetIdentityId`
-  - `permissions`: Record of `PermissionKey` to `ResolvedPermissionValue` (includes `finalEffect`, `limits`, `trace`).
-  - `riskSummary`, `overridesSummary`
-- **Notes:** This is the high-traffic endpoint for determining what a user can do in the context of a connection. Use `preferCache=true` and `preferSnapshot=true` in most UI flows to minimize latency.
+  - `template`, `overridesSummary`, `riskSummary`
+  - `permissions` record with `finalEffect`, optional `limits`, and `trace`
+- Frontend notes:
+  - default to `preferCache=true` for normal reads
+  - use `forceRefresh=true` only when the UI just changed trust, relationship, or overrides and needs a hard refresh
+  - use `preferSnapshot=true` only when slightly stale but fast reads are acceptable
 
 ---
 
 ## Debug & Explain Endpoints (Internal / Dev Tools)
 
-### `GET /api/connections/:connectionId/permissions/explain`
+### `GET /v1/identity-connections/:connectionId/permissions/explain`
 
-**Description:** Returns a detailed summary of all permissions on a connection, including how they were resolved stage-by-stage.
+Returns a summary of all resolved permissions plus stage counts.
 
-- **Request Params:**
-  - `connectionId` (UUID)
-- **Query Params:**
-  - `verbosity` (`BASIC` | `DETAILED`, optional)
-  - `previewRiskSignals` (array of signals, optional)
-  - `forceRefresh`, `preferCache`, `preferSnapshot`, `applyRiskOverlay`
-- **Response:**
-  - `PermissionDebugSummary` including `effectCounts`, `stageSummaries`, `blockedPermissionKeys`, and an array of `PermissionExplainResult` if verbosity is `DETAILED`.
+- Path params:
+  - `connectionId` UUID
+- Query params:
+  - `verbosity?` = `BASIC | DETAILED`
+  - `forceRefresh?`, `preferCache?`, `preferSnapshot?`, `applyRiskOverlay?`
+- Key response fields:
+  - `connection`
+  - `effectCounts`
+  - `stageSummaries`
+  - `blockedPermissionKeys`, `riskyPermissionKeys`
+  - `permissions` only when `verbosity=DETAILED`
 
-### `GET /api/connections/:connectionId/permissions/explain/:permissionKey`
+### `GET /v1/identity-connections/:connectionId/permissions/:permissionKey/explain`
 
-**Description:** Explains the resolution trace for a single specific permission key.
+Explains one permission using actual resolver trace output.
 
-- **Request Params:**
-  - `connectionId` (UUID)
-  - `permissionKey` (string, e.g., `media.download`)
-- **Query Params:** Same as above.
-- **Response:**
-  - `PermissionExplainResult` detailing `initialTemplateEffect`, `trustEffect`, `manualOverrideEffect`, `riskEffect`, `finalEffect`, and an `explanationText`.
+- Path params:
+  - `connectionId` UUID
+  - `permissionKey` known permission key
+- Query params:
+  - `verbosity?`, `forceRefresh?`, `applyRiskOverlay?`
+- Key response fields:
+  - `permissionKey`, `label`
+  - `initialTemplateEffect`, `trustEffect`, `manualOverrideEffect`, `riskEffect`, `finalEffect`
+  - `stages[]`, `explanationText`, `incomplete`
 
-### `GET /api/connections/:connectionId/permissions/diff`
+### `GET /v1/identity-connections/:connectionId/permissions/diff-against-snapshot`
 
-**Description:** Compares the current live permission resolution against the most recently persisted database snapshot.
+Diffs current permissions against the latest stored snapshot.
 
-- **Request Params:**
-  - `connectionId` (UUID)
-- **Query Params:**
-  - `forceRefresh`, `applyRiskOverlay`
-- **Response:**
-  - `status`: `"NO_SNAPSHOT"` or `"DIFF_COMPUTED"`
-  - `diff`: `PermissionDiffResult` detailing keys that were `PROMOTED`, `RESTRICTED`, `ADDED`, `REMOVED`, or `MODIFIED`.
+- Path params:
+  - `connectionId` UUID
+- Query params:
+  - `forceRefresh?`, `applyRiskOverlay?`
+- Key response fields:
+  - `status` = `NO_SNAPSHOT | DIFF_COMPUTED`
+  - `summaryText`
+  - when present: `snapshotId`, `snapshotComputedAt`, `diff.summary`, `diff.entries`
 
 ---
 
 ## Conversation Context
 
-### `GET /api/conversations/:conversationId/permissions/explain`
+### `POST /v1/identity-conversations`
 
-**Description:** Debugs and explains the permission context bound to a conversation.
+Creates a conversation bound to a connection.
 
-- **Request Params:**
-  - `conversationId` (UUID)
-- **Response:**
-  - `conversationId`, `connectionId`
-  - `stale` (boolean) - Indicates if the underlying connection permissions have changed since the conversation was bound.
+- Request body:
+  - `sourceIdentityId` UUID
+  - `targetIdentityId` UUID
+  - `connectionId` UUID
+  - `conversationType` enum
+  - `status?` enum
+  - `title?` string
+  - `metadataJson?` object
+  - `createdByIdentityId` UUID
+
+### `GET /v1/identity-conversations/:conversationId`
+
+Returns one conversation by id.
+
+### `GET /v1/identities/:identityId/conversations`
+
+Lists conversations for one identity.
+
+- Query params:
+  - `status?` conversation status enum
+
+### `PATCH /v1/identity-conversations/:conversationId/status`
+
+Updates conversation status.
+
+- Request body:
+  - `status` conversation status enum
+
+### `GET /v1/identity-conversations/:conversationId/context`
+
+Returns the current conversation permission context.
+
+- Key response fields:
+  - `conversation`
+  - `resolvedPermissions`
+  - `stale`
   - `bindingSummary`, `traceSummary`
-  - `permissionSummary` (`PermissionDebugSummary`)
+
+### `POST /v1/identity-conversations/:conversationId/bind-permissions`
+
+Rebinds the latest resolved permissions to the conversation.
+
+- Key response fields:
+  - `conversationId`, `connectionId`, `bindingSummary`, `resolvedAt`, `stale`
+
+### `GET /v1/identity-conversations/:conversationId/binding-staleness`
+
+Checks whether the stored permission binding is stale.
+
+- Key response fields:
+  - `stale`, `currentHash`, `storedHash`, `lastResolvedAt`, `currentResolvedAt`
+
+### `GET /v1/identity-conversations/:conversationId/explain-context`
+
+Returns a debug-friendly explanation summary for conversation permission context.
+
+- Key response fields:
+  - `conversationId`, `connectionId`, `stale`
+  - `bindingSummary`, `traceSummary`
+  - `permissionSummary`
 
 ---
 
-## Enforcement & Previews
+## Content Access Rules
 
-### `POST /api/conversations/:conversationId/enforce-action`
+### `PUT /v1/content-access-rules`
 
-**Description:** Previews or enforces whether a specific action is allowed in the conversation context.
+Upserts a content access rule.
 
-- **Request Params:**
-  - `conversationId` (UUID)
-- **Body:**
-  - `actorIdentityId` (UUID)
-  - `actionType` (`ActionType` enum)
-  - `contentId` (UUID, optional)
-  - `currentViewCount` (number, optional)
-- **Response:**
-  - `ActionDecision` containing `allowed` (boolean), `effect` (Allow, Deny, etc.), `reasonCode`, and `reasons` string array.
+- Request body:
+  - `contentId` UUID
+  - `targetIdentityId` UUID
+  - `canView?`, `canDownload?`, `canForward?`, `canExport?` booleans
+  - `screenshotPolicy?`, `recordPolicy?` enums
+  - `expiryAt?` ISO string
+  - `viewLimit?` number
+  - `watermarkMode?` string
+  - `aiAccessAllowed?` boolean
+  - `metadataJson?` object
+  - `createdByIdentityId` UUID
 
-### `POST /api/conversations/:conversationId/enforce-call`
+### `GET /v1/content-access-rules`
 
-**Description:** Previews or enforces whether a specific call type can be initiated.
+Reads one content rule.
 
-- **Request Params:**
-  - `conversationId` (UUID)
-- **Body:**
-  - `actorIdentityId` (UUID)
-  - `callType` (`CallType` enum)
-  - `initiationMode` (`CallInitiationMode` enum)
-- **Response:**
-  - `CallPermissionDecision` containing `allowed`, `effect`, `restrictionSummary`, and `reasonCode`.
+- Query params:
+  - `contentId` UUID
+  - `targetIdentityId` UUID
 
-### `POST /api/conversations/:conversationId/enforce-ai`
+### `GET /v1/identity-connections/:connectionId/content/:contentId/permissions`
 
-**Description:** Previews or enforces whether an AI capability can be used.
+Resolves effective content permissions for one connection/content target pair.
 
-- **Request Params:**
-  - `conversationId` (UUID)
-- **Body:**
-  - `actorIdentityId` (UUID)
-  - `capability` (`AICapability` enum)
-  - `contextType` (`AIExecutionContext` enum)
-  - `contentId` (UUID, optional)
-- **Response:**
-  - `AICapabilityDecision` containing `allowed`, `restrictionLevel` (`FULL`, `LIMITED`, `DENIED`), and `reasonCode`.
+- Path params:
+  - `connectionId` UUID
+  - `contentId` UUID
+- Query params:
+  - `targetIdentityId` UUID
+  - `currentViewCount?` number
+  - `persistSnapshot?` boolean
+- Key response fields:
+  - `connection`
+  - `contentSummary`
+  - `baseConnectionPermissions`
+  - `effectiveContentPermissions`
+  - `contentTrace`, `restrictionSummary`
+
+---
+
+## Enforcement Preview
+
+### `POST /v1/identity-conversations/:conversationId/enforce-action`
+
+Previews whether an action is allowed in conversation context.
+
+- Request body:
+  - `actorIdentityId` UUID
+  - `actionType` enum
+  - `contentId?` UUID
+  - `currentViewCount?` number
+  - `metadata?` object
+- Key response fields:
+  - `allowed`, `effect`, `reasonCode`, `reasons`, `trace`
+- Frontend notes:
+  - use before showing send/export/content actions that depend on runtime context
+
+### `POST /v1/identity-conversations/:conversationId/enforce-call`
+
+Previews whether a call is allowed.
+
+- Request body:
+  - `actorIdentityId` UUID
+  - `callType` enum
+  - `initiationMode` enum
+  - runtime booleans like `screenCaptureDetected?`, `castingDetected?`, `deviceIntegrityCompromised?`, `currentProtectedModeExpectation?`
+- Key response fields:
+  - `allowed`, `effect`, `reasonCode`, `restrictionSummary`, `trace`
+
+### `POST /v1/identity-conversations/:conversationId/enforce-ai`
+
+Previews whether an AI capability is allowed.
+
+- Request body:
+  - `actorIdentityId` UUID
+  - `capability` enum
+  - `contextType` enum
+  - `contentId?` UUID
+  - `isProtectedContent?`, `isVaultContent?` booleans
+- Key response fields:
+  - `allowed`, `restrictionLevel`, `reasonCode`, `reasons`, `trace`
+- Frontend notes:
+  - treat this as preview + gating data for AI buttons and menus
+  - if the request fails, fail closed and hide/disable the action
 
 ---
 
 ## Audit Logs (Internal)
 
-### `GET /api/permissions/audit-events`
+### `GET /v1/permission-audit-events`
 
-**Description:** Lists recent permission audit events (e.g., resolution computed, cache invalidated, action enforced).
+Lists recent permission audit events.
 
-- **Query Params:**
-  - `eventType` (PermissionAuditEventType, optional)
-  - `connectionId` (UUID, optional)
-  - `conversationId` (UUID, optional)
-  - `actorIdentityId` (UUID, optional)
-  - `limit` (number, default: 50, max: 100)
-- **Response:**
-  - Array of `PermissionAuditEvent` with `summaryText` and `payloadJson`.
+- Query params:
+  - `eventType?` enum
+  - `connectionId?` UUID
+  - `conversationId?` UUID
+  - `actorIdentityId?` UUID
+  - `limit?` number, max `100`
+- Key response fields:
+  - `id`, `eventType`, `connectionId`, `conversationId`, `permissionKey`, `summaryText`, `payloadJson`, `createdAt`
 
 ---
 
 ## Validation & Error Expectations
 
-- **400 Bad Request:** Missing required IDs, invalid enum values (e.g., wrong `permissionKey` or `actionType`).
-- **404 Not Found:** If a requested `connectionId` or `conversationId` does not exist.
-- **Type Safety:** The frontend should strictly type permission keys using the provided enums/constants to avoid failed evaluations.
-- **Fail-Closed:** If the enforcement endpoints return 500 or cannot be reached, the frontend must assume the action is **DENIED**.
+- `400 Bad Request`
+  - invalid UUID path/query/body fields
+  - invalid enum values
+  - invalid `permissionKey` path values
+- `401 Unauthorized`
+  - missing or invalid bearer token
+- `404 Not Found`
+  - unknown connection, conversation, or identity ids when the service rejects lookup
+- Successful responses are wrapped by the shared response envelope used by the backend, so frontend callers should read `data` for the payload body.
+- Errors use normal HTTP status codes and the shared error shape from the global exception filter.
