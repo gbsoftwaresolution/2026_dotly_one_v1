@@ -739,6 +739,13 @@ export type EnumConnectionTypeFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumConnectionTypeFilter<$PrismaModel> | $Enums.ConnectionType
 }
 
+export type EnumRelationshipTypeNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.RelationshipType | Prisma.EnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+  in?: $Enums.RelationshipType[] | Prisma.ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.RelationshipType[] | Prisma.ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumRelationshipTypeNullableFilter<$PrismaModel> | $Enums.RelationshipType | null
+}
+
 export type EnumTrustStateFilter<$PrismaModel = never> = {
   equals?: $Enums.TrustState | Prisma.EnumTrustStateFieldRefInput<$PrismaModel>
   in?: $Enums.TrustState[] | Prisma.ListEnumTrustStateFieldRefInput<$PrismaModel>
@@ -761,6 +768,16 @@ export type EnumConnectionTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumConnectionTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumConnectionTypeFilter<$PrismaModel>
+}
+
+export type EnumRelationshipTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RelationshipType | Prisma.EnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+  in?: $Enums.RelationshipType[] | Prisma.ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.RelationshipType[] | Prisma.ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumRelationshipTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.RelationshipType | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
 }
 
 export type EnumTrustStateWithAggregatesFilter<$PrismaModel = never> = {
@@ -1510,6 +1527,13 @@ export type NestedEnumConnectionTypeFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumConnectionTypeFilter<$PrismaModel> | $Enums.ConnectionType
 }
 
+export type NestedEnumRelationshipTypeNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.RelationshipType | Prisma.EnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+  in?: $Enums.RelationshipType[] | Prisma.ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.RelationshipType[] | Prisma.ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumRelationshipTypeNullableFilter<$PrismaModel> | $Enums.RelationshipType | null
+}
+
 export type NestedEnumTrustStateFilter<$PrismaModel = never> = {
   equals?: $Enums.TrustState | Prisma.EnumTrustStateFieldRefInput<$PrismaModel>
   in?: $Enums.TrustState[] | Prisma.ListEnumTrustStateFieldRefInput<$PrismaModel>
@@ -1532,6 +1556,16 @@ export type NestedEnumConnectionTypeWithAggregatesFilter<$PrismaModel = never> =
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumConnectionTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumConnectionTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumRelationshipTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RelationshipType | Prisma.EnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+  in?: $Enums.RelationshipType[] | Prisma.ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.RelationshipType[] | Prisma.ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumRelationshipTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.RelationshipType | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
 }
 
 export type NestedEnumTrustStateWithAggregatesFilter<$PrismaModel = never> = {

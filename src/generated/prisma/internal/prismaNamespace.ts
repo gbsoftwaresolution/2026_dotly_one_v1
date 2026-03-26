@@ -2825,6 +2825,7 @@ export const IdentityConnectionScalarFieldEnum = {
   sourceIdentityId: 'sourceIdentityId',
   targetIdentityId: 'targetIdentityId',
   connectionType: 'connectionType',
+  relationshipType: 'relationshipType',
   trustState: 'trustState',
   status: 'status',
   createdByIdentityId: 'createdByIdentityId',
@@ -3359,6 +3360,20 @@ export type EnumConnectionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$P
  * Reference to a field of type 'ConnectionType[]'
  */
 export type ListEnumConnectionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ConnectionType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'RelationshipType'
+ */
+export type EnumRelationshipTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RelationshipType'>
+    
+
+
+/**
+ * Reference to a field of type 'RelationshipType[]'
+ */
+export type ListEnumRelationshipTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RelationshipType[]'>
     
 
 

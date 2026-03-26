@@ -387,6 +387,18 @@ function ensureRiskTraceBase(
 
   return {
     baseEffect: traceEntry?.baseEffect ?? fallbackEffect,
+    identityBehaviorEffect: traceEntry?.identityBehaviorEffect ?? null,
+    postIdentityBehaviorEffect:
+      traceEntry?.postIdentityBehaviorEffect ??
+      traceEntry?.postRelationshipEffect ??
+      traceEntry?.postTrustEffect ??
+      fallbackEffect,
+    relationshipBehaviorEffect: traceEntry?.relationshipBehaviorEffect ?? null,
+    postRelationshipEffect:
+      traceEntry?.postRelationshipEffect ??
+      traceEntry?.postIdentityBehaviorEffect ??
+      traceEntry?.postTrustEffect ??
+      fallbackEffect,
     adjustmentEffect: traceEntry?.adjustmentEffect ?? null,
     postTrustEffect: traceEntry?.postTrustEffect ?? fallbackEffect,
     manualOverrideEffect: traceEntry?.manualOverrideEffect ?? null,

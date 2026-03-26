@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import { ConnectionType } from "../src/common/enums/connection-type.enum";
 import { IdentityType } from "../src/common/enums/identity-type.enum";
 import { PermissionEffect } from "../src/common/enums/permission-effect.enum";
+import { RelationshipType } from "../src/common/enums/relationship-type.enum";
 import { TrustState } from "../src/common/enums/trust-state.enum";
 import { IdentitiesService } from "../src/modules/identities/identities.service";
 import { CONNECTION_POLICY_TEMPLATE_SEEDS } from "../src/modules/identities/policy-template-seeds";
@@ -41,6 +42,7 @@ function createConnectionRecord(overrides?: Partial<Record<string, unknown>>) {
     sourceIdentityId: "identity-source",
     targetIdentityId: "identity-target",
     connectionType: "TRUSTED",
+    relationshipType: null,
     trustState: "BLOCKED",
     status: "BLOCKED",
     createdByIdentityId: "identity-source",
@@ -455,9 +457,484 @@ describe("canonical permission resolver", () => {
       PermissionEffect.Allow,
     );
     assert.equal(
+      typeof result.trace[PERMISSION_KEYS.ai.summaryUse]
+        ?.postIdentityBehaviorEffect,
+      "string",
+    );
+    assert.equal(
+      typeof result.trace[PERMISSION_KEYS.ai.summaryUse]
+        ?.identityBehaviorEffect === "string" ||
+        result.trace[PERMISSION_KEYS.ai.summaryUse]?.identityBehaviorEffect ===
+          null,
+      true,
+    );
+    assert.equal(
+      typeof result.trace[PERMISSION_KEYS.ai.summaryUse]
+        ?.postRelationshipEffect,
+      "string",
+    );
+    assert.equal(
+      typeof result.trace[PERMISSION_KEYS.ai.summaryUse]
+        ?.relationshipBehaviorEffect === "string" ||
+        result.trace[PERMISSION_KEYS.ai.summaryUse]
+          ?.relationshipBehaviorEffect === null,
+      true,
+    );
+    assert.equal(
       result.trace[PERMISSION_KEYS.ai.summaryUse]?.overrideApplied,
       true,
     );
     assert.equal(typeof result.resolvedAt.getTime(), "number");
+  });
+
+  it("resolver exposes identity behavior summary and compatibility flags", async () => {
+    const service = new IdentitiesService({
+      identityConnection: {
+        findUnique: async () =>
+          createConnectionRecord({
+            trustState: "TRUSTED_BY_USER",
+            connectionType: "PARTNER",
+          }),
+      },
+      identity: {
+        findUnique: async ({ where }: any) => ({
+          id: where.id,
+          identityType: where.id === "identity-source" ? "COUPLE" : "PERSONAL",
+        }),
+      },
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("couple.partner"),
+      },
+      connectionPermissionOverride: {
+        findMany: async () => [],
+      },
+    } as any);
+
+    const result = await service.resolveConnectionPermissions({
+      connectionId: "1becc7fd-39aa-42f8-a522-a4f3879f98f9",
+    });
+
+    assert.equal(
+      result.identityBehaviorSummary.sourceIdentityType,
+      IdentityType.Couple,
+    );
+    assert.equal(
+      result.identityBehaviorSummary.targetIdentityType,
+      IdentityType.Personal,
+    );
+    assert.equal(
+      result.identityBehaviorSummary.restrictionFlags
+        .prefersProtectedConversation,
+      true,
+    );
+    assert.equal(
+      result.identityBehaviorSummary.restrictionFlags
+        .allowsBusinessConversation,
+      false,
+    );
+    assert.equal(
+      result.identityBehaviorSummary.restrictionFlags.restrictsExport,
+      true,
+    );
+    assert.equal(
+      result.identityBehaviorSummary.restrictionFlags.restrictsReshare,
+      true,
+    );
+    assert.equal(
+      result.identityBehaviorSummary.restrictionFlags
+        .schedulingPreferredForCalls,
+      false,
+    );
+    assert.equal(
+      result.identityBehaviorSummary.restrictionFlags.restrictsDirectVideo,
+      true,
+    );
+  });
+
+  it("previewPermissionsWithIdentityBehavior returns behavior-shaped preview", async () => {
+    const service = new IdentitiesService({
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("professional.client"),
+      },
+    } as any);
+
+    const result = await service.previewPermissionsWithIdentityBehavior({
+      sourceIdentityType: IdentityType.Professional,
+      targetIdentityType: IdentityType.Business,
+      connectionType: ConnectionType.Client,
+      trustState: TrustState.TrustedByUser,
+    });
+
+    assert.equal(result.sourceIdentityType, IdentityType.Professional);
+    assert.equal(result.targetIdentityType, IdentityType.Business);
+    assert.equal(
+      result.behaviorSummary.restrictionFlags.schedulingPreferredForCalls,
+      true,
+    );
+    assert.equal(
+      result.postIdentityBehaviorPermissions[
+        PERMISSION_KEYS.actions.supportTicketCreate
+      ]?.effect,
+      PermissionEffect.Allow,
+    );
+    assert.equal(
+      typeof result.mergeTrace[PERMISSION_KEYS.actions.supportTicketCreate]
+        ?.postIdentityBehaviorEffect,
+      "string",
+    );
+    assert.equal(
+      result.behaviorSummary.reasonCodes.includes(
+        "IDENTITY_BEHAVIOR_SCHEDULE_PREFERRED",
+      ),
+      true,
+    );
+  });
+
+  it("PARTNER reinforces protected private posture", async () => {
+    const service = new IdentitiesService({
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("generic.trusted"),
+      },
+    } as any);
+
+    const result = await service.previewPermissionsWithRelationship({
+      sourceIdentityType: IdentityType.Personal,
+      targetIdentityType: IdentityType.Personal,
+      connectionType: ConnectionType.Trusted,
+      relationshipType: RelationshipType.Partner,
+      trustState: TrustState.TrustedByUser,
+    });
+
+    assert.equal(
+      result.relationshipBehaviorSummary.recommendedConversationType,
+      "PROTECTED_DIRECT",
+    );
+    assert.equal(
+      result.relationshipBehaviorSummary.compatibilityFlags
+        .prefersProtectedConversation,
+      true,
+    );
+    assert.equal(
+      result.postRelationshipBehaviorPermissions[
+        PERMISSION_KEYS.mediaPrivacy.export
+      ]?.effect,
+      PermissionEffect.Deny,
+    );
+    assert.equal(
+      result.postRelationshipBehaviorPermissions[
+        PERMISSION_KEYS.vault.itemReshare
+      ]?.effect,
+      PermissionEffect.Deny,
+    );
+  });
+
+  it("FAMILY_MEMBER improves vault-friendly behavior safely", async () => {
+    const service = new IdentitiesService({
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("generic.known"),
+      },
+    } as any);
+
+    const result = await service.previewPermissionsWithRelationship({
+      sourceIdentityType: IdentityType.Family,
+      targetIdentityType: IdentityType.Family,
+      connectionType: ConnectionType.Known,
+      relationshipType: RelationshipType.FamilyMember,
+      trustState: TrustState.BasicVerified,
+    });
+
+    assert.equal(
+      result.postRelationshipBehaviorPermissions[PERMISSION_KEYS.vault.itemView]
+        ?.effect,
+      PermissionEffect.Allow,
+    );
+    assert.equal(
+      result.postRelationshipBehaviorPermissions[
+        PERMISSION_KEYS.vault.itemDownload
+      ]?.effect,
+      PermissionEffect.Allow,
+    );
+    assert.equal(
+      result.relationshipBehaviorSummary.compatibilityFlags.restrictsReshare,
+      true,
+    );
+  });
+
+  it("CLIENT improves business actions without opening private profile fields", async () => {
+    const service = new IdentitiesService({
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("generic.known"),
+      },
+    } as any);
+
+    const result = await service.previewPermissionsWithRelationship({
+      sourceIdentityType: IdentityType.Business,
+      targetIdentityType: IdentityType.Personal,
+      connectionType: ConnectionType.Client,
+      relationshipType: RelationshipType.Client,
+      trustState: TrustState.BasicVerified,
+    });
+
+    assert.equal(
+      result.postRelationshipBehaviorPermissions[
+        PERMISSION_KEYS.actions.bookingRequestCreate
+      ]?.effect,
+      PermissionEffect.Allow,
+    );
+    assert.equal(
+      result.postRelationshipBehaviorPermissions[
+        PERMISSION_KEYS.actions.paymentRequestCreate
+      ]?.effect,
+      PermissionEffect.Allow,
+    );
+    assert.equal(
+      result.postRelationshipBehaviorPermissions[
+        PERMISSION_KEYS.actions.supportTicketCreate
+      ]?.effect,
+      PermissionEffect.Allow,
+    );
+    assert.equal(
+      result.postRelationshipBehaviorPermissions[
+        PERMISSION_KEYS.profile.phoneView
+      ]?.effect,
+      PermissionEffect.RequestApproval,
+    );
+  });
+
+  it("COLLEAGUE mildly improves call and support behavior", async () => {
+    const service = new IdentitiesService({
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("generic.known"),
+      },
+    } as any);
+
+    const result = await service.previewPermissionsWithRelationship({
+      sourceIdentityType: IdentityType.Professional,
+      targetIdentityType: IdentityType.Professional,
+      connectionType: ConnectionType.Colleague,
+      relationshipType: RelationshipType.Colleague,
+      trustState: TrustState.BasicVerified,
+    });
+
+    assert.equal(
+      result.postRelationshipBehaviorPermissions[
+        PERMISSION_KEYS.calling.voiceStart
+      ]?.effect,
+      PermissionEffect.Allow,
+    );
+    assert.equal(
+      result.postRelationshipBehaviorPermissions[
+        PERMISSION_KEYS.actions.supportTicketCreate
+      ]?.effect,
+      PermissionEffect.Allow,
+    );
+    assert.equal(
+      result.relationshipBehaviorSummary.prefersScheduledCalls,
+      true,
+    );
+  });
+
+  it("UNKNOWN relationship remains neutral", async () => {
+    const service = new IdentitiesService({
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("generic.trusted"),
+      },
+    } as any);
+
+    const templatePermissions =
+      createTemplateRecord("generic.trusted").permissionsJson;
+    const result = await service.previewPermissionsWithRelationship({
+      sourceIdentityType: IdentityType.Personal,
+      targetIdentityType: IdentityType.Personal,
+      connectionType: ConnectionType.Trusted,
+      relationshipType: RelationshipType.Unknown,
+      trustState: TrustState.TrustedByUser,
+    });
+
+    assert.deepEqual(
+      result.postRelationshipBehaviorPermissions,
+      templatePermissions,
+    );
+  });
+
+  it("relationship summary exposes call and service hints", async () => {
+    const service = new IdentitiesService({
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("generic.known"),
+      },
+    } as any);
+
+    const result = await service.previewPermissionsWithRelationship({
+      sourceIdentityType: IdentityType.Business,
+      targetIdentityType: IdentityType.Personal,
+      connectionType: ConnectionType.Client,
+      relationshipType: RelationshipType.HouseholdService,
+      trustState: TrustState.BasicVerified,
+    });
+
+    assert.equal(
+      result.relationshipBehaviorSummary.prefersScheduledCalls,
+      true,
+    );
+    assert.equal(result.relationshipBehaviorSummary.routineCallFriendly, true);
+    assert.equal(result.relationshipBehaviorSummary.serviceFlowFriendly, true);
+  });
+
+  it("relationship behavior does not override hard-deny constraints", async () => {
+    const service = new IdentitiesService({
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("couple.partner"),
+      },
+    } as any);
+
+    const result = await service.previewPermissionsWithRelationship({
+      sourceIdentityType: IdentityType.Couple,
+      targetIdentityType: IdentityType.Personal,
+      connectionType: ConnectionType.Partner,
+      relationshipType: RelationshipType.InnerCircle,
+      trustState: TrustState.TrustedByUser,
+    });
+
+    assert.equal(
+      result.postRelationshipBehaviorPermissions[
+        PERMISSION_KEYS.mediaPrivacy.export
+      ]?.effect,
+      PermissionEffect.Deny,
+    );
+    assert.equal(
+      result.postRelationshipBehaviorPermissions[
+        PERMISSION_KEYS.vault.itemReshare
+      ]?.effect,
+      PermissionEffect.Deny,
+    );
+  });
+
+  it("service getIdentityTypeBehavior exposes pairwise behavior summary", () => {
+    const service = new IdentitiesService({} as any);
+
+    const result = service.getIdentityTypeBehavior(
+      IdentityType.Family,
+      IdentityType.Family,
+    );
+
+    assert.equal(
+      result.summary.restrictionFlags.prefersProtectedConversation,
+      true,
+    );
+    assert.equal(
+      result.summary.pairAppliedKeys.includes(PERMISSION_KEYS.vault.itemView),
+      true,
+    );
+  });
+
+  it("BUSINESS behavior promotes business actions without overexposing private profile fields", async () => {
+    const service = new IdentitiesService({
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("business.known"),
+      },
+    } as any);
+
+    const result = await service.previewPermissionsWithIdentityBehavior({
+      sourceIdentityType: IdentityType.Business,
+      targetIdentityType: IdentityType.Business,
+      connectionType: ConnectionType.Known,
+      trustState: TrustState.Unverified,
+    });
+
+    assert.equal(
+      result.postIdentityBehaviorPermissions[
+        PERMISSION_KEYS.actions.bookingRequestCreate
+      ]?.effect,
+      PermissionEffect.Allow,
+    );
+    assert.equal(
+      result.postIdentityBehaviorPermissions[
+        PERMISSION_KEYS.actions.paymentRequestCreate
+      ]?.effect,
+      PermissionEffect.Allow,
+    );
+    assert.equal(
+      result.postIdentityBehaviorPermissions[
+        PERMISSION_KEYS.actions.invoiceIssue
+      ]?.effect,
+      undefined,
+    );
+    assert.equal(
+      result.postIdentityBehaviorPermissions[
+        PERMISSION_KEYS.actions.supportTicketCreate
+      ]?.effect,
+      PermissionEffect.Allow,
+    );
+    assert.equal(
+      result.postIdentityBehaviorPermissions[PERMISSION_KEYS.profile.phoneView]
+        ?.effect,
+      PermissionEffect.RequestApproval,
+    );
+    assert.equal(
+      result.postIdentityBehaviorPermissions[PERMISSION_KEYS.profile.emailView]
+        ?.effect,
+      PermissionEffect.RequestApproval,
+    );
+  });
+
+  it("PROFESSIONAL behavior applies only mild promotion", async () => {
+    const service = new IdentitiesService({
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("professional.client"),
+      },
+    } as any);
+
+    const result = await service.previewPermissionsWithIdentityBehavior({
+      sourceIdentityType: IdentityType.Professional,
+      targetIdentityType: IdentityType.Business,
+      connectionType: ConnectionType.Client,
+      trustState: TrustState.Unverified,
+    });
+
+    assert.equal(
+      result.postIdentityBehaviorPermissions[PERMISSION_KEYS.ai.summaryUse]
+        ?.effect,
+      PermissionEffect.AllowWithLimits,
+    );
+    assert.equal(
+      result.postIdentityBehaviorPermissions[PERMISSION_KEYS.ai.replyUse]
+        ?.effect,
+      PermissionEffect.AllowWithLimits,
+    );
+    assert.equal(
+      result.postIdentityBehaviorPermissions[
+        PERMISSION_KEYS.actions.supportTicketCreate
+      ]?.effect,
+      PermissionEffect.Allow,
+    );
+    assert.equal(
+      result.postIdentityBehaviorPermissions[PERMISSION_KEYS.profile.phoneView]
+        ?.effect,
+      PermissionEffect.RequestApproval,
+    );
+  });
+
+  it("PERSONAL behavior does not over-promote template permissions", async () => {
+    const service = new IdentitiesService({
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("personal.trusted"),
+      },
+    } as any);
+
+    const templatePermissions =
+      createTemplateRecord("personal.trusted").permissionsJson;
+    const result = await service.previewPermissionsWithIdentityBehavior({
+      sourceIdentityType: IdentityType.Personal,
+      targetIdentityType: IdentityType.Personal,
+      connectionType: ConnectionType.Trusted,
+      trustState: TrustState.TrustedByUser,
+    });
+
+    assert.equal(result.behaviorSummary.sourceAppliedKeys.length, 0);
+    assert.equal(result.behaviorSummary.pairAppliedKeys.length, 0);
+    assert.deepEqual(
+      result.postIdentityBehaviorPermissions,
+      templatePermissions,
+    );
   });
 });

@@ -9,8 +9,12 @@ import {
 
 import { ConnectionStatus } from "../../../common/enums/connection-status.enum";
 import { ConnectionType } from "../../../common/enums/connection-type.enum";
+import { RelationshipType } from "../../../common/enums/relationship-type.enum";
 import { TrustState } from "../../../common/enums/trust-state.enum";
-import type { ConnectionMetadata } from "../identity.types";
+import type {
+  ConnectionMetadata,
+  RelationshipMetadata,
+} from "../identity.types";
 import {
   IDENTITY_NOTE_MAX_LENGTH,
   TrimNullableString,
@@ -29,6 +33,10 @@ export class CreateConnectionDto {
   @IsEnum(TrustState)
   trustState!: TrustState;
 
+  @IsOptional()
+  @IsEnum(RelationshipType)
+  relationshipType?: RelationshipType | null;
+
   @IsEnum(ConnectionStatus)
   status!: ConnectionStatus;
 
@@ -44,4 +52,8 @@ export class CreateConnectionDto {
   @IsOptional()
   @IsObject()
   metadataJson?: ConnectionMetadata | null;
+
+  @IsOptional()
+  @IsObject()
+  relationshipMetadataJson?: RelationshipMetadata | null;
 }

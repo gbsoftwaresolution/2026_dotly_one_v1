@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 
 import { PermissionEffect } from "../../common/enums/permission-effect.enum";
+import { IdentityType } from "../../common/enums/identity-type.enum";
 
 import {
   ActionDecisionEffect,
@@ -11,7 +12,12 @@ import {
   getActionPermissionDefinition,
 } from "./action-permission";
 import { EnforceActionDto } from "./dto/enforce-action.dto";
-import { ConversationStatus, ConversationType } from "./identity.types";
+import {
+  ConversationStatus,
+  ConversationType,
+  type IdentityBehaviorRuleSummary,
+} from "./identity.types";
+import { getIdentityTypeBehavior } from "./identity-type-behaviors";
 import { IdentitiesService } from "./identities.service";
 import { PERMISSION_KEYS, type PermissionKey } from "./permission-keys";
 
@@ -36,6 +42,18 @@ export class ActionEnforcementService {
       boundPermissions?.resolvedConnectionPermissions ??
       context.resolvedPermissions;
     const conversation = context.conversation;
+    const sourceIdentityType =
+      await this.identitiesService.getIdentityTypeForIdentity(
+        conversation.sourceIdentityId,
+      );
+    const targetIdentityType =
+      await this.identitiesService.getIdentityTypeForIdentity(
+        conversation.targetIdentityId,
+      );
+    const identityBehaviorSummary = getIdentityTypeBehavior(
+      sourceIdentityType,
+      targetIdentityType,
+    ).summary;
 
     if (
       !this.validateActorInConversation(input.actorIdentityId, conversation)
@@ -117,6 +135,20 @@ export class ActionEnforcementService {
           contentAction: actionDefinition.contentAction,
         },
       });
+    }
+
+    const identityBehaviorDecision = this.applyIdentityBehaviorToActionDecision(
+      input,
+      actionDefinition,
+      identityBehaviorSummary,
+      staleCheck.stale,
+      conversation.conversationStatus,
+      conversation.conversationType,
+      resolvedPermission.finalEffect,
+    );
+
+    if (identityBehaviorDecision) {
+      return identityBehaviorDecision;
     }
 
     const protectedModeDecision = this.enforceProtectedConversationOverrides(
@@ -670,6 +702,75 @@ export class ActionEnforcementService {
           baseEffect,
           contentEffect: null,
           contentAction: null,
+        },
+      });
+    }
+
+    return null;
+  }
+
+  private applyIdentityBehaviorToActionDecision(
+    input: EnforceActionDto,
+    actionDefinition: ActionPermissionDefinition,
+    pairBehaviorSummary: IdentityBehaviorRuleSummary,
+    staleBinding: boolean,
+    conversationStatus: ConversationStatus,
+    conversationType: ConversationType,
+    baseEffect: PermissionEffect,
+  ): ActionDecision | null {
+    const exportRestricted =
+      pairBehaviorSummary.restrictionFlags.exportRestricted &&
+      (input.actionType === ActionType.ExportMedia ||
+        input.actionType === ActionType.ExportContent);
+    const reshareRestricted =
+      pairBehaviorSummary.restrictionFlags.reshareRestricted &&
+      (input.actionType === ActionType.ForwardMedia ||
+        input.actionType === ActionType.ForwardContent);
+
+    if (exportRestricted) {
+      return this.buildDecision({
+        allowed: false,
+        effect: ActionDecisionEffect.Deny,
+        actionType: input.actionType,
+        permissionKey: actionDefinition.permissionKey,
+        conversationId: input.conversationId,
+        actorIdentityId: input.actorIdentityId,
+        reasonCode: "ACTION_DENIED_PERMISSION",
+        reasons: ["Identity behavior restricts export for this pair context"],
+        trace: {
+          staleBinding,
+          conversationStatus,
+          conversationType,
+          baseEffect,
+          contentEffect: null,
+          contentAction: actionDefinition.contentAction,
+          identityBehaviorApplied: true,
+          identityBehaviorReasonCodes: pairBehaviorSummary.reasonCodes,
+          identityBehaviorSummary: pairBehaviorSummary,
+        },
+      });
+    }
+
+    if (reshareRestricted) {
+      return this.buildDecision({
+        allowed: true,
+        effect: ActionDecisionEffect.AllowWithLimits,
+        actionType: input.actionType,
+        permissionKey: actionDefinition.permissionKey,
+        conversationId: input.conversationId,
+        actorIdentityId: input.actorIdentityId,
+        reasonCode: "ACTION_ALLOWED_WITH_LIMITS",
+        reasons: ["Identity behavior limits reshare for this pair context"],
+        trace: {
+          staleBinding,
+          conversationStatus,
+          conversationType,
+          baseEffect,
+          contentEffect: null,
+          contentAction: actionDefinition.contentAction,
+          identityBehaviorApplied: true,
+          identityBehaviorReasonCodes: pairBehaviorSummary.reasonCodes,
+          identityBehaviorSummary: pairBehaviorSummary,
         },
       });
     }

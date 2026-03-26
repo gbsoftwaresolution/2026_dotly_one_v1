@@ -195,6 +195,10 @@ function createTraceEntry(
 ): PermissionMergeTraceEntry {
   return {
     baseEffect,
+    identityBehaviorEffect: null,
+    postIdentityBehaviorEffect: baseEffect,
+    relationshipBehaviorEffect: null,
+    postRelationshipEffect: baseEffect,
     adjustmentEffect,
     postTrustEffect: finalEffect,
     manualOverrideEffect: null,

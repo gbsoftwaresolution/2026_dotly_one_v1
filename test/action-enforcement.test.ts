@@ -2,6 +2,7 @@ import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
 import { PermissionEffect } from "../src/common/enums/permission-effect.enum";
+import { IdentityType } from "../src/common/enums/identity-type.enum";
 import {
   ActionDecisionEffect,
   ActionType,
@@ -206,6 +207,10 @@ function createService(overrides?: Partial<Record<string, unknown>>) {
       resolvedAt: new Date("2026-03-26T12:00:00.000Z"),
       stale: false,
     }),
+    getIdentityTypeForIdentity: async (identityId: string) =>
+      identityId === "identity-source"
+        ? IdentityType.Personal
+        : IdentityType.Personal,
     resolveContentPermissionsForConnection: async () =>
       createContentResolution(PermissionEffect.Allow),
     ...overrides,

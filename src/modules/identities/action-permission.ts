@@ -4,6 +4,7 @@ import type {
   ContentActionKey,
   ConversationStatus,
   ConversationType,
+  IdentityBehaviorRuleSummary,
 } from "./identity.types";
 import type { PermissionKey } from "./permission-keys";
 import { PERMISSION_KEYS } from "./permission-keys";
@@ -63,6 +64,9 @@ export interface ActionDecision {
     baseEffect: PermissionEffect | null;
     contentEffect: PermissionEffect | null;
     contentAction: ContentActionKey | null;
+    identityBehaviorApplied?: boolean;
+    identityBehaviorReasonCodes?: string[];
+    identityBehaviorSummary?: IdentityBehaviorRuleSummary | null;
   };
   evaluatedAt: Date;
 }

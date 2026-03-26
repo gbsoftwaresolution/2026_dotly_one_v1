@@ -1,7 +1,10 @@
 import type { ConnectionType } from "../../common/enums/connection-type.enum";
 import type { IdentityType } from "../../common/enums/identity-type.enum";
 import type { PermissionEffect } from "../../common/enums/permission-effect.enum";
+import type { RelationshipType } from "../../common/enums/relationship-type.enum";
 import type { TrustState } from "../../common/enums/trust-state.enum";
+import type { IdentityTypeBehaviorSummary } from "./identity-type-behaviors";
+import type { RelationshipBehaviorSummary } from "./relationship-engine";
 import type { RiskSeverity, RiskSignal, RiskSignalRecord } from "./risk-engine";
 
 import type { PermissionKey } from "./permission-keys";
@@ -17,6 +20,12 @@ export interface ConnectionMetadata {
   source?: string;
   labels?: string[];
   lastReviewedAt?: string;
+}
+
+export interface RelationshipMetadata {
+  establishedAt?: string;
+  tags?: string[];
+  notes?: string;
 }
 
 export interface PermissionLimits {
@@ -131,6 +140,15 @@ export type MergeMode = "RESTRICTIVE" | "PERMISSIVE";
 
 export type PermissionMergeReasonCode =
   | "TEMPLATE_BASE"
+  | "IDENTITY_BEHAVIOR_NO_CHANGE"
+  | "IDENTITY_BEHAVIOR_PROMOTED"
+  | "IDENTITY_BEHAVIOR_RESTRICTED"
+  | "IDENTITY_PAIR_RULE_APPLIED"
+  | "IDENTITY_BEHAVIOR_FLAG_ONLY"
+  | "RELATIONSHIP_NO_CHANGE"
+  | "RELATIONSHIP_PROMOTED"
+  | "RELATIONSHIP_RESTRICTED"
+  | "RELATIONSHIP_FLAG_ONLY"
   | "TRUST_NO_CHANGE"
   | "TRUST_PROMOTED"
   | "TRUST_RESTRICTED"
@@ -150,6 +168,10 @@ export type PermissionMergeReasonCode =
 
 export interface PermissionResolutionStageTrace {
   baseEffect: PermissionEffect;
+  identityBehaviorEffect: PermissionEffect | null;
+  postIdentityBehaviorEffect: PermissionEffect;
+  relationshipBehaviorEffect: PermissionEffect | null;
+  postRelationshipEffect: PermissionEffect;
   adjustmentEffect: PermissionEffect | null;
   postTrustEffect: PermissionEffect;
   manualOverrideEffect: PermissionEffect | null;
@@ -216,6 +238,18 @@ export interface TrustAdjustedPermissionsResult {
   mergeTrace: PermissionMergeTrace;
 }
 
+export interface IdentityBehaviorAdjustedPermissionsResult {
+  mergedPermissions: ConnectionPolicyTemplatePermissions;
+  mergeTrace: PermissionMergeTrace;
+  behaviorSummary: IdentityTypeBehaviorSummary;
+}
+
+export interface RelationshipBehaviorAdjustedPermissionsResult {
+  mergedPermissions: ConnectionPolicyTemplatePermissions;
+  mergeTrace: PermissionMergeTrace;
+  relationshipSummary: RelationshipBehaviorSummary;
+}
+
 export interface OverrideAdjustedPermissionsResult {
   mergedPermissions: ConnectionPolicyTemplatePermissions;
   mergeTrace: PermissionMergeTrace;
@@ -243,6 +277,51 @@ export interface PreviewPermissionsWithTrustStateResult {
   mergeTrace: PermissionMergeTrace;
 }
 
+export interface PreviewPermissionsWithIdentityBehaviorResult {
+  template: Pick<
+    ConnectionPolicyTemplateRecord,
+    | "id"
+    | "sourceIdentityType"
+    | "connectionType"
+    | "templateKey"
+    | "displayName"
+    | "description"
+    | "policyVersion"
+  >;
+  sourceIdentityType: IdentityType;
+  targetIdentityType: IdentityType | null;
+  connectionType: ConnectionType;
+  trustState: TrustState;
+  behaviorSummary: IdentityTypeBehaviorSummary;
+  postIdentityBehaviorPermissions: ConnectionPolicyTemplatePermissions;
+  finalPermissions: ConnectionPolicyTemplatePermissions;
+  mergeTrace: PermissionMergeTrace;
+}
+
+export interface PreviewPermissionsWithRelationshipResult {
+  template: Pick<
+    ConnectionPolicyTemplateRecord,
+    | "id"
+    | "sourceIdentityType"
+    | "connectionType"
+    | "templateKey"
+    | "displayName"
+    | "description"
+    | "policyVersion"
+  >;
+  sourceIdentityType: IdentityType;
+  targetIdentityType: IdentityType | null;
+  connectionType: ConnectionType;
+  trustState: TrustState;
+  relationshipType: RelationshipType;
+  identityBehaviorSummary: IdentityTypeBehaviorSummary;
+  relationshipBehaviorSummary: RelationshipBehaviorSummary;
+  postIdentityBehaviorPermissions: ConnectionPolicyTemplatePermissions;
+  postRelationshipBehaviorPermissions: ConnectionPolicyTemplatePermissions;
+  finalPermissions: ConnectionPolicyTemplatePermissions;
+  mergeTrace: PermissionMergeTrace;
+}
+
 export interface ConnectionPermissionOverrideRecord {
   permissionKey: PermissionKey;
   effect: PermissionEffect;
@@ -257,6 +336,7 @@ export interface PreviewResolvedPermissionsForConnectionResult {
     id: string;
     sourceIdentityId: string;
     targetIdentityId: string;
+    relationshipType: RelationshipType;
     connectionType: ConnectionType;
     trustState: TrustState;
     status: string;
@@ -519,6 +599,10 @@ export interface ResolveConversationContextResult {
   traceSummary: ConversationResolutionTrace;
 }
 
+export type { IdentityTypeBehaviorSummary } from "./identity-type-behaviors";
+
+export type IdentityBehaviorRuleSummary = IdentityTypeBehaviorSummary;
+
 export interface ResolvedPermissionValue extends PermissionTemplateValue {
   postTrustEffect: PermissionEffect;
   manualOverrideEffect: PermissionEffect | null;
@@ -535,6 +619,7 @@ export interface ResolvedConnectionPermissions {
   sourceIdentityId: string;
   targetIdentityId: string;
   sourceIdentityType: IdentityType;
+  relationshipType: RelationshipType;
   connectionType: ConnectionType;
   trustState: TrustState;
   status: string;
@@ -542,6 +627,8 @@ export interface ResolvedConnectionPermissions {
     templateKey: string;
     policyVersion: number;
   };
+  identityBehaviorSummary: IdentityTypeBehaviorSummary;
+  relationshipBehaviorSummary: RelationshipBehaviorSummary;
   overridesSummary: ConnectionPermissionResolutionSummary;
   riskSummary: RiskEvaluationSummary;
   permissions: ResolvedPermissionMap;

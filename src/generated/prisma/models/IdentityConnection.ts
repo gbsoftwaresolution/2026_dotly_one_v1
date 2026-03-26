@@ -29,6 +29,7 @@ export type IdentityConnectionMinAggregateOutputType = {
   sourceIdentityId: string | null
   targetIdentityId: string | null
   connectionType: $Enums.ConnectionType | null
+  relationshipType: $Enums.RelationshipType | null
   trustState: $Enums.TrustState | null
   status: $Enums.ConnectionStatus | null
   createdByIdentityId: string | null
@@ -42,6 +43,7 @@ export type IdentityConnectionMaxAggregateOutputType = {
   sourceIdentityId: string | null
   targetIdentityId: string | null
   connectionType: $Enums.ConnectionType | null
+  relationshipType: $Enums.RelationshipType | null
   trustState: $Enums.TrustState | null
   status: $Enums.ConnectionStatus | null
   createdByIdentityId: string | null
@@ -55,6 +57,7 @@ export type IdentityConnectionCountAggregateOutputType = {
   sourceIdentityId: number
   targetIdentityId: number
   connectionType: number
+  relationshipType: number
   trustState: number
   status: number
   createdByIdentityId: number
@@ -71,6 +74,7 @@ export type IdentityConnectionMinAggregateInputType = {
   sourceIdentityId?: true
   targetIdentityId?: true
   connectionType?: true
+  relationshipType?: true
   trustState?: true
   status?: true
   createdByIdentityId?: true
@@ -84,6 +88,7 @@ export type IdentityConnectionMaxAggregateInputType = {
   sourceIdentityId?: true
   targetIdentityId?: true
   connectionType?: true
+  relationshipType?: true
   trustState?: true
   status?: true
   createdByIdentityId?: true
@@ -97,6 +102,7 @@ export type IdentityConnectionCountAggregateInputType = {
   sourceIdentityId?: true
   targetIdentityId?: true
   connectionType?: true
+  relationshipType?: true
   trustState?: true
   status?: true
   createdByIdentityId?: true
@@ -184,6 +190,7 @@ export type IdentityConnectionGroupByOutputType = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionType: $Enums.ConnectionType
+  relationshipType: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   createdByIdentityId: string
@@ -219,6 +226,7 @@ export type IdentityConnectionWhereInput = {
   sourceIdentityId?: Prisma.UuidFilter<"IdentityConnection"> | string
   targetIdentityId?: Prisma.UuidFilter<"IdentityConnection"> | string
   connectionType?: Prisma.EnumConnectionTypeFilter<"IdentityConnection"> | $Enums.ConnectionType
+  relationshipType?: Prisma.EnumRelationshipTypeNullableFilter<"IdentityConnection"> | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFilter<"IdentityConnection"> | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFilter<"IdentityConnection"> | $Enums.ConnectionStatus
   createdByIdentityId?: Prisma.UuidFilter<"IdentityConnection"> | string
@@ -239,6 +247,7 @@ export type IdentityConnectionOrderByWithRelationInput = {
   sourceIdentityId?: Prisma.SortOrder
   targetIdentityId?: Prisma.SortOrder
   connectionType?: Prisma.SortOrder
+  relationshipType?: Prisma.SortOrderInput | Prisma.SortOrder
   trustState?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdByIdentityId?: Prisma.SortOrder
@@ -263,6 +272,7 @@ export type IdentityConnectionWhereUniqueInput = Prisma.AtLeast<{
   sourceIdentityId?: Prisma.UuidFilter<"IdentityConnection"> | string
   targetIdentityId?: Prisma.UuidFilter<"IdentityConnection"> | string
   connectionType?: Prisma.EnumConnectionTypeFilter<"IdentityConnection"> | $Enums.ConnectionType
+  relationshipType?: Prisma.EnumRelationshipTypeNullableFilter<"IdentityConnection"> | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFilter<"IdentityConnection"> | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFilter<"IdentityConnection"> | $Enums.ConnectionStatus
   createdByIdentityId?: Prisma.UuidFilter<"IdentityConnection"> | string
@@ -283,6 +293,7 @@ export type IdentityConnectionOrderByWithAggregationInput = {
   sourceIdentityId?: Prisma.SortOrder
   targetIdentityId?: Prisma.SortOrder
   connectionType?: Prisma.SortOrder
+  relationshipType?: Prisma.SortOrderInput | Prisma.SortOrder
   trustState?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdByIdentityId?: Prisma.SortOrder
@@ -303,6 +314,7 @@ export type IdentityConnectionScalarWhereWithAggregatesInput = {
   sourceIdentityId?: Prisma.UuidWithAggregatesFilter<"IdentityConnection"> | string
   targetIdentityId?: Prisma.UuidWithAggregatesFilter<"IdentityConnection"> | string
   connectionType?: Prisma.EnumConnectionTypeWithAggregatesFilter<"IdentityConnection"> | $Enums.ConnectionType
+  relationshipType?: Prisma.EnumRelationshipTypeNullableWithAggregatesFilter<"IdentityConnection"> | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateWithAggregatesFilter<"IdentityConnection"> | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusWithAggregatesFilter<"IdentityConnection"> | $Enums.ConnectionStatus
   createdByIdentityId?: Prisma.UuidWithAggregatesFilter<"IdentityConnection"> | string
@@ -315,6 +327,7 @@ export type IdentityConnectionScalarWhereWithAggregatesInput = {
 export type IdentityConnectionCreateInput = {
   id?: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   note?: string | null
@@ -334,6 +347,7 @@ export type IdentityConnectionUncheckedCreateInput = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   createdByIdentityId: string
@@ -349,6 +363,7 @@ export type IdentityConnectionUncheckedCreateInput = {
 export type IdentityConnectionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -368,6 +383,7 @@ export type IdentityConnectionUncheckedUpdateInput = {
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   createdByIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -385,6 +401,7 @@ export type IdentityConnectionCreateManyInput = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   createdByIdentityId: string
@@ -397,6 +414,7 @@ export type IdentityConnectionCreateManyInput = {
 export type IdentityConnectionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -410,6 +428,7 @@ export type IdentityConnectionUncheckedUpdateManyInput = {
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   createdByIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -439,6 +458,7 @@ export type IdentityConnectionCountOrderByAggregateInput = {
   sourceIdentityId?: Prisma.SortOrder
   targetIdentityId?: Prisma.SortOrder
   connectionType?: Prisma.SortOrder
+  relationshipType?: Prisma.SortOrder
   trustState?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdByIdentityId?: Prisma.SortOrder
@@ -453,6 +473,7 @@ export type IdentityConnectionMaxOrderByAggregateInput = {
   sourceIdentityId?: Prisma.SortOrder
   targetIdentityId?: Prisma.SortOrder
   connectionType?: Prisma.SortOrder
+  relationshipType?: Prisma.SortOrder
   trustState?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdByIdentityId?: Prisma.SortOrder
@@ -466,6 +487,7 @@ export type IdentityConnectionMinOrderByAggregateInput = {
   sourceIdentityId?: Prisma.SortOrder
   targetIdentityId?: Prisma.SortOrder
   connectionType?: Prisma.SortOrder
+  relationshipType?: Prisma.SortOrder
   trustState?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdByIdentityId?: Prisma.SortOrder
@@ -609,6 +631,10 @@ export type EnumConnectionTypeFieldUpdateOperationsInput = {
   set?: $Enums.ConnectionType
 }
 
+export type NullableEnumRelationshipTypeFieldUpdateOperationsInput = {
+  set?: $Enums.RelationshipType | null
+}
+
 export type EnumTrustStateFieldUpdateOperationsInput = {
   set?: $Enums.TrustState
 }
@@ -662,6 +688,7 @@ export type IdentityConnectionUpdateOneRequiredWithoutConversationsNestedInput =
 export type IdentityConnectionCreateWithoutSourceIdentityInput = {
   id?: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   note?: string | null
@@ -679,6 +706,7 @@ export type IdentityConnectionUncheckedCreateWithoutSourceIdentityInput = {
   id?: string
   targetIdentityId: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   createdByIdentityId: string
@@ -704,6 +732,7 @@ export type IdentityConnectionCreateManySourceIdentityInputEnvelope = {
 export type IdentityConnectionCreateWithoutTargetIdentityInput = {
   id?: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   note?: string | null
@@ -721,6 +750,7 @@ export type IdentityConnectionUncheckedCreateWithoutTargetIdentityInput = {
   id?: string
   sourceIdentityId: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   createdByIdentityId: string
@@ -746,6 +776,7 @@ export type IdentityConnectionCreateManyTargetIdentityInputEnvelope = {
 export type IdentityConnectionCreateWithoutCreatedByIdentityInput = {
   id?: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   note?: string | null
@@ -764,6 +795,7 @@ export type IdentityConnectionUncheckedCreateWithoutCreatedByIdentityInput = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   note?: string | null
@@ -809,6 +841,7 @@ export type IdentityConnectionScalarWhereInput = {
   sourceIdentityId?: Prisma.UuidFilter<"IdentityConnection"> | string
   targetIdentityId?: Prisma.UuidFilter<"IdentityConnection"> | string
   connectionType?: Prisma.EnumConnectionTypeFilter<"IdentityConnection"> | $Enums.ConnectionType
+  relationshipType?: Prisma.EnumRelationshipTypeNullableFilter<"IdentityConnection"> | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFilter<"IdentityConnection"> | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFilter<"IdentityConnection"> | $Enums.ConnectionStatus
   createdByIdentityId?: Prisma.UuidFilter<"IdentityConnection"> | string
@@ -853,6 +886,7 @@ export type IdentityConnectionUpdateManyWithWhereWithoutCreatedByIdentityInput =
 export type IdentityConnectionCreateWithoutPermissionOverridesInput = {
   id?: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   note?: string | null
@@ -871,6 +905,7 @@ export type IdentityConnectionUncheckedCreateWithoutPermissionOverridesInput = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   createdByIdentityId: string
@@ -901,6 +936,7 @@ export type IdentityConnectionUpdateToOneWithWhereWithoutPermissionOverridesInpu
 export type IdentityConnectionUpdateWithoutPermissionOverridesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -919,6 +955,7 @@ export type IdentityConnectionUncheckedUpdateWithoutPermissionOverridesInput = {
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   createdByIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -933,6 +970,7 @@ export type IdentityConnectionUncheckedUpdateWithoutPermissionOverridesInput = {
 export type IdentityConnectionCreateWithoutPermissionSnapshotsInput = {
   id?: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   note?: string | null
@@ -951,6 +989,7 @@ export type IdentityConnectionUncheckedCreateWithoutPermissionSnapshotsInput = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   createdByIdentityId: string
@@ -981,6 +1020,7 @@ export type IdentityConnectionUpdateToOneWithWhereWithoutPermissionSnapshotsInpu
 export type IdentityConnectionUpdateWithoutPermissionSnapshotsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -999,6 +1039,7 @@ export type IdentityConnectionUncheckedUpdateWithoutPermissionSnapshotsInput = {
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   createdByIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1013,6 +1054,7 @@ export type IdentityConnectionUncheckedUpdateWithoutPermissionSnapshotsInput = {
 export type IdentityConnectionCreateWithoutConversationsInput = {
   id?: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   note?: string | null
@@ -1031,6 +1073,7 @@ export type IdentityConnectionUncheckedCreateWithoutConversationsInput = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   createdByIdentityId: string
@@ -1061,6 +1104,7 @@ export type IdentityConnectionUpdateToOneWithWhereWithoutConversationsInput = {
 export type IdentityConnectionUpdateWithoutConversationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1079,6 +1123,7 @@ export type IdentityConnectionUncheckedUpdateWithoutConversationsInput = {
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   createdByIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1094,6 +1139,7 @@ export type IdentityConnectionCreateManySourceIdentityInput = {
   id?: string
   targetIdentityId: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   createdByIdentityId: string
@@ -1107,6 +1153,7 @@ export type IdentityConnectionCreateManyTargetIdentityInput = {
   id?: string
   sourceIdentityId: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   createdByIdentityId: string
@@ -1121,6 +1168,7 @@ export type IdentityConnectionCreateManyCreatedByIdentityInput = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionType: $Enums.ConnectionType
+  relationshipType?: $Enums.RelationshipType | null
   trustState: $Enums.TrustState
   status: $Enums.ConnectionStatus
   note?: string | null
@@ -1132,6 +1180,7 @@ export type IdentityConnectionCreateManyCreatedByIdentityInput = {
 export type IdentityConnectionUpdateWithoutSourceIdentityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1149,6 +1198,7 @@ export type IdentityConnectionUncheckedUpdateWithoutSourceIdentityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   createdByIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1165,6 +1215,7 @@ export type IdentityConnectionUncheckedUpdateManyWithoutSourceIdentityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   createdByIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1177,6 +1228,7 @@ export type IdentityConnectionUncheckedUpdateManyWithoutSourceIdentityInput = {
 export type IdentityConnectionUpdateWithoutTargetIdentityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1194,6 +1246,7 @@ export type IdentityConnectionUncheckedUpdateWithoutTargetIdentityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   createdByIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1210,6 +1263,7 @@ export type IdentityConnectionUncheckedUpdateManyWithoutTargetIdentityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   createdByIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1222,6 +1276,7 @@ export type IdentityConnectionUncheckedUpdateManyWithoutTargetIdentityInput = {
 export type IdentityConnectionUpdateWithoutCreatedByIdentityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1240,6 +1295,7 @@ export type IdentityConnectionUncheckedUpdateWithoutCreatedByIdentityInput = {
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1256,6 +1312,7 @@ export type IdentityConnectionUncheckedUpdateManyWithoutCreatedByIdentityInput =
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  relationshipType?: Prisma.NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
   trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
   status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1318,6 +1375,7 @@ export type IdentityConnectionSelect<ExtArgs extends runtime.Types.Extensions.In
   sourceIdentityId?: boolean
   targetIdentityId?: boolean
   connectionType?: boolean
+  relationshipType?: boolean
   trustState?: boolean
   status?: boolean
   createdByIdentityId?: boolean
@@ -1339,6 +1397,7 @@ export type IdentityConnectionSelectCreateManyAndReturn<ExtArgs extends runtime.
   sourceIdentityId?: boolean
   targetIdentityId?: boolean
   connectionType?: boolean
+  relationshipType?: boolean
   trustState?: boolean
   status?: boolean
   createdByIdentityId?: boolean
@@ -1356,6 +1415,7 @@ export type IdentityConnectionSelectUpdateManyAndReturn<ExtArgs extends runtime.
   sourceIdentityId?: boolean
   targetIdentityId?: boolean
   connectionType?: boolean
+  relationshipType?: boolean
   trustState?: boolean
   status?: boolean
   createdByIdentityId?: boolean
@@ -1373,6 +1433,7 @@ export type IdentityConnectionSelectScalar = {
   sourceIdentityId?: boolean
   targetIdentityId?: boolean
   connectionType?: boolean
+  relationshipType?: boolean
   trustState?: boolean
   status?: boolean
   createdByIdentityId?: boolean
@@ -1382,7 +1443,7 @@ export type IdentityConnectionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type IdentityConnectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sourceIdentityId" | "targetIdentityId" | "connectionType" | "trustState" | "status" | "createdByIdentityId" | "note" | "metadataJson" | "createdAt" | "updatedAt", ExtArgs["result"]["identityConnection"]>
+export type IdentityConnectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sourceIdentityId" | "targetIdentityId" | "connectionType" | "relationshipType" | "trustState" | "status" | "createdByIdentityId" | "note" | "metadataJson" | "createdAt" | "updatedAt", ExtArgs["result"]["identityConnection"]>
 export type IdentityConnectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sourceIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   targetIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
@@ -1418,6 +1479,7 @@ export type $IdentityConnectionPayload<ExtArgs extends runtime.Types.Extensions.
     sourceIdentityId: string
     targetIdentityId: string
     connectionType: $Enums.ConnectionType
+    relationshipType: $Enums.RelationshipType | null
     trustState: $Enums.TrustState
     status: $Enums.ConnectionStatus
     createdByIdentityId: string
@@ -1858,6 +1920,7 @@ export interface IdentityConnectionFieldRefs {
   readonly sourceIdentityId: Prisma.FieldRef<"IdentityConnection", 'String'>
   readonly targetIdentityId: Prisma.FieldRef<"IdentityConnection", 'String'>
   readonly connectionType: Prisma.FieldRef<"IdentityConnection", 'ConnectionType'>
+  readonly relationshipType: Prisma.FieldRef<"IdentityConnection", 'RelationshipType'>
   readonly trustState: Prisma.FieldRef<"IdentityConnection", 'TrustState'>
   readonly status: Prisma.FieldRef<"IdentityConnection", 'ConnectionStatus'>
   readonly createdByIdentityId: Prisma.FieldRef<"IdentityConnection", 'String'>

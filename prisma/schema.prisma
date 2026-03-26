@@ -167,6 +167,20 @@ enum ConnectionType {
   SUSPENDED_RISKY   @map("suspended_risky")
 }
 
+enum RelationshipType {
+  UNKNOWN                   @map("unknown")
+  FRIEND                    @map("friend")
+  PARTNER                   @map("partner")
+  FAMILY_MEMBER             @map("family_member")
+  COLLEAGUE                 @map("colleague")
+  CLIENT                    @map("client")
+  VENDOR                    @map("vendor")
+  VERIFIED_BUSINESS_CONTACT @map("verified_business_contact")
+  INNER_CIRCLE              @map("inner_circle")
+  HOUSEHOLD_SERVICE         @map("household_service")
+  SUPPORT_AGENT             @map("support_agent")
+}
+
 enum TrustState {
   UNVERIFIED      @map("unverified")
   BASIC_VERIFIED  @map("basic_verified")
@@ -657,6 +671,7 @@ model IdentityConnection {
   sourceIdentityId      String                         @db.Uuid
   targetIdentityId      String                         @db.Uuid
   connectionType        ConnectionType
+  relationshipType      RelationshipType?
   trustState            TrustState
   status                ConnectionStatus
   createdByIdentityId   String                         @db.Uuid
@@ -675,6 +690,7 @@ model IdentityConnection {
   @@index([sourceIdentityId])
   @@index([targetIdentityId])
   @@index([connectionType])
+  @@index([relationshipType])
   @@index([trustState])
   @@index([status])
   @@index([sourceIdentityId, status])

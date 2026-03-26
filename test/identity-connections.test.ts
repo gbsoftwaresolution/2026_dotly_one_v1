@@ -9,14 +9,17 @@ import { ConnectionStatus } from "../src/common/enums/connection-status.enum";
 import { ConnectionType } from "../src/common/enums/connection-type.enum";
 import { IdentityType } from "../src/common/enums/identity-type.enum";
 import { PermissionEffect } from "../src/common/enums/permission-effect.enum";
+import { RelationshipType } from "../src/common/enums/relationship-type.enum";
 import { TrustState } from "../src/common/enums/trust-state.enum";
 import {
   Prisma,
   ConnectionStatus as PrismaConnectionStatus,
   ConnectionType as PrismaConnectionType,
+  RelationshipType as PrismaRelationshipType,
   TrustState as PrismaTrustState,
 } from "../src/generated/prisma/client";
 import { CreateIdentityDto } from "../src/modules/identities/dto/create-identity.dto";
+import { UpdateConnectionRelationshipTypeDto } from "../src/modules/identities/dto/update-connection-relationship-type.dto";
 import { SetPermissionOverrideDto } from "../src/modules/identities/dto/set-permission-override.dto";
 import { IdentitiesService } from "../src/modules/identities/identities.service";
 import { PERMISSION_KEYS } from "../src/modules/identities/permission-keys";
@@ -103,6 +106,7 @@ describe("IdentitiesService", () => {
           sourceIdentityId: data.sourceIdentityId,
           targetIdentityId: data.targetIdentityId,
           connectionType: data.connectionType,
+          relationshipType: data.relationshipType,
           trustState: data.trustState,
           status: data.status,
           createdByIdentityId: data.createdByIdentityId,
@@ -136,7 +140,17 @@ describe("IdentitiesService", () => {
       "22222222-2222-4222-8222-222222222222",
     );
     assert.equal(result.connectionType, PrismaConnectionType.KNOWN);
+    assert.equal(result.relationshipType, PrismaRelationshipType.UNKNOWN);
     assert.equal(result.status, PrismaConnectionStatus.ACTIVE);
+  });
+
+  it("validates update connection relationship type dto", () => {
+    const dto = plainToInstance(UpdateConnectionRelationshipTypeDto, {
+      connectionId: "50f0c0d9-8fd0-4916-91f5-743126b8e495",
+      relationshipType: RelationshipType.Client,
+    });
+
+    assert.deepEqual(validateSync(dto), []);
   });
 
   it("rejects self connections", async () => {
@@ -202,6 +216,7 @@ describe("IdentitiesService", () => {
             sourceIdentityId: "11111111-1111-4111-8111-111111111111",
             targetIdentityId: "22222222-2222-4222-8222-222222222222",
             connectionType: PrismaConnectionType.KNOWN,
+            relationshipType: PrismaRelationshipType.UNKNOWN,
             trustState: PrismaTrustState.BASIC_VERIFIED,
             status: PrismaConnectionStatus.ACTIVE,
             createdByIdentityId: "11111111-1111-4111-8111-111111111111",
@@ -251,6 +266,7 @@ describe("IdentitiesService", () => {
           sourceIdentityId: data.sourceIdentityId,
           targetIdentityId: data.targetIdentityId,
           connectionType: data.connectionType,
+          relationshipType: data.relationshipType,
           trustState: data.trustState,
           status: data.status,
           createdByIdentityId: data.createdByIdentityId,
@@ -272,7 +288,50 @@ describe("IdentitiesService", () => {
     });
 
     assert.equal(result.connectionType, PrismaConnectionType.BLOCKED);
+    assert.equal(result.relationshipType, PrismaRelationshipType.UNKNOWN);
     assert.equal(result.status, PrismaConnectionStatus.BLOCKED);
+  });
+
+  it("updates connection relationship type", async () => {
+    const service = new IdentitiesService({
+      identityConnection: {
+        findUnique: async () => ({
+          id: "connection-1",
+          sourceIdentityId: "identity-1",
+          targetIdentityId: "identity-2",
+          connectionType: PrismaConnectionType.KNOWN,
+          relationshipType: PrismaRelationshipType.UNKNOWN,
+          trustState: PrismaTrustState.BASIC_VERIFIED,
+          status: PrismaConnectionStatus.ACTIVE,
+          createdByIdentityId: "identity-1",
+          note: null,
+          metadataJson: null,
+          createdAt: new Date("2026-03-26T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-26T10:00:00.000Z"),
+        }),
+        update: async ({ data }: any) => ({
+          id: "connection-1",
+          sourceIdentityId: "identity-1",
+          targetIdentityId: "identity-2",
+          connectionType: PrismaConnectionType.KNOWN,
+          relationshipType: data.relationshipType,
+          trustState: PrismaTrustState.BASIC_VERIFIED,
+          status: PrismaConnectionStatus.ACTIVE,
+          createdByIdentityId: "identity-1",
+          note: null,
+          metadataJson: null,
+          createdAt: new Date("2026-03-26T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-26T11:00:00.000Z"),
+        }),
+      },
+    } as any);
+
+    const result = await service.updateConnectionRelationshipType({
+      connectionId: "connection-1",
+      relationshipType: RelationshipType.Partner,
+    });
+
+    assert.equal(result.relationshipType, PrismaRelationshipType.PARTNER);
   });
 
   it("lists connections for an identity across both directions", async () => {
@@ -287,6 +346,7 @@ describe("IdentitiesService", () => {
               sourceIdentityId: "identity-1",
               targetIdentityId: "identity-2",
               connectionType: PrismaConnectionType.KNOWN,
+              relationshipType: PrismaRelationshipType.FRIEND,
               trustState: PrismaTrustState.BASIC_VERIFIED,
               status: PrismaConnectionStatus.ACTIVE,
               createdByIdentityId: "identity-1",
@@ -300,6 +360,7 @@ describe("IdentitiesService", () => {
               sourceIdentityId: "identity-3",
               targetIdentityId: "identity-1",
               connectionType: PrismaConnectionType.REQUESTED,
+              relationshipType: PrismaRelationshipType.UNKNOWN,
               trustState: PrismaTrustState.UNVERIFIED,
               status: PrismaConnectionStatus.PENDING,
               createdByIdentityId: "identity-3",

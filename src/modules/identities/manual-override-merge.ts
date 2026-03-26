@@ -220,6 +220,21 @@ function createOverrideTraceEntry(
 ): PermissionMergeTraceEntry {
   return {
     baseEffect: existingTrace?.baseEffect ?? finalEffect,
+    identityBehaviorEffect: existingTrace?.identityBehaviorEffect ?? null,
+    postIdentityBehaviorEffect:
+      existingTrace?.postIdentityBehaviorEffect ??
+      existingTrace?.postRelationshipEffect ??
+      existingTrace?.postTrustEffect ??
+      existingTrace?.finalEffect ??
+      finalEffect,
+    relationshipBehaviorEffect:
+      existingTrace?.relationshipBehaviorEffect ?? null,
+    postRelationshipEffect:
+      existingTrace?.postRelationshipEffect ??
+      existingTrace?.postIdentityBehaviorEffect ??
+      existingTrace?.postTrustEffect ??
+      existingTrace?.finalEffect ??
+      finalEffect,
     adjustmentEffect: existingTrace?.adjustmentEffect ?? null,
     postTrustEffect:
       existingTrace?.postTrustEffect ??

@@ -454,6 +454,7 @@ export const IdentityConnectionScalarFieldEnum = {
   sourceIdentityId: 'sourceIdentityId',
   targetIdentityId: 'targetIdentityId',
   connectionType: 'connectionType',
+  relationshipType: 'relationshipType',
   trustState: 'trustState',
   status: 'status',
   createdByIdentityId: 'createdByIdentityId',

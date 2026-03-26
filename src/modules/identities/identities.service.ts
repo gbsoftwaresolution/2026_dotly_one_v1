@@ -11,6 +11,7 @@ import {
   IdentityType as PrismaIdentityType,
   PermissionEffect as PrismaPermissionEffect,
   Prisma,
+  RelationshipType as PrismaRelationshipType,
   TrustState as PrismaTrustState,
 } from "../../generated/prisma/client";
 import type {
@@ -23,6 +24,7 @@ import { ConnectionStatus } from "../../common/enums/connection-status.enum";
 import { ConnectionType } from "../../common/enums/connection-type.enum";
 import { IdentityType } from "../../common/enums/identity-type.enum";
 import { PermissionEffect } from "../../common/enums/permission-effect.enum";
+import { RelationshipType } from "../../common/enums/relationship-type.enum";
 import { TrustState } from "../../common/enums/trust-state.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 
@@ -42,6 +44,8 @@ import { ListConversationsForIdentityDto } from "./dto/list-conversations-for-id
 import { ListContentAccessRulesForContentDto } from "./dto/list-content-access-rules-for-content.dto";
 import { ListPermissionOverridesForConnectionDto } from "./dto/list-permission-overrides-for-connection.dto";
 import { PreviewContentPermissionsDto } from "./dto/preview-content-permissions.dto";
+import { PreviewPermissionsWithIdentityBehaviorDto } from "./dto/preview-permissions-with-identity-behavior.dto";
+import { PreviewPermissionsWithRelationshipDto } from "./dto/preview-permissions-with-relationship.dto";
 import { PreviewPermissionsWithRiskDto } from "./dto/preview-permissions-with-risk.dto";
 import { PreviewPermissionsWithTrustStateDto } from "./dto/preview-permissions-with-trust-state.dto";
 import { PreviewResolvedPermissionsForConnectionDto } from "./dto/preview-resolved-permissions-for-connection.dto";
@@ -52,6 +56,7 @@ import { SetContentAccessRuleDto } from "./dto/set-content-access-rule.dto";
 import { SetPermissionOverrideDto } from "./dto/set-permission-override.dto";
 import { UpdateConversationStatusDto } from "./dto/update-conversation-status.dto";
 import { UpdateConnectionStatusDto } from "./dto/update-connection-status.dto";
+import { UpdateConnectionRelationshipTypeDto } from "./dto/update-connection-relationship-type.dto";
 import { UpdateConnectionTypeDto } from "./dto/update-connection-type.dto";
 import { UpdateTrustStateDto } from "./dto/update-trust-state.dto";
 import type {
@@ -67,12 +72,15 @@ import type {
   ConnectionPolicyTemplateRecord,
   ConnectionPolicyTemplateSeedDefinition,
   ContentAccessRuleValue,
+  PreviewPermissionsWithIdentityBehaviorResult,
+  PreviewPermissionsWithRelationshipResult,
   IdentityConversationContext,
   ManualOverrideMap,
   PreviewContentPermissionsResult,
   PreviewPermissionsWithRiskResult,
   PreviewPermissionsWithTrustStateResult,
   PreviewResolvedPermissionsForConnectionResult,
+  PermissionMergeTrace,
   ResolveConversationContextResult,
   ResolvedContentPermissionsForConnectionResult,
   ResolvedConnectionPermissions,
@@ -101,17 +109,26 @@ import {
   deriveRiskSignalsFromTrustState,
   type RiskSignalRecord,
 } from "./risk-engine";
+import { getIdentityTypeBehavior as resolveIdentityTypeBehavior } from "./identity-type-behaviors";
+import { applyIdentityTypeBehavior } from "./identity-behavior-merge";
+import {
+  getRelationshipBehavior as resolveRelationshipBehavior,
+  inferRelationshipTypeFromConnectionType,
+  summarizeRelationshipBehavior,
+} from "./relationship-engine";
+import { applyRelationshipBehavior } from "./relationship-merge";
 import {
   CONNECTION_POLICY_TEMPLATE_SEEDS,
   validateTemplatePermissions,
 } from "./policy-template-seeds";
-import { PERMISSION_KEYS } from "./permission-keys";
+import { PERMISSION_KEYS, type PermissionKey } from "./permission-keys";
 
 const identityConnectionSelect = {
   id: true,
   sourceIdentityId: true,
   targetIdentityId: true,
   connectionType: true,
+  relationshipType: true,
   trustState: true,
   status: true,
   createdByIdentityId: true,
@@ -215,6 +232,12 @@ export class IdentitiesService {
           connectionType: toPrismaConnectionType(
             createConnectionDto.connectionType,
           ),
+          relationshipType: toNullablePrismaRelationshipType(
+            createConnectionDto.relationshipType ??
+              inferRelationshipTypeFromConnectionType(
+                createConnectionDto.connectionType,
+              ),
+          ),
           trustState: toPrismaTrustState(createConnectionDto.trustState),
           status: toPrismaConnectionStatus(normalizedStatus),
           createdByIdentityId: createConnectionDto.createdByIdentityId,
@@ -248,7 +271,34 @@ export class IdentitiesService {
         connectionType: toPrismaConnectionType(
           updateConnectionTypeDto.connectionType,
         ),
+        relationshipType:
+          existingConnection.relationshipType ??
+          toPrismaRelationshipType(
+            inferRelationshipTypeFromConnectionType(
+              updateConnectionTypeDto.connectionType,
+            ),
+          ),
         status: toPrismaConnectionStatus(nextStatus),
+      },
+      select: identityConnectionSelect,
+    });
+  }
+
+  async updateConnectionRelationshipType(
+    updateConnectionRelationshipTypeDto: UpdateConnectionRelationshipTypeDto,
+  ): Promise<IdentityConnectionRecord> {
+    await this.requireConnection(
+      updateConnectionRelationshipTypeDto.connectionId,
+    );
+
+    return this.prismaService.identityConnection.update({
+      where: {
+        id: updateConnectionRelationshipTypeDto.connectionId,
+      },
+      data: {
+        relationshipType: toPrismaRelationshipType(
+          updateConnectionRelationshipTypeDto.relationshipType,
+        ),
       },
       select: identityConnectionSelect,
     });
@@ -398,14 +448,26 @@ export class IdentitiesService {
       connectionId: createConversationDto.connectionId,
       persistSnapshot: false,
     });
+    const sourceIdentity = await this.requireIdentity(
+      createConversationDto.sourceIdentityId,
+    );
     const targetIdentity = await this.requireIdentity(
       createConversationDto.targetIdentityId,
     );
+    const sourceIdentityType = toApiIdentityType(sourceIdentity.identityType);
+    const targetIdentityType = toApiIdentityType(targetIdentity.identityType);
+
+    if (!sourceIdentityType || !targetIdentityType) {
+      throw new BadRequestException(
+        "Conversation requires valid source and target identity types",
+      );
+    }
 
     this.assertConversationTypeCompatibility(
       createConversationDto.conversationType,
       resolvedPermissions,
-      targetIdentity,
+      sourceIdentityType,
+      targetIdentityType,
     );
 
     try {
@@ -554,6 +616,25 @@ export class IdentitiesService {
     return contentRules.map(toContentAccessRuleValue);
   }
 
+  async getIdentityTypeForIdentity(identityId: string): Promise<IdentityType> {
+    const identity = await this.requireIdentity(identityId);
+    const identityType = toApiIdentityType(identity.identityType);
+
+    if (!identityType) {
+      throw new NotFoundException("Identity type not found");
+    }
+
+    return identityType;
+  }
+
+  async getRelationshipTypeForConnection(
+    connectionId: string,
+  ): Promise<RelationshipType> {
+    const connection = await this.requireConnection(connectionId);
+
+    return toConnectionRelationshipType(connection);
+  }
+
   async getConnectionById(
     getConnectionByIdDto: GetConnectionByIdDto,
   ): Promise<IdentityConnectionRecord> {
@@ -661,6 +742,20 @@ export class IdentitiesService {
     return getTrustStateAdjustmentDefinition(trustState);
   }
 
+  getIdentityTypeBehavior(
+    sourceIdentityType: IdentityType,
+    targetIdentityType?: IdentityType | null,
+  ) {
+    return resolveIdentityTypeBehavior(sourceIdentityType, targetIdentityType);
+  }
+
+  getRelationshipBehavior(relationshipType: RelationshipType | null) {
+    return {
+      definition: resolveRelationshipBehavior(relationshipType),
+      summary: summarizeRelationshipBehavior(relationshipType),
+    };
+  }
+
   async previewPermissionsWithTrustState(
     previewDto: PreviewPermissionsWithTrustStateDto,
   ): Promise<PreviewPermissionsWithTrustStateResult> {
@@ -686,6 +781,104 @@ export class IdentitiesService {
       trustState: previewDto.trustState,
       mergedPermissions: trustAdjustedPermissions.mergedPermissions,
       mergeTrace: trustAdjustedPermissions.mergeTrace,
+    };
+  }
+
+  async previewPermissionsWithIdentityBehavior(
+    previewDto: PreviewPermissionsWithIdentityBehaviorDto,
+  ): Promise<PreviewPermissionsWithIdentityBehaviorResult> {
+    const template = await this.getConnectionPolicyTemplate({
+      sourceIdentityType: previewDto.sourceIdentityType,
+      connectionType: previewDto.connectionType,
+    });
+    const behaviorAdjustedPermissions = applyIdentityTypeBehavior(
+      template.permissionsJson,
+      previewDto.sourceIdentityType,
+      previewDto.targetIdentityType ?? null,
+    );
+    const trustAdjustedPermissions = applyTrustStateAdjustment(
+      behaviorAdjustedPermissions.mergedPermissions,
+      previewDto.trustState,
+    );
+    const mergedTrace = mergeBehaviorTraceWithTrustTrace(
+      behaviorAdjustedPermissions.mergeTrace,
+      trustAdjustedPermissions.mergeTrace,
+    );
+
+    return {
+      template: {
+        id: template.id,
+        sourceIdentityType: template.sourceIdentityType,
+        connectionType: template.connectionType,
+        templateKey: template.templateKey,
+        displayName: template.displayName,
+        description: template.description,
+        policyVersion: template.policyVersion,
+      },
+      sourceIdentityType: previewDto.sourceIdentityType,
+      targetIdentityType: previewDto.targetIdentityType ?? null,
+      connectionType: previewDto.connectionType,
+      trustState: previewDto.trustState,
+      behaviorSummary: behaviorAdjustedPermissions.behaviorSummary,
+      postIdentityBehaviorPermissions:
+        behaviorAdjustedPermissions.mergedPermissions,
+      finalPermissions: trustAdjustedPermissions.mergedPermissions,
+      mergeTrace: mergedTrace,
+    };
+  }
+
+  async previewPermissionsWithRelationship(
+    previewDto: PreviewPermissionsWithRelationshipDto,
+  ): Promise<PreviewPermissionsWithRelationshipResult> {
+    const template = await this.getConnectionPolicyTemplate({
+      sourceIdentityType: previewDto.sourceIdentityType,
+      connectionType: previewDto.connectionType,
+    });
+    const behaviorAdjustedPermissions = applyIdentityTypeBehavior(
+      template.permissionsJson,
+      previewDto.sourceIdentityType,
+      previewDto.targetIdentityType ?? null,
+    );
+    const relationshipAdjustedPermissions = applyRelationshipBehavior(
+      behaviorAdjustedPermissions.mergedPermissions,
+      previewDto.relationshipType,
+    );
+    const trustAdjustedPermissions = applyTrustStateAdjustment(
+      relationshipAdjustedPermissions.mergedPermissions,
+      previewDto.trustState,
+    );
+    const mergedTrace = mergeRelationshipTraceWithTrustTrace(
+      mergeBehaviorTraceWithRelationshipTrace(
+        behaviorAdjustedPermissions.mergeTrace,
+        relationshipAdjustedPermissions.relationshipTrace,
+      ),
+      trustAdjustedPermissions.mergeTrace,
+    );
+
+    return {
+      template: {
+        id: template.id,
+        sourceIdentityType: template.sourceIdentityType,
+        connectionType: template.connectionType,
+        templateKey: template.templateKey,
+        displayName: template.displayName,
+        description: template.description,
+        policyVersion: template.policyVersion,
+      },
+      sourceIdentityType: previewDto.sourceIdentityType,
+      targetIdentityType: previewDto.targetIdentityType ?? null,
+      connectionType: previewDto.connectionType,
+      trustState: previewDto.trustState,
+      relationshipType: previewDto.relationshipType,
+      identityBehaviorSummary: behaviorAdjustedPermissions.behaviorSummary,
+      relationshipBehaviorSummary:
+        relationshipAdjustedPermissions.relationshipSummary,
+      postIdentityBehaviorPermissions:
+        behaviorAdjustedPermissions.mergedPermissions,
+      postRelationshipBehaviorPermissions:
+        relationshipAdjustedPermissions.mergedPermissions,
+      finalPermissions: trustAdjustedPermissions.mergedPermissions,
+      mergeTrace: mergedTrace,
     };
   }
 
@@ -728,6 +921,7 @@ export class IdentitiesService {
         id: resolvedPermissions.connectionId,
         sourceIdentityId: resolvedPermissions.sourceIdentityId,
         targetIdentityId: resolvedPermissions.targetIdentityId,
+        relationshipType: resolvedPermissions.relationshipType,
         connectionType: resolvedPermissions.connectionType,
         trustState: resolvedPermissions.trustState,
         status: resolvedPermissions.status,
@@ -1119,16 +1313,55 @@ export class IdentitiesService {
     if (!sourceIdentityType) {
       throw new NotFoundException("Source identity type not found");
     }
+    const targetIdentity = await this.prismaService.identity.findUnique({
+      where: {
+        id: connection.targetIdentityId,
+      },
+      select: {
+        id: true,
+        identityType: true,
+      },
+    });
+
+    if (!targetIdentity) {
+      throw new NotFoundException("Target identity not found");
+    }
+
+    const targetIdentityType = toApiIdentityType(targetIdentity.identityType);
+
+    if (!targetIdentityType) {
+      throw new NotFoundException("Target identity type not found");
+    }
 
     const resolvedTrustState = toApiTrustState(connection.trustState);
     const connectionType = toApiConnectionType(connection.connectionType);
+    const relationshipType =
+      toApiRelationshipType(connection.relationshipType) ??
+      inferRelationshipTypeFromConnectionType(connectionType);
     const template = await this.getConnectionPolicyTemplate({
       sourceIdentityType,
       connectionType,
     });
-    const trustAdjustedPermissions = applyTrustStateAdjustment(
+    const behaviorAdjustedPermissions = applyIdentityTypeBehavior(
       template.permissionsJson,
+      sourceIdentityType,
+      targetIdentityType,
+    );
+    const relationshipAdjustedPermissions = applyRelationshipBehavior(
+      behaviorAdjustedPermissions.mergedPermissions,
+      relationshipType,
+    );
+    const trustAdjustedPermissions = applyTrustStateAdjustment(
+      relationshipAdjustedPermissions.mergedPermissions,
       resolvedTrustState,
+    );
+    const behaviorRelationshipTrace = mergeBehaviorTraceWithRelationshipTrace(
+      behaviorAdjustedPermissions.mergeTrace,
+      relationshipAdjustedPermissions.relationshipTrace,
+    );
+    const behaviorTrustTrace = mergeRelationshipTraceWithTrustTrace(
+      behaviorRelationshipTrace,
+      trustAdjustedPermissions.mergeTrace,
     );
     const overrideItems = await this.listPermissionOverridesForConnection({
       connectionId,
@@ -1141,7 +1374,7 @@ export class IdentitiesService {
         {
           trustState: resolvedTrustState,
           templateKey: template.templateKey,
-          mergeTrace: trustAdjustedPermissions.mergeTrace,
+          mergeTrace: behaviorTrustTrace,
         },
       );
     const mergedRiskSignals = mergeRiskSignals(
@@ -1168,6 +1401,7 @@ export class IdentitiesService {
       sourceIdentityId: connection.sourceIdentityId,
       targetIdentityId: connection.targetIdentityId,
       sourceIdentityType,
+      relationshipType,
       connectionType,
       trustState: resolvedTrustState,
       status: toApiConnectionStatus(connection.status),
@@ -1175,6 +1409,9 @@ export class IdentitiesService {
         templateKey: template.templateKey,
         policyVersion: template.policyVersion,
       },
+      identityBehaviorSummary: behaviorAdjustedPermissions.behaviorSummary,
+      relationshipBehaviorSummary:
+        relationshipAdjustedPermissions.relationshipSummary,
       overridesSummary: createOverrideSummary(overrideItems),
       riskSummary: riskAdjustedPermissions.riskSummary,
       permissions: toResolvedPermissionMap(
@@ -1256,8 +1493,14 @@ export class IdentitiesService {
   private assertConversationTypeCompatibility(
     conversationType: ConversationType,
     resolvedPermissions: ResolvedConnectionPermissions,
-    targetIdentity: Identity,
+    sourceIdentityType: IdentityType,
+    targetIdentityType: IdentityType,
   ): void {
+    const behavior = this.getIdentityTypeBehavior(
+      sourceIdentityType,
+      targetIdentityType,
+    );
+
     if (
       resolvedPermissions.status === ConnectionStatus.Blocked ||
       resolvedPermissions.status === ConnectionStatus.Archived
@@ -1279,6 +1522,13 @@ export class IdentitiesService {
 
       if (
         !protectedCapable ||
+        (!behavior.summary.restrictionFlags.prefersProtectedConversation &&
+          !resolvedPermissions.identityBehaviorSummary.restrictionFlags
+            .prefersProtectedConversation &&
+          false) ||
+        (behavior.sourceBehavior.allowsProtectedConversation === false &&
+          (behavior.pairBehavior?.allowsProtectedConversation ?? true) ===
+            false) ||
         resolvedPermissions.riskSummary.blockedProtectedMode === true
       ) {
         throw new BadRequestException(
@@ -1288,20 +1538,7 @@ export class IdentitiesService {
     }
 
     if (conversationType === ConversationType.BusinessDirect) {
-      const sourceIdentityType = resolvedPermissions.sourceIdentityType;
-      const targetIdentityType = toApiIdentityType(targetIdentity.identityType);
-      const allowedIdentityTypes = new Set<IdentityType>([
-        IdentityType.Business,
-        IdentityType.Professional,
-      ]);
-
-      if (
-        sourceIdentityType === IdentityType.Couple ||
-        targetIdentityType === IdentityType.Couple ||
-        (!allowedIdentityTypes.has(sourceIdentityType) &&
-          (targetIdentityType === null ||
-            !allowedIdentityTypes.has(targetIdentityType)))
-      ) {
+      if (!behavior.summary.restrictionFlags.allowsBusinessConversation) {
         throw new BadRequestException(
           "Business direct conversations require business or professional identities",
         );
@@ -1377,6 +1614,45 @@ function toNullablePrismaIdentityType(
   return identityType === null ? null : toPrismaIdentityType(identityType);
 }
 
+function toPrismaRelationshipType(
+  relationshipType: RelationshipType,
+): PrismaRelationshipType {
+  switch (relationshipType) {
+    case RelationshipType.Unknown:
+      return PrismaRelationshipType.UNKNOWN;
+    case RelationshipType.Friend:
+      return PrismaRelationshipType.FRIEND;
+    case RelationshipType.Partner:
+      return PrismaRelationshipType.PARTNER;
+    case RelationshipType.FamilyMember:
+      return PrismaRelationshipType.FAMILY_MEMBER;
+    case RelationshipType.Colleague:
+      return PrismaRelationshipType.COLLEAGUE;
+    case RelationshipType.Client:
+      return PrismaRelationshipType.CLIENT;
+    case RelationshipType.Vendor:
+      return PrismaRelationshipType.VENDOR;
+    case RelationshipType.VerifiedBusinessContact:
+      return PrismaRelationshipType.VERIFIED_BUSINESS_CONTACT;
+    case RelationshipType.InnerCircle:
+      return PrismaRelationshipType.INNER_CIRCLE;
+    case RelationshipType.HouseholdService:
+      return PrismaRelationshipType.HOUSEHOLD_SERVICE;
+    case RelationshipType.SupportAgent:
+      return PrismaRelationshipType.SUPPORT_AGENT;
+  }
+
+  throw new Error("Unsupported relationship type");
+}
+
+function toNullablePrismaRelationshipType(
+  relationshipType: RelationshipType | null,
+): PrismaRelationshipType | null {
+  return relationshipType === null
+    ? null
+    : toPrismaRelationshipType(relationshipType);
+}
+
 function toApiIdentityType(
   identityType: PrismaIdentityType | null,
 ): IdentityType | null {
@@ -1398,6 +1674,41 @@ function toApiIdentityType(
   }
 
   throw new Error("Unsupported identity type");
+}
+
+function toApiRelationshipType(
+  relationshipType: PrismaRelationshipType | null | undefined,
+): RelationshipType | null {
+  if (relationshipType === null || relationshipType === undefined) {
+    return null;
+  }
+
+  switch (relationshipType) {
+    case PrismaRelationshipType.UNKNOWN:
+      return RelationshipType.Unknown;
+    case PrismaRelationshipType.FRIEND:
+      return RelationshipType.Friend;
+    case PrismaRelationshipType.PARTNER:
+      return RelationshipType.Partner;
+    case PrismaRelationshipType.FAMILY_MEMBER:
+      return RelationshipType.FamilyMember;
+    case PrismaRelationshipType.COLLEAGUE:
+      return RelationshipType.Colleague;
+    case PrismaRelationshipType.CLIENT:
+      return RelationshipType.Client;
+    case PrismaRelationshipType.VENDOR:
+      return RelationshipType.Vendor;
+    case PrismaRelationshipType.VERIFIED_BUSINESS_CONTACT:
+      return RelationshipType.VerifiedBusinessContact;
+    case PrismaRelationshipType.INNER_CIRCLE:
+      return RelationshipType.InnerCircle;
+    case PrismaRelationshipType.HOUSEHOLD_SERVICE:
+      return RelationshipType.HouseholdService;
+    case PrismaRelationshipType.SUPPORT_AGENT:
+      return RelationshipType.SupportAgent;
+  }
+
+  throw new Error("Unsupported relationship type");
 }
 
 function toPrismaConnectionType(
@@ -1622,6 +1933,17 @@ function toConnectionPolicyTemplateRecord(
   };
 }
 
+function toConnectionRelationshipType(
+  connection: IdentityConnectionRecord,
+): RelationshipType {
+  return (
+    toApiRelationshipType(connection.relationshipType) ??
+    inferRelationshipTypeFromConnectionType(
+      toApiConnectionType(connection.connectionType),
+    )
+  );
+}
+
 function toContentAccessRuleValue(
   contentRule: ContentAccessRuleRecord,
 ): ContentAccessRuleValue {
@@ -1822,6 +2144,135 @@ function deriveConversationContentCapabilitySummary(
       resolvedPermissions.permissions[PERMISSION_KEYS.ai.summaryUse]
         ?.finalEffect !== PermissionEffect.Deny,
   };
+}
+
+function mergeBehaviorTraceWithTrustTrace(
+  behaviorTrace: PermissionMergeTrace,
+  trustTrace: PermissionMergeTrace,
+): PermissionMergeTrace {
+  const mergedTrace = {} as PermissionMergeTrace;
+  const permissionKeys = new Set([
+    ...Object.keys(behaviorTrace),
+    ...Object.keys(trustTrace),
+  ]);
+
+  for (const permissionKey of permissionKeys) {
+    const typedPermissionKey = permissionKey as PermissionKey;
+    const behaviorEntry = behaviorTrace[typedPermissionKey];
+    const trustEntry = trustTrace[typedPermissionKey];
+
+    if (!behaviorEntry && trustEntry) {
+      mergedTrace[typedPermissionKey] = trustEntry;
+      continue;
+    }
+
+    if (!trustEntry && behaviorEntry) {
+      mergedTrace[typedPermissionKey] = behaviorEntry;
+      continue;
+    }
+
+    if (!behaviorEntry || !trustEntry) {
+      continue;
+    }
+
+    mergedTrace[typedPermissionKey] = {
+      ...trustEntry,
+      baseEffect: behaviorEntry.baseEffect,
+      identityBehaviorEffect: behaviorEntry.identityBehaviorEffect,
+      postIdentityBehaviorEffect: behaviorEntry.postIdentityBehaviorEffect,
+      relationshipBehaviorEffect:
+        behaviorEntry.relationshipBehaviorEffect ?? null,
+      postRelationshipEffect:
+        behaviorEntry.postRelationshipEffect ??
+        behaviorEntry.postIdentityBehaviorEffect,
+    };
+  }
+
+  return mergedTrace;
+}
+
+function mergeBehaviorTraceWithRelationshipTrace(
+  behaviorTrace: PermissionMergeTrace,
+  relationshipTrace: PermissionMergeTrace,
+): PermissionMergeTrace {
+  const mergedTrace = {} as PermissionMergeTrace;
+  const permissionKeys = new Set([
+    ...Object.keys(behaviorTrace),
+    ...Object.keys(relationshipTrace),
+  ]);
+
+  for (const permissionKey of permissionKeys) {
+    const typedPermissionKey = permissionKey as PermissionKey;
+    const behaviorEntry = behaviorTrace[typedPermissionKey];
+    const relationshipEntry = relationshipTrace[typedPermissionKey];
+
+    if (!behaviorEntry && relationshipEntry) {
+      mergedTrace[typedPermissionKey] = relationshipEntry;
+      continue;
+    }
+
+    if (!relationshipEntry && behaviorEntry) {
+      mergedTrace[typedPermissionKey] = behaviorEntry;
+      continue;
+    }
+
+    if (!behaviorEntry || !relationshipEntry) {
+      continue;
+    }
+
+    mergedTrace[typedPermissionKey] = {
+      ...relationshipEntry,
+      baseEffect: behaviorEntry.baseEffect,
+      identityBehaviorEffect: behaviorEntry.identityBehaviorEffect,
+      postIdentityBehaviorEffect: behaviorEntry.postIdentityBehaviorEffect,
+      relationshipBehaviorEffect: relationshipEntry.identityBehaviorEffect,
+      postRelationshipEffect: relationshipEntry.postIdentityBehaviorEffect,
+    };
+  }
+
+  return mergedTrace;
+}
+
+function mergeRelationshipTraceWithTrustTrace(
+  relationshipTrace: PermissionMergeTrace,
+  trustTrace: PermissionMergeTrace,
+): PermissionMergeTrace {
+  const mergedTrace = {} as PermissionMergeTrace;
+  const permissionKeys = new Set([
+    ...Object.keys(relationshipTrace),
+    ...Object.keys(trustTrace),
+  ]);
+
+  for (const permissionKey of permissionKeys) {
+    const typedPermissionKey = permissionKey as PermissionKey;
+    const relationshipEntry = relationshipTrace[typedPermissionKey];
+    const trustEntry = trustTrace[typedPermissionKey];
+
+    if (!relationshipEntry && trustEntry) {
+      mergedTrace[typedPermissionKey] = trustEntry;
+      continue;
+    }
+
+    if (!trustEntry && relationshipEntry) {
+      mergedTrace[typedPermissionKey] = relationshipEntry;
+      continue;
+    }
+
+    if (!relationshipEntry || !trustEntry) {
+      continue;
+    }
+
+    mergedTrace[typedPermissionKey] = {
+      ...trustEntry,
+      baseEffect: relationshipEntry.baseEffect,
+      identityBehaviorEffect: relationshipEntry.identityBehaviorEffect,
+      postIdentityBehaviorEffect: relationshipEntry.postIdentityBehaviorEffect,
+      relationshipBehaviorEffect: relationshipEntry.relationshipBehaviorEffect,
+      postRelationshipEffect: relationshipEntry.postRelationshipEffect,
+    };
+  }
+
+  return mergedTrace;
 }
 
 function mapConnectionPermissionOverrideRecord(override: {

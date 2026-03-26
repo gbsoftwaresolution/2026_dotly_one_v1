@@ -236,6 +236,23 @@ export const ConnectionType = {
 export type ConnectionType = (typeof ConnectionType)[keyof typeof ConnectionType]
 
 
+export const RelationshipType = {
+  UNKNOWN: 'UNKNOWN',
+  FRIEND: 'FRIEND',
+  PARTNER: 'PARTNER',
+  FAMILY_MEMBER: 'FAMILY_MEMBER',
+  COLLEAGUE: 'COLLEAGUE',
+  CLIENT: 'CLIENT',
+  VENDOR: 'VENDOR',
+  VERIFIED_BUSINESS_CONTACT: 'VERIFIED_BUSINESS_CONTACT',
+  INNER_CIRCLE: 'INNER_CIRCLE',
+  HOUSEHOLD_SERVICE: 'HOUSEHOLD_SERVICE',
+  SUPPORT_AGENT: 'SUPPORT_AGENT'
+} as const
+
+export type RelationshipType = (typeof RelationshipType)[keyof typeof RelationshipType]
+
+
 export const TrustState = {
   UNVERIFIED: 'UNVERIFIED',
   BASIC_VERIFIED: 'BASIC_VERIFIED',
