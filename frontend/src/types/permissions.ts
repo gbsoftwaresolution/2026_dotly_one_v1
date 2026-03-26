@@ -42,5 +42,21 @@ export interface ExplainResponse {
   key: string;
   finalEffect: PermissionEffect;
   reason: string;
+  reasonCode?: string | null;
+  explanationText?: string | null;
   trace: string[];
+}
+
+export interface ExplainedResolvedPermission {
+  key: string;
+  finalEffect: PermissionEffect;
+  reasonCode?: string | null;
+  explanationText?: string | null;
+}
+
+export interface ResolvedPermissionsExplanation {
+  summaryText: string;
+  blockedPermissionKeys: string[];
+  protectedPermissionKeys: string[];
+  permissions?: ExplainedResolvedPermission[];
 }

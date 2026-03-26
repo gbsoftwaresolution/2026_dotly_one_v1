@@ -15,6 +15,7 @@ import { AIEnforcementService } from "./ai-enforcement.service";
 import { ActionEnforcementService } from "./action-enforcement.service";
 import { CallEnforcementService } from "./call-enforcement.service";
 import { CreateConversationDto } from "./dto/create-conversation.dto";
+import { GetOrCreateDirectConversationDto } from "./dto/get-or-create-direct-conversation.dto";
 import {
   ConversationIdParamDto,
   EnforceAICapabilityRequestDto,
@@ -39,6 +40,13 @@ export class IdentityConversationsController {
   @Post("identity-conversations")
   createConversation(@Body() body: CreateConversationDto) {
     return this.identitiesService.createConversation(body);
+  }
+
+  @Post("identity-conversations/get-or-create")
+  getOrCreateDirectConversation(
+    @Body() body: GetOrCreateDirectConversationDto,
+  ) {
+    return this.identitiesService.getOrCreateDirectConversation(body);
   }
 
   @Get("identity-conversations/:conversationId")

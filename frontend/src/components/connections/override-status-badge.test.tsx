@@ -21,9 +21,7 @@ describe("OverrideStatusBadge", () => {
 
     render(<OverrideStatusBadge vm={vm} />);
     expect(screen.getByText("Using system default")).toBeInTheDocument();
-    expect(
-      screen.queryByText("Custom override active"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Custom setting saved")).not.toBeInTheDocument();
   });
 
   it("shows custom override status when overridden", () => {
@@ -40,7 +38,7 @@ describe("OverrideStatusBadge", () => {
     };
 
     render(<OverrideStatusBadge vm={vm} />);
-    expect(screen.getByText("Custom override active")).toBeInTheDocument();
+    expect(screen.getByText("Custom setting saved")).toBeInTheDocument();
   });
 
   it("shows guardrail message when there is an intervention", () => {
@@ -58,11 +56,11 @@ describe("OverrideStatusBadge", () => {
 
     render(<OverrideStatusBadge vm={vm} />);
 
-    // MS-118.8 messaging check
+    // MS-118.8 & MS-519 messaging check
     expect(
-      screen.getByText(/System safeguards prevent fully allowing this setting/),
+      screen.getByText(/This action is still blocked by safety protections/),
     ).toBeInTheDocument();
-    // It should also state the effective state, e.g. "Not Allowed" (Deny is labeled "Not Allowed")
+    // It should also state the effective state
     expect(screen.getByText("Not Allowed")).toBeInTheDocument();
   });
 });

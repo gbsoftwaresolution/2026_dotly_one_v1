@@ -55,6 +55,7 @@ const explainPermissionCalls: unknown[] = [];
 const explainPermissionsCalls: unknown[] = [];
 const diffPermissionsCalls: unknown[] = [];
 const createConversationCalls: unknown[] = [];
+const getOrCreateConversationCalls: unknown[] = [];
 const getConversationCalls: unknown[] = [];
 const listConversationsCalls: unknown[] = [];
 const updateConversationStatusCalls: unknown[] = [];
@@ -86,6 +87,7 @@ function resetCalls() {
   explainPermissionsCalls.length = 0;
   diffPermissionsCalls.length = 0;
   createConversationCalls.length = 0;
+  getOrCreateConversationCalls.length = 0;
   getConversationCalls.length = 0;
   listConversationsCalls.length = 0;
   updateConversationStatusCalls.length = 0;
@@ -245,6 +247,10 @@ const identitiesServiceMock = {
   createConversation: async (payload: CreateConversationDto) => {
     createConversationCalls.push(payload);
     return { conversationId: "conversation-1", ...payload };
+  },
+  getOrCreateDirectConversation: async (payload: unknown) => {
+    getOrCreateConversationCalls.push(payload);
+    return { conversationId: "conversation-1", ...(payload as object) };
   },
   getConversationById: async (payload: unknown) => {
     getConversationCalls.push(payload);
@@ -631,6 +637,20 @@ describe("Identities HTTP E2E", () => {
       `${baseUrl}/v1/identity-conversations/11111111-1111-4111-8111-111111111111`,
       { headers },
     );
+    const getOrCreateResponse = await fetch(
+      `${baseUrl}/v1/identity-conversations/get-or-create`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          sourceIdentityId: "11111111-1111-4111-8111-111111111111",
+          targetIdentityId: "22222222-2222-4222-8222-222222222222",
+          connectionId: "33333333-3333-4333-8333-333333333333",
+          conversationType: "DIRECT",
+          createdByIdentityId: "11111111-1111-4111-8111-111111111111",
+        }),
+      },
+    );
     const listResponse = await fetch(
       `${baseUrl}/v1/identities/11111111-1111-4111-8111-111111111111/conversations?status=ACTIVE`,
       { headers },
@@ -646,9 +666,11 @@ describe("Identities HTTP E2E", () => {
 
     assert.equal(createResponse.status, 201);
     assert.equal(getResponse.status, 200);
+    assert.equal(getOrCreateResponse.status, 201);
     assert.equal(listResponse.status, 200);
     assert.equal(updateResponse.status, 200);
     assert.equal(createConversationCalls.length, 1);
+    assert.equal(getOrCreateConversationCalls.length, 1);
     assert.equal(getConversationCalls.length, 1);
     assert.equal(listConversationsCalls.length, 1);
     assert.equal(updateConversationStatusCalls.length, 1);

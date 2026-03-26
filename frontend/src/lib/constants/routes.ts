@@ -15,6 +15,8 @@ export const routes = {
     home: "/app",
     connections: "/app/connections",
     connectionDetail: (id: string) => `/app/connections/${id}`,
+    conversationDetail: (conversationId: string) =>
+      `/app/conversations/${conversationId}`,
     personas: "/app/personas",
     createPersona: "/app/personas/create",
     personaDetail: (personaId: string) => `/app/personas/${personaId}`,

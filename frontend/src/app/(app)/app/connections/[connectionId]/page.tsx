@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 
 import { PermissionControlsWidget } from "@/components/connections/permission-controls-widget";
@@ -11,6 +12,7 @@ import {
   listPermissionOverrides,
 } from "@/lib/api/connections";
 import { routes } from "@/lib/constants/routes";
+import { getOrCreateConversationForConnection } from "@/lib/conversation-routing";
 import {
   getConnectionStatusLabel,
   getConnectionTypeLabel,
@@ -32,12 +34,14 @@ export default function ConnectionDetailsPage({
   params,
 }: ConnectionDetailsPageProps) {
   const { connectionId } = use(params);
+  const router = useRouter();
   const [connection, setConnection] = useState<IdentityConnection | null>(null);
   const [permissions, setPermissions] = useState<ResolvedPermissionsMap | null>(
     null,
   );
   const [overrides, setOverrides] = useState<PermissionOverride[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOpeningConversation, setIsOpeningConversation] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -97,6 +101,35 @@ export default function ConnectionDetailsPage({
 
   const targetIdentity = connection.targetIdentity;
 
+  async function handleOpenConversation() {
+    if (!connection || isOpeningConversation) {
+      return;
+    }
+
+    setIsOpeningConversation(true);
+    setError(null);
+
+    try {
+      const conversation = await getOrCreateConversationForConnection({
+        connectionId: connection.id,
+        sourceIdentityId: connection.sourceIdentityId,
+        targetIdentityId: connection.targetIdentityId,
+        createdByIdentityId: connection.createdByIdentityId,
+        connectionType: connection.connectionType,
+        relationshipType: connection.relationshipType,
+      });
+
+      router.push(routes.app.conversationDetail(conversation.conversationId));
+    } catch (openError) {
+      setError(
+        openError instanceof Error
+          ? openError.message
+          : "We could not open this conversation.",
+      );
+      setIsOpeningConversation(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-6 sm:px-5">
       <div className="space-y-5 rounded-3xl bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-6 shadow-sm ring-1 ring-slate-200">
@@ -115,11 +148,20 @@ export default function ConnectionDetailsPage({
           <h1 className="mt-2 text-4xl font-bold text-slate-950">
             {targetIdentity?.displayName ?? "Unknown contact"}
           </h1>
-          <p className="mt-2 text-lg text-slate-600">
-            {targetIdentity?.handle
-              ? `@${targetIdentity.handle}`
-              : connection.targetIdentityId}
-          </p>
+          <div className="flex items-center gap-4 mt-2">
+            <p className="text-lg text-slate-600">
+              {targetIdentity?.handle
+                ? `@${targetIdentity.handle}`
+                : connection.targetIdentityId}
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleOpenConversation()}
+              className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+            >
+              {isOpeningConversation ? "Opening..." : "Open Conversation"}
+            </button>
+          </div>
           {connection.note ? (
             <p className="mt-4 max-w-3xl text-lg text-slate-700">
               {connection.note}
