@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   BadRequestException,
   ConflictException,
@@ -26,21 +27,38 @@ import { TrustState } from "../../common/enums/trust-state.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 
 import { CreateConnectionDto } from "./dto/create-connection.dto";
+import { CreateConversationDto } from "./dto/create-conversation.dto";
 import { CreateIdentityDto } from "./dto/create-identity.dto";
+import { BindResolvedPermissionsToConversationDto } from "./dto/bind-resolved-permissions-to-conversation.dto";
+import { DeleteContentAccessRuleDto } from "./dto/delete-content-access-rule.dto";
+import { GetContentAccessRuleDto } from "./dto/get-content-access-rule.dto";
 import { GetConnectionByIdDto } from "./dto/get-connection-by-id.dto";
+import { GetConversationByIdDto } from "./dto/get-conversation-by-id.dto";
 import { GetConnectionPolicyTemplateDto } from "./dto/get-connection-policy-template.dto";
+import { GetOrCreateDirectConversationDto } from "./dto/get-or-create-direct-conversation.dto";
 import { GetLatestPermissionSnapshotDto } from "./dto/get-latest-permission-snapshot.dto";
 import { ListConnectionsForIdentityDto } from "./dto/list-connections-for-identity.dto";
+import { ListConversationsForIdentityDto } from "./dto/list-conversations-for-identity.dto";
+import { ListContentAccessRulesForContentDto } from "./dto/list-content-access-rules-for-content.dto";
 import { ListPermissionOverridesForConnectionDto } from "./dto/list-permission-overrides-for-connection.dto";
+import { PreviewContentPermissionsDto } from "./dto/preview-content-permissions.dto";
 import { PreviewPermissionsWithRiskDto } from "./dto/preview-permissions-with-risk.dto";
 import { PreviewPermissionsWithTrustStateDto } from "./dto/preview-permissions-with-trust-state.dto";
 import { PreviewResolvedPermissionsForConnectionDto } from "./dto/preview-resolved-permissions-for-connection.dto";
 import { ResolveConnectionPermissionsDto } from "./dto/resolve-connection-permissions.dto";
+import { ResolveConversationContextDto } from "./dto/resolve-conversation-context.dto";
+import { ResolveContentPermissionsForConnectionDto } from "./dto/resolve-content-permissions-for-connection.dto";
+import { SetContentAccessRuleDto } from "./dto/set-content-access-rule.dto";
 import { SetPermissionOverrideDto } from "./dto/set-permission-override.dto";
+import { UpdateConversationStatusDto } from "./dto/update-conversation-status.dto";
 import { UpdateConnectionStatusDto } from "./dto/update-connection-status.dto";
 import { UpdateConnectionTypeDto } from "./dto/update-connection-type.dto";
 import { UpdateTrustStateDto } from "./dto/update-trust-state.dto";
 import type {
+  BoundConversationPermissions,
+  ConversationBindingStalenessResult,
+  ConversationPermissionBindingSummary,
+  ConversationResolutionTrace,
   ConnectionPermissionOverrideRecord,
   ConnectionPermissionResolutionSummary,
   ConnectionPermissionSnapshotRecord,
@@ -48,14 +66,30 @@ import type {
   ConnectionPolicyTemplatePermissions,
   ConnectionPolicyTemplateRecord,
   ConnectionPolicyTemplateSeedDefinition,
+  ContentAccessRuleValue,
+  IdentityConversationContext,
   ManualOverrideMap,
+  PreviewContentPermissionsResult,
   PreviewPermissionsWithRiskResult,
   PreviewPermissionsWithTrustStateResult,
   PreviewResolvedPermissionsForConnectionResult,
+  ResolveConversationContextResult,
+  ResolvedContentPermissionsForConnectionResult,
   ResolvedConnectionPermissions,
   ResolvedPermissionMap,
   TrustStateAdjustmentDefinition,
 } from "./identity.types";
+import {
+  ConversationStatus,
+  ConversationType,
+  RecordPolicy,
+  ScreenshotPolicy,
+} from "./identity.types";
+import {
+  deriveContentPermissionSubset,
+  deriveContentPermissionSubsetFromFinalPermissions,
+} from "./content-permission-mapping";
+import { applyContentAccessRule } from "./content-permission-merge";
 import { applyManualOverrides } from "./manual-override-merge";
 import {
   applyTrustStateAdjustment,
@@ -71,6 +105,7 @@ import {
   CONNECTION_POLICY_TEMPLATE_SEEDS,
   validateTemplatePermissions,
 } from "./policy-template-seeds";
+import { PERMISSION_KEYS } from "./permission-keys";
 
 const identityConnectionSelect = {
   id: true,
@@ -86,8 +121,52 @@ const identityConnectionSelect = {
   updatedAt: true,
 } satisfies Prisma.IdentityConnectionSelect;
 
+const contentAccessRuleSelect = {
+  id: true,
+  contentId: true,
+  targetIdentityId: true,
+  canView: true,
+  canDownload: true,
+  canForward: true,
+  canExport: true,
+  screenshotPolicy: true,
+  recordPolicy: true,
+  expiryAt: true,
+  viewLimit: true,
+  watermarkMode: true,
+  aiAccessAllowed: true,
+  metadataJson: true,
+  createdByIdentityId: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.ContentAccessRuleSelect;
+
+const identityConversationSelect = {
+  id: true,
+  sourceIdentityId: true,
+  targetIdentityId: true,
+  connectionId: true,
+  conversationType: true,
+  status: true,
+  title: true,
+  metadataJson: true,
+  lastResolvedAt: true,
+  lastPermissionHash: true,
+  createdByIdentityId: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.IdentityConversationSelect;
+
 type IdentityConnectionRecord = Prisma.IdentityConnectionGetPayload<{
   select: typeof identityConnectionSelect;
+}>;
+
+type ContentAccessRuleRecord = Prisma.ContentAccessRuleGetPayload<{
+  select: typeof contentAccessRuleSelect;
+}>;
+
+type IdentityConversationRecord = Prisma.IdentityConversationGetPayload<{
+  select: typeof identityConversationSelect;
 }>;
 
 @Injectable()
@@ -250,6 +329,229 @@ export class IdentitiesService {
         createdByIdentityId: setPermissionOverrideDto.createdByIdentityId,
       },
     });
+  }
+
+  async setContentAccessRule(
+    setContentAccessRuleDto: SetContentAccessRuleDto,
+  ): Promise<ContentAccessRuleValue> {
+    const contentRule = await this.prismaService.contentAccessRule.upsert({
+      where: {
+        contentId_targetIdentityId: {
+          contentId: setContentAccessRuleDto.contentId,
+          targetIdentityId: setContentAccessRuleDto.targetIdentityId,
+        },
+      },
+      update: {
+        canView: setContentAccessRuleDto.canView ?? false,
+        canDownload: setContentAccessRuleDto.canDownload ?? false,
+        canForward: setContentAccessRuleDto.canForward ?? false,
+        canExport: setContentAccessRuleDto.canExport ?? false,
+        screenshotPolicy:
+          setContentAccessRuleDto.screenshotPolicy ?? ScreenshotPolicy.Inherit,
+        recordPolicy:
+          setContentAccessRuleDto.recordPolicy ?? RecordPolicy.Inherit,
+        expiryAt: setContentAccessRuleDto.expiryAt
+          ? new Date(setContentAccessRuleDto.expiryAt)
+          : null,
+        viewLimit: setContentAccessRuleDto.viewLimit ?? null,
+        watermarkMode: setContentAccessRuleDto.watermarkMode ?? null,
+        aiAccessAllowed: setContentAccessRuleDto.aiAccessAllowed ?? null,
+        metadataJson: toNullableJsonInput(setContentAccessRuleDto.metadataJson),
+        createdByIdentityId: setContentAccessRuleDto.createdByIdentityId,
+      },
+      create: {
+        contentId: setContentAccessRuleDto.contentId,
+        targetIdentityId: setContentAccessRuleDto.targetIdentityId,
+        canView: setContentAccessRuleDto.canView ?? false,
+        canDownload: setContentAccessRuleDto.canDownload ?? false,
+        canForward: setContentAccessRuleDto.canForward ?? false,
+        canExport: setContentAccessRuleDto.canExport ?? false,
+        screenshotPolicy:
+          setContentAccessRuleDto.screenshotPolicy ?? ScreenshotPolicy.Inherit,
+        recordPolicy:
+          setContentAccessRuleDto.recordPolicy ?? RecordPolicy.Inherit,
+        expiryAt: setContentAccessRuleDto.expiryAt
+          ? new Date(setContentAccessRuleDto.expiryAt)
+          : null,
+        viewLimit: setContentAccessRuleDto.viewLimit ?? null,
+        watermarkMode: setContentAccessRuleDto.watermarkMode ?? null,
+        aiAccessAllowed: setContentAccessRuleDto.aiAccessAllowed ?? null,
+        metadataJson: toNullableJsonInput(setContentAccessRuleDto.metadataJson),
+        createdByIdentityId: setContentAccessRuleDto.createdByIdentityId,
+      },
+      select: contentAccessRuleSelect,
+    });
+
+    return toContentAccessRuleValue(contentRule);
+  }
+
+  async createConversation(
+    createConversationDto: CreateConversationDto,
+  ): Promise<IdentityConversationContext> {
+    const connection = await this.requireConnection(
+      createConversationDto.connectionId,
+    );
+
+    this.assertConversationMatchesConnection(createConversationDto, connection);
+
+    const resolvedPermissions = await this.resolveConnectionPermissions({
+      connectionId: createConversationDto.connectionId,
+      persistSnapshot: false,
+    });
+    const targetIdentity = await this.requireIdentity(
+      createConversationDto.targetIdentityId,
+    );
+
+    this.assertConversationTypeCompatibility(
+      createConversationDto.conversationType,
+      resolvedPermissions,
+      targetIdentity,
+    );
+
+    try {
+      const conversation = await this.prismaService.identityConversation.create(
+        {
+          data: {
+            sourceIdentityId: createConversationDto.sourceIdentityId,
+            targetIdentityId: createConversationDto.targetIdentityId,
+            connectionId: createConversationDto.connectionId,
+            conversationType: createConversationDto.conversationType,
+            status: createConversationDto.status ?? ConversationStatus.Active,
+            title: createConversationDto.title ?? null,
+            metadataJson: toNullableJsonInput(
+              createConversationDto.metadataJson,
+            ),
+            createdByIdentityId: createConversationDto.createdByIdentityId,
+          },
+          select: identityConversationSelect,
+        },
+      );
+
+      return toIdentityConversationContext(conversation);
+    } catch (error) {
+      throw this.mapKnownError(error, "Identity conversation already exists");
+    }
+  }
+
+  async getConversationById(
+    getConversationByIdDto: GetConversationByIdDto,
+  ): Promise<IdentityConversationContext> {
+    return toIdentityConversationContext(
+      await this.requireConversation(getConversationByIdDto.conversationId),
+    );
+  }
+
+  async listConversationsForIdentity(
+    listConversationsForIdentityDto: ListConversationsForIdentityDto,
+  ): Promise<IdentityConversationContext[]> {
+    const conversations =
+      await this.prismaService.identityConversation.findMany({
+        where: {
+          OR: [
+            {
+              sourceIdentityId: listConversationsForIdentityDto.identityId,
+            },
+            {
+              targetIdentityId: listConversationsForIdentityDto.identityId,
+            },
+          ],
+          ...(listConversationsForIdentityDto.status
+            ? {
+                status: listConversationsForIdentityDto.status,
+              }
+            : {}),
+        },
+        orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
+        select: identityConversationSelect,
+      });
+
+    return conversations.map(toIdentityConversationContext);
+  }
+
+  async updateConversationStatus(
+    updateConversationStatusDto: UpdateConversationStatusDto,
+  ): Promise<IdentityConversationContext> {
+    const conversation = await this.prismaService.identityConversation.update({
+      where: {
+        id: updateConversationStatusDto.conversationId,
+      },
+      data: {
+        status: updateConversationStatusDto.status,
+      },
+      select: identityConversationSelect,
+    });
+
+    return toIdentityConversationContext(conversation);
+  }
+
+  async getOrCreateDirectConversation(
+    getOrCreateDirectConversationDto: GetOrCreateDirectConversationDto,
+  ): Promise<IdentityConversationContext> {
+    const existingConversation =
+      await this.prismaService.identityConversation.findUnique({
+        where: {
+          sourceIdentityId_targetIdentityId_connectionId: {
+            sourceIdentityId: getOrCreateDirectConversationDto.sourceIdentityId,
+            targetIdentityId: getOrCreateDirectConversationDto.targetIdentityId,
+            connectionId: getOrCreateDirectConversationDto.connectionId,
+          },
+        },
+        select: identityConversationSelect,
+      });
+
+    if (existingConversation) {
+      return toIdentityConversationContext(existingConversation);
+    }
+
+    return this.createConversation({
+      sourceIdentityId: getOrCreateDirectConversationDto.sourceIdentityId,
+      targetIdentityId: getOrCreateDirectConversationDto.targetIdentityId,
+      connectionId: getOrCreateDirectConversationDto.connectionId,
+      conversationType: getOrCreateDirectConversationDto.conversationType,
+      createdByIdentityId: getOrCreateDirectConversationDto.createdByIdentityId,
+      status: ConversationStatus.Active,
+    });
+  }
+
+  async getContentAccessRule(
+    getContentAccessRuleDto: GetContentAccessRuleDto,
+  ): Promise<ContentAccessRuleValue | null> {
+    const contentRule = await this.prismaService.contentAccessRule.findUnique({
+      where: {
+        contentId_targetIdentityId: {
+          contentId: getContentAccessRuleDto.contentId,
+          targetIdentityId: getContentAccessRuleDto.targetIdentityId,
+        },
+      },
+      select: contentAccessRuleSelect,
+    });
+
+    return contentRule ? toContentAccessRuleValue(contentRule) : null;
+  }
+
+  async deleteContentAccessRule(
+    deleteContentAccessRuleDto: DeleteContentAccessRuleDto,
+  ): Promise<void> {
+    await this.prismaService.contentAccessRule.deleteMany({
+      where: {
+        contentId: deleteContentAccessRuleDto.contentId,
+        targetIdentityId: deleteContentAccessRuleDto.targetIdentityId,
+      },
+    });
+  }
+
+  async listContentAccessRulesForContent(
+    listContentAccessRulesForContentDto: ListContentAccessRulesForContentDto,
+  ): Promise<ContentAccessRuleValue[]> {
+    const contentRules = await this.prismaService.contentAccessRule.findMany({
+      where: {
+        contentId: listContentAccessRulesForContentDto.contentId,
+      },
+      orderBy: [{ targetIdentityId: "asc" }, { createdAt: "asc" }],
+      select: contentAccessRuleSelect,
+    });
+
+    return contentRules.map(toContentAccessRuleValue);
   }
 
   async getConnectionById(
@@ -539,6 +841,194 @@ export class IdentitiesService {
     };
   }
 
+  async resolveContentPermissionsForConnection(
+    resolveDto: ResolveContentPermissionsForConnectionDto,
+  ): Promise<ResolvedContentPermissionsForConnectionResult> {
+    const resolvedConnection = await this.resolveConnectionPermissions({
+      connectionId: resolveDto.connectionId,
+      persistSnapshot: false,
+    });
+    const contentRule = await this.getContentAccessRule({
+      contentId: resolveDto.contentId,
+      targetIdentityId: resolveDto.targetIdentityId,
+    });
+    const baseConnectionPermissions =
+      deriveContentPermissionSubset(resolvedConnection);
+    const contentResolution = applyContentAccessRule(
+      baseConnectionPermissions,
+      contentRule,
+      {
+        contentId: resolveDto.contentId,
+        targetIdentityId: resolveDto.targetIdentityId,
+        currentViewCount: resolveDto.currentViewCount,
+      },
+    );
+
+    return {
+      connection: {
+        id: resolvedConnection.connectionId,
+        sourceIdentityId: resolvedConnection.sourceIdentityId,
+        targetIdentityId: resolvedConnection.targetIdentityId,
+        sourceIdentityType: resolvedConnection.sourceIdentityType,
+        connectionType: resolvedConnection.connectionType,
+        trustState: resolvedConnection.trustState,
+        status: resolvedConnection.status,
+        templateKey: resolvedConnection.template.templateKey,
+        policyVersion: resolvedConnection.template.policyVersion,
+      },
+      contentSummary: contentResolution.contentSummary,
+      baseConnectionPermissions,
+      effectiveContentPermissions:
+        contentResolution.effectiveContentPermissions,
+      contentTrace: contentResolution.contentTrace,
+      restrictionSummary: contentResolution.restrictionSummary,
+    };
+  }
+
+  async previewContentPermissions(
+    previewDto: PreviewContentPermissionsDto,
+  ): Promise<PreviewContentPermissionsResult> {
+    const previewPermissions = await this.previewPermissionsWithRisk({
+      sourceIdentityType: previewDto.sourceIdentityType ?? null,
+      connectionType: previewDto.connectionType,
+      trustState: previewDto.trustState,
+      manualOverrides: previewDto.manualOverrides,
+      previewRiskSignals: previewDto.previewRiskSignals,
+      applyRiskOverlay: previewDto.applyRiskOverlay,
+    });
+    const contentRule = previewDto.contentRule
+      ? createPreviewContentAccessRuleValue(
+          previewDto.contentId,
+          previewDto.targetIdentityId,
+          previewDto.contentRule,
+        )
+      : null;
+    const baseConnectionPermissions =
+      deriveContentPermissionSubsetFromFinalPermissions(
+        previewPermissions.finalPermissions,
+      );
+    const contentResolution = applyContentAccessRule(
+      baseConnectionPermissions,
+      contentRule,
+      {
+        contentId: previewDto.contentId,
+        targetIdentityId: previewDto.targetIdentityId,
+        currentViewCount: previewDto.currentViewCount,
+      },
+    );
+
+    return {
+      sourceIdentityType: previewDto.sourceIdentityType ?? null,
+      connectionType: previewDto.connectionType,
+      trustState: previewDto.trustState,
+      contentSummary: contentResolution.contentSummary,
+      baseConnectionPermissions,
+      effectiveContentPermissions:
+        contentResolution.effectiveContentPermissions,
+      contentTrace: contentResolution.contentTrace,
+      restrictionSummary: contentResolution.restrictionSummary,
+      riskSummary: previewPermissions.riskSummary,
+    };
+  }
+
+  async bindResolvedPermissionsToConversation(
+    bindDto: BindResolvedPermissionsToConversationDto,
+  ): Promise<BoundConversationPermissions> {
+    const conversation = await this.requireConversation(bindDto.conversationId);
+    const resolvedPermissions = await this.resolveConnectionPermissions({
+      connectionId: conversation.connectionId,
+      persistSnapshot: false,
+    });
+    const currentHash = computeResolvedPermissionHash(resolvedPermissions);
+    const updatedConversation =
+      await this.prismaService.identityConversation.update({
+        where: {
+          id: bindDto.conversationId,
+        },
+        data: {
+          lastResolvedAt: resolvedPermissions.resolvedAt,
+          lastPermissionHash: currentHash,
+        },
+        select: identityConversationSelect,
+      });
+    const bindingSummary = createConversationBindingSummary(
+      updatedConversation.lastPermissionHash,
+      currentHash,
+      updatedConversation.lastResolvedAt,
+      resolvedPermissions.resolvedAt,
+    );
+
+    return {
+      conversationId: updatedConversation.id,
+      connectionId: updatedConversation.connectionId,
+      sourceIdentityId: updatedConversation.sourceIdentityId,
+      targetIdentityId: updatedConversation.targetIdentityId,
+      conversationType: normalizeConversationType(
+        updatedConversation.conversationType,
+      ),
+      conversationStatus: normalizeConversationStatus(
+        updatedConversation.status,
+      ),
+      resolvedConnectionPermissions: resolvedPermissions,
+      contentCapabilitySummary:
+        deriveConversationContentCapabilitySummary(resolvedPermissions),
+      bindingSummary,
+      traceSummary: createConversationTraceSummary(resolvedPermissions),
+      resolvedAt: resolvedPermissions.resolvedAt,
+      stale: false,
+    };
+  }
+
+  async isConversationPermissionBindingStale(
+    conversationId: string,
+  ): Promise<ConversationBindingStalenessResult> {
+    const conversation = await this.requireConversation(conversationId);
+    const resolvedPermissions = await this.resolveConnectionPermissions({
+      connectionId: conversation.connectionId,
+      persistSnapshot: false,
+    });
+    const currentHash = computeResolvedPermissionHash(resolvedPermissions);
+    const stale =
+      conversation.lastResolvedAt === null ||
+      conversation.lastPermissionHash === null ||
+      conversation.lastPermissionHash !== currentHash;
+
+    return {
+      stale,
+      currentHash,
+      storedHash: conversation.lastPermissionHash,
+      lastResolvedAt: conversation.lastResolvedAt,
+      currentResolvedAt: resolvedPermissions.resolvedAt,
+    };
+  }
+
+  async resolveConversationContext(
+    resolveDto: ResolveConversationContextDto,
+  ): Promise<ResolveConversationContextResult> {
+    const conversation = await this.requireConversation(
+      resolveDto.conversationId,
+    );
+    const resolvedPermissions = await this.resolveConnectionPermissions({
+      connectionId: conversation.connectionId,
+      persistSnapshot: false,
+    });
+    const currentHash = computeResolvedPermissionHash(resolvedPermissions);
+    const bindingSummary = createConversationBindingSummary(
+      conversation.lastPermissionHash,
+      currentHash,
+      conversation.lastResolvedAt,
+      resolvedPermissions.resolvedAt,
+    );
+
+    return {
+      conversation: toIdentityConversationContext(conversation),
+      resolvedPermissions,
+      stale: bindingSummary.stale,
+      bindingSummary,
+      traceSummary: createConversationTraceSummary(resolvedPermissions),
+    };
+  }
+
   async persistResolvedPermissionSnapshot(
     connectionId: string,
     resolved: ResolvedConnectionPermissions,
@@ -711,6 +1201,112 @@ export class IdentitiesService {
     }
 
     return connection;
+  }
+
+  private async requireConversation(
+    conversationId: string,
+  ): Promise<IdentityConversationRecord> {
+    const conversation =
+      await this.prismaService.identityConversation.findUnique({
+        where: {
+          id: conversationId,
+        },
+        select: identityConversationSelect,
+      });
+
+    if (!conversation) {
+      throw new NotFoundException("Identity conversation not found");
+    }
+
+    return conversation;
+  }
+
+  private async requireIdentity(identityId: string): Promise<Identity> {
+    const identity = await this.prismaService.identity.findUnique({
+      where: {
+        id: identityId,
+      },
+    });
+
+    if (!identity) {
+      throw new NotFoundException("Identity not found");
+    }
+
+    return identity;
+  }
+
+  private assertConversationMatchesConnection(
+    conversation: Pick<
+      CreateConversationDto,
+      "sourceIdentityId" | "targetIdentityId" | "connectionId"
+    >,
+    connection: IdentityConnectionRecord,
+  ): void {
+    if (
+      conversation.connectionId !== connection.id ||
+      conversation.sourceIdentityId !== connection.sourceIdentityId ||
+      conversation.targetIdentityId !== connection.targetIdentityId
+    ) {
+      throw new BadRequestException(
+        "Conversation source and target must match the referenced connection direction",
+      );
+    }
+  }
+
+  private assertConversationTypeCompatibility(
+    conversationType: ConversationType,
+    resolvedPermissions: ResolvedConnectionPermissions,
+    targetIdentity: Identity,
+  ): void {
+    if (
+      resolvedPermissions.status === ConnectionStatus.Blocked ||
+      resolvedPermissions.status === ConnectionStatus.Archived
+    ) {
+      throw new BadRequestException(
+        "Conversation cannot be created for blocked or archived connections",
+      );
+    }
+
+    if (conversationType === ConversationType.ProtectedDirect) {
+      const protectedCapable =
+        resolvedPermissions.permissions[
+          PERMISSION_KEYS.mediaPrivacy.protectedSend
+        ]?.finalEffect !== PermissionEffect.Deny ||
+        resolvedPermissions.permissions[PERMISSION_KEYS.vault.itemView]
+          ?.finalEffect !== PermissionEffect.Deny ||
+        resolvedPermissions.permissions[PERMISSION_KEYS.vault.itemAttach]
+          ?.finalEffect !== PermissionEffect.Deny;
+
+      if (
+        !protectedCapable ||
+        resolvedPermissions.riskSummary.blockedProtectedMode === true
+      ) {
+        throw new BadRequestException(
+          "Protected direct conversations require protected-capable permissions",
+        );
+      }
+    }
+
+    if (conversationType === ConversationType.BusinessDirect) {
+      const sourceIdentityType = resolvedPermissions.sourceIdentityType;
+      const targetIdentityType = toApiIdentityType(targetIdentity.identityType);
+      const allowedIdentityTypes = new Set<IdentityType>([
+        IdentityType.Business,
+        IdentityType.Professional,
+      ]);
+
+      if (
+        sourceIdentityType === IdentityType.Couple ||
+        targetIdentityType === IdentityType.Couple ||
+        (!allowedIdentityTypes.has(sourceIdentityType) &&
+          (targetIdentityType === null ||
+            !allowedIdentityTypes.has(targetIdentityType)))
+      ) {
+        throw new BadRequestException(
+          "Business direct conversations require business or professional identities",
+        );
+      }
+    }
   }
 
   private assertNotSelfConnection(
@@ -1023,6 +1619,208 @@ function toConnectionPolicyTemplateRecord(
     isActive: template.isActive,
     createdAt: template.createdAt,
     updatedAt: template.updatedAt,
+  };
+}
+
+function toContentAccessRuleValue(
+  contentRule: ContentAccessRuleRecord,
+): ContentAccessRuleValue {
+  return {
+    contentId: contentRule.contentId,
+    targetIdentityId: contentRule.targetIdentityId,
+    canView: contentRule.canView,
+    canDownload: contentRule.canDownload,
+    canForward: contentRule.canForward,
+    canExport: contentRule.canExport,
+    screenshotPolicy: normalizeScreenshotPolicy(contentRule.screenshotPolicy),
+    recordPolicy: normalizeRecordPolicy(contentRule.recordPolicy),
+    expiryAt: contentRule.expiryAt,
+    viewLimit: contentRule.viewLimit,
+    watermarkMode: contentRule.watermarkMode,
+    aiAccessAllowed: contentRule.aiAccessAllowed,
+    metadataJson: contentRule.metadataJson as Record<string, unknown> | null,
+    createdByIdentityId: contentRule.createdByIdentityId,
+    createdAt: contentRule.createdAt,
+    updatedAt: contentRule.updatedAt,
+  };
+}
+
+function toIdentityConversationContext(
+  conversation: IdentityConversationRecord,
+): IdentityConversationContext {
+  return {
+    conversationId: conversation.id,
+    connectionId: conversation.connectionId,
+    sourceIdentityId: conversation.sourceIdentityId,
+    targetIdentityId: conversation.targetIdentityId,
+    conversationType: normalizeConversationType(conversation.conversationType),
+    conversationStatus: normalizeConversationStatus(conversation.status),
+    title: conversation.title,
+    metadataJson: conversation.metadataJson as Record<string, unknown> | null,
+    lastResolvedAt: conversation.lastResolvedAt,
+    lastPermissionHash: conversation.lastPermissionHash,
+    createdByIdentityId: conversation.createdByIdentityId,
+    createdAt: conversation.createdAt,
+    updatedAt: conversation.updatedAt,
+  };
+}
+
+function createPreviewContentAccessRuleValue(
+  contentId: string,
+  targetIdentityId: string,
+  previewRule: PreviewContentPermissionsDto["contentRule"],
+): ContentAccessRuleValue {
+  return {
+    contentId,
+    targetIdentityId,
+    canView: previewRule?.canView ?? true,
+    canDownload: previewRule?.canDownload ?? true,
+    canForward: previewRule?.canForward ?? true,
+    canExport: previewRule?.canExport ?? true,
+    screenshotPolicy: previewRule?.screenshotPolicy ?? ScreenshotPolicy.Inherit,
+    recordPolicy: previewRule?.recordPolicy ?? RecordPolicy.Inherit,
+    expiryAt: previewRule?.expiryAt ? new Date(previewRule.expiryAt) : null,
+    viewLimit: previewRule?.viewLimit ?? null,
+    watermarkMode: previewRule?.watermarkMode ?? null,
+    aiAccessAllowed: previewRule?.aiAccessAllowed ?? null,
+    metadataJson: previewRule?.metadataJson ?? null,
+    createdByIdentityId: "preview",
+    createdAt: new Date(0),
+    updatedAt: new Date(0),
+  };
+}
+
+function normalizeScreenshotPolicy(value: string): ScreenshotPolicy {
+  switch (value) {
+    case ScreenshotPolicy.Allow:
+      return ScreenshotPolicy.Allow;
+    case ScreenshotPolicy.Deny:
+      return ScreenshotPolicy.Deny;
+    case ScreenshotPolicy.Inherit:
+    default:
+      return ScreenshotPolicy.Inherit;
+  }
+}
+
+function normalizeRecordPolicy(value: string): RecordPolicy {
+  switch (value) {
+    case RecordPolicy.Allow:
+      return RecordPolicy.Allow;
+    case RecordPolicy.Deny:
+      return RecordPolicy.Deny;
+    case RecordPolicy.Inherit:
+    default:
+      return RecordPolicy.Inherit;
+  }
+}
+
+function normalizeConversationType(value: string): ConversationType {
+  switch (value) {
+    case ConversationType.ProtectedDirect:
+      return ConversationType.ProtectedDirect;
+    case ConversationType.BusinessDirect:
+      return ConversationType.BusinessDirect;
+    case ConversationType.Direct:
+    default:
+      return ConversationType.Direct;
+  }
+}
+
+function normalizeConversationStatus(value: string): ConversationStatus {
+  switch (value) {
+    case ConversationStatus.Archived:
+      return ConversationStatus.Archived;
+    case ConversationStatus.Blocked:
+      return ConversationStatus.Blocked;
+    case ConversationStatus.Locked:
+      return ConversationStatus.Locked;
+    case ConversationStatus.Active:
+    default:
+      return ConversationStatus.Active;
+  }
+}
+
+function computeResolvedPermissionHash(
+  resolvedPermissions: ResolvedConnectionPermissions,
+): string {
+  const normalizedPayload = {
+    templateKey: resolvedPermissions.template.templateKey,
+    policyVersion: resolvedPermissions.template.policyVersion,
+    trustState: resolvedPermissions.trustState,
+    overridesSummary: resolvedPermissions.overridesSummary,
+    riskSummary: resolvedPermissions.riskSummary,
+    permissions: Object.keys(resolvedPermissions.permissions)
+      .sort()
+      .reduce<Record<string, unknown>>((accumulator, permissionKey) => {
+        const permission =
+          resolvedPermissions.permissions[
+            permissionKey as keyof ResolvedConnectionPermissions["permissions"]
+          ];
+
+        if (!permission) {
+          return accumulator;
+        }
+
+        accumulator[permissionKey] = {
+          effect: permission.finalEffect,
+          limits: permission.limits ?? null,
+        };
+
+        return accumulator;
+      }, {}),
+  };
+
+  return createHash("sha256")
+    .update(JSON.stringify(normalizedPayload))
+    .digest("hex");
+}
+
+function createConversationBindingSummary(
+  storedHash: string | null,
+  currentHash: string,
+  lastResolvedAt: Date | null,
+  currentResolvedAt: Date,
+): ConversationPermissionBindingSummary {
+  return {
+    storedHash,
+    currentHash,
+    lastResolvedAt,
+    currentResolvedAt,
+    stale:
+      storedHash === null ||
+      lastResolvedAt === null ||
+      storedHash !== currentHash,
+  };
+}
+
+function createConversationTraceSummary(
+  resolvedPermissions: ResolvedConnectionPermissions,
+): ConversationResolutionTrace {
+  return {
+    templateKey: resolvedPermissions.template.templateKey,
+    policyVersion: resolvedPermissions.template.policyVersion,
+    trustState: resolvedPermissions.trustState,
+    overrideCount: resolvedPermissions.overridesSummary.count,
+    riskSignals: resolvedPermissions.riskSummary.appliedSignals,
+  };
+}
+
+function deriveConversationContentCapabilitySummary(
+  resolvedPermissions: ResolvedConnectionPermissions,
+) {
+  return {
+    protectedCapable:
+      resolvedPermissions.permissions[
+        PERMISSION_KEYS.mediaPrivacy.protectedSend
+      ]?.finalEffect !== PermissionEffect.Deny,
+    vaultCapable:
+      resolvedPermissions.permissions[PERMISSION_KEYS.vault.itemView]
+        ?.finalEffect !== PermissionEffect.Deny ||
+      resolvedPermissions.permissions[PERMISSION_KEYS.vault.itemAttach]
+        ?.finalEffect !== PermissionEffect.Deny,
+    aiCapable:
+      resolvedPermissions.permissions[PERMISSION_KEYS.ai.summaryUse]
+        ?.finalEffect !== PermissionEffect.Deny,
   };
 }
 

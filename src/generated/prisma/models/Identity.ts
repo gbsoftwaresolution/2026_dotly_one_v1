@@ -221,7 +221,12 @@ export type IdentityWhereInput = {
   outgoingConnections?: Prisma.IdentityConnectionListRelationFilter
   incomingConnections?: Prisma.IdentityConnectionListRelationFilter
   createdConnections?: Prisma.IdentityConnectionListRelationFilter
+  outgoingConversations?: Prisma.IdentityConversationListRelationFilter
+  incomingConversations?: Prisma.IdentityConversationListRelationFilter
+  createdConversations?: Prisma.IdentityConversationListRelationFilter
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideListRelationFilter
+  targetedContentAccessRules?: Prisma.ContentAccessRuleListRelationFilter
+  createdContentAccessRules?: Prisma.ContentAccessRuleListRelationFilter
 }
 
 export type IdentityOrderByWithRelationInput = {
@@ -238,7 +243,12 @@ export type IdentityOrderByWithRelationInput = {
   outgoingConnections?: Prisma.IdentityConnectionOrderByRelationAggregateInput
   incomingConnections?: Prisma.IdentityConnectionOrderByRelationAggregateInput
   createdConnections?: Prisma.IdentityConnectionOrderByRelationAggregateInput
+  outgoingConversations?: Prisma.IdentityConversationOrderByRelationAggregateInput
+  incomingConversations?: Prisma.IdentityConversationOrderByRelationAggregateInput
+  createdConversations?: Prisma.IdentityConversationOrderByRelationAggregateInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideOrderByRelationAggregateInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleOrderByRelationAggregateInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleOrderByRelationAggregateInput
 }
 
 export type IdentityWhereUniqueInput = Prisma.AtLeast<{
@@ -258,7 +268,12 @@ export type IdentityWhereUniqueInput = Prisma.AtLeast<{
   outgoingConnections?: Prisma.IdentityConnectionListRelationFilter
   incomingConnections?: Prisma.IdentityConnectionListRelationFilter
   createdConnections?: Prisma.IdentityConnectionListRelationFilter
+  outgoingConversations?: Prisma.IdentityConversationListRelationFilter
+  incomingConversations?: Prisma.IdentityConversationListRelationFilter
+  createdConversations?: Prisma.IdentityConversationListRelationFilter
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideListRelationFilter
+  targetedContentAccessRules?: Prisma.ContentAccessRuleListRelationFilter
+  createdContentAccessRules?: Prisma.ContentAccessRuleListRelationFilter
 }, "id" | "handle">
 
 export type IdentityOrderByWithAggregationInput = {
@@ -307,7 +322,12 @@ export type IdentityCreateInput = {
   outgoingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutSourceIdentityInput
   incomingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutTargetIdentityInput
   createdConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationCreateNestedManyWithoutCreatedByIdentityInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutCreatedByIdentityInput
 }
 
 export type IdentityUncheckedCreateInput = {
@@ -324,7 +344,12 @@ export type IdentityUncheckedCreateInput = {
   outgoingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutSourceIdentityInput
   incomingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutTargetIdentityInput
   createdConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutCreatedByIdentityInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutCreatedByIdentityInput
 }
 
 export type IdentityUpdateInput = {
@@ -341,7 +366,12 @@ export type IdentityUpdateInput = {
   outgoingConnections?: Prisma.IdentityConnectionUpdateManyWithoutSourceIdentityNestedInput
   incomingConnections?: Prisma.IdentityConnectionUpdateManyWithoutTargetIdentityNestedInput
   createdConnections?: Prisma.IdentityConnectionUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUpdateManyWithoutCreatedByIdentityNestedInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutCreatedByIdentityNestedInput
 }
 
 export type IdentityUncheckedUpdateInput = {
@@ -358,7 +388,12 @@ export type IdentityUncheckedUpdateInput = {
   outgoingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutSourceIdentityNestedInput
   incomingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutTargetIdentityNestedInput
   createdConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
 }
 
 export type IdentityCreateManyInput = {
@@ -502,6 +537,76 @@ export type IdentityUpdateOneRequiredWithoutCreatedPermissionOverridesNestedInpu
   update?: Prisma.XOR<Prisma.XOR<Prisma.IdentityUpdateToOneWithWhereWithoutCreatedPermissionOverridesInput, Prisma.IdentityUpdateWithoutCreatedPermissionOverridesInput>, Prisma.IdentityUncheckedUpdateWithoutCreatedPermissionOverridesInput>
 }
 
+export type IdentityCreateNestedOneWithoutTargetedContentAccessRulesInput = {
+  create?: Prisma.XOR<Prisma.IdentityCreateWithoutTargetedContentAccessRulesInput, Prisma.IdentityUncheckedCreateWithoutTargetedContentAccessRulesInput>
+  connectOrCreate?: Prisma.IdentityCreateOrConnectWithoutTargetedContentAccessRulesInput
+  connect?: Prisma.IdentityWhereUniqueInput
+}
+
+export type IdentityCreateNestedOneWithoutCreatedContentAccessRulesInput = {
+  create?: Prisma.XOR<Prisma.IdentityCreateWithoutCreatedContentAccessRulesInput, Prisma.IdentityUncheckedCreateWithoutCreatedContentAccessRulesInput>
+  connectOrCreate?: Prisma.IdentityCreateOrConnectWithoutCreatedContentAccessRulesInput
+  connect?: Prisma.IdentityWhereUniqueInput
+}
+
+export type IdentityUpdateOneRequiredWithoutTargetedContentAccessRulesNestedInput = {
+  create?: Prisma.XOR<Prisma.IdentityCreateWithoutTargetedContentAccessRulesInput, Prisma.IdentityUncheckedCreateWithoutTargetedContentAccessRulesInput>
+  connectOrCreate?: Prisma.IdentityCreateOrConnectWithoutTargetedContentAccessRulesInput
+  upsert?: Prisma.IdentityUpsertWithoutTargetedContentAccessRulesInput
+  connect?: Prisma.IdentityWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.IdentityUpdateToOneWithWhereWithoutTargetedContentAccessRulesInput, Prisma.IdentityUpdateWithoutTargetedContentAccessRulesInput>, Prisma.IdentityUncheckedUpdateWithoutTargetedContentAccessRulesInput>
+}
+
+export type IdentityUpdateOneRequiredWithoutCreatedContentAccessRulesNestedInput = {
+  create?: Prisma.XOR<Prisma.IdentityCreateWithoutCreatedContentAccessRulesInput, Prisma.IdentityUncheckedCreateWithoutCreatedContentAccessRulesInput>
+  connectOrCreate?: Prisma.IdentityCreateOrConnectWithoutCreatedContentAccessRulesInput
+  upsert?: Prisma.IdentityUpsertWithoutCreatedContentAccessRulesInput
+  connect?: Prisma.IdentityWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.IdentityUpdateToOneWithWhereWithoutCreatedContentAccessRulesInput, Prisma.IdentityUpdateWithoutCreatedContentAccessRulesInput>, Prisma.IdentityUncheckedUpdateWithoutCreatedContentAccessRulesInput>
+}
+
+export type IdentityCreateNestedOneWithoutOutgoingConversationsInput = {
+  create?: Prisma.XOR<Prisma.IdentityCreateWithoutOutgoingConversationsInput, Prisma.IdentityUncheckedCreateWithoutOutgoingConversationsInput>
+  connectOrCreate?: Prisma.IdentityCreateOrConnectWithoutOutgoingConversationsInput
+  connect?: Prisma.IdentityWhereUniqueInput
+}
+
+export type IdentityCreateNestedOneWithoutIncomingConversationsInput = {
+  create?: Prisma.XOR<Prisma.IdentityCreateWithoutIncomingConversationsInput, Prisma.IdentityUncheckedCreateWithoutIncomingConversationsInput>
+  connectOrCreate?: Prisma.IdentityCreateOrConnectWithoutIncomingConversationsInput
+  connect?: Prisma.IdentityWhereUniqueInput
+}
+
+export type IdentityCreateNestedOneWithoutCreatedConversationsInput = {
+  create?: Prisma.XOR<Prisma.IdentityCreateWithoutCreatedConversationsInput, Prisma.IdentityUncheckedCreateWithoutCreatedConversationsInput>
+  connectOrCreate?: Prisma.IdentityCreateOrConnectWithoutCreatedConversationsInput
+  connect?: Prisma.IdentityWhereUniqueInput
+}
+
+export type IdentityUpdateOneRequiredWithoutOutgoingConversationsNestedInput = {
+  create?: Prisma.XOR<Prisma.IdentityCreateWithoutOutgoingConversationsInput, Prisma.IdentityUncheckedCreateWithoutOutgoingConversationsInput>
+  connectOrCreate?: Prisma.IdentityCreateOrConnectWithoutOutgoingConversationsInput
+  upsert?: Prisma.IdentityUpsertWithoutOutgoingConversationsInput
+  connect?: Prisma.IdentityWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.IdentityUpdateToOneWithWhereWithoutOutgoingConversationsInput, Prisma.IdentityUpdateWithoutOutgoingConversationsInput>, Prisma.IdentityUncheckedUpdateWithoutOutgoingConversationsInput>
+}
+
+export type IdentityUpdateOneRequiredWithoutIncomingConversationsNestedInput = {
+  create?: Prisma.XOR<Prisma.IdentityCreateWithoutIncomingConversationsInput, Prisma.IdentityUncheckedCreateWithoutIncomingConversationsInput>
+  connectOrCreate?: Prisma.IdentityCreateOrConnectWithoutIncomingConversationsInput
+  upsert?: Prisma.IdentityUpsertWithoutIncomingConversationsInput
+  connect?: Prisma.IdentityWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.IdentityUpdateToOneWithWhereWithoutIncomingConversationsInput, Prisma.IdentityUpdateWithoutIncomingConversationsInput>, Prisma.IdentityUncheckedUpdateWithoutIncomingConversationsInput>
+}
+
+export type IdentityUpdateOneRequiredWithoutCreatedConversationsNestedInput = {
+  create?: Prisma.XOR<Prisma.IdentityCreateWithoutCreatedConversationsInput, Prisma.IdentityUncheckedCreateWithoutCreatedConversationsInput>
+  connectOrCreate?: Prisma.IdentityCreateOrConnectWithoutCreatedConversationsInput
+  upsert?: Prisma.IdentityUpsertWithoutCreatedConversationsInput
+  connect?: Prisma.IdentityWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.IdentityUpdateToOneWithWhereWithoutCreatedConversationsInput, Prisma.IdentityUpdateWithoutCreatedConversationsInput>, Prisma.IdentityUncheckedUpdateWithoutCreatedConversationsInput>
+}
+
 export type IdentityCreateWithoutOutgoingConnectionsInput = {
   id?: string
   personId?: string | null
@@ -515,7 +620,12 @@ export type IdentityCreateWithoutOutgoingConnectionsInput = {
   updatedAt?: Date | string
   incomingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutTargetIdentityInput
   createdConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationCreateNestedManyWithoutCreatedByIdentityInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutCreatedByIdentityInput
 }
 
 export type IdentityUncheckedCreateWithoutOutgoingConnectionsInput = {
@@ -531,7 +641,12 @@ export type IdentityUncheckedCreateWithoutOutgoingConnectionsInput = {
   updatedAt?: Date | string
   incomingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutTargetIdentityInput
   createdConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutCreatedByIdentityInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutCreatedByIdentityInput
 }
 
 export type IdentityCreateOrConnectWithoutOutgoingConnectionsInput = {
@@ -552,7 +667,12 @@ export type IdentityCreateWithoutIncomingConnectionsInput = {
   updatedAt?: Date | string
   outgoingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutSourceIdentityInput
   createdConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationCreateNestedManyWithoutCreatedByIdentityInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutCreatedByIdentityInput
 }
 
 export type IdentityUncheckedCreateWithoutIncomingConnectionsInput = {
@@ -568,7 +688,12 @@ export type IdentityUncheckedCreateWithoutIncomingConnectionsInput = {
   updatedAt?: Date | string
   outgoingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutSourceIdentityInput
   createdConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutCreatedByIdentityInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutCreatedByIdentityInput
 }
 
 export type IdentityCreateOrConnectWithoutIncomingConnectionsInput = {
@@ -589,7 +714,12 @@ export type IdentityCreateWithoutCreatedConnectionsInput = {
   updatedAt?: Date | string
   outgoingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutSourceIdentityInput
   incomingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutTargetIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationCreateNestedManyWithoutCreatedByIdentityInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutCreatedByIdentityInput
 }
 
 export type IdentityUncheckedCreateWithoutCreatedConnectionsInput = {
@@ -605,7 +735,12 @@ export type IdentityUncheckedCreateWithoutCreatedConnectionsInput = {
   updatedAt?: Date | string
   outgoingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutSourceIdentityInput
   incomingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutTargetIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutCreatedByIdentityInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutCreatedByIdentityInput
 }
 
 export type IdentityCreateOrConnectWithoutCreatedConnectionsInput = {
@@ -637,7 +772,12 @@ export type IdentityUpdateWithoutOutgoingConnectionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   incomingConnections?: Prisma.IdentityConnectionUpdateManyWithoutTargetIdentityNestedInput
   createdConnections?: Prisma.IdentityConnectionUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUpdateManyWithoutCreatedByIdentityNestedInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutCreatedByIdentityNestedInput
 }
 
 export type IdentityUncheckedUpdateWithoutOutgoingConnectionsInput = {
@@ -653,7 +793,12 @@ export type IdentityUncheckedUpdateWithoutOutgoingConnectionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   incomingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutTargetIdentityNestedInput
   createdConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
 }
 
 export type IdentityUpsertWithoutIncomingConnectionsInput = {
@@ -680,7 +825,12 @@ export type IdentityUpdateWithoutIncomingConnectionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   outgoingConnections?: Prisma.IdentityConnectionUpdateManyWithoutSourceIdentityNestedInput
   createdConnections?: Prisma.IdentityConnectionUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUpdateManyWithoutCreatedByIdentityNestedInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutCreatedByIdentityNestedInput
 }
 
 export type IdentityUncheckedUpdateWithoutIncomingConnectionsInput = {
@@ -696,7 +846,12 @@ export type IdentityUncheckedUpdateWithoutIncomingConnectionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   outgoingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutSourceIdentityNestedInput
   createdConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
 }
 
 export type IdentityUpsertWithoutCreatedConnectionsInput = {
@@ -723,7 +878,12 @@ export type IdentityUpdateWithoutCreatedConnectionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   outgoingConnections?: Prisma.IdentityConnectionUpdateManyWithoutSourceIdentityNestedInput
   incomingConnections?: Prisma.IdentityConnectionUpdateManyWithoutTargetIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUpdateManyWithoutCreatedByIdentityNestedInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutCreatedByIdentityNestedInput
 }
 
 export type IdentityUncheckedUpdateWithoutCreatedConnectionsInput = {
@@ -739,7 +899,12 @@ export type IdentityUncheckedUpdateWithoutCreatedConnectionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   outgoingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutSourceIdentityNestedInput
   incomingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
   createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
 }
 
 export type IdentityCreateWithoutCreatedPermissionOverridesInput = {
@@ -756,6 +921,11 @@ export type IdentityCreateWithoutCreatedPermissionOverridesInput = {
   outgoingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutSourceIdentityInput
   incomingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutTargetIdentityInput
   createdConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutCreatedByIdentityInput
 }
 
 export type IdentityUncheckedCreateWithoutCreatedPermissionOverridesInput = {
@@ -772,6 +942,11 @@ export type IdentityUncheckedCreateWithoutCreatedPermissionOverridesInput = {
   outgoingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutSourceIdentityInput
   incomingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutTargetIdentityInput
   createdConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutCreatedByIdentityInput
 }
 
 export type IdentityCreateOrConnectWithoutCreatedPermissionOverridesInput = {
@@ -804,6 +979,11 @@ export type IdentityUpdateWithoutCreatedPermissionOverridesInput = {
   outgoingConnections?: Prisma.IdentityConnectionUpdateManyWithoutSourceIdentityNestedInput
   incomingConnections?: Prisma.IdentityConnectionUpdateManyWithoutTargetIdentityNestedInput
   createdConnections?: Prisma.IdentityConnectionUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutCreatedByIdentityNestedInput
 }
 
 export type IdentityUncheckedUpdateWithoutCreatedPermissionOverridesInput = {
@@ -820,6 +1000,511 @@ export type IdentityUncheckedUpdateWithoutCreatedPermissionOverridesInput = {
   outgoingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutSourceIdentityNestedInput
   incomingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutTargetIdentityNestedInput
   createdConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+}
+
+export type IdentityCreateWithoutTargetedContentAccessRulesInput = {
+  id?: string
+  personId?: string | null
+  identityType: $Enums.IdentityType
+  displayName: string
+  handle?: string | null
+  verificationLevel: string
+  status: string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  outgoingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutSourceIdentityInput
+  incomingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutTargetIdentityInput
+  createdConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationCreateNestedManyWithoutCreatedByIdentityInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutCreatedByIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutCreatedByIdentityInput
+}
+
+export type IdentityUncheckedCreateWithoutTargetedContentAccessRulesInput = {
+  id?: string
+  personId?: string | null
+  identityType: $Enums.IdentityType
+  displayName: string
+  handle?: string | null
+  verificationLevel: string
+  status: string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutSourceIdentityInput
+  incomingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+}
+
+export type IdentityCreateOrConnectWithoutTargetedContentAccessRulesInput = {
+  where: Prisma.IdentityWhereUniqueInput
+  create: Prisma.XOR<Prisma.IdentityCreateWithoutTargetedContentAccessRulesInput, Prisma.IdentityUncheckedCreateWithoutTargetedContentAccessRulesInput>
+}
+
+export type IdentityCreateWithoutCreatedContentAccessRulesInput = {
+  id?: string
+  personId?: string | null
+  identityType: $Enums.IdentityType
+  displayName: string
+  handle?: string | null
+  verificationLevel: string
+  status: string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  outgoingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutSourceIdentityInput
+  incomingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutTargetIdentityInput
+  createdConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationCreateNestedManyWithoutCreatedByIdentityInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutTargetIdentityInput
+}
+
+export type IdentityUncheckedCreateWithoutCreatedContentAccessRulesInput = {
+  id?: string
+  personId?: string | null
+  identityType: $Enums.IdentityType
+  displayName: string
+  handle?: string | null
+  verificationLevel: string
+  status: string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutSourceIdentityInput
+  incomingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutTargetIdentityInput
+}
+
+export type IdentityCreateOrConnectWithoutCreatedContentAccessRulesInput = {
+  where: Prisma.IdentityWhereUniqueInput
+  create: Prisma.XOR<Prisma.IdentityCreateWithoutCreatedContentAccessRulesInput, Prisma.IdentityUncheckedCreateWithoutCreatedContentAccessRulesInput>
+}
+
+export type IdentityUpsertWithoutTargetedContentAccessRulesInput = {
+  update: Prisma.XOR<Prisma.IdentityUpdateWithoutTargetedContentAccessRulesInput, Prisma.IdentityUncheckedUpdateWithoutTargetedContentAccessRulesInput>
+  create: Prisma.XOR<Prisma.IdentityCreateWithoutTargetedContentAccessRulesInput, Prisma.IdentityUncheckedCreateWithoutTargetedContentAccessRulesInput>
+  where?: Prisma.IdentityWhereInput
+}
+
+export type IdentityUpdateToOneWithWhereWithoutTargetedContentAccessRulesInput = {
+  where?: Prisma.IdentityWhereInput
+  data: Prisma.XOR<Prisma.IdentityUpdateWithoutTargetedContentAccessRulesInput, Prisma.IdentityUncheckedUpdateWithoutTargetedContentAccessRulesInput>
+}
+
+export type IdentityUpdateWithoutTargetedContentAccessRulesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  personId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityType?: Prisma.EnumIdentityTypeFieldUpdateOperationsInput | $Enums.IdentityType
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verificationLevel?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUpdateManyWithoutSourceIdentityNestedInput
+  incomingConnections?: Prisma.IdentityConnectionUpdateManyWithoutTargetIdentityNestedInput
+  createdConnections?: Prisma.IdentityConnectionUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUpdateManyWithoutCreatedByIdentityNestedInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutCreatedByIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutCreatedByIdentityNestedInput
+}
+
+export type IdentityUncheckedUpdateWithoutTargetedContentAccessRulesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  personId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityType?: Prisma.EnumIdentityTypeFieldUpdateOperationsInput | $Enums.IdentityType
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verificationLevel?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  incomingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+}
+
+export type IdentityUpsertWithoutCreatedContentAccessRulesInput = {
+  update: Prisma.XOR<Prisma.IdentityUpdateWithoutCreatedContentAccessRulesInput, Prisma.IdentityUncheckedUpdateWithoutCreatedContentAccessRulesInput>
+  create: Prisma.XOR<Prisma.IdentityCreateWithoutCreatedContentAccessRulesInput, Prisma.IdentityUncheckedCreateWithoutCreatedContentAccessRulesInput>
+  where?: Prisma.IdentityWhereInput
+}
+
+export type IdentityUpdateToOneWithWhereWithoutCreatedContentAccessRulesInput = {
+  where?: Prisma.IdentityWhereInput
+  data: Prisma.XOR<Prisma.IdentityUpdateWithoutCreatedContentAccessRulesInput, Prisma.IdentityUncheckedUpdateWithoutCreatedContentAccessRulesInput>
+}
+
+export type IdentityUpdateWithoutCreatedContentAccessRulesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  personId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityType?: Prisma.EnumIdentityTypeFieldUpdateOperationsInput | $Enums.IdentityType
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verificationLevel?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUpdateManyWithoutSourceIdentityNestedInput
+  incomingConnections?: Prisma.IdentityConnectionUpdateManyWithoutTargetIdentityNestedInput
+  createdConnections?: Prisma.IdentityConnectionUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUpdateManyWithoutCreatedByIdentityNestedInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutTargetIdentityNestedInput
+}
+
+export type IdentityUncheckedUpdateWithoutCreatedContentAccessRulesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  personId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityType?: Prisma.EnumIdentityTypeFieldUpdateOperationsInput | $Enums.IdentityType
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verificationLevel?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  incomingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutTargetIdentityNestedInput
+}
+
+export type IdentityCreateWithoutOutgoingConversationsInput = {
+  id?: string
+  personId?: string | null
+  identityType: $Enums.IdentityType
+  displayName: string
+  handle?: string | null
+  verificationLevel: string
+  status: string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  outgoingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutSourceIdentityInput
+  incomingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutTargetIdentityInput
+  createdConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutCreatedByIdentityInput
+  incomingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationCreateNestedManyWithoutCreatedByIdentityInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutCreatedByIdentityInput
+}
+
+export type IdentityUncheckedCreateWithoutOutgoingConversationsInput = {
+  id?: string
+  personId?: string | null
+  identityType: $Enums.IdentityType
+  displayName: string
+  handle?: string | null
+  verificationLevel: string
+  status: string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutSourceIdentityInput
+  incomingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+}
+
+export type IdentityCreateOrConnectWithoutOutgoingConversationsInput = {
+  where: Prisma.IdentityWhereUniqueInput
+  create: Prisma.XOR<Prisma.IdentityCreateWithoutOutgoingConversationsInput, Prisma.IdentityUncheckedCreateWithoutOutgoingConversationsInput>
+}
+
+export type IdentityCreateWithoutIncomingConversationsInput = {
+  id?: string
+  personId?: string | null
+  identityType: $Enums.IdentityType
+  displayName: string
+  handle?: string | null
+  verificationLevel: string
+  status: string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  outgoingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutSourceIdentityInput
+  incomingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutTargetIdentityInput
+  createdConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutSourceIdentityInput
+  createdConversations?: Prisma.IdentityConversationCreateNestedManyWithoutCreatedByIdentityInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutCreatedByIdentityInput
+}
+
+export type IdentityUncheckedCreateWithoutIncomingConversationsInput = {
+  id?: string
+  personId?: string | null
+  identityType: $Enums.IdentityType
+  displayName: string
+  handle?: string | null
+  verificationLevel: string
+  status: string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutSourceIdentityInput
+  incomingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutSourceIdentityInput
+  createdConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+}
+
+export type IdentityCreateOrConnectWithoutIncomingConversationsInput = {
+  where: Prisma.IdentityWhereUniqueInput
+  create: Prisma.XOR<Prisma.IdentityCreateWithoutIncomingConversationsInput, Prisma.IdentityUncheckedCreateWithoutIncomingConversationsInput>
+}
+
+export type IdentityCreateWithoutCreatedConversationsInput = {
+  id?: string
+  personId?: string | null
+  identityType: $Enums.IdentityType
+  displayName: string
+  handle?: string | null
+  verificationLevel: string
+  status: string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  outgoingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutSourceIdentityInput
+  incomingConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutTargetIdentityInput
+  createdConnections?: Prisma.IdentityConnectionCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationCreateNestedManyWithoutTargetIdentityInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleCreateNestedManyWithoutCreatedByIdentityInput
+}
+
+export type IdentityUncheckedCreateWithoutCreatedConversationsInput = {
+  id?: string
+  personId?: string | null
+  identityType: $Enums.IdentityType
+  displayName: string
+  handle?: string | null
+  verificationLevel: string
+  status: string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutSourceIdentityInput
+  incomingConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdConnections?: Prisma.IdentityConnectionUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutSourceIdentityInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutTargetIdentityInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedCreateNestedManyWithoutCreatedByIdentityInput
+}
+
+export type IdentityCreateOrConnectWithoutCreatedConversationsInput = {
+  where: Prisma.IdentityWhereUniqueInput
+  create: Prisma.XOR<Prisma.IdentityCreateWithoutCreatedConversationsInput, Prisma.IdentityUncheckedCreateWithoutCreatedConversationsInput>
+}
+
+export type IdentityUpsertWithoutOutgoingConversationsInput = {
+  update: Prisma.XOR<Prisma.IdentityUpdateWithoutOutgoingConversationsInput, Prisma.IdentityUncheckedUpdateWithoutOutgoingConversationsInput>
+  create: Prisma.XOR<Prisma.IdentityCreateWithoutOutgoingConversationsInput, Prisma.IdentityUncheckedCreateWithoutOutgoingConversationsInput>
+  where?: Prisma.IdentityWhereInput
+}
+
+export type IdentityUpdateToOneWithWhereWithoutOutgoingConversationsInput = {
+  where?: Prisma.IdentityWhereInput
+  data: Prisma.XOR<Prisma.IdentityUpdateWithoutOutgoingConversationsInput, Prisma.IdentityUncheckedUpdateWithoutOutgoingConversationsInput>
+}
+
+export type IdentityUpdateWithoutOutgoingConversationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  personId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityType?: Prisma.EnumIdentityTypeFieldUpdateOperationsInput | $Enums.IdentityType
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verificationLevel?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUpdateManyWithoutSourceIdentityNestedInput
+  incomingConnections?: Prisma.IdentityConnectionUpdateManyWithoutTargetIdentityNestedInput
+  createdConnections?: Prisma.IdentityConnectionUpdateManyWithoutCreatedByIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUpdateManyWithoutCreatedByIdentityNestedInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutCreatedByIdentityNestedInput
+}
+
+export type IdentityUncheckedUpdateWithoutOutgoingConversationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  personId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityType?: Prisma.EnumIdentityTypeFieldUpdateOperationsInput | $Enums.IdentityType
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verificationLevel?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  incomingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+}
+
+export type IdentityUpsertWithoutIncomingConversationsInput = {
+  update: Prisma.XOR<Prisma.IdentityUpdateWithoutIncomingConversationsInput, Prisma.IdentityUncheckedUpdateWithoutIncomingConversationsInput>
+  create: Prisma.XOR<Prisma.IdentityCreateWithoutIncomingConversationsInput, Prisma.IdentityUncheckedCreateWithoutIncomingConversationsInput>
+  where?: Prisma.IdentityWhereInput
+}
+
+export type IdentityUpdateToOneWithWhereWithoutIncomingConversationsInput = {
+  where?: Prisma.IdentityWhereInput
+  data: Prisma.XOR<Prisma.IdentityUpdateWithoutIncomingConversationsInput, Prisma.IdentityUncheckedUpdateWithoutIncomingConversationsInput>
+}
+
+export type IdentityUpdateWithoutIncomingConversationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  personId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityType?: Prisma.EnumIdentityTypeFieldUpdateOperationsInput | $Enums.IdentityType
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verificationLevel?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUpdateManyWithoutSourceIdentityNestedInput
+  incomingConnections?: Prisma.IdentityConnectionUpdateManyWithoutTargetIdentityNestedInput
+  createdConnections?: Prisma.IdentityConnectionUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUpdateManyWithoutSourceIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUpdateManyWithoutCreatedByIdentityNestedInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutCreatedByIdentityNestedInput
+}
+
+export type IdentityUncheckedUpdateWithoutIncomingConversationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  personId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityType?: Prisma.EnumIdentityTypeFieldUpdateOperationsInput | $Enums.IdentityType
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verificationLevel?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  incomingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  createdConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+}
+
+export type IdentityUpsertWithoutCreatedConversationsInput = {
+  update: Prisma.XOR<Prisma.IdentityUpdateWithoutCreatedConversationsInput, Prisma.IdentityUncheckedUpdateWithoutCreatedConversationsInput>
+  create: Prisma.XOR<Prisma.IdentityCreateWithoutCreatedConversationsInput, Prisma.IdentityUncheckedCreateWithoutCreatedConversationsInput>
+  where?: Prisma.IdentityWhereInput
+}
+
+export type IdentityUpdateToOneWithWhereWithoutCreatedConversationsInput = {
+  where?: Prisma.IdentityWhereInput
+  data: Prisma.XOR<Prisma.IdentityUpdateWithoutCreatedConversationsInput, Prisma.IdentityUncheckedUpdateWithoutCreatedConversationsInput>
+}
+
+export type IdentityUpdateWithoutCreatedConversationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  personId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityType?: Prisma.EnumIdentityTypeFieldUpdateOperationsInput | $Enums.IdentityType
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verificationLevel?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUpdateManyWithoutSourceIdentityNestedInput
+  incomingConnections?: Prisma.IdentityConnectionUpdateManyWithoutTargetIdentityNestedInput
+  createdConnections?: Prisma.IdentityConnectionUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUpdateManyWithoutTargetIdentityNestedInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUpdateManyWithoutCreatedByIdentityNestedInput
+}
+
+export type IdentityUncheckedUpdateWithoutCreatedConversationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  personId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityType?: Prisma.EnumIdentityTypeFieldUpdateOperationsInput | $Enums.IdentityType
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  handle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verificationLevel?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  outgoingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  incomingConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdConnections?: Prisma.IdentityConnectionUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  outgoingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutSourceIdentityNestedInput
+  incomingConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdPermissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
+  targetedContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutTargetIdentityNestedInput
+  createdContentAccessRules?: Prisma.ContentAccessRuleUncheckedUpdateManyWithoutCreatedByIdentityNestedInput
 }
 
 
@@ -831,14 +1516,24 @@ export type IdentityCountOutputType = {
   outgoingConnections: number
   incomingConnections: number
   createdConnections: number
+  outgoingConversations: number
+  incomingConversations: number
+  createdConversations: number
   createdPermissionOverrides: number
+  targetedContentAccessRules: number
+  createdContentAccessRules: number
 }
 
 export type IdentityCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   outgoingConnections?: boolean | IdentityCountOutputTypeCountOutgoingConnectionsArgs
   incomingConnections?: boolean | IdentityCountOutputTypeCountIncomingConnectionsArgs
   createdConnections?: boolean | IdentityCountOutputTypeCountCreatedConnectionsArgs
+  outgoingConversations?: boolean | IdentityCountOutputTypeCountOutgoingConversationsArgs
+  incomingConversations?: boolean | IdentityCountOutputTypeCountIncomingConversationsArgs
+  createdConversations?: boolean | IdentityCountOutputTypeCountCreatedConversationsArgs
   createdPermissionOverrides?: boolean | IdentityCountOutputTypeCountCreatedPermissionOverridesArgs
+  targetedContentAccessRules?: boolean | IdentityCountOutputTypeCountTargetedContentAccessRulesArgs
+  createdContentAccessRules?: boolean | IdentityCountOutputTypeCountCreatedContentAccessRulesArgs
 }
 
 /**
@@ -875,8 +1570,43 @@ export type IdentityCountOutputTypeCountCreatedConnectionsArgs<ExtArgs extends r
 /**
  * IdentityCountOutputType without action
  */
+export type IdentityCountOutputTypeCountOutgoingConversationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IdentityConversationWhereInput
+}
+
+/**
+ * IdentityCountOutputType without action
+ */
+export type IdentityCountOutputTypeCountIncomingConversationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IdentityConversationWhereInput
+}
+
+/**
+ * IdentityCountOutputType without action
+ */
+export type IdentityCountOutputTypeCountCreatedConversationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IdentityConversationWhereInput
+}
+
+/**
+ * IdentityCountOutputType without action
+ */
 export type IdentityCountOutputTypeCountCreatedPermissionOverridesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ConnectionPermissionOverrideWhereInput
+}
+
+/**
+ * IdentityCountOutputType without action
+ */
+export type IdentityCountOutputTypeCountTargetedContentAccessRulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ContentAccessRuleWhereInput
+}
+
+/**
+ * IdentityCountOutputType without action
+ */
+export type IdentityCountOutputTypeCountCreatedContentAccessRulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ContentAccessRuleWhereInput
 }
 
 
@@ -894,7 +1624,12 @@ export type IdentitySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   outgoingConnections?: boolean | Prisma.Identity$outgoingConnectionsArgs<ExtArgs>
   incomingConnections?: boolean | Prisma.Identity$incomingConnectionsArgs<ExtArgs>
   createdConnections?: boolean | Prisma.Identity$createdConnectionsArgs<ExtArgs>
+  outgoingConversations?: boolean | Prisma.Identity$outgoingConversationsArgs<ExtArgs>
+  incomingConversations?: boolean | Prisma.Identity$incomingConversationsArgs<ExtArgs>
+  createdConversations?: boolean | Prisma.Identity$createdConversationsArgs<ExtArgs>
   createdPermissionOverrides?: boolean | Prisma.Identity$createdPermissionOverridesArgs<ExtArgs>
+  targetedContentAccessRules?: boolean | Prisma.Identity$targetedContentAccessRulesArgs<ExtArgs>
+  createdContentAccessRules?: boolean | Prisma.Identity$createdContentAccessRulesArgs<ExtArgs>
   _count?: boolean | Prisma.IdentityCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["identity"]>
 
@@ -942,7 +1677,12 @@ export type IdentityInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   outgoingConnections?: boolean | Prisma.Identity$outgoingConnectionsArgs<ExtArgs>
   incomingConnections?: boolean | Prisma.Identity$incomingConnectionsArgs<ExtArgs>
   createdConnections?: boolean | Prisma.Identity$createdConnectionsArgs<ExtArgs>
+  outgoingConversations?: boolean | Prisma.Identity$outgoingConversationsArgs<ExtArgs>
+  incomingConversations?: boolean | Prisma.Identity$incomingConversationsArgs<ExtArgs>
+  createdConversations?: boolean | Prisma.Identity$createdConversationsArgs<ExtArgs>
   createdPermissionOverrides?: boolean | Prisma.Identity$createdPermissionOverridesArgs<ExtArgs>
+  targetedContentAccessRules?: boolean | Prisma.Identity$targetedContentAccessRulesArgs<ExtArgs>
+  createdContentAccessRules?: boolean | Prisma.Identity$createdContentAccessRulesArgs<ExtArgs>
   _count?: boolean | Prisma.IdentityCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type IdentityIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -954,7 +1694,12 @@ export type $IdentityPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     outgoingConnections: Prisma.$IdentityConnectionPayload<ExtArgs>[]
     incomingConnections: Prisma.$IdentityConnectionPayload<ExtArgs>[]
     createdConnections: Prisma.$IdentityConnectionPayload<ExtArgs>[]
+    outgoingConversations: Prisma.$IdentityConversationPayload<ExtArgs>[]
+    incomingConversations: Prisma.$IdentityConversationPayload<ExtArgs>[]
+    createdConversations: Prisma.$IdentityConversationPayload<ExtArgs>[]
     createdPermissionOverrides: Prisma.$ConnectionPermissionOverridePayload<ExtArgs>[]
+    targetedContentAccessRules: Prisma.$ContentAccessRulePayload<ExtArgs>[]
+    createdContentAccessRules: Prisma.$ContentAccessRulePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1364,7 +2109,12 @@ export interface Prisma__IdentityClient<T, Null = never, ExtArgs extends runtime
   outgoingConnections<T extends Prisma.Identity$outgoingConnectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Identity$outgoingConnectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdentityConnectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   incomingConnections<T extends Prisma.Identity$incomingConnectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Identity$incomingConnectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdentityConnectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdConnections<T extends Prisma.Identity$createdConnectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Identity$createdConnectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdentityConnectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  outgoingConversations<T extends Prisma.Identity$outgoingConversationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Identity$outgoingConversationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdentityConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  incomingConversations<T extends Prisma.Identity$incomingConversationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Identity$incomingConversationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdentityConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  createdConversations<T extends Prisma.Identity$createdConversationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Identity$createdConversationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdentityConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdPermissionOverrides<T extends Prisma.Identity$createdPermissionOverridesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Identity$createdPermissionOverridesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConnectionPermissionOverridePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  targetedContentAccessRules<T extends Prisma.Identity$targetedContentAccessRulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Identity$targetedContentAccessRulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContentAccessRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  createdContentAccessRules<T extends Prisma.Identity$createdContentAccessRulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Identity$createdContentAccessRulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContentAccessRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1869,6 +2619,78 @@ export type Identity$createdConnectionsArgs<ExtArgs extends runtime.Types.Extens
 }
 
 /**
+ * Identity.outgoingConversations
+ */
+export type Identity$outgoingConversationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IdentityConversation
+   */
+  select?: Prisma.IdentityConversationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the IdentityConversation
+   */
+  omit?: Prisma.IdentityConversationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IdentityConversationInclude<ExtArgs> | null
+  where?: Prisma.IdentityConversationWhereInput
+  orderBy?: Prisma.IdentityConversationOrderByWithRelationInput | Prisma.IdentityConversationOrderByWithRelationInput[]
+  cursor?: Prisma.IdentityConversationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.IdentityConversationScalarFieldEnum | Prisma.IdentityConversationScalarFieldEnum[]
+}
+
+/**
+ * Identity.incomingConversations
+ */
+export type Identity$incomingConversationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IdentityConversation
+   */
+  select?: Prisma.IdentityConversationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the IdentityConversation
+   */
+  omit?: Prisma.IdentityConversationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IdentityConversationInclude<ExtArgs> | null
+  where?: Prisma.IdentityConversationWhereInput
+  orderBy?: Prisma.IdentityConversationOrderByWithRelationInput | Prisma.IdentityConversationOrderByWithRelationInput[]
+  cursor?: Prisma.IdentityConversationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.IdentityConversationScalarFieldEnum | Prisma.IdentityConversationScalarFieldEnum[]
+}
+
+/**
+ * Identity.createdConversations
+ */
+export type Identity$createdConversationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IdentityConversation
+   */
+  select?: Prisma.IdentityConversationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the IdentityConversation
+   */
+  omit?: Prisma.IdentityConversationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IdentityConversationInclude<ExtArgs> | null
+  where?: Prisma.IdentityConversationWhereInput
+  orderBy?: Prisma.IdentityConversationOrderByWithRelationInput | Prisma.IdentityConversationOrderByWithRelationInput[]
+  cursor?: Prisma.IdentityConversationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.IdentityConversationScalarFieldEnum | Prisma.IdentityConversationScalarFieldEnum[]
+}
+
+/**
  * Identity.createdPermissionOverrides
  */
 export type Identity$createdPermissionOverridesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1890,6 +2712,54 @@ export type Identity$createdPermissionOverridesArgs<ExtArgs extends runtime.Type
   take?: number
   skip?: number
   distinct?: Prisma.ConnectionPermissionOverrideScalarFieldEnum | Prisma.ConnectionPermissionOverrideScalarFieldEnum[]
+}
+
+/**
+ * Identity.targetedContentAccessRules
+ */
+export type Identity$targetedContentAccessRulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContentAccessRule
+   */
+  select?: Prisma.ContentAccessRuleSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContentAccessRule
+   */
+  omit?: Prisma.ContentAccessRuleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContentAccessRuleInclude<ExtArgs> | null
+  where?: Prisma.ContentAccessRuleWhereInput
+  orderBy?: Prisma.ContentAccessRuleOrderByWithRelationInput | Prisma.ContentAccessRuleOrderByWithRelationInput[]
+  cursor?: Prisma.ContentAccessRuleWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ContentAccessRuleScalarFieldEnum | Prisma.ContentAccessRuleScalarFieldEnum[]
+}
+
+/**
+ * Identity.createdContentAccessRules
+ */
+export type Identity$createdContentAccessRulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ContentAccessRule
+   */
+  select?: Prisma.ContentAccessRuleSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ContentAccessRule
+   */
+  omit?: Prisma.ContentAccessRuleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ContentAccessRuleInclude<ExtArgs> | null
+  where?: Prisma.ContentAccessRuleWhereInput
+  orderBy?: Prisma.ContentAccessRuleOrderByWithRelationInput | Prisma.ContentAccessRuleOrderByWithRelationInput[]
+  cursor?: Prisma.ContentAccessRuleWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ContentAccessRuleScalarFieldEnum | Prisma.ContentAccessRuleScalarFieldEnum[]
 }
 
 /**

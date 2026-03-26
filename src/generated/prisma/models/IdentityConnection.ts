@@ -229,6 +229,7 @@ export type IdentityConnectionWhereInput = {
   sourceIdentity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
   targetIdentity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
   createdByIdentity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
+  conversations?: Prisma.IdentityConversationListRelationFilter
   permissionOverrides?: Prisma.ConnectionPermissionOverrideListRelationFilter
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotListRelationFilter
 }
@@ -248,6 +249,7 @@ export type IdentityConnectionOrderByWithRelationInput = {
   sourceIdentity?: Prisma.IdentityOrderByWithRelationInput
   targetIdentity?: Prisma.IdentityOrderByWithRelationInput
   createdByIdentity?: Prisma.IdentityOrderByWithRelationInput
+  conversations?: Prisma.IdentityConversationOrderByRelationAggregateInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideOrderByRelationAggregateInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotOrderByRelationAggregateInput
 }
@@ -271,6 +273,7 @@ export type IdentityConnectionWhereUniqueInput = Prisma.AtLeast<{
   sourceIdentity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
   targetIdentity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
   createdByIdentity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
+  conversations?: Prisma.IdentityConversationListRelationFilter
   permissionOverrides?: Prisma.ConnectionPermissionOverrideListRelationFilter
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotListRelationFilter
 }, "id" | "sourceIdentityId_targetIdentityId">
@@ -321,6 +324,7 @@ export type IdentityConnectionCreateInput = {
   sourceIdentity: Prisma.IdentityCreateNestedOneWithoutOutgoingConnectionsInput
   targetIdentity: Prisma.IdentityCreateNestedOneWithoutIncomingConnectionsInput
   createdByIdentity: Prisma.IdentityCreateNestedOneWithoutCreatedConnectionsInput
+  conversations?: Prisma.IdentityConversationCreateNestedManyWithoutConnectionInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutConnectionInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotCreateNestedManyWithoutConnectionInput
 }
@@ -337,6 +341,7 @@ export type IdentityConnectionUncheckedCreateInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
+  conversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutConnectionInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutConnectionInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUncheckedCreateNestedManyWithoutConnectionInput
 }
@@ -353,6 +358,7 @@ export type IdentityConnectionUpdateInput = {
   sourceIdentity?: Prisma.IdentityUpdateOneRequiredWithoutOutgoingConnectionsNestedInput
   targetIdentity?: Prisma.IdentityUpdateOneRequiredWithoutIncomingConnectionsNestedInput
   createdByIdentity?: Prisma.IdentityUpdateOneRequiredWithoutCreatedConnectionsNestedInput
+  conversations?: Prisma.IdentityConversationUpdateManyWithoutConnectionNestedInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutConnectionNestedInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUpdateManyWithoutConnectionNestedInput
 }
@@ -369,6 +375,7 @@ export type IdentityConnectionUncheckedUpdateInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  conversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutConnectionNestedInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutConnectionNestedInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUncheckedUpdateManyWithoutConnectionNestedInput
 }
@@ -638,6 +645,20 @@ export type IdentityConnectionUpdateOneRequiredWithoutPermissionSnapshotsNestedI
   update?: Prisma.XOR<Prisma.XOR<Prisma.IdentityConnectionUpdateToOneWithWhereWithoutPermissionSnapshotsInput, Prisma.IdentityConnectionUpdateWithoutPermissionSnapshotsInput>, Prisma.IdentityConnectionUncheckedUpdateWithoutPermissionSnapshotsInput>
 }
 
+export type IdentityConnectionCreateNestedOneWithoutConversationsInput = {
+  create?: Prisma.XOR<Prisma.IdentityConnectionCreateWithoutConversationsInput, Prisma.IdentityConnectionUncheckedCreateWithoutConversationsInput>
+  connectOrCreate?: Prisma.IdentityConnectionCreateOrConnectWithoutConversationsInput
+  connect?: Prisma.IdentityConnectionWhereUniqueInput
+}
+
+export type IdentityConnectionUpdateOneRequiredWithoutConversationsNestedInput = {
+  create?: Prisma.XOR<Prisma.IdentityConnectionCreateWithoutConversationsInput, Prisma.IdentityConnectionUncheckedCreateWithoutConversationsInput>
+  connectOrCreate?: Prisma.IdentityConnectionCreateOrConnectWithoutConversationsInput
+  upsert?: Prisma.IdentityConnectionUpsertWithoutConversationsInput
+  connect?: Prisma.IdentityConnectionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.IdentityConnectionUpdateToOneWithWhereWithoutConversationsInput, Prisma.IdentityConnectionUpdateWithoutConversationsInput>, Prisma.IdentityConnectionUncheckedUpdateWithoutConversationsInput>
+}
+
 export type IdentityConnectionCreateWithoutSourceIdentityInput = {
   id?: string
   connectionType: $Enums.ConnectionType
@@ -649,6 +670,7 @@ export type IdentityConnectionCreateWithoutSourceIdentityInput = {
   updatedAt?: Date | string
   targetIdentity: Prisma.IdentityCreateNestedOneWithoutIncomingConnectionsInput
   createdByIdentity: Prisma.IdentityCreateNestedOneWithoutCreatedConnectionsInput
+  conversations?: Prisma.IdentityConversationCreateNestedManyWithoutConnectionInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutConnectionInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotCreateNestedManyWithoutConnectionInput
 }
@@ -664,6 +686,7 @@ export type IdentityConnectionUncheckedCreateWithoutSourceIdentityInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
+  conversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutConnectionInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutConnectionInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUncheckedCreateNestedManyWithoutConnectionInput
 }
@@ -689,6 +712,7 @@ export type IdentityConnectionCreateWithoutTargetIdentityInput = {
   updatedAt?: Date | string
   sourceIdentity: Prisma.IdentityCreateNestedOneWithoutOutgoingConnectionsInput
   createdByIdentity: Prisma.IdentityCreateNestedOneWithoutCreatedConnectionsInput
+  conversations?: Prisma.IdentityConversationCreateNestedManyWithoutConnectionInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutConnectionInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotCreateNestedManyWithoutConnectionInput
 }
@@ -704,6 +728,7 @@ export type IdentityConnectionUncheckedCreateWithoutTargetIdentityInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
+  conversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutConnectionInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutConnectionInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUncheckedCreateNestedManyWithoutConnectionInput
 }
@@ -729,6 +754,7 @@ export type IdentityConnectionCreateWithoutCreatedByIdentityInput = {
   updatedAt?: Date | string
   sourceIdentity: Prisma.IdentityCreateNestedOneWithoutOutgoingConnectionsInput
   targetIdentity: Prisma.IdentityCreateNestedOneWithoutIncomingConnectionsInput
+  conversations?: Prisma.IdentityConversationCreateNestedManyWithoutConnectionInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutConnectionInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotCreateNestedManyWithoutConnectionInput
 }
@@ -744,6 +770,7 @@ export type IdentityConnectionUncheckedCreateWithoutCreatedByIdentityInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
+  conversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutConnectionInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutConnectionInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUncheckedCreateNestedManyWithoutConnectionInput
 }
@@ -835,6 +862,7 @@ export type IdentityConnectionCreateWithoutPermissionOverridesInput = {
   sourceIdentity: Prisma.IdentityCreateNestedOneWithoutOutgoingConnectionsInput
   targetIdentity: Prisma.IdentityCreateNestedOneWithoutIncomingConnectionsInput
   createdByIdentity: Prisma.IdentityCreateNestedOneWithoutCreatedConnectionsInput
+  conversations?: Prisma.IdentityConversationCreateNestedManyWithoutConnectionInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotCreateNestedManyWithoutConnectionInput
 }
 
@@ -850,6 +878,7 @@ export type IdentityConnectionUncheckedCreateWithoutPermissionOverridesInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
+  conversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutConnectionInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUncheckedCreateNestedManyWithoutConnectionInput
 }
 
@@ -881,6 +910,7 @@ export type IdentityConnectionUpdateWithoutPermissionOverridesInput = {
   sourceIdentity?: Prisma.IdentityUpdateOneRequiredWithoutOutgoingConnectionsNestedInput
   targetIdentity?: Prisma.IdentityUpdateOneRequiredWithoutIncomingConnectionsNestedInput
   createdByIdentity?: Prisma.IdentityUpdateOneRequiredWithoutCreatedConnectionsNestedInput
+  conversations?: Prisma.IdentityConversationUpdateManyWithoutConnectionNestedInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUpdateManyWithoutConnectionNestedInput
 }
 
@@ -896,6 +926,7 @@ export type IdentityConnectionUncheckedUpdateWithoutPermissionOverridesInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  conversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutConnectionNestedInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUncheckedUpdateManyWithoutConnectionNestedInput
 }
 
@@ -911,6 +942,7 @@ export type IdentityConnectionCreateWithoutPermissionSnapshotsInput = {
   sourceIdentity: Prisma.IdentityCreateNestedOneWithoutOutgoingConnectionsInput
   targetIdentity: Prisma.IdentityCreateNestedOneWithoutIncomingConnectionsInput
   createdByIdentity: Prisma.IdentityCreateNestedOneWithoutCreatedConnectionsInput
+  conversations?: Prisma.IdentityConversationCreateNestedManyWithoutConnectionInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutConnectionInput
 }
 
@@ -926,6 +958,7 @@ export type IdentityConnectionUncheckedCreateWithoutPermissionSnapshotsInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
+  conversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutConnectionInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutConnectionInput
 }
 
@@ -957,6 +990,7 @@ export type IdentityConnectionUpdateWithoutPermissionSnapshotsInput = {
   sourceIdentity?: Prisma.IdentityUpdateOneRequiredWithoutOutgoingConnectionsNestedInput
   targetIdentity?: Prisma.IdentityUpdateOneRequiredWithoutIncomingConnectionsNestedInput
   createdByIdentity?: Prisma.IdentityUpdateOneRequiredWithoutCreatedConnectionsNestedInput
+  conversations?: Prisma.IdentityConversationUpdateManyWithoutConnectionNestedInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutConnectionNestedInput
 }
 
@@ -972,7 +1006,88 @@ export type IdentityConnectionUncheckedUpdateWithoutPermissionSnapshotsInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  conversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutConnectionNestedInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutConnectionNestedInput
+}
+
+export type IdentityConnectionCreateWithoutConversationsInput = {
+  id?: string
+  connectionType: $Enums.ConnectionType
+  trustState: $Enums.TrustState
+  status: $Enums.ConnectionStatus
+  note?: string | null
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sourceIdentity: Prisma.IdentityCreateNestedOneWithoutOutgoingConnectionsInput
+  targetIdentity: Prisma.IdentityCreateNestedOneWithoutIncomingConnectionsInput
+  createdByIdentity: Prisma.IdentityCreateNestedOneWithoutCreatedConnectionsInput
+  permissionOverrides?: Prisma.ConnectionPermissionOverrideCreateNestedManyWithoutConnectionInput
+  permissionSnapshots?: Prisma.ConnectionPermissionSnapshotCreateNestedManyWithoutConnectionInput
+}
+
+export type IdentityConnectionUncheckedCreateWithoutConversationsInput = {
+  id?: string
+  sourceIdentityId: string
+  targetIdentityId: string
+  connectionType: $Enums.ConnectionType
+  trustState: $Enums.TrustState
+  status: $Enums.ConnectionStatus
+  createdByIdentityId: string
+  note?: string | null
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  permissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedCreateNestedManyWithoutConnectionInput
+  permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUncheckedCreateNestedManyWithoutConnectionInput
+}
+
+export type IdentityConnectionCreateOrConnectWithoutConversationsInput = {
+  where: Prisma.IdentityConnectionWhereUniqueInput
+  create: Prisma.XOR<Prisma.IdentityConnectionCreateWithoutConversationsInput, Prisma.IdentityConnectionUncheckedCreateWithoutConversationsInput>
+}
+
+export type IdentityConnectionUpsertWithoutConversationsInput = {
+  update: Prisma.XOR<Prisma.IdentityConnectionUpdateWithoutConversationsInput, Prisma.IdentityConnectionUncheckedUpdateWithoutConversationsInput>
+  create: Prisma.XOR<Prisma.IdentityConnectionCreateWithoutConversationsInput, Prisma.IdentityConnectionUncheckedCreateWithoutConversationsInput>
+  where?: Prisma.IdentityConnectionWhereInput
+}
+
+export type IdentityConnectionUpdateToOneWithWhereWithoutConversationsInput = {
+  where?: Prisma.IdentityConnectionWhereInput
+  data: Prisma.XOR<Prisma.IdentityConnectionUpdateWithoutConversationsInput, Prisma.IdentityConnectionUncheckedUpdateWithoutConversationsInput>
+}
+
+export type IdentityConnectionUpdateWithoutConversationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
+  status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sourceIdentity?: Prisma.IdentityUpdateOneRequiredWithoutOutgoingConnectionsNestedInput
+  targetIdentity?: Prisma.IdentityUpdateOneRequiredWithoutIncomingConnectionsNestedInput
+  createdByIdentity?: Prisma.IdentityUpdateOneRequiredWithoutCreatedConnectionsNestedInput
+  permissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutConnectionNestedInput
+  permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUpdateManyWithoutConnectionNestedInput
+}
+
+export type IdentityConnectionUncheckedUpdateWithoutConversationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
+  targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
+  connectionType?: Prisma.EnumConnectionTypeFieldUpdateOperationsInput | $Enums.ConnectionType
+  trustState?: Prisma.EnumTrustStateFieldUpdateOperationsInput | $Enums.TrustState
+  status?: Prisma.EnumConnectionStatusFieldUpdateOperationsInput | $Enums.ConnectionStatus
+  createdByIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  permissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutConnectionNestedInput
+  permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUncheckedUpdateManyWithoutConnectionNestedInput
 }
 
 export type IdentityConnectionCreateManySourceIdentityInput = {
@@ -1025,6 +1140,7 @@ export type IdentityConnectionUpdateWithoutSourceIdentityInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   targetIdentity?: Prisma.IdentityUpdateOneRequiredWithoutIncomingConnectionsNestedInput
   createdByIdentity?: Prisma.IdentityUpdateOneRequiredWithoutCreatedConnectionsNestedInput
+  conversations?: Prisma.IdentityConversationUpdateManyWithoutConnectionNestedInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutConnectionNestedInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUpdateManyWithoutConnectionNestedInput
 }
@@ -1040,6 +1156,7 @@ export type IdentityConnectionUncheckedUpdateWithoutSourceIdentityInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  conversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutConnectionNestedInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutConnectionNestedInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUncheckedUpdateManyWithoutConnectionNestedInput
 }
@@ -1068,6 +1185,7 @@ export type IdentityConnectionUpdateWithoutTargetIdentityInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sourceIdentity?: Prisma.IdentityUpdateOneRequiredWithoutOutgoingConnectionsNestedInput
   createdByIdentity?: Prisma.IdentityUpdateOneRequiredWithoutCreatedConnectionsNestedInput
+  conversations?: Prisma.IdentityConversationUpdateManyWithoutConnectionNestedInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutConnectionNestedInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUpdateManyWithoutConnectionNestedInput
 }
@@ -1083,6 +1201,7 @@ export type IdentityConnectionUncheckedUpdateWithoutTargetIdentityInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  conversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutConnectionNestedInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutConnectionNestedInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUncheckedUpdateManyWithoutConnectionNestedInput
 }
@@ -1111,6 +1230,7 @@ export type IdentityConnectionUpdateWithoutCreatedByIdentityInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sourceIdentity?: Prisma.IdentityUpdateOneRequiredWithoutOutgoingConnectionsNestedInput
   targetIdentity?: Prisma.IdentityUpdateOneRequiredWithoutIncomingConnectionsNestedInput
+  conversations?: Prisma.IdentityConversationUpdateManyWithoutConnectionNestedInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUpdateManyWithoutConnectionNestedInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUpdateManyWithoutConnectionNestedInput
 }
@@ -1126,6 +1246,7 @@ export type IdentityConnectionUncheckedUpdateWithoutCreatedByIdentityInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  conversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutConnectionNestedInput
   permissionOverrides?: Prisma.ConnectionPermissionOverrideUncheckedUpdateManyWithoutConnectionNestedInput
   permissionSnapshots?: Prisma.ConnectionPermissionSnapshotUncheckedUpdateManyWithoutConnectionNestedInput
 }
@@ -1149,11 +1270,13 @@ export type IdentityConnectionUncheckedUpdateManyWithoutCreatedByIdentityInput =
  */
 
 export type IdentityConnectionCountOutputType = {
+  conversations: number
   permissionOverrides: number
   permissionSnapshots: number
 }
 
 export type IdentityConnectionCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  conversations?: boolean | IdentityConnectionCountOutputTypeCountConversationsArgs
   permissionOverrides?: boolean | IdentityConnectionCountOutputTypeCountPermissionOverridesArgs
   permissionSnapshots?: boolean | IdentityConnectionCountOutputTypeCountPermissionSnapshotsArgs
 }
@@ -1166,6 +1289,13 @@ export type IdentityConnectionCountOutputTypeDefaultArgs<ExtArgs extends runtime
    * Select specific fields to fetch from the IdentityConnectionCountOutputType
    */
   select?: Prisma.IdentityConnectionCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * IdentityConnectionCountOutputType without action
+ */
+export type IdentityConnectionCountOutputTypeCountConversationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IdentityConversationWhereInput
 }
 
 /**
@@ -1198,6 +1328,7 @@ export type IdentityConnectionSelect<ExtArgs extends runtime.Types.Extensions.In
   sourceIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   targetIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   createdByIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
+  conversations?: boolean | Prisma.IdentityConnection$conversationsArgs<ExtArgs>
   permissionOverrides?: boolean | Prisma.IdentityConnection$permissionOverridesArgs<ExtArgs>
   permissionSnapshots?: boolean | Prisma.IdentityConnection$permissionSnapshotsArgs<ExtArgs>
   _count?: boolean | Prisma.IdentityConnectionCountOutputTypeDefaultArgs<ExtArgs>
@@ -1256,6 +1387,7 @@ export type IdentityConnectionInclude<ExtArgs extends runtime.Types.Extensions.I
   sourceIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   targetIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   createdByIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
+  conversations?: boolean | Prisma.IdentityConnection$conversationsArgs<ExtArgs>
   permissionOverrides?: boolean | Prisma.IdentityConnection$permissionOverridesArgs<ExtArgs>
   permissionSnapshots?: boolean | Prisma.IdentityConnection$permissionSnapshotsArgs<ExtArgs>
   _count?: boolean | Prisma.IdentityConnectionCountOutputTypeDefaultArgs<ExtArgs>
@@ -1277,6 +1409,7 @@ export type $IdentityConnectionPayload<ExtArgs extends runtime.Types.Extensions.
     sourceIdentity: Prisma.$IdentityPayload<ExtArgs>
     targetIdentity: Prisma.$IdentityPayload<ExtArgs>
     createdByIdentity: Prisma.$IdentityPayload<ExtArgs>
+    conversations: Prisma.$IdentityConversationPayload<ExtArgs>[]
     permissionOverrides: Prisma.$ConnectionPermissionOverridePayload<ExtArgs>[]
     permissionSnapshots: Prisma.$ConnectionPermissionSnapshotPayload<ExtArgs>[]
   }
@@ -1689,6 +1822,7 @@ export interface Prisma__IdentityConnectionClient<T, Null = never, ExtArgs exten
   sourceIdentity<T extends Prisma.IdentityDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IdentityDefaultArgs<ExtArgs>>): Prisma.Prisma__IdentityClient<runtime.Types.Result.GetResult<Prisma.$IdentityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   targetIdentity<T extends Prisma.IdentityDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IdentityDefaultArgs<ExtArgs>>): Prisma.Prisma__IdentityClient<runtime.Types.Result.GetResult<Prisma.$IdentityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   createdByIdentity<T extends Prisma.IdentityDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IdentityDefaultArgs<ExtArgs>>): Prisma.Prisma__IdentityClient<runtime.Types.Result.GetResult<Prisma.$IdentityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  conversations<T extends Prisma.IdentityConnection$conversationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IdentityConnection$conversationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdentityConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   permissionOverrides<T extends Prisma.IdentityConnection$permissionOverridesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IdentityConnection$permissionOverridesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConnectionPermissionOverridePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   permissionSnapshots<T extends Prisma.IdentityConnection$permissionSnapshotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IdentityConnection$permissionSnapshotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConnectionPermissionSnapshotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -2129,6 +2263,30 @@ export type IdentityConnectionDeleteManyArgs<ExtArgs extends runtime.Types.Exten
    * Limit how many IdentityConnections to delete.
    */
   limit?: number
+}
+
+/**
+ * IdentityConnection.conversations
+ */
+export type IdentityConnection$conversationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IdentityConversation
+   */
+  select?: Prisma.IdentityConversationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the IdentityConversation
+   */
+  omit?: Prisma.IdentityConversationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IdentityConversationInclude<ExtArgs> | null
+  where?: Prisma.IdentityConversationWhereInput
+  orderBy?: Prisma.IdentityConversationOrderByWithRelationInput | Prisma.IdentityConversationOrderByWithRelationInput[]
+  cursor?: Prisma.IdentityConversationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.IdentityConversationScalarFieldEnum | Prisma.IdentityConversationScalarFieldEnum[]
 }
 
 /**

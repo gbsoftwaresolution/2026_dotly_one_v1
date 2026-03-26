@@ -138,6 +138,16 @@ export type ConnectionPermissionOverride = Prisma.ConnectionPermissionOverrideMo
  */
 export type ConnectionPermissionSnapshot = Prisma.ConnectionPermissionSnapshotModel
 /**
+ * Model ContentAccessRule
+ * 
+ */
+export type ContentAccessRule = Prisma.ContentAccessRuleModel
+/**
+ * Model IdentityConversation
+ * 
+ */
+export type IdentityConversation = Prisma.IdentityConversationModel
+/**
  * Model ConnectionPolicyTemplate
  * 
  */

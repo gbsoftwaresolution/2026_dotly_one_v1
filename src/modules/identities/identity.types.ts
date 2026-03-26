@@ -294,6 +294,231 @@ export interface RiskEvaluationSummary {
   aiRestricted: boolean;
 }
 
+export enum ScreenshotPolicy {
+  Inherit = "INHERIT",
+  Allow = "ALLOW",
+  Deny = "DENY",
+}
+
+export enum RecordPolicy {
+  Inherit = "INHERIT",
+  Allow = "ALLOW",
+  Deny = "DENY",
+}
+
+export type ContentActionKey =
+  | "content.view"
+  | "content.download"
+  | "content.forward"
+  | "content.export"
+  | "content.screenshot"
+  | "content.record"
+  | "content.ai_access";
+
+export type ContentRestrictionReason =
+  | "CONTENT_INHERITED"
+  | "CONTENT_RULE_APPLIED"
+  | "CONTENT_EXPIRED"
+  | "CONTENT_VIEW_LIMIT_REACHED"
+  | "CONTENT_SCREENSHOT_DENIED"
+  | "CONTENT_RECORD_DENIED"
+  | "CONTENT_AI_DENIED"
+  | "CONTENT_NO_RULE"
+  | "CONTENT_BASE_DENY_PRESERVED";
+
+export interface ContentAccessRuleValue {
+  contentId: string;
+  targetIdentityId: string;
+  canView: boolean;
+  canDownload: boolean;
+  canForward: boolean;
+  canExport: boolean;
+  screenshotPolicy: ScreenshotPolicy;
+  recordPolicy: RecordPolicy;
+  expiryAt: Date | null;
+  viewLimit: number | null;
+  watermarkMode: string | null;
+  aiAccessAllowed: boolean | null;
+  metadataJson: Record<string, unknown> | null;
+  createdByIdentityId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ContentBasePermissionResolution {
+  basePermissionKey: PermissionKey;
+  effect: PermissionEffect;
+  inheritedFromConnection: boolean;
+}
+
+export type ContentConnectionPermissionSubset = Record<
+  ContentActionKey,
+  ContentBasePermissionResolution
+>;
+
+export interface ContentPermissionResolution {
+  effect: PermissionEffect;
+}
+
+export interface ContentPolicyTraceEntry {
+  basePermissionKey: PermissionKey;
+  baseEffect: PermissionEffect;
+  contentRulePresent: boolean;
+  contentRuleDecision:
+    | "INHERIT"
+    | "ALLOW"
+    | "DENY"
+    | "EXPIRED"
+    | "VIEW_LIMIT_REACHED"
+    | "SCREENSHOT_DENY"
+    | "RECORD_DENY"
+    | "AI_DENY"
+    | "BASE_DENY";
+  finalEffect: PermissionEffect;
+  reasonCode: ContentRestrictionReason;
+}
+
+export type ContentPolicyTrace = Record<
+  ContentActionKey,
+  ContentPolicyTraceEntry
+>;
+
+export interface ContentSummary {
+  contentId: string;
+  targetIdentityId: string;
+  rulePresent: boolean;
+  expiryAt: Date | null;
+  viewLimit: number | null;
+  currentViewCount: number;
+  watermarkMode: string | null;
+  aiAccessAllowed: boolean | null;
+}
+
+export interface ContentPermissionSummary {
+  rulePresent: boolean;
+  expired: boolean;
+  viewLimitReached: boolean;
+  blockedActions: ContentActionKey[];
+  reasons: ContentRestrictionReason[];
+}
+
+export interface ResolvedContentPermissionsForConnectionResult {
+  connection: {
+    id: string;
+    sourceIdentityId: string;
+    targetIdentityId: string;
+    sourceIdentityType: IdentityType;
+    connectionType: ConnectionType;
+    trustState: TrustState;
+    status: string;
+    templateKey: string;
+    policyVersion: number;
+  };
+  contentSummary: ContentSummary;
+  baseConnectionPermissions: ContentConnectionPermissionSubset;
+  effectiveContentPermissions: Record<
+    ContentActionKey,
+    ContentPermissionResolution
+  >;
+  contentTrace: ContentPolicyTrace;
+  restrictionSummary: ContentPermissionSummary;
+}
+
+export interface PreviewContentPermissionsResult {
+  sourceIdentityType: IdentityType | null;
+  connectionType: ConnectionType;
+  trustState: TrustState;
+  contentSummary: ContentSummary;
+  baseConnectionPermissions: ContentConnectionPermissionSubset;
+  effectiveContentPermissions: Record<
+    ContentActionKey,
+    ContentPermissionResolution
+  >;
+  contentTrace: ContentPolicyTrace;
+  restrictionSummary: ContentPermissionSummary;
+  riskSummary: RiskEvaluationSummary;
+}
+
+export enum ConversationType {
+  Direct = "DIRECT",
+  ProtectedDirect = "PROTECTED_DIRECT",
+  BusinessDirect = "BUSINESS_DIRECT",
+}
+
+export enum ConversationStatus {
+  Active = "ACTIVE",
+  Archived = "ARCHIVED",
+  Blocked = "BLOCKED",
+  Locked = "LOCKED",
+}
+
+export interface IdentityConversationContext {
+  conversationId: string;
+  connectionId: string;
+  sourceIdentityId: string;
+  targetIdentityId: string;
+  conversationType: ConversationType;
+  conversationStatus: ConversationStatus;
+  title: string | null;
+  metadataJson: Record<string, unknown> | null;
+  lastResolvedAt: Date | null;
+  lastPermissionHash: string | null;
+  createdByIdentityId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ConversationPermissionBindingSummary {
+  storedHash: string | null;
+  currentHash: string;
+  lastResolvedAt: Date | null;
+  currentResolvedAt: Date;
+  stale: boolean;
+}
+
+export interface ConversationResolutionTrace {
+  templateKey: string;
+  policyVersion: number;
+  trustState: TrustState;
+  overrideCount: number;
+  riskSignals: RiskSignal[];
+}
+
+export interface BoundConversationPermissions {
+  conversationId: string;
+  connectionId: string;
+  sourceIdentityId: string;
+  targetIdentityId: string;
+  conversationType: ConversationType;
+  conversationStatus: ConversationStatus;
+  resolvedConnectionPermissions: ResolvedConnectionPermissions;
+  contentCapabilitySummary: {
+    protectedCapable: boolean;
+    vaultCapable: boolean;
+    aiCapable: boolean;
+  };
+  bindingSummary: ConversationPermissionBindingSummary;
+  traceSummary: ConversationResolutionTrace;
+  resolvedAt: Date;
+  stale: boolean;
+}
+
+export interface ConversationBindingStalenessResult {
+  stale: boolean;
+  currentHash: string;
+  storedHash: string | null;
+  lastResolvedAt: Date | null;
+  currentResolvedAt: Date;
+}
+
+export interface ResolveConversationContextResult {
+  conversation: IdentityConversationContext;
+  resolvedPermissions: ResolvedConnectionPermissions;
+  stale: boolean;
+  bindingSummary: ConversationPermissionBindingSummary;
+  traceSummary: ConversationResolutionTrace;
+}
+
 export interface ResolvedPermissionValue extends PermissionTemplateValue {
   postTrustEffect: PermissionEffect;
   manualOverrideEffect: PermissionEffect | null;

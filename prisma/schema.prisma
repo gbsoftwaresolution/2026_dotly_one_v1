@@ -641,7 +641,12 @@ model Identity {
   outgoingConnections               IdentityConnection[]           @relation("IdentityConnectionSource")
   incomingConnections               IdentityConnection[]           @relation("IdentityConnectionTarget")
   createdConnections                IdentityConnection[]           @relation("IdentityConnectionCreatedBy")
+  outgoingConversations             IdentityConversation[]         @relation("IdentityConversationSource")
+  incomingConversations             IdentityConversation[]         @relation("IdentityConversationTarget")
+  createdConversations              IdentityConversation[]         @relation("IdentityConversationCreatedBy")
   createdPermissionOverrides        ConnectionPermissionOverride[] @relation("ConnectionPermissionOverrideCreatedBy")
+  targetedContentAccessRules        ContentAccessRule[]            @relation("ContentAccessRuleTarget")
+  createdContentAccessRules         ContentAccessRule[]            @relation("ContentAccessRuleCreatedBy")
 
   @@index([identityType])
   @@index([personId])
@@ -662,6 +667,7 @@ model IdentityConnection {
   sourceIdentity        Identity                       @relation("IdentityConnectionSource", fields: [sourceIdentityId], references: [id], onDelete: Cascade)
   targetIdentity        Identity                       @relation("IdentityConnectionTarget", fields: [targetIdentityId], references: [id], onDelete: Cascade)
   createdByIdentity     Identity                       @relation("IdentityConnectionCreatedBy", fields: [createdByIdentityId], references: [id], onDelete: Cascade)
+  conversations         IdentityConversation[]
   permissionOverrides   ConnectionPermissionOverride[]
   permissionSnapshots   ConnectionPermissionSnapshot[]
 
@@ -700,6 +706,63 @@ model ConnectionPermissionSnapshot {
 
   @@index([connectionId])
   @@index([connectionId, policyVersion])
+}
+
+model ContentAccessRule {
+  id                  String   @id @default(uuid()) @db.Uuid
+  contentId           String   @db.Uuid
+  targetIdentityId    String   @db.Uuid
+  canView             Boolean  @default(false)
+  canDownload         Boolean  @default(false)
+  canForward          Boolean  @default(false)
+  canExport           Boolean  @default(false)
+  screenshotPolicy    String   @default("INHERIT") @db.VarChar(16)
+  recordPolicy        String   @default("INHERIT") @db.VarChar(16)
+  expiryAt            DateTime?
+  viewLimit           Int?
+  watermarkMode       String?  @db.VarChar(64)
+  aiAccessAllowed     Boolean?
+  metadataJson        Json?
+  createdByIdentityId String   @db.Uuid
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  targetIdentity      Identity @relation("ContentAccessRuleTarget", fields: [targetIdentityId], references: [id], onDelete: Cascade)
+  createdByIdentity   Identity @relation("ContentAccessRuleCreatedBy", fields: [createdByIdentityId], references: [id], onDelete: Cascade)
+
+  @@unique([contentId, targetIdentityId])
+  @@index([contentId])
+  @@index([targetIdentityId])
+  @@index([expiryAt])
+  @@index([contentId, targetIdentityId])
+}
+
+model IdentityConversation {
+  id                  String             @id @default(uuid()) @db.Uuid
+  sourceIdentityId    String             @db.Uuid
+  targetIdentityId    String             @db.Uuid
+  connectionId        String             @db.Uuid
+  conversationType    String             @db.VarChar(32)
+  status              String             @db.VarChar(32)
+  title               String?            @db.VarChar(160)
+  metadataJson        Json?
+  lastResolvedAt      DateTime?
+  lastPermissionHash  String?            @db.VarChar(128)
+  createdByIdentityId String             @db.Uuid
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  sourceIdentity      Identity           @relation("IdentityConversationSource", fields: [sourceIdentityId], references: [id], onDelete: Cascade)
+  targetIdentity      Identity           @relation("IdentityConversationTarget", fields: [targetIdentityId], references: [id], onDelete: Cascade)
+  connection          IdentityConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  createdByIdentity   Identity           @relation("IdentityConversationCreatedBy", fields: [createdByIdentityId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceIdentityId, targetIdentityId, connectionId])
+  @@index([sourceIdentityId])
+  @@index([targetIdentityId])
+  @@index([connectionId])
+  @@index([status])
+  @@index([conversationType])
+  @@index([sourceIdentityId, status])
+  @@index([targetIdentityId, status])
 }
 
 model ConnectionPolicyTemplate {

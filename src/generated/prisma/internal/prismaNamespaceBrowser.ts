@@ -75,6 +75,8 @@ export const ModelName = {
   IdentityConnection: 'IdentityConnection',
   ConnectionPermissionOverride: 'ConnectionPermissionOverride',
   ConnectionPermissionSnapshot: 'ConnectionPermissionSnapshot',
+  ContentAccessRule: 'ContentAccessRule',
+  IdentityConversation: 'IdentityConversation',
   ConnectionPolicyTemplate: 'ConnectionPolicyTemplate'
 } as const
 
@@ -487,6 +489,48 @@ export const ConnectionPermissionSnapshotScalarFieldEnum = {
 } as const
 
 export type ConnectionPermissionSnapshotScalarFieldEnum = (typeof ConnectionPermissionSnapshotScalarFieldEnum)[keyof typeof ConnectionPermissionSnapshotScalarFieldEnum]
+
+
+export const ContentAccessRuleScalarFieldEnum = {
+  id: 'id',
+  contentId: 'contentId',
+  targetIdentityId: 'targetIdentityId',
+  canView: 'canView',
+  canDownload: 'canDownload',
+  canForward: 'canForward',
+  canExport: 'canExport',
+  screenshotPolicy: 'screenshotPolicy',
+  recordPolicy: 'recordPolicy',
+  expiryAt: 'expiryAt',
+  viewLimit: 'viewLimit',
+  watermarkMode: 'watermarkMode',
+  aiAccessAllowed: 'aiAccessAllowed',
+  metadataJson: 'metadataJson',
+  createdByIdentityId: 'createdByIdentityId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ContentAccessRuleScalarFieldEnum = (typeof ContentAccessRuleScalarFieldEnum)[keyof typeof ContentAccessRuleScalarFieldEnum]
+
+
+export const IdentityConversationScalarFieldEnum = {
+  id: 'id',
+  sourceIdentityId: 'sourceIdentityId',
+  targetIdentityId: 'targetIdentityId',
+  connectionId: 'connectionId',
+  conversationType: 'conversationType',
+  status: 'status',
+  title: 'title',
+  metadataJson: 'metadataJson',
+  lastResolvedAt: 'lastResolvedAt',
+  lastPermissionHash: 'lastPermissionHash',
+  createdByIdentityId: 'createdByIdentityId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityConversationScalarFieldEnum = (typeof IdentityConversationScalarFieldEnum)[keyof typeof IdentityConversationScalarFieldEnum]
 
 
 export const ConnectionPolicyTemplateScalarFieldEnum = {

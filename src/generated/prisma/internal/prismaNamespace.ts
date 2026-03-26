@@ -408,6 +408,8 @@ export const ModelName = {
   IdentityConnection: 'IdentityConnection',
   ConnectionPermissionOverride: 'ConnectionPermissionOverride',
   ConnectionPermissionSnapshot: 'ConnectionPermissionSnapshot',
+  ContentAccessRule: 'ContentAccessRule',
+  IdentityConversation: 'IdentityConversation',
   ConnectionPolicyTemplate: 'ConnectionPolicyTemplate'
 } as const
 
@@ -424,7 +426,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "agencyProfile" | "emailVerificationToken" | "passwordResetToken" | "mobileOtpChallenge" | "authSession" | "persona" | "qRAccessToken" | "event" | "eventParticipant" | "contactRequest" | "contactRelationship" | "interaction" | "followUp" | "contactMemory" | "block" | "notification" | "supportRequest" | "analyticsEvent" | "personaAnalytics" | "identity" | "identityConnection" | "connectionPermissionOverride" | "connectionPermissionSnapshot" | "connectionPolicyTemplate"
+    modelProps: "user" | "agencyProfile" | "emailVerificationToken" | "passwordResetToken" | "mobileOtpChallenge" | "authSession" | "persona" | "qRAccessToken" | "event" | "eventParticipant" | "contactRequest" | "contactRelationship" | "interaction" | "followUp" | "contactMemory" | "block" | "notification" | "supportRequest" | "analyticsEvent" | "personaAnalytics" | "identity" | "identityConnection" | "connectionPermissionOverride" | "connectionPermissionSnapshot" | "contentAccessRule" | "identityConversation" | "connectionPolicyTemplate"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2204,6 +2206,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ContentAccessRule: {
+      payload: Prisma.$ContentAccessRulePayload<ExtArgs>
+      fields: Prisma.ContentAccessRuleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ContentAccessRuleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContentAccessRulePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ContentAccessRuleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContentAccessRulePayload>
+        }
+        findFirst: {
+          args: Prisma.ContentAccessRuleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContentAccessRulePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ContentAccessRuleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContentAccessRulePayload>
+        }
+        findMany: {
+          args: Prisma.ContentAccessRuleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContentAccessRulePayload>[]
+        }
+        create: {
+          args: Prisma.ContentAccessRuleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContentAccessRulePayload>
+        }
+        createMany: {
+          args: Prisma.ContentAccessRuleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ContentAccessRuleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContentAccessRulePayload>[]
+        }
+        delete: {
+          args: Prisma.ContentAccessRuleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContentAccessRulePayload>
+        }
+        update: {
+          args: Prisma.ContentAccessRuleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContentAccessRulePayload>
+        }
+        deleteMany: {
+          args: Prisma.ContentAccessRuleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ContentAccessRuleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ContentAccessRuleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContentAccessRulePayload>[]
+        }
+        upsert: {
+          args: Prisma.ContentAccessRuleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContentAccessRulePayload>
+        }
+        aggregate: {
+          args: Prisma.ContentAccessRuleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateContentAccessRule>
+        }
+        groupBy: {
+          args: Prisma.ContentAccessRuleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ContentAccessRuleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ContentAccessRuleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ContentAccessRuleCountAggregateOutputType> | number
+        }
+      }
+    }
+    IdentityConversation: {
+      payload: Prisma.$IdentityConversationPayload<ExtArgs>
+      fields: Prisma.IdentityConversationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IdentityConversationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConversationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IdentityConversationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConversationPayload>
+        }
+        findFirst: {
+          args: Prisma.IdentityConversationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConversationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IdentityConversationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConversationPayload>
+        }
+        findMany: {
+          args: Prisma.IdentityConversationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConversationPayload>[]
+        }
+        create: {
+          args: Prisma.IdentityConversationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConversationPayload>
+        }
+        createMany: {
+          args: Prisma.IdentityConversationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IdentityConversationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConversationPayload>[]
+        }
+        delete: {
+          args: Prisma.IdentityConversationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConversationPayload>
+        }
+        update: {
+          args: Prisma.IdentityConversationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConversationPayload>
+        }
+        deleteMany: {
+          args: Prisma.IdentityConversationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IdentityConversationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IdentityConversationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConversationPayload>[]
+        }
+        upsert: {
+          args: Prisma.IdentityConversationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityConversationPayload>
+        }
+        aggregate: {
+          args: Prisma.IdentityConversationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIdentityConversation>
+        }
+        groupBy: {
+          args: Prisma.IdentityConversationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityConversationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IdentityConversationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityConversationCountAggregateOutputType> | number
+        }
+      }
+    }
     ConnectionPolicyTemplate: {
       payload: Prisma.$ConnectionPolicyTemplatePayload<ExtArgs>
       fields: Prisma.ConnectionPolicyTemplateFieldRefs
@@ -2710,6 +2860,48 @@ export const ConnectionPermissionSnapshotScalarFieldEnum = {
 } as const
 
 export type ConnectionPermissionSnapshotScalarFieldEnum = (typeof ConnectionPermissionSnapshotScalarFieldEnum)[keyof typeof ConnectionPermissionSnapshotScalarFieldEnum]
+
+
+export const ContentAccessRuleScalarFieldEnum = {
+  id: 'id',
+  contentId: 'contentId',
+  targetIdentityId: 'targetIdentityId',
+  canView: 'canView',
+  canDownload: 'canDownload',
+  canForward: 'canForward',
+  canExport: 'canExport',
+  screenshotPolicy: 'screenshotPolicy',
+  recordPolicy: 'recordPolicy',
+  expiryAt: 'expiryAt',
+  viewLimit: 'viewLimit',
+  watermarkMode: 'watermarkMode',
+  aiAccessAllowed: 'aiAccessAllowed',
+  metadataJson: 'metadataJson',
+  createdByIdentityId: 'createdByIdentityId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ContentAccessRuleScalarFieldEnum = (typeof ContentAccessRuleScalarFieldEnum)[keyof typeof ContentAccessRuleScalarFieldEnum]
+
+
+export const IdentityConversationScalarFieldEnum = {
+  id: 'id',
+  sourceIdentityId: 'sourceIdentityId',
+  targetIdentityId: 'targetIdentityId',
+  connectionId: 'connectionId',
+  conversationType: 'conversationType',
+  status: 'status',
+  title: 'title',
+  metadataJson: 'metadataJson',
+  lastResolvedAt: 'lastResolvedAt',
+  lastPermissionHash: 'lastPermissionHash',
+  createdByIdentityId: 'createdByIdentityId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityConversationScalarFieldEnum = (typeof IdentityConversationScalarFieldEnum)[keyof typeof IdentityConversationScalarFieldEnum]
 
 
 export const ConnectionPolicyTemplateScalarFieldEnum = {
@@ -3344,6 +3536,8 @@ export type GlobalOmitConfig = {
   identityConnection?: Prisma.IdentityConnectionOmit
   connectionPermissionOverride?: Prisma.ConnectionPermissionOverrideOmit
   connectionPermissionSnapshot?: Prisma.ConnectionPermissionSnapshotOmit
+  contentAccessRule?: Prisma.ContentAccessRuleOmit
+  identityConversation?: Prisma.IdentityConversationOmit
   connectionPolicyTemplate?: Prisma.ConnectionPolicyTemplateOmit
 }
 
