@@ -124,4 +124,45 @@ describe("ProtectedConversationScreen", () => {
       ),
     ).toBeInTheDocument();
   });
+
+  it("shows error state and allows retry on failure", async () => {
+    const user = userEvent.setup();
+
+    // Initial failure
+    mocks.getConnection.mockRejectedValue(new Error("API Timeout"));
+    mocks.getResolvedPermissions.mockRejectedValue(new Error("API Timeout"));
+    mocks.explainResolvedPermissions.mockRejectedValue(
+      new Error("API Timeout"),
+    );
+
+    await act(async () => {
+      render(<ProtectedConversationScreen connectionId="connection-1" />);
+    });
+
+    expect(
+      await screen.findByText("Failed to load environment"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("API Timeout")).toBeInTheDocument();
+
+    // Setup success for retry
+    mocks.getConnection.mockResolvedValue({
+      id: "connection-1",
+      targetIdentity: { displayName: "Mary Johnson" },
+    });
+    mocks.getResolvedPermissions.mockResolvedValue({
+      permissions: {},
+    });
+    mocks.explainResolvedPermissions.mockResolvedValue({
+      summaryText: "Ok",
+      permissions: [],
+    });
+
+    const retryBtn = screen.getByRole("button", { name: /try again/i });
+    await user.click(retryBtn);
+
+    expect(
+      await screen.findByText("Chat with Mary Johnson"),
+    ).toBeInTheDocument();
+    expect(mocks.getConnection).toHaveBeenCalledTimes(2);
+  });
 });

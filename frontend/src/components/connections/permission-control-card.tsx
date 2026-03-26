@@ -52,7 +52,9 @@ export function PermissionControlCard({
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h4 className="text-xl font-bold text-slate-900">{vm.label}</h4>
-            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${getEffectColorBadge(vm.effectiveEffect)}`}>
+            <span
+              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${getEffectColorBadge(vm.effectiveEffect)}`}
+            >
               {getPermissionEffectLabel(vm.effectiveEffect)}
             </span>
           </div>
@@ -67,7 +69,7 @@ export function PermissionControlCard({
       <div className="mt-2 space-y-3">
         <fieldset disabled={isUpdating} className="group relative">
           <legend className="sr-only">Set permission for {vm.label}</legend>
-          
+
           {isUpdating && (
             <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-slate-50/50 backdrop-blur-[1px]">
               <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
@@ -77,7 +79,7 @@ export function PermissionControlCard({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 rounded-xl bg-slate-200/50 p-1.5 ring-1 ring-inset ring-slate-200">
             {OPTIONS.map((opt) => {
               const isSelected = selectedEffect === opt.effect;
-              
+
               return (
                 <label
                   key={opt.effect}
@@ -108,18 +110,42 @@ export function PermissionControlCard({
 
         {/* Feedback Messaging */}
         {showSuccess && !error && !isUpdating && (
-          <div role="status" className="flex items-center gap-2 text-emerald-700 animate-in fade-in slide-in-from-top-1">
+          <div
+            role="status"
+            className="flex items-center gap-2 text-emerald-700 animate-in fade-in slide-in-from-top-1"
+          >
             <CheckCircle2 className="h-4 w-4" />
             <span className="text-sm font-medium">Changes saved securely.</span>
           </div>
         )}
-        
+
         {error && !isUpdating && (
-          <div role="alert" className="flex items-center gap-2 text-rose-700 animate-in fade-in slide-in-from-top-1">
+          <div
+            role="alert"
+            className="flex items-center gap-2 text-rose-700 animate-in fade-in slide-in-from-top-1"
+          >
             <AlertCircle className="h-4 w-4" />
             <span className="text-sm font-medium">{error}</span>
           </div>
         )}
+
+        {/* Superseded Override Warning */}
+        {vm.overrideEffect &&
+          vm.overrideEffect !== vm.effectiveEffect &&
+          !isUpdating &&
+          !error && (
+            <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-amber-800 ring-1 ring-inset ring-amber-500/20">
+              <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
+              <div className="text-sm">
+                <span className="font-semibold block">Override Superseded</span>
+                Your preference is set to{" "}
+                <strong>{getPermissionEffectLabel(vm.overrideEffect)}</strong>,
+                but the active policy enforces{" "}
+                <strong>{getPermissionEffectLabel(vm.effectiveEffect)}</strong>.
+                Use &quot;Explain Policy&quot; below to see why.
+              </div>
+            </div>
+          )}
       </div>
 
       <PermissionExplainWidget connectionId={connectionId} vm={vm} />

@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Send, Video, FileText, Forward } from "lucide-react";
+import {
+  ArrowLeft,
+  Send,
+  Video,
+  FileText,
+  Forward,
+  ShieldAlert,
+  RefreshCw,
+} from "lucide-react";
 
 import { ProtectedModeBanner } from "@/components/connections/protected/protected-mode-banner";
 import { ProtectedRestrictionsPanel } from "@/components/connections/protected/protected-restrictions-panel";
@@ -35,10 +43,10 @@ export function ProtectedConversationScreen({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
+  const load = useCallback(
+    async (cancelled = false) => {
+      setIsLoading(true);
+      setError(null);
       try {
         const [conn, perms, explanation] = await Promise.all([
           getConnection(connectionId),
@@ -46,18 +54,12 @@ export function ProtectedConversationScreen({
           explainResolvedPermissions(connectionId),
         ]);
 
-        if (cancelled) {
-          return;
-        }
-
+        if (cancelled) return;
         setConnection(conn);
         setPermissions(perms);
         setPermissionsExplanation(explanation);
       } catch (err) {
-        if (cancelled) {
-          return;
-        }
-
+        if (cancelled) return;
         setError(
           err instanceof Error ? err.message : "Failed to load conversation.",
         );
@@ -66,21 +68,49 @@ export function ProtectedConversationScreen({
           setIsLoading(false);
         }
       }
-    }
+    },
+    [connectionId],
+  );
 
-    void load();
-
+  useEffect(() => {
+    let cancelled = false;
+    void load(cancelled);
     return () => {
       cancelled = true;
     };
-  }, [connectionId]);
+  }, [load]);
 
   if (isLoading) {
-    return <div className="p-8">Loading protected environment...</div>;
+    return (
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-5">
+        <div className="h-6 w-32 bg-slate-200 rounded animate-pulse" />
+        <div className="h-[72px] w-full bg-slate-200 rounded-3xl animate-pulse" />
+        <div className="h-[400px] w-full bg-slate-200 rounded-3xl animate-pulse" />
+      </div>
+    );
   }
 
   if (error || !connection) {
-    return <div className="p-8 text-rose-600">{error || "Not found"}</div>;
+    return (
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-5">
+        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-center shadow-sm">
+          <ShieldAlert className="mx-auto h-12 w-12 text-rose-500 mb-4" />
+          <h2 className="text-xl font-bold text-rose-900 mb-2">
+            Failed to load environment
+          </h2>
+          <p className="text-rose-700 mb-6">
+            {error || "Connection not found"}
+          </p>
+          <button
+            onClick={() => void load()}
+            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 font-semibold text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const restrictions = getProtectedRestrictions(
