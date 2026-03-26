@@ -15,11 +15,13 @@ import { IdentityType } from "@/types/identity";
 const mocks = vi.hoisted(() => ({
   getConnection: vi.fn(),
   getResolvedPermissions: vi.fn(),
+  listPermissionOverrides: vi.fn(),
 }));
 
 vi.mock("@/lib/api/connections", () => ({
   getConnection: mocks.getConnection,
   getResolvedPermissions: mocks.getResolvedPermissions,
+  listPermissionOverrides: mocks.listPermissionOverrides,
 }));
 
 import ConnectionDetailsPage from "./page";
@@ -28,6 +30,7 @@ describe("ConnectionDetailsPage", () => {
   beforeEach(() => {
     mocks.getConnection.mockReset();
     mocks.getResolvedPermissions.mockReset();
+    mocks.listPermissionOverrides.mockReset();
   });
 
   it("loads connection details and a human-readable permissions summary", async () => {
@@ -67,6 +70,8 @@ describe("ConnectionDetailsPage", () => {
       },
     });
 
+    mocks.listPermissionOverrides.mockResolvedValue([]);
+
     await act(async () => {
       render(
         <ConnectionDetailsPage
@@ -79,8 +84,8 @@ describe("ConnectionDetailsPage", () => {
     expect(
       screen.getByText(/known through the neighborhood center/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("Permissions Summary")).toBeInTheDocument();
-    expect(screen.getByText("Send text messages")).toBeInTheDocument();
-    expect(screen.getByText("Not Allowed")).toBeInTheDocument();
+    expect(screen.getByText("Access and Permissions")).toBeInTheDocument();
+    expect(screen.getByText("Messaging")).toBeInTheDocument();
+    expect(screen.getByText("Send messages")).toBeInTheDocument();
   });
 });

@@ -4,8 +4,12 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 
-import { PermissionsSummaryWidget } from "@/components/connections/permissions-summary-widget";
-import { getConnection, getResolvedPermissions } from "@/lib/api/connections";
+import { PermissionControlsWidget } from "@/components/connections/permission-controls-widget";
+import {
+  getConnection,
+  getResolvedPermissions,
+  listPermissionOverrides,
+} from "@/lib/api/connections";
 import { routes } from "@/lib/constants/routes";
 import {
   getConnectionStatusLabel,
@@ -18,6 +22,7 @@ import type {
   IdentityConnection,
   ResolvedPermissionsMap,
 } from "@/types/connection";
+import type { PermissionOverride } from "@/types/permissions";
 
 interface ConnectionDetailsPageProps {
   params: Promise<{ connectionId: string }>;
@@ -31,6 +36,7 @@ export default function ConnectionDetailsPage({
   const [permissions, setPermissions] = useState<ResolvedPermissionsMap | null>(
     null,
   );
+  const [overrides, setOverrides] = useState<PermissionOverride[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,13 +46,16 @@ export default function ConnectionDetailsPage({
       setError(null);
 
       try {
-        const [connectionData, permissionData] = await Promise.all([
-          getConnection(connectionId),
-          getResolvedPermissions(connectionId),
-        ]);
+        const [connectionData, permissionData, overridesData] =
+          await Promise.all([
+            getConnection(connectionId),
+            getResolvedPermissions(connectionId),
+            listPermissionOverrides(connectionId),
+          ]);
 
         setConnection(connectionData);
         setPermissions(permissionData);
+        setOverrides(overridesData);
       } catch (loadError) {
         setError(
           loadError instanceof Error
@@ -165,7 +174,11 @@ export default function ConnectionDetailsPage({
         </div>
       </section>
 
-      <PermissionsSummaryWidget permissions={permissions} />
+      <PermissionControlsWidget
+        connectionId={connectionId}
+        initialPermissions={permissions}
+        initialOverrides={overrides}
+      />
     </div>
   );
 }
