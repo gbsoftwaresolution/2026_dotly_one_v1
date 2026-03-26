@@ -1,5 +1,6 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
+import { BadRequestException } from "@nestjs/common";
 
 import { ConnectionType } from "../src/common/enums/connection-type.enum";
 import { IdentityType } from "../src/common/enums/identity-type.enum";
@@ -124,7 +125,7 @@ describe("content permission resolution", () => {
     const result = await service.resolveContentPermissionsForConnection({
       connectionId: "7e18a269-65ef-4636-a903-9ca594a9bb19",
       contentId: "11111111-1111-4111-8111-111111111111",
-      targetIdentityId: "22222222-2222-4222-8222-222222222222",
+      targetIdentityId: "identity-target",
     });
 
     assert.equal(
@@ -147,7 +148,7 @@ describe("content permission resolution", () => {
     const result = await service.resolveContentPermissionsForConnection({
       connectionId: "9f7716a8-f401-4777-a6d9-d7c57f1e4d8b",
       contentId: "11111111-1111-4111-8111-111111111111",
-      targetIdentityId: "22222222-2222-4222-8222-222222222222",
+      targetIdentityId: "identity-target",
     });
 
     assert.equal(
@@ -166,7 +167,7 @@ describe("content permission resolution", () => {
     const result = await service.resolveContentPermissionsForConnection({
       connectionId: "0b372620-4f5b-459f-bab0-2364b4e2b9a0",
       contentId: "11111111-1111-4111-8111-111111111111",
-      targetIdentityId: "22222222-2222-4222-8222-222222222222",
+      targetIdentityId: "identity-target",
     });
 
     assert.equal(
@@ -188,7 +189,7 @@ describe("content permission resolution", () => {
     const result = await service.resolveContentPermissionsForConnection({
       connectionId: "003676f4-f6f8-484d-b3d9-a55a2d76d3e4",
       contentId: "11111111-1111-4111-8111-111111111111",
-      targetIdentityId: "22222222-2222-4222-8222-222222222222",
+      targetIdentityId: "identity-target",
     });
 
     assert.equal(
@@ -208,7 +209,7 @@ describe("content permission resolution", () => {
     const result = await service.resolveContentPermissionsForConnection({
       connectionId: "0be00c77-6672-4e49-a855-4f0a3878436d",
       contentId: "11111111-1111-4111-8111-111111111111",
-      targetIdentityId: "22222222-2222-4222-8222-222222222222",
+      targetIdentityId: "identity-target",
       currentViewCount: 1,
     });
 
@@ -218,13 +219,35 @@ describe("content permission resolution", () => {
     );
   });
 
+  it("fails closed when content target does not match the connection target", async () => {
+    const service = createBaseService({
+      identityConnection: {
+        findUnique: async () =>
+          createConnectionRecord({ targetIdentityId: "identity-target" }),
+      },
+    });
+
+    await assert.rejects(
+      service.resolveContentPermissionsForConnection({
+        connectionId: "connection-1",
+        contentId: "11111111-1111-4111-8111-111111111111",
+        targetIdentityId: "identity-other",
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof BadRequestException);
+        assert.match(String(error.message), /target must match/i);
+        return true;
+      },
+    );
+  });
+
   it("screenshotPolicy DENY denies content.screenshot", async () => {
     const result = await createBaseService().previewContentPermissions({
       sourceIdentityType: IdentityType.Personal,
       connectionType: ConnectionType.Trusted,
       trustState: TrustState.TrustedByUser,
       contentId: "11111111-1111-4111-8111-111111111111",
-      targetIdentityId: "22222222-2222-4222-8222-222222222222",
+      targetIdentityId: "identity-target",
       contentRule: {
         screenshotPolicy: ScreenshotPolicy.Deny,
       },
@@ -242,7 +265,7 @@ describe("content permission resolution", () => {
       connectionType: ConnectionType.Trusted,
       trustState: TrustState.TrustedByUser,
       contentId: "11111111-1111-4111-8111-111111111111",
-      targetIdentityId: "22222222-2222-4222-8222-222222222222",
+      targetIdentityId: "identity-target",
       contentRule: {
         recordPolicy: RecordPolicy.Deny,
       },
@@ -260,7 +283,7 @@ describe("content permission resolution", () => {
       connectionType: ConnectionType.Trusted,
       trustState: TrustState.TrustedByUser,
       contentId: "11111111-1111-4111-8111-111111111111",
-      targetIdentityId: "22222222-2222-4222-8222-222222222222",
+      targetIdentityId: "identity-target",
       contentRule: {
         aiAccessAllowed: false,
       },
@@ -278,7 +301,7 @@ describe("content permission resolution", () => {
       connectionType: ConnectionType.Trusted,
       trustState: TrustState.TrustedByUser,
       contentId: "11111111-1111-4111-8111-111111111111",
-      targetIdentityId: "22222222-2222-4222-8222-222222222222",
+      targetIdentityId: "identity-target",
       contentRule: {
         screenshotPolicy: ScreenshotPolicy.Allow,
       },
@@ -313,7 +336,7 @@ describe("content permission resolution", () => {
 
     const result = await service.setContentAccessRule({
       contentId: "11111111-1111-4111-8111-111111111111",
-      targetIdentityId: "22222222-2222-4222-8222-222222222222",
+      targetIdentityId: "identity-target",
       canDownload: false,
       screenshotPolicy: ScreenshotPolicy.Deny,
       createdByIdentityId: "33333333-3333-4333-8333-333333333333",
@@ -334,7 +357,7 @@ describe("content permission resolution", () => {
     const result = await service.resolveContentPermissionsForConnection({
       connectionId: "ad0735dc-7548-4ec5-bd22-6f8b5f786ab9",
       contentId: "11111111-1111-4111-8111-111111111111",
-      targetIdentityId: "22222222-2222-4222-8222-222222222222",
+      targetIdentityId: "identity-target",
     });
 
     assert.equal(

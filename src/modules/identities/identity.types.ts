@@ -660,6 +660,7 @@ export interface PermissionSnapshotMetadata {
   resolverVersion: string;
   templateKey: string;
   templatePolicyVersion: number;
+  applyRiskOverlay: boolean;
   trustState: TrustState;
   connectionType: ConnectionType;
   relationshipType: RelationshipType;
@@ -675,6 +676,7 @@ export interface SnapshotFreshnessCheckResult {
     | "FRESH"
     | "MISSING"
     | "RESOLVER_VERSION_MISMATCH"
+    | "RISK_OVERLAY_MISMATCH"
     | "SOURCE_HASH_MISMATCH"
     | "RISK_PREVIEW_UNSAFE"
     | "MISSING_METADATA";

@@ -517,4 +517,23 @@ describe("ai enforcement", () => {
     assert.equal(result.allowed, false);
     assert.equal(result.reasonCode, AIReasonCode.DeniedContext);
   });
+
+  it("missing AI permission resolution denies fail-closed", async () => {
+    const service = createService({
+      resolveConversationContext: async () =>
+        createConversationContext({
+          resolvedPermissions: createResolvedPermissions({ permissions: {} }),
+        }),
+    });
+
+    const result = await service.enforceAICapability({
+      conversationId: "conversation-1",
+      actorIdentityId: "identity-source",
+      capability: AICapability.Summary,
+      contextType: AIExecutionContext.Conversation,
+    });
+
+    assert.equal(result.allowed, false);
+    assert.equal(result.reasonCode, AIReasonCode.DeniedPermission);
+  });
 });

@@ -253,6 +253,20 @@ export class IdentitiesService {
     private readonly permissionAuditService: PermissionAuditService = new PermissionAuditService(),
   ) {}
 
+  private async runInTransaction<T>(
+    callback: (tx: any) => Promise<T>,
+  ): Promise<T> {
+    const transaction = this.prismaService.$transaction as
+      | ((cb: (tx: any) => Promise<T>) => Promise<T>)
+      | undefined;
+
+    if (typeof transaction === "function") {
+      return transaction(callback);
+    }
+
+    return callback(this.prismaService);
+  }
+
   async createIdentity(
     createIdentityDto: CreateIdentityDto,
   ): Promise<Identity> {
@@ -326,17 +340,25 @@ export class IdentitiesService {
   async updateConnectionType(
     updateConnectionTypeDto: UpdateConnectionTypeDto,
   ): Promise<IdentityConnectionRecord> {
-    const existingConnection = await this.requireConnection(
-      updateConnectionTypeDto.connectionId,
-    );
-    const nextStatus = this.normalizeStatusForConnection(
-      updateConnectionTypeDto.connectionType,
-      toApiTrustState(existingConnection.trustState),
-      toApiConnectionStatus(existingConnection.status),
-    );
+    const updatedConnection = await this.runInTransaction(async (tx) => {
+      const existingConnection = await tx.identityConnection.findUnique({
+        where: {
+          id: updateConnectionTypeDto.connectionId,
+        },
+        select: identityConnectionSelect,
+      });
 
-    const updatedConnection =
-      await this.prismaService.identityConnection.update({
+      if (!existingConnection) {
+        throw new NotFoundException("Identity connection not found");
+      }
+
+      const nextStatus = this.normalizeStatusForConnection(
+        updateConnectionTypeDto.connectionType,
+        toApiTrustState(existingConnection.trustState),
+        toApiConnectionStatus(existingConnection.status),
+      );
+
+      return tx.identityConnection.update({
         where: {
           id: updateConnectionTypeDto.connectionId,
         },
@@ -355,6 +377,7 @@ export class IdentitiesService {
         },
         select: identityConnectionSelect,
       });
+    });
 
     await this.invalidateCachesForConnection(
       updateConnectionTypeDto.connectionId,
@@ -365,12 +388,19 @@ export class IdentitiesService {
   async updateConnectionRelationshipType(
     updateConnectionRelationshipTypeDto: UpdateConnectionRelationshipTypeDto,
   ): Promise<IdentityConnectionRecord> {
-    await this.requireConnection(
-      updateConnectionRelationshipTypeDto.connectionId,
-    );
+    const updatedConnection = await this.runInTransaction(async (tx) => {
+      const existingConnection = await tx.identityConnection.findUnique({
+        where: {
+          id: updateConnectionRelationshipTypeDto.connectionId,
+        },
+        select: identityConnectionSelect,
+      });
 
-    const updatedConnection =
-      await this.prismaService.identityConnection.update({
+      if (!existingConnection) {
+        throw new NotFoundException("Identity connection not found");
+      }
+
+      return tx.identityConnection.update({
         where: {
           id: updateConnectionRelationshipTypeDto.connectionId,
         },
@@ -381,6 +411,7 @@ export class IdentitiesService {
         },
         select: identityConnectionSelect,
       });
+    });
 
     await this.invalidateCachesForConnection(
       updateConnectionRelationshipTypeDto.connectionId,
@@ -391,17 +422,25 @@ export class IdentitiesService {
   async updateTrustState(
     updateTrustStateDto: UpdateTrustStateDto,
   ): Promise<IdentityConnectionRecord> {
-    const existingConnection = await this.requireConnection(
-      updateTrustStateDto.connectionId,
-    );
-    const nextStatus = this.normalizeStatusForConnection(
-      toApiConnectionType(existingConnection.connectionType),
-      updateTrustStateDto.trustState,
-      toApiConnectionStatus(existingConnection.status),
-    );
+    const updatedConnection = await this.runInTransaction(async (tx) => {
+      const existingConnection = await tx.identityConnection.findUnique({
+        where: {
+          id: updateTrustStateDto.connectionId,
+        },
+        select: identityConnectionSelect,
+      });
 
-    const updatedConnection =
-      await this.prismaService.identityConnection.update({
+      if (!existingConnection) {
+        throw new NotFoundException("Identity connection not found");
+      }
+
+      const nextStatus = this.normalizeStatusForConnection(
+        toApiConnectionType(existingConnection.connectionType),
+        updateTrustStateDto.trustState,
+        toApiConnectionStatus(existingConnection.status),
+      );
+
+      return tx.identityConnection.update({
         where: {
           id: updateTrustStateDto.connectionId,
         },
@@ -411,6 +450,7 @@ export class IdentitiesService {
         },
         select: identityConnectionSelect,
       });
+    });
 
     await this.invalidateCachesForConnection(updateTrustStateDto.connectionId);
     return updatedConnection;
@@ -442,10 +482,21 @@ export class IdentitiesService {
   async setPermissionOverride(
     setPermissionOverrideDto: SetPermissionOverrideDto,
   ) {
-    await this.requireConnection(setPermissionOverrideDto.connectionId);
+    const override = await this.runInTransaction(async (tx) => {
+      const connection = await tx.identityConnection.findUnique({
+        where: {
+          id: setPermissionOverrideDto.connectionId,
+        },
+        select: {
+          id: true,
+        },
+      });
 
-    const override =
-      await this.prismaService.connectionPermissionOverride.upsert({
+      if (!connection) {
+        throw new NotFoundException("Identity connection not found");
+      }
+
+      return tx.connectionPermissionOverride.upsert({
         where: {
           connectionId_permissionKey: {
             connectionId: setPermissionOverrideDto.connectionId,
@@ -468,6 +519,7 @@ export class IdentitiesService {
           createdByIdentityId: setPermissionOverrideDto.createdByIdentityId,
         },
       });
+    });
 
     await this.invalidateCachesForConnection(
       setPermissionOverrideDto.connectionId,
@@ -1452,6 +1504,13 @@ export class IdentitiesService {
       connectionId: resolveDto.connectionId,
       persistSnapshot: false,
     });
+
+    if (resolveDto.targetIdentityId !== resolvedConnection.targetIdentityId) {
+      throw new BadRequestException(
+        "Content permission target must match the connection target identity",
+      );
+    }
+
     const contentRule = await this.getContentAccessRule({
       contentId: resolveDto.contentId,
       targetIdentityId: resolveDto.targetIdentityId,
@@ -1559,7 +1618,29 @@ export class IdentitiesService {
       persistSnapshot: false,
     });
     const currentHash = computeResolvedPermissionHash(resolvedPermissions);
-    const updatedConversation =
+    if (
+      typeof this.prismaService.identityConversation.updateMany === "function"
+    ) {
+      await this.prismaService.identityConversation.updateMany({
+        where: {
+          id: bindDto.conversationId,
+          OR: [
+            {
+              lastResolvedAt: null,
+            },
+            {
+              lastResolvedAt: {
+                lte: resolvedPermissions.resolvedAt,
+              },
+            },
+          ],
+        },
+        data: {
+          lastResolvedAt: resolvedPermissions.resolvedAt,
+          lastPermissionHash: currentHash,
+        },
+      });
+    } else {
       await this.prismaService.identityConversation.update({
         where: {
           id: bindDto.conversationId,
@@ -1570,6 +1651,10 @@ export class IdentitiesService {
         },
         select: identityConversationSelect,
       });
+    }
+    const updatedConversation = await this.requireConversation(
+      bindDto.conversationId,
+    );
     const bindingSummary = createConversationBindingSummary(
       updatedConversation.lastPermissionHash,
       currentHash,
@@ -1703,6 +1788,9 @@ export class IdentitiesService {
     const metadata = await this.buildPermissionSnapshotMetadata(
       connectionId,
       resolved,
+      {
+        applyRiskOverlay: true,
+      },
     );
     const snapshot =
       await this.prismaService.connectionPermissionSnapshot.create({
@@ -1814,6 +1902,18 @@ export class IdentitiesService {
       };
     }
 
+    if (
+      snapshot.metadataJson.applyRiskOverlay !==
+      (options?.applyRiskOverlay ?? true)
+    ) {
+      return {
+        fresh: false,
+        reason: "RISK_OVERLAY_MISMATCH",
+        expectedSourceHash: null,
+        actualSourceHash: snapshot.metadataJson.sourceHash,
+      };
+    }
+
     const expectedSourceHash = await this.computePermissionSourceHash(
       connectionId,
       options,
@@ -1841,6 +1941,9 @@ export class IdentitiesService {
     const sourceIdentity = await this.requireIdentity(
       connection.sourceIdentityId,
     );
+    const targetIdentity = await this.requireIdentity(
+      connection.targetIdentityId,
+    );
     const template = await this.getConnectionPolicyTemplate({
       sourceIdentityType: toApiIdentityType(sourceIdentity.identityType),
       connectionType: toApiConnectionType(connection.connectionType),
@@ -1861,11 +1964,20 @@ export class IdentitiesService {
         sourceIdentity.createdAt ??
         new Date(0)
       ).toISOString(),
+      targetIdentityUpdatedAt: (
+        targetIdentity.updatedAt ??
+        targetIdentity.createdAt ??
+        new Date(0)
+      ).toISOString(),
+      targetIdentityType: toApiIdentityType(targetIdentity.identityType),
       connectionType: toApiConnectionType(connection.connectionType),
       trustState: toApiTrustState(connection.trustState),
       relationshipType: toConnectionRelationshipType(connection),
       templateKey: template.templateKey,
       templatePolicyVersion: template.policyVersion,
+      templateUpdatedAt: (
+        template.updatedAt ?? template.createdAt
+      ).toISOString(),
       overrideCount: overrides.length,
       latestOverrideCreatedAt,
       applyRiskOverlay: options?.applyRiskOverlay ?? true,
@@ -1946,6 +2058,13 @@ export class IdentitiesService {
       previewRiskSignals?: RiskSignalRecord[];
     },
   ): Promise<ResolvedConnectionPermissions | null> {
+    if (
+      snapshot.metadataJson?.applyRiskOverlay !==
+      (options?.applyRiskOverlay ?? true)
+    ) {
+      return null;
+    }
+
     const resolved = await this.resolveConnectionPermissionsCore(connectionId, {
       applyRiskOverlay: options?.applyRiskOverlay,
       previewRiskSignals: options?.previewRiskSignals,
@@ -1958,15 +2077,19 @@ export class IdentitiesService {
   private async buildPermissionSnapshotMetadata(
     connectionId: string,
     resolved: ResolvedConnectionPermissions,
+    options?: {
+      applyRiskOverlay?: boolean;
+    },
   ): Promise<PermissionSnapshotMetadata> {
     const sourceHash = await this.computePermissionSourceHash(connectionId, {
-      applyRiskOverlay: true,
+      applyRiskOverlay: options?.applyRiskOverlay,
     });
 
     return {
       resolverVersion: PERMISSION_RESOLVER_VERSION,
       templateKey: resolved.template.templateKey,
       templatePolicyVersion: resolved.template.policyVersion,
+      applyRiskOverlay: options?.applyRiskOverlay ?? true,
       trustState: resolved.trustState,
       connectionType: resolved.connectionType,
       relationshipType: resolved.relationshipType,

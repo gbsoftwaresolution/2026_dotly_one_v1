@@ -458,6 +458,7 @@ describe("canonical permission resolver", () => {
               resolverVersion: "2026-03-26.prompt-114",
               templateKey: "business.client",
               templatePolicyVersion: 1,
+              applyRiskOverlay: true,
               trustState: TrustState.Unverified,
               connectionType: ConnectionType.Client,
               relationshipType: RelationshipType.Client,
@@ -517,6 +518,7 @@ describe("canonical permission resolver", () => {
           resolverVersion: "older-version",
           templateKey: "business.client",
           templatePolicyVersion: 1,
+          applyRiskOverlay: true,
           trustState: TrustState.Unverified,
           connectionType: ConnectionType.Client,
           relationshipType: RelationshipType.Client,
@@ -609,6 +611,7 @@ describe("canonical permission resolver", () => {
               resolverVersion: "2026-03-26.prompt-114",
               templateKey: "business.client",
               templatePolicyVersion: 1,
+              applyRiskOverlay: true,
               trustState: TrustState.Unverified,
               connectionType: ConnectionType.Client,
               relationshipType: RelationshipType.Client,
@@ -632,6 +635,61 @@ describe("canonical permission resolver", () => {
     });
 
     assert.equal(snapshotReads, 1);
+  });
+
+  it("snapshot freshness rejects risk overlay mismatch", async () => {
+    const service = new IdentitiesService({
+      identityConnection: {
+        findUnique: async () =>
+          createConnectionRecord({
+            trustState: "UNVERIFIED",
+            connectionType: "CLIENT",
+          }),
+      },
+      identity: {
+        findUnique: async ({ where }: any) => ({
+          id: where.id,
+          identityType: "BUSINESS",
+          updatedAt: new Date("2026-03-26T12:00:00.000Z"),
+          createdAt: new Date("2026-03-26T12:00:00.000Z"),
+        }),
+      },
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("business.client"),
+      },
+      connectionPermissionOverride: {
+        findMany: async () => [],
+      },
+    } as any);
+
+    const freshness = await service.isSnapshotFresh(
+      "connection-1",
+      {
+        id: "snapshot-risk-overlay-1",
+        connectionId: "connection-1",
+        policyVersion: 1,
+        permissionsJson:
+          createTemplateRecord("business.client").permissionsJson,
+        metadataJson: {
+          resolverVersion: "2026-03-26.prompt-114",
+          templateKey: "business.client",
+          templatePolicyVersion: 1,
+          applyRiskOverlay: false,
+          trustState: TrustState.Unverified,
+          connectionType: ConnectionType.Client,
+          relationshipType: RelationshipType.Client,
+          overrideCount: 0,
+          riskSummaryHash: "hash",
+          sourceHash: "hash",
+          computedAt: new Date("2026-03-26T12:00:00.000Z"),
+        },
+        computedAt: new Date("2026-03-26T12:00:00.000Z"),
+      },
+      { applyRiskOverlay: true },
+    );
+
+    assert.equal(freshness.fresh, false);
+    assert.equal(freshness.reason, "RISK_OVERLAY_MISMATCH");
   });
 
   it("previewRiskSignals do not poison stable cache entries", async () => {

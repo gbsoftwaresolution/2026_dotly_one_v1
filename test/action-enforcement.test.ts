@@ -13,6 +13,7 @@ import {
   ConversationType,
 } from "../src/modules/identities/identity.types";
 import { PERMISSION_KEYS } from "../src/modules/identities/permission-keys";
+import { buildTestPermissionScenario } from "./helpers/permission-flow-scenario";
 
 function createResolvedPermissions(
   overrides?: Partial<Record<string, unknown>>,
@@ -549,5 +550,43 @@ describe("action enforcement", () => {
     });
 
     assert.equal(result.allowed, false);
+  });
+
+  it("fails closed when content permission resolution is missing", async () => {
+    const scenario = buildTestPermissionScenario();
+    const service = createService({
+      resolveConversationContext: async () => ({
+        ...createConversationContext(),
+        conversation: {
+          ...createConversationContext().conversation,
+          conversationType: scenario.conversation.conversationType,
+        },
+        resolvedPermissions: {
+          ...createResolvedPermissions(),
+          permissions: {
+            ...createResolvedPermissions().permissions,
+            [PERMISSION_KEYS.mediaPrivacy.export]: {
+              finalEffect:
+                scenario.resolvedPermissions.permissions["media.export"]
+                  .finalEffect,
+            },
+          },
+        },
+      }),
+      resolveContentPermissionsForConnection: async () => ({
+        ...createContentResolution(PermissionEffect.Allow),
+        effectiveContentPermissions: {},
+      }),
+    });
+
+    const result = await service.enforceAction({
+      conversationId: "conversation-1",
+      actorIdentityId: "identity-source",
+      actionType: ActionType.ExportMedia,
+      contentId: "content-1",
+    });
+
+    assert.equal(result.allowed, false);
+    assert.equal(result.reasonCode, "ACTION_DENIED_CONTENT_RULE");
   });
 });

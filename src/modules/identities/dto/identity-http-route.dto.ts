@@ -131,10 +131,6 @@ export class SetPermissionOverrideRequestDto {
   limitsJson?: PermissionLimits | null;
 
   @IsOptional()
-  @IsObject()
-  metadataJson?: Record<string, unknown> | null;
-
-  @IsOptional()
   @IsString()
   @MaxLength(500)
   reason?: string | null;

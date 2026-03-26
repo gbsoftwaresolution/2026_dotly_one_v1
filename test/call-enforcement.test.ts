@@ -471,4 +471,37 @@ describe("call enforcement", () => {
     assert.ok(result.restrictionSummary);
     assert.equal(typeof result.reasonCode, "string");
   });
+
+  it("unsupported call type fails closed", async () => {
+    const service = createService();
+
+    const result = await service.enforceCall({
+      conversationId: "conversation-1",
+      actorIdentityId: "identity-source",
+      callType: "UNKNOWN" as CallType,
+      initiationMode: CallInitiationMode.Direct,
+    });
+
+    assert.equal(result.allowed, false);
+    assert.equal(result.reasonCode, "CALL_DENIED_CALL_TYPE_UNSUPPORTED");
+  });
+
+  it("missing call permission resolution fails closed", async () => {
+    const service = createService({
+      resolveConversationContext: async () =>
+        createConversationContext({
+          resolvedPermissions: createResolvedPermissions({ permissions: {} }),
+        }),
+    });
+
+    const result = await service.enforceCall({
+      conversationId: "conversation-1",
+      actorIdentityId: "identity-source",
+      callType: CallType.Video,
+      initiationMode: CallInitiationMode.Direct,
+    });
+
+    assert.equal(result.allowed, false);
+    assert.equal(result.reasonCode, "CALL_DENIED_PERMISSION");
+  });
 });
