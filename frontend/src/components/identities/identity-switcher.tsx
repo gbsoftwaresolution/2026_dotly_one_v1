@@ -9,7 +9,7 @@ export function IdentitySwitcher() {
   const { activeIdentity, availableIdentities, switchIdentity, isLoading } =
     useIdentityContext();
 
-  if (!activeIdentity) {
+  if (!activeIdentity || availableIdentities.length === 0) {
     return null;
   }
 

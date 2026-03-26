@@ -28,7 +28,7 @@ export function BlockUserButton({
     try {
       await blocksApi.blockByPersona(personaId);
       setShowModal(false);
-      router.replace("/app/contacts?message=node-removed");
+      router.replace("/app-old/contacts?message=node-removed");
     } catch (err) {
       setError(
         isApiError(err)

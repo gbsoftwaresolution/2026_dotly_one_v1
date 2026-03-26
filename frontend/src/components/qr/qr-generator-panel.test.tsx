@@ -207,7 +207,7 @@ describe("QrGeneratorPanel", () => {
 
     expect(screen.getByRole("link", { name: /switch dotly/i })).toHaveAttribute(
       "href",
-      "/app/personas",
+      "/app-old/personas",
     );
     expect(
       screen.queryByRole("button", { name: /quick connect/i }),
@@ -475,7 +475,7 @@ describe("QrGeneratorPanel", () => {
 
     expect(screen.getByRole("link", { name: /switch dotly/i })).toHaveAttribute(
       "href",
-      "/app/personas",
+      "/app-old/personas",
     );
     expect(
       screen.queryByRole("combobox", { name: /share persona/i }),

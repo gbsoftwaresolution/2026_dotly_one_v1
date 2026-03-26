@@ -198,7 +198,7 @@ describe("ContactFollowUpForm", () => {
     expect(screen.getByText(/2 reminders in view/i)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /open follow-ups/i }),
-    ).toHaveAttribute("href", "/app/follow-ups");
+    ).toHaveAttribute("href", "/app-old/follow-ups");
     expect(mocks.create).not.toHaveBeenCalled();
   });
 

@@ -6,6 +6,12 @@ export enum IdentityType {
   Family = "family",
 }
 
+export const enabledIdentityTypes = [
+  IdentityType.Personal,
+  IdentityType.Professional,
+  IdentityType.Business,
+] as const;
+
 export type IdentityVerificationLevel = string;
 export type IdentityLifecycleStatus = string;
 

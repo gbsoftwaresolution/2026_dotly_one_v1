@@ -130,7 +130,7 @@ export function ProtectedConversationScreen({
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-5">
       <Link
         className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 hover:text-sky-800"
-        href={`/app/connections/${connectionId}`}
+        href={`/app-old/connections/${connectionId}`}
       >
         <ArrowLeft className="h-5 w-5" />
         Back to profile

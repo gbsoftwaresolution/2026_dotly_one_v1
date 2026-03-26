@@ -180,7 +180,7 @@ export function PersonaForm() {
       setCreatedPersona(persona);
     } catch (submissionError) {
       if (isApiError(submissionError) && submissionError.status === 401) {
-        router.replace("/login?next=/app/personas/create&reason=expired");
+        router.replace("/login?next=/app-old/personas/create&reason=expired");
         return;
       }
 
@@ -194,8 +194,10 @@ export function PersonaForm() {
     }
   }
 
-  const inputCls = "w-full bg-transparent px-4 py-3.5 text-[17px] text-foreground outline-none placeholder:text-muted/50 tracking-tight";
-  const sectionCls = "flex flex-col overflow-hidden rounded-[20px] bg-black/[0.03] dark:bg-white/[0.04] backdrop-blur-[40px] saturate-[200%]";
+  const inputCls =
+    "w-full bg-transparent px-4 py-3.5 text-[17px] text-foreground outline-none placeholder:text-muted/50 tracking-tight";
+  const sectionCls =
+    "flex flex-col overflow-hidden rounded-[20px] bg-black/[0.03] dark:bg-white/[0.04] backdrop-blur-[40px] saturate-[200%]";
   const usernameTone = getUsernameTone(usernameAvailability);
   const usernameInputCls =
     usernameTone === "success"
@@ -266,7 +268,6 @@ export function PersonaForm() {
     <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
       <section className={sectionCls}>
         <div className="space-y-1">
-          
           <h3 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
             Handle and access
           </h3>
@@ -403,7 +404,6 @@ export function PersonaForm() {
 
       <section className={sectionCls}>
         <div className="space-y-1">
-          
           <h3 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
             Public identity
           </h3>
@@ -482,7 +482,6 @@ export function PersonaForm() {
 
       <section className={sectionCls}>
         <div className="space-y-1">
-          
           <h3 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
             Trust and links
           </h3>

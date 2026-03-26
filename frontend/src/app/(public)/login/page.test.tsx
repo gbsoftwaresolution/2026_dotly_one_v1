@@ -55,7 +55,7 @@ describe("LoginPage", () => {
     expect(mocks.authForm).toHaveBeenCalledWith(
       expect.objectContaining({
         mode: "login",
-        redirectTo: "/app",
+        redirectTo: "/app-old",
         initialEmail: "new@dotly.one",
       }),
     );

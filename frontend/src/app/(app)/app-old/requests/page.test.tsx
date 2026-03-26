@@ -27,7 +27,7 @@ describe("RequestsPage", () => {
 
     const element = await RequestsPage();
 
-    expect(mocks.requireServerSession).toHaveBeenCalledWith("/app/requests");
+    expect(mocks.requireServerSession).toHaveBeenCalledWith("/app-old/requests");
     expect(element).toBeTruthy();
   });
 });

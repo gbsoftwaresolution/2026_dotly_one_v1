@@ -74,7 +74,7 @@ describe("QrPage", () => {
 
     const element = await QrPage();
 
-    expect(mocks.requireServerSession).toHaveBeenCalledWith("/app/qr");
+    expect(mocks.requireServerSession).toHaveBeenCalledWith("/app-old/qr");
     expect(mocks.meAnalytics).toHaveBeenCalledWith("token");
     expect(element).toBeTruthy();
     expect(JSON.stringify(element)).toContain("user@dotly.one");

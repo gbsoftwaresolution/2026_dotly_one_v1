@@ -161,7 +161,7 @@ describe("ConnectionDetailsPage", () => {
       relationshipType: RelationshipType.Friend,
     });
     expect(mocks.push).toHaveBeenCalledWith(
-      "/app/conversations/conversation-1",
+      "/app-old/conversations/conversation-1",
     );
   });
 });

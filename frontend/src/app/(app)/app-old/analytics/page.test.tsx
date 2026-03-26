@@ -27,7 +27,7 @@ describe("AnalyticsPage", () => {
 
     const element = await AnalyticsPage();
 
-    expect(mocks.requireServerSession).toHaveBeenCalledWith("/app/analytics");
+    expect(mocks.requireServerSession).toHaveBeenCalledWith("/app-old/analytics");
     expect(element).toBeTruthy();
   });
 });

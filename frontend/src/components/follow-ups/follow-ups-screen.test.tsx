@@ -366,7 +366,7 @@ describe("FollowUpsScreen", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /set follow-up/i }),
-    ).toHaveAttribute("href", "/app/contacts/relationship-1");
+    ).toHaveAttribute("href", "/app-old/contacts/relationship-1");
     expect(screen.getAllByRole("button", { name: /^done$/i })).toHaveLength(2);
   });
 });

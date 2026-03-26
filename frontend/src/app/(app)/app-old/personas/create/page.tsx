@@ -11,7 +11,7 @@ export default function CreatePersonaPage() {
         title="Create a persona"
         description="Set up the version of you that people should remember after the conversation."
         action={
-          <Link href="/app/personas">
+          <Link href="/app-old/personas">
             <SecondaryButton className="w-full sm:w-auto">
               Back to personas
             </SecondaryButton>

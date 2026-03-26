@@ -115,8 +115,8 @@ describe("PersonaForm", () => {
     expect(screen.getByText(/requests only/i)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /edit sharing settings/i }),
-    ).toHaveAttribute("href", "/app/personas/settings/persona-1");
-    expect(mocks.replace).not.toHaveBeenCalledWith("/app/personas");
+    ).toHaveAttribute("href", "/app-old/personas/settings/persona-1");
+    expect(mocks.replace).not.toHaveBeenCalledWith("/app-old/personas");
   });
 
   it("blocks premium short usernames and shows claim guidance", async () => {

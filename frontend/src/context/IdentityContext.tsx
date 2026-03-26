@@ -11,7 +11,7 @@ import {
 } from "react";
 
 import type { Identity } from "@/types/identity";
-import { IdentityType } from "@/types/identity";
+import { enabledIdentityTypes, IdentityType } from "@/types/identity";
 import { listMyIdentities } from "@/lib/api/identities";
 
 const STORAGE_KEY = "dotly.active-identity-id";
@@ -46,6 +46,10 @@ const mockIdentities: Identity[] = [
 ];
 
 const IdentityContext = createContext<IdentityContextValue | null>(null);
+
+function isEnabledIdentity(identity: Identity): boolean {
+  return enabledIdentityTypes.some((type) => type === identity.identityType);
+}
 
 function readStoredIdentityId(): string | null {
   if (typeof window === "undefined") {
@@ -94,8 +98,9 @@ export function IdentityProvider({
     try {
       const identities =
         initialIdentities ?? (await listMyIdentities().catch(() => []));
-      const safeIdentities =
-        identities.length > 0 ? identities : mockIdentities;
+      const safeIdentities = (
+        identities.length > 0 ? identities : mockIdentities
+      ).filter(isEnabledIdentity);
       const preferredId = readStoredIdentityId();
       const nextActiveIdentity = chooseActiveIdentity(
         safeIdentities,

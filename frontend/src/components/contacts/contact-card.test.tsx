@@ -71,7 +71,7 @@ describe("ContactCard", () => {
 
     expect(screen.getByRole("link")).toHaveAttribute(
       "href",
-      "/app/contacts/relationship-id",
+      "/app-old/contacts/relationship-id",
     );
     expect(screen.getByText("Connected via QR")).toBeInTheDocument();
     expect(screen.getByText("1d")).toBeInTheDocument();
