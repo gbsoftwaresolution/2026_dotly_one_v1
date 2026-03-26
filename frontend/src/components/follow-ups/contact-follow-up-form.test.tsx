@@ -104,11 +104,16 @@ describe("ContactFollowUpForm", () => {
     fireEvent.click(screen.getByRole("button", { name: /tomorrow/i }));
 
     await waitFor(() => {
-      expect(mocks.create).toHaveBeenCalledWith({
-        relationshipId: "relationship-id",
-        preset: "TOMORROW",
-        customDate: undefined,
-      });
+      expect(mocks.create).toHaveBeenCalledWith(
+        {
+          relationshipId: "relationship-id",
+          preset: "TOMORROW",
+          customDate: undefined,
+        },
+        expect.objectContaining({
+          requestKey: expect.any(String),
+        }),
+      );
     });
 
     expect(await screen.findByRole("status")).toHaveTextContent(

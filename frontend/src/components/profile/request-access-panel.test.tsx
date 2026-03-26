@@ -288,7 +288,7 @@ describe("RequestAccessPanel", () => {
       }),
     );
 
-    expect(screen.getByRole("combobox")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /send from/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/add a note/i)).toBeInTheDocument();
   });
 

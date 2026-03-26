@@ -41,7 +41,10 @@ describe("ResetPasswordPage", () => {
 
     render(React.createElement(ResetPasswordPage));
 
-    expect(screen.getByText(/invalid reset link/i)).toBeInTheDocument();
+    expect(screen.getByText(/Invalid link\./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/This reset link is missing what it needs to continue/i),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /request another reset link/i }),
     ).toHaveAttribute("href", "/forgot-password");
@@ -59,7 +62,10 @@ describe("ResetPasswordPage", () => {
     await user.type(screen.getByLabelText(/new password/i), "NewPass123!");
     await user.click(screen.getByRole("button", { name: /reset password/i }));
 
-    expect(await screen.findByText(/reset link expired/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Link expired\./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Reset link is invalid or expired/i),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /request another reset link/i }),
     ).toHaveAttribute("href", "/forgot-password");

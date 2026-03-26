@@ -87,7 +87,9 @@ describe("PersonaForm", () => {
     await user.type(screen.getByLabelText(/^website$/i), "https://dotly.one");
     await user.click(screen.getByLabelText(/show verified badge/i));
     await waitFor(() => {
-      expect(screen.getByText(/username is available/i)).toBeInTheDocument();
+      expect(
+        screen.getAllByText(/username is available/i)[0],
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: /create persona/i }));
@@ -134,10 +136,10 @@ describe("PersonaForm", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/reserved for premium claims/i),
+        screen.getAllByText(/reserved for premium claims/i)[0],
       ).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/support@dotly.one/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/support@dotly.one/i)[0]).toBeInTheDocument();
   });
 });

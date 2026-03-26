@@ -65,14 +65,20 @@ describe("PersonaSharingSettingsForm", () => {
   it("shows a collapsed summary first and reveals controls on demand", async () => {
     const user = userEvent.setup();
 
-    render(React.createElement(PersonaSharingSettingsForm, { persona: personaFixture }));
+    render(
+      React.createElement(PersonaSharingSettingsForm, {
+        persona: personaFixture,
+      }),
+    );
 
     expect(screen.getByText(/sharing mode/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/people start with a request before any direct contact details are shown/i),
+      screen.getByText(
+        /people start with a request before any direct contact details are shown/i,
+      ),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("combobox", { name: /primary action/i }),
+      screen.queryByRole("button", { name: /primary action/i }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("radio", { name: /smart card mode/i }),
@@ -80,12 +86,14 @@ describe("PersonaSharingSettingsForm", () => {
 
     await user.click(screen.getByRole("button", { name: /customize/i }));
 
-    expect(screen.getByRole("radio", { name: /^Smart Card/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: /^Smart Card/i }),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("radio", { name: /^Smart Card/i }));
 
     expect(
-      screen.getByRole("combobox", { name: /primary action/i }),
+      screen.getByRole("button", { name: /primary action/i }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/public phone/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/allow call/i)).toBeInTheDocument();
@@ -94,27 +102,39 @@ describe("PersonaSharingSettingsForm", () => {
   it("preselects the first supported primary action when smart card mode is enabled", async () => {
     const user = userEvent.setup();
 
-    render(React.createElement(PersonaSharingSettingsForm, { persona: personaFixture }));
+    render(
+      React.createElement(PersonaSharingSettingsForm, {
+        persona: personaFixture,
+      }),
+    );
 
     await user.click(screen.getByRole("button", { name: /customize/i }));
     await user.click(screen.getByRole("radio", { name: /^Smart Card/i }));
 
+    expect(screen.getByRole("button", { name: /primary action/i })).toHaveTextContent(
+      "Request Access",
+    );
     expect(
-      screen.getByRole("combobox", { name: /primary action/i }),
-    ).toHaveValue("request_access");
-    expect(screen.getByRole("button", { name: /save settings/i })).toBeEnabled();
+      screen.getByRole("button", { name: /save settings/i }),
+    ).toBeEnabled();
   });
 
   it("hides unsupported instant connect until a profile QR exists", async () => {
     const user = userEvent.setup();
 
-    render(React.createElement(PersonaSharingSettingsForm, { persona: personaFixture }));
+    render(
+      React.createElement(PersonaSharingSettingsForm, {
+        persona: personaFixture,
+      }),
+    );
 
     await user.click(screen.getByRole("button", { name: /customize/i }));
     await user.click(screen.getByRole("radio", { name: /^Smart Card/i }));
 
     expect(
-      screen.getByText(/connect instantly appears after you activate a profile qr code/i),
+      screen.getByText(
+        /connect instantly appears after you activate a profile qr code/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("option", { name: /instant connect/i }),
@@ -124,24 +144,32 @@ describe("PersonaSharingSettingsForm", () => {
   it("shows inline validation when enabled actions are missing public values", async () => {
     const user = userEvent.setup();
 
-    render(React.createElement(PersonaSharingSettingsForm, { persona: personaFixture }));
+    render(
+      React.createElement(PersonaSharingSettingsForm, {
+        persona: personaFixture,
+      }),
+    );
 
     await user.click(screen.getByRole("button", { name: /customize/i }));
     await user.click(screen.getByRole("radio", { name: /^Smart Card/i }));
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: /primary action/i }),
-      "request_access",
-    );
+    await user.click(screen.getByRole("button", { name: /primary action/i }));
+    await user.click(screen.getByRole("button", { name: "Request Access" }));
     await user.click(screen.getByLabelText(/allow call/i));
     await user.click(screen.getByLabelText(/allow whatsapp/i));
     await user.click(screen.getByLabelText(/allow email/i));
 
-    expect(screen.getByText(/phone is required to enable call/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/phone is required to enable call/i),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/whatsapp number is required to enable whatsapp/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/email is required to enable email/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /save settings/i })).toBeDisabled();
+    expect(
+      screen.getByText(/email is required to enable email/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /save settings/i }),
+    ).toBeDisabled();
 
     await user.type(screen.getByLabelText(/public phone/i), "+1 555 123 4567");
     await user.type(
@@ -159,20 +187,24 @@ describe("PersonaSharingSettingsForm", () => {
     expect(
       screen.queryByText(/email is required to enable email/i),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /save settings/i })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: /save settings/i }),
+    ).toBeEnabled();
   });
 
   it("blocks malformed public values before save", async () => {
     const user = userEvent.setup();
 
-    render(React.createElement(PersonaSharingSettingsForm, { persona: personaFixture }));
+    render(
+      React.createElement(PersonaSharingSettingsForm, {
+        persona: personaFixture,
+      }),
+    );
 
     await user.click(screen.getByRole("button", { name: /customize/i }));
     await user.click(screen.getByRole("radio", { name: /^Smart Card/i }));
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: /primary action/i }),
-      "request_access",
-    );
+    await user.click(screen.getByRole("button", { name: /primary action/i }));
+    await user.click(screen.getByRole("button", { name: "Request Access" }));
     await user.type(screen.getByLabelText(/public phone/i), "abc");
     await user.type(screen.getByLabelText(/public email/i), "not-an-email");
 
@@ -182,32 +214,40 @@ describe("PersonaSharingSettingsForm", () => {
     expect(
       screen.getByText(/email must be a valid email address/i),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /save settings/i })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /save settings/i }),
+    ).toBeDisabled();
   });
 
   it("requires at least one valid direct action for contact primary action", async () => {
     const user = userEvent.setup();
 
-    render(React.createElement(PersonaSharingSettingsForm, { persona: personaFixture }));
+    render(
+      React.createElement(PersonaSharingSettingsForm, {
+        persona: personaFixture,
+      }),
+    );
 
     await user.click(screen.getByRole("button", { name: /customize/i }));
     await user.click(screen.getByRole("radio", { name: /^Smart Card/i }));
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: /primary action/i }),
-      "contact_me",
-    );
+    await user.click(screen.getByRole("button", { name: /primary action/i }));
+    await user.click(screen.getByRole("button", { name: "Contact" }));
 
     expect(
       screen.getByText(/at least one direct action is required for contact/i),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /save settings/i })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /save settings/i }),
+    ).toBeDisabled();
 
     await user.click(screen.getByLabelText(/allow save contact/i));
 
     expect(
       screen.queryByText(/at least one direct action is required for contact/i),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /save settings/i })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: /save settings/i }),
+    ).toBeEnabled();
   });
 
   it("saves the selected smart card configuration", async () => {
@@ -255,10 +295,8 @@ describe("PersonaSharingSettingsForm", () => {
 
     await user.click(screen.getByRole("button", { name: /customize/i }));
     await user.click(screen.getByRole("radio", { name: /^Smart Card/i }));
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: /primary action/i }),
-      "instant_connect",
-    );
+    await user.click(screen.getByRole("button", { name: /primary action/i }));
+    await user.click(screen.getByRole("button", { name: "Connect" }));
     await user.type(screen.getByLabelText(/public phone/i), "+1 555 123 4567");
     await user.type(screen.getByLabelText(/public email/i), "jane@example.com");
     await user.click(screen.getByLabelText(/allow call/i));
@@ -281,29 +319,38 @@ describe("PersonaSharingSettingsForm", () => {
       });
     });
 
-    expect(await screen.findByText(/sharing settings saved/i)).toBeInTheDocument();
-    expect(screen.queryByRole("combobox", { name: /primary action/i })).not.toBeInTheDocument();
+    expect(
+      await screen.findByText(/sharing settings saved/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("combobox", { name: /primary action/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("preserves smart card selections when switching modes repeatedly", async () => {
     const user = userEvent.setup();
 
-    render(React.createElement(PersonaSharingSettingsForm, { persona: personaFixture }));
+    render(
+      React.createElement(PersonaSharingSettingsForm, {
+        persona: personaFixture,
+      }),
+    );
 
     await user.click(screen.getByRole("button", { name: /customize/i }));
     await user.click(screen.getByRole("radio", { name: /^Smart Card/i }));
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: /primary action/i }),
-      "contact_me",
+    await user.click(screen.getByRole("button", { name: /primary action/i }));
+    await user.click(screen.getByRole("button", { name: "Contact" }));
+    await user.type(
+      screen.getByLabelText(/public whatsapp number/i),
+      "+1 555 999 0000",
     );
-    await user.type(screen.getByLabelText(/public whatsapp number/i), "+1 555 999 0000");
     await user.click(screen.getByLabelText(/allow whatsapp/i));
     await user.click(screen.getByRole("radio", { name: /^Controlled/i }));
     await user.click(screen.getByRole("radio", { name: /^Smart Card/i }));
 
-    expect(
-      screen.getByRole("combobox", { name: /primary action/i }),
-    ).toHaveValue("contact_me");
+    expect(screen.getByRole("button", { name: /primary action/i })).toHaveTextContent(
+      "Contact",
+    );
     expect(screen.getByLabelText(/public whatsapp number/i)).toHaveValue(
       "+1 555 999 0000",
     );
