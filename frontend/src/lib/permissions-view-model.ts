@@ -14,7 +14,7 @@ export interface PermissionControlViewModel extends PermissionControlMetadata {
   overrideEffect: PermissionEffect | null;
   /** True if the user has set an override for this control */
   isOverridden: boolean;
-  /** 
+  /**
    * True if an override exists, but system guardrails (risk, trust, etc.)
    * forced the effective state to be different from the requested override.
    */
@@ -23,12 +23,17 @@ export interface PermissionControlViewModel extends PermissionControlMetadata {
 
 export function buildPermissionViewModels(
   resolvedMap: ResolvedPermissionsMap | null,
-  overrides: PermissionOverride[]
+  overrides: PermissionOverride[],
 ): Record<PermissionCategory, PermissionControlViewModel[]> {
-  const grouped = {} as Record<PermissionCategory, PermissionControlViewModel[]>;
+  const grouped = {} as Record<
+    PermissionCategory,
+    PermissionControlViewModel[]
+  >;
 
   // Initialize all categories defined in the metadata
-  const categories = Array.from(new Set(PERMISSION_CONTROLS.map((c) => c.category))) as PermissionCategory[];
+  const categories = Array.from(
+    new Set(PERMISSION_CONTROLS.map((c) => c.category)),
+  ) as PermissionCategory[];
   categories.forEach((cat) => {
     grouped[cat] = [];
   });
@@ -43,15 +48,21 @@ export function buildPermissionViewModels(
   for (const control of PERMISSION_CONTROLS) {
     const overrideEffect = overrideMap.get(control.key) || null;
     const resolved = resolvedPermissions[control.key];
-    
-    // Fall back to the control's safe default if the backend map is missing this key
-    const effectiveEffect = resolved?.finalEffect ?? control.defaultEffect;
-    
+
+    // Fall back to the control's safe default if the backend map is missing this key.
+    // If the entire resolvedMap is null (unresolved), default to Deny to prevent
+    // temporarily showing "Allowed" while data is still loading or in an error state.
+    const effectiveEffect =
+      resolvedMap === null
+        ? PermissionEffect.Deny
+        : (resolved?.finalEffect ?? control.defaultEffect);
+
     const isOverridden = overrideEffect !== null;
-    
+
     // A mismatch occurs if the user requested a specific state but the system
     // resolved it to something else (e.g., requested "Allow", but system says "Blocked")
-    const hasGuardrailIntervention = isOverridden && overrideEffect !== effectiveEffect;
+    const hasGuardrailIntervention =
+      isOverridden && overrideEffect !== effectiveEffect;
 
     grouped[control.category].push({
       ...control,

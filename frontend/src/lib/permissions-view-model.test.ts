@@ -6,19 +6,18 @@ import type { ResolvedPermissionsMap } from "../types/connection";
 import type { PermissionOverride } from "../types/permissions";
 
 describe("buildPermissionViewModels", () => {
-  const getMockControl = (key: string) => PERMISSION_CONTROLS.find((c) => c.key === key)!;
+  const getMockControl = (key: string) =>
+    PERMISSION_CONTROLS.find((c) => c.key === key)!;
 
-  it("builds models with system defaults when no resolved map or overrides exist", () => {
-    const viewModels = buildPermissionViewModels(null, []);
-    
-    // Check messaging category
-    const msgModels = viewModels["Messaging"];
-    expect(msgModels).toBeDefined();
-    
-    const sendMsg = msgModels.find((m) => m.key === "msg.text.send")!;
+  it("builds models with safe deny defaults when no resolved map exists", () => {
+    const grouped = buildPermissionViewModels(null, []);
+    const messaging = grouped["Messaging"];
+    const sendMsg = messaging.find((c) => c.key === "msg.text.send")!;
+
     expect(sendMsg.isOverridden).toBe(false);
     expect(sendMsg.overrideEffect).toBeNull();
-    expect(sendMsg.effectiveEffect).toBe(getMockControl("msg.text.send").defaultEffect);
+    // Since resolvedMap is null, it defaults to safe Deny regardless of the metadata default.
+    expect(sendMsg.effectiveEffect).toBe(PermissionEffect.Deny);
     expect(sendMsg.hasGuardrailIntervention).toBe(false);
   });
 
@@ -33,8 +32,10 @@ describe("buildPermissionViewModels", () => {
     };
 
     const viewModels = buildPermissionViewModels(resolvedMap, []);
-    const sendMsg = viewModels["Messaging"].find((m) => m.key === "msg.text.send")!;
-    
+    const sendMsg = viewModels["Messaging"].find(
+      (m) => m.key === "msg.text.send",
+    )!;
+
     expect(sendMsg.isOverridden).toBe(false);
     expect(sendMsg.effectiveEffect).toBe(PermissionEffect.AllowWithLimits);
     expect(sendMsg.hasGuardrailIntervention).toBe(false);
@@ -50,12 +51,18 @@ describe("buildPermissionViewModels", () => {
       },
     };
     const overrides: PermissionOverride[] = [
-      { key: "msg.text.send", effect: PermissionEffect.Deny, createdAt: "2026-01-01T00:00:00Z" }
+      {
+        key: "msg.text.send",
+        effect: PermissionEffect.Deny,
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
     const viewModels = buildPermissionViewModels(resolvedMap, overrides);
-    const sendMsg = viewModels["Messaging"].find((m) => m.key === "msg.text.send")!;
-    
+    const sendMsg = viewModels["Messaging"].find(
+      (m) => m.key === "msg.text.send",
+    )!;
+
     expect(sendMsg.isOverridden).toBe(true);
     expect(sendMsg.overrideEffect).toBe(PermissionEffect.Deny);
     expect(sendMsg.effectiveEffect).toBe(PermissionEffect.Deny);
@@ -74,12 +81,18 @@ describe("buildPermissionViewModels", () => {
     };
     const overrides: PermissionOverride[] = [
       // But user requested allow
-      { key: "msg.text.send", effect: PermissionEffect.Allow, createdAt: "2026-01-01T00:00:00Z" }
+      {
+        key: "msg.text.send",
+        effect: PermissionEffect.Allow,
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
     const viewModels = buildPermissionViewModels(resolvedMap, overrides);
-    const sendMsg = viewModels["Messaging"].find((m) => m.key === "msg.text.send")!;
-    
+    const sendMsg = viewModels["Messaging"].find(
+      (m) => m.key === "msg.text.send",
+    )!;
+
     expect(sendMsg.isOverridden).toBe(true);
     expect(sendMsg.overrideEffect).toBe(PermissionEffect.Allow);
     expect(sendMsg.effectiveEffect).toBe(PermissionEffect.Deny);

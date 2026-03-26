@@ -468,15 +468,22 @@ export class IdentitiesService {
       updateConnectionStatusDto.status,
     );
 
-    return this.prismaService.identityConnection.update({
-      where: {
-        id: updateConnectionStatusDto.connectionId,
-      },
-      data: {
-        status: toPrismaConnectionStatus(nextStatus),
-      },
-      select: identityConnectionSelect,
-    });
+    const updatedConnection =
+      await this.prismaService.identityConnection.update({
+        where: {
+          id: updateConnectionStatusDto.connectionId,
+        },
+        data: {
+          status: toPrismaConnectionStatus(nextStatus),
+        },
+        select: identityConnectionSelect,
+      });
+
+    await this.invalidateCachesForConnection(
+      updateConnectionStatusDto.connectionId,
+    );
+
+    return updatedConnection;
   }
 
   async setPermissionOverride(

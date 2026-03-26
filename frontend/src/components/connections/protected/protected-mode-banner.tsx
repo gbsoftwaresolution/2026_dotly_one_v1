@@ -28,11 +28,11 @@ export function ProtectedModeBanner({
       </div>
       <div className="mt-4 flex-1 sm:mt-0">
         <h3 className="text-lg font-bold tracking-tight text-white">
-          Protected Mode On
+          Protected mode active
         </h3>
         <p className="mt-1 text-sm text-slate-300 leading-relaxed max-w-2xl">
           {summaryText ??
-            "This conversation uses stricter privacy controls. Exporting, resharing, and some AI actions may be limited. If a risky condition is detected, sensitive actions will be blocked."}
+            "This conversation uses stricter privacy controls. Sensitive actions remain unavailable until protected mode changes."}
         </p>
       </div>
       <div className="mt-4 sm:mt-0 sm:shrink-0">

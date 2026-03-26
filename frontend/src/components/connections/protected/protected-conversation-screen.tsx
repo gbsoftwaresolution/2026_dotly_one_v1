@@ -169,7 +169,7 @@ export function ProtectedConversationScreen({
                   effect={restrictions.exports.effect}
                   reasonText={getExplanationText(
                     restrictions.exports.key,
-                    "This action is restricted in protected mode to prevent sensitive data leakage.",
+                    "Restricted because protected mode is on.",
                   )}
                 >
                   <button className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50">
@@ -183,7 +183,7 @@ export function ProtectedConversationScreen({
                   effect={restrictions.exports.effect}
                   reasonText={getExplanationText(
                     restrictions.exports.key,
-                    "Downloading attachments is disabled in protected mode.",
+                    "Unavailable until protected mode changes.",
                   )}
                 >
                   <button className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50">
@@ -206,7 +206,7 @@ export function ProtectedConversationScreen({
             effect={restrictions.calls.effect}
             reasonText={getExplanationText(
               restrictions.calls.key,
-              "This call is blocked when safety conditions are not met.",
+              "Unavailable until protected mode changes.",
             )}
           >
             <button className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200">

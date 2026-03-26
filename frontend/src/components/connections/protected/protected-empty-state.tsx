@@ -7,8 +7,8 @@ interface ProtectedEmptyStateProps {
 }
 
 export function ProtectedEmptyState({
-  title = "This action is blocked",
-  description = "Safety conditions were not met.",
+  title = "Restricted because protected mode is on",
+  description = "Unavailable until protected mode changes.",
   type = "blocked",
 }: ProtectedEmptyStateProps) {
   const Icon =

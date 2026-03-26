@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { ShieldAlert, RefreshCw } from "lucide-react";
 
 import { ConnectionSummaryCard } from "@/components/connections/connection-summary-card";
 import { IdentitySummaryWidget } from "@/components/identities/identity-summary-widget";
@@ -41,31 +42,29 @@ export default function ConnectionsPage() {
     RelationshipType | typeof ALL_FILTER
   >(ALL_FILTER);
 
-  useEffect(() => {
-    async function loadConnections() {
-      if (!activeIdentity) {
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const data = await getIdentityConnections(activeIdentity.id);
-        setConnections(data);
-      } catch (loadError) {
-        setError(
-          loadError instanceof Error
-            ? loadError.message
-            : "We could not load your connections.",
-        );
-      } finally {
-        setIsLoading(false);
-      }
+  const loadConnections = useCallback(async () => {
+    if (!activeIdentity) {
+      return;
     }
 
-    void loadConnections();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const data = await getIdentityConnections(activeIdentity.id);
+      setConnections(data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load connections.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }, [activeIdentity]);
+
+  useEffect(() => {
+    void loadConnections();
+  }, [loadConnections]);
 
   const filteredConnections = useMemo(() => {
     return connections.filter((connection) => {
@@ -218,12 +217,25 @@ export default function ConnectionsPage() {
       </section>
 
       {isLoading ? (
-        <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-lg text-slate-600 shadow-sm">
-          Loading connections...
+        <div className="space-y-4">
+          <div className="h-24 w-full rounded-2xl bg-slate-200 animate-pulse" />
+          <div className="h-24 w-full rounded-2xl bg-slate-200 animate-pulse" />
+          <div className="h-24 w-full rounded-2xl bg-slate-200 animate-pulse" />
         </div>
       ) : error ? (
-        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-lg text-rose-800 shadow-sm">
-          {error}
+        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-center shadow-sm">
+          <ShieldAlert className="mx-auto h-12 w-12 text-rose-500 mb-4" />
+          <h2 className="text-xl font-bold text-rose-900 mb-2">
+            Failed to load connections
+          </h2>
+          <p className="text-rose-700 mb-6">{error}</p>
+          <button
+            onClick={() => void loadConnections()}
+            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 font-semibold text-white shadow-sm hover:bg-rose-700"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Try Again
+          </button>
         </div>
       ) : filteredConnections.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center shadow-sm">

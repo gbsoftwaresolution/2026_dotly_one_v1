@@ -31,9 +31,9 @@ export function ProtectedActionState({
   const isAllowed = effect === PermissionEffect.Allow;
 
   const defaultReason = isBlocked
-    ? "This action is restricted in protected mode."
+    ? "Restricted because protected mode is on."
     : isLimited
-      ? "This action is limited for privacy."
+      ? "Unavailable until protected mode changes."
       : "Allowed";
 
   const explanation = reasonText || defaultReason;

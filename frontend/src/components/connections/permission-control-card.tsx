@@ -9,6 +9,7 @@ interface PermissionControlCardProps {
   connectionId: string;
   vm: PermissionControlViewModel;
   isUpdating: boolean;
+  isRefreshing?: boolean;
   showSuccess?: boolean;
   error?: string;
   onChange: (key: string, newEffect: PermissionEffect) => void;
@@ -40,6 +41,7 @@ export function PermissionControlCard({
   connectionId,
   vm,
   isUpdating,
+  isRefreshing,
   showSuccess,
   error,
   onChange,
@@ -133,22 +135,29 @@ export function PermissionControlCard({
         {vm.overrideEffect &&
           vm.overrideEffect !== vm.effectiveEffect &&
           !isUpdating &&
+          !isRefreshing &&
           !error && (
             <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-amber-800 ring-1 ring-inset ring-amber-500/20">
               <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
               <div className="text-sm">
-                <span className="font-semibold block">Override Superseded</span>
-                Your preference is set to{" "}
+                <span className="font-semibold block">
+                  System safeguards still apply
+                </span>
+                Your preference was saved as{" "}
                 <strong>{getPermissionEffectLabel(vm.overrideEffect)}</strong>,
-                but the active policy enforces{" "}
-                <strong>{getPermissionEffectLabel(vm.effectiveEffect)}</strong>.
-                Use &quot;Explain Policy&quot; below to see why.
+                but this action remains{" "}
+                <strong>{getPermissionEffectLabel(vm.effectiveEffect)}</strong>{" "}
+                due to active safety rules.
               </div>
             </div>
           )}
       </div>
 
-      <PermissionExplainWidget connectionId={connectionId} vm={vm} />
+      <PermissionExplainWidget
+        connectionId={connectionId}
+        vm={vm}
+        isRefreshing={isRefreshing}
+      />
     </div>
   );
 }

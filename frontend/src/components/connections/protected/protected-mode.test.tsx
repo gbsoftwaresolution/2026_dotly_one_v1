@@ -63,7 +63,7 @@ describe("Protected Mode UX", () => {
           explanation={mockExplanation}
         />,
       );
-      expect(screen.getByText("Protected Mode On")).toBeInTheDocument();
+      expect(screen.getByText("Protected mode active")).toBeInTheDocument();
       expect(
         screen.getByText(/restricted by backend policy resolution/),
       ).toBeInTheDocument();
@@ -170,9 +170,11 @@ describe("Protected Mode UX", () => {
   describe("ProtectedEmptyState", () => {
     it("renders correctly with default props", () => {
       render(<ProtectedEmptyState />);
-      expect(screen.getByText("This action is blocked")).toBeInTheDocument();
       expect(
-        screen.getByText("Safety conditions were not met."),
+        screen.getByText("Restricted because protected mode is on"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Unavailable until protected mode changes."),
       ).toBeInTheDocument();
     });
 

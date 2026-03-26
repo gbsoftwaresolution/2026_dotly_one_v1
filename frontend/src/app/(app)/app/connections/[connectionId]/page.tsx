@@ -1,9 +1,9 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck, ShieldAlert, RefreshCw } from "lucide-react";
 
 import { PermissionControlsWidget } from "@/components/connections/permission-controls-widget";
 import {
@@ -44,40 +44,43 @@ export default function ConnectionDetailsPage({
   const [isOpeningConversation, setIsOpeningConversation] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      setIsLoading(true);
-      setError(null);
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-      try {
-        const [connectionData, permissionData, overridesData] =
-          await Promise.all([
-            getConnection(connectionId),
-            getResolvedPermissions(connectionId),
-            listPermissionOverrides(connectionId),
-          ]);
+    try {
+      const [connectionData, permissionData, overridesData] = await Promise.all(
+        [
+          getConnection(connectionId),
+          getResolvedPermissions(connectionId),
+          listPermissionOverrides(connectionId),
+        ],
+      );
 
-        setConnection(connectionData);
-        setPermissions(permissionData);
-        setOverrides(overridesData);
-      } catch (loadError) {
-        setError(
-          loadError instanceof Error
-            ? loadError.message
-            : "We could not load this connection.",
-        );
-      } finally {
-        setIsLoading(false);
-      }
+      setConnection(connectionData);
+      setPermissions(permissionData);
+      setOverrides(overridesData);
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "We could not load this connection.",
+      );
+    } finally {
+      setIsLoading(false);
     }
-
-    void loadData();
   }, [connectionId]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   if (isLoading) {
     return (
-      <div className="p-8 text-lg text-slate-600">
-        Loading connection details...
+      <div className="mx-auto max-w-6xl space-y-8 px-4 py-6 sm:px-5 animate-pulse">
+        <div className="h-48 w-full rounded-3xl bg-slate-200" />
+        <div className="h-40 w-full rounded-3xl bg-slate-200" />
+        <div className="h-96 w-full rounded-3xl bg-slate-200" />
       </div>
     );
   }
@@ -92,8 +95,21 @@ export default function ConnectionDetailsPage({
           <ArrowLeft className="h-5 w-5" />
           Back to connections
         </Link>
-        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-lg text-rose-800 shadow-sm">
-          {error ?? "This connection could not be found."}
+        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-center shadow-sm">
+          <ShieldAlert className="mx-auto h-12 w-12 text-rose-500 mb-4" />
+          <h2 className="text-xl font-bold text-rose-900 mb-2">
+            Failed to load connection
+          </h2>
+          <p className="text-rose-700 mb-6">
+            {error || "This connection could not be found."}
+          </p>
+          <button
+            onClick={() => void loadData()}
+            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 font-semibold text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Try Again
+          </button>
         </div>
       </div>
     );

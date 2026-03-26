@@ -586,6 +586,124 @@ describe("IdentitiesService", () => {
     assert.ok(connectionLookups > 3);
   });
 
+  it("cache invalidates after connection status update", async () => {
+    let connectionLookups = 0;
+    const service = new IdentitiesService({
+      identityConnection: {
+        findUnique: async () => {
+          connectionLookups += 1;
+          return {
+            id: "connection-1",
+            sourceIdentityId: "identity-1",
+            targetIdentityId: "identity-2",
+            connectionType: PrismaConnectionType.KNOWN,
+            relationshipType: PrismaRelationshipType.UNKNOWN,
+            trustState: PrismaTrustState.BASIC_VERIFIED,
+            status: PrismaConnectionStatus.ACTIVE,
+            createdByIdentityId: "identity-1",
+            note: null,
+            metadataJson: null,
+            createdAt: new Date("2026-03-26T10:00:00.000Z"),
+            updatedAt: new Date("2026-03-26T10:00:00.000Z"),
+            sourceIdentity: {
+              id: "identity-1",
+              displayName: "Alice",
+              handle: "alice",
+              identityType: PrismaIdentityType.PERSONAL,
+              verificationLevel: "basic",
+              status: "active",
+            },
+            targetIdentity: {
+              id: "identity-2",
+              displayName: "Bob",
+              handle: "bob",
+              identityType: PrismaIdentityType.PERSONAL,
+              verificationLevel: "basic",
+              status: "active",
+            },
+          };
+        },
+        update: async () => ({
+          id: "connection-1",
+          sourceIdentityId: "identity-1",
+          targetIdentityId: "identity-2",
+          connectionType: PrismaConnectionType.KNOWN,
+          relationshipType: PrismaRelationshipType.UNKNOWN,
+          trustState: PrismaTrustState.BASIC_VERIFIED,
+          status: PrismaConnectionStatus.RESTRICTED,
+          createdByIdentityId: "identity-1",
+          note: null,
+          metadataJson: null,
+          createdAt: new Date("2026-03-26T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-26T11:00:00.000Z"),
+          sourceIdentity: {
+            id: "identity-1",
+            displayName: "Alice",
+            handle: "alice",
+            identityType: PrismaIdentityType.PERSONAL,
+            verificationLevel: "basic",
+            status: "active",
+          },
+          targetIdentity: {
+            id: "identity-2",
+            displayName: "Bob",
+            handle: "bob",
+            identityType: PrismaIdentityType.PERSONAL,
+            verificationLevel: "basic",
+            status: "active",
+          },
+        }),
+      },
+      identity: {
+        findUnique: async ({ where }: any) => ({
+          id: where.id,
+          identityType: "PERSONAL",
+          updatedAt: new Date("2026-03-26T10:00:00.000Z"),
+          createdAt: new Date("2026-03-26T10:00:00.000Z"),
+        }),
+      },
+      connectionPolicyTemplate: {
+        findFirst: async () => ({
+          id: "template-1",
+          sourceIdentityType: "PERSONAL",
+          connectionType: "KNOWN",
+          templateKey: "personal.trusted",
+          displayName: "Personal Trusted",
+          description: null,
+          policyVersion: 1,
+          permissionsJson: CONNECTION_POLICY_TEMPLATE_SEEDS.find(
+            (template) => template.templateKey === "personal.trusted",
+          )?.permissions,
+          limitsJson: null,
+          isSystem: true,
+          isActive: true,
+          createdAt: new Date("2026-03-26T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-26T10:00:00.000Z"),
+        }),
+      },
+      connectionPermissionOverride: {
+        findMany: async () => [],
+      },
+      connectionPermissionSnapshot: {
+        findFirst: async () => null,
+      },
+    } as any);
+
+    await service.resolveConnectionPermissions({
+      connectionId: "connection-1",
+    });
+    await service.updateConnectionStatus({
+      connectionId: "connection-1",
+      status: ConnectionStatus.Restricted,
+    });
+    await service.resolveConnectionPermissions({
+      connectionId: "connection-1",
+      forceRefresh: true,
+    });
+
+    assert.ok(connectionLookups > 3);
+  });
+
   it("lists connections for an identity across both directions", async () => {
     let capturedWhere: Record<string, unknown> | null = null;
     const service = new IdentitiesService({

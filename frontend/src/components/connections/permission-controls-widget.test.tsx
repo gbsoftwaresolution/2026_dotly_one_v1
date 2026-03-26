@@ -67,7 +67,12 @@ describe("PermissionControlsWidget", () => {
     render(
       <PermissionControlsWidget
         connectionId={mockConnectionId}
-        initialPermissions={null}
+        initialPermissions={{
+          connectionId: mockConnectionId,
+          sourceIdentityId: "1",
+          targetIdentityId: "2",
+          permissions: {},
+        }}
         initialOverrides={[]}
       />,
     );
@@ -115,7 +120,12 @@ describe("PermissionControlsWidget", () => {
     render(
       <PermissionControlsWidget
         connectionId={mockConnectionId}
-        initialPermissions={null}
+        initialPermissions={{
+          connectionId: mockConnectionId,
+          sourceIdentityId: "1",
+          targetIdentityId: "2",
+          permissions: {},
+        }}
         initialOverrides={[]}
       />,
     );
@@ -201,6 +211,60 @@ describe("PermissionControlsWidget", () => {
     expect(
       await screen.findByText("Changes saved securely."),
     ).toBeInTheDocument();
-    expect(screen.getByText("Override Superseded")).toBeInTheDocument();
+    expect(
+      screen.getByText("System safeguards still apply"),
+    ).toBeInTheDocument();
+  });
+
+  it("displays a sync error and retry affordance when save succeeds but policy fetch fails", async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(updatePermissionOverride).mockResolvedValue({
+      key: "msg.text.send",
+      effect: PermissionEffect.Allow,
+      createdAt: "2026-03-26T12:00:00Z",
+    });
+
+    vi.mocked(refreshResolvedPermissions).mockRejectedValue(
+      new Error("Sync timeout"),
+    );
+
+    render(
+      <PermissionControlsWidget
+        connectionId={mockConnectionId}
+        initialPermissions={{
+          connectionId: mockConnectionId,
+          sourceIdentityId: "1",
+          targetIdentityId: "2",
+          permissions: {
+            "msg.text.send": { finalEffect: PermissionEffect.Deny },
+          },
+        }}
+        initialOverrides={[]}
+      />,
+    );
+
+    const messagingToggle = screen.getByRole("button", { name: /Messaging/i });
+    if (messagingToggle.getAttribute("aria-expanded") === "false") {
+      await user.click(messagingToggle);
+    }
+
+    const radioAllow = screen
+      .getAllByLabelText("Allow")
+      .find((r) => r.getAttribute("name") === "permission-msg.text.send");
+
+    await act(async () => {
+      if (radioAllow) {
+        fireEvent.click(radioAllow);
+      }
+    });
+
+    // Check error messaging appears
+    expect(
+      await screen.findByText(/failed to sync the latest policy/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Retry Sync/i }),
+    ).toBeInTheDocument();
   });
 });
