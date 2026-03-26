@@ -243,17 +243,20 @@ export default function SupportPage() {
       </div>
 
       <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8 px-4 sm:px-6">
-        <div className="premium-card rounded-[2.5rem] p-8 md:p-12 relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+        <div className="rounded-[2.5rem] md:rounded-[3rem] p-10 md:p-14 relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8 border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
           <div className="space-y-4 max-w-2xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-black/5 dark:border-white/10 bg-foreground/5 px-4 py-1.5 font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-foreground">
               <LifeBuoy className="h-3.5 w-3.5 text-accent" />
               Dotly support
             </span>
             <div className="space-y-4">
-              <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl leading-[1.1]">
+              <h1
+                className="text-4xl font-bold tracking-tighter text-foreground sm:text-[3.5rem] leading-[1.05]"
+                style={{ WebkitFontSmoothing: "antialiased" }}
+              >
                 Get help when something blocks the next step.
               </h1>
-              <p className="text-[17px] leading-relaxed text-muted font-medium max-w-[40ch]">
+              <p className="text-[19px] leading-relaxed text-muted font-medium max-w-[40ch]">
                 Send a support request directly from Dotly, or open an email
                 draft if you prefer to continue in your mail app.
               </p>
@@ -262,7 +265,7 @@ export default function SupportPage() {
 
           <a
             href={mailtoHref}
-            className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-foreground px-8 text-[15px] font-semibold text-background transition-transform hover:scale-[0.98] shadow-md tap-feedback w-full md:w-auto shrink-0"
+            className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-foreground px-8 text-[15px] font-semibold text-background transition-transform hover:scale-[0.98] shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.12)] tap-feedback w-full md:w-auto shrink-0"
           >
             <Mail className="h-4 w-4" />
             Email {supportEmail}
@@ -276,15 +279,15 @@ export default function SupportPage() {
             return (
               <article
                 key={section.title}
-                className="premium-card rounded-[2rem] p-8 flex flex-col"
+                className="rounded-[2.5rem] p-8 flex flex-col border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.02)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.1)]"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-foreground/5 ring-1 ring-black/5 dark:ring-white/10 mb-6">
-                  <Icon className="h-6 w-6 text-foreground" strokeWidth={1.5} />
+                <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-gradient-to-br from-black/5 dark:from-white/10 to-transparent shadow-inner ring-1 ring-black/5 dark:ring-white/10 mb-6">
+                  <Icon className="h-7 w-7 text-foreground" strokeWidth={1.5} />
                 </div>
-                <h2 className="text-xl font-semibold tracking-tight text-foreground mb-3">
+                <h2 className="text-[20px] font-bold tracking-tight text-foreground mb-3">
                   {section.title}
                 </h2>
-                <p className="text-[15px] leading-relaxed text-muted font-medium">
+                <p className="text-[16px] leading-relaxed text-muted font-medium">
                   {section.description}
                 </p>
               </article>
@@ -294,12 +297,12 @@ export default function SupportPage() {
 
         <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr] relative z-10">
           <form
-            className="premium-card rounded-[2.5rem] p-8 md:p-12"
+            className="rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-14 border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]"
             onSubmit={(event) => void handleSubmit(event)}
           >
             <div className="space-y-8">
               <div className="space-y-3">
-                <h2 className="text-3xl font-semibold tracking-tight text-foreground">
+                <h2 className="text-3xl font-bold tracking-tight text-foreground">
                   Start your support request
                 </h2>
                 <p className="text-[16px] leading-relaxed text-muted font-medium">
@@ -468,9 +471,9 @@ export default function SupportPage() {
           </form>
 
           <div className="flex flex-col gap-6">
-            <article className="premium-card rounded-[2.5rem] p-8 md:p-10">
+            <article className="rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-12 border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
               <div className="space-y-6">
-                <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                <h2 className="text-[24px] font-bold tracking-tighter text-foreground">
                   What to include
                 </h2>
                 <div className="grid gap-3">
@@ -490,9 +493,9 @@ export default function SupportPage() {
               </div>
             </article>
 
-            <article className="premium-card rounded-[2.5rem] p-8 md:p-10">
+            <article className="rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-12 border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
               <div className="space-y-6">
-                <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                <h2 className="text-[24px] font-bold tracking-tighter text-foreground">
                   Helpful links
                 </h2>
                 <div className="flex flex-col gap-3">

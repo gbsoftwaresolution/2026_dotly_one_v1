@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
     <>
       {/* Ambient Background Glow matching Home Page */}
       <div className="fixed inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden">
-        <div className="absolute top-[-10%] h-[600px] w-[600px] rounded-full bg-accent/5 blur-[120px] mix-blend-normal opacity-50" />
+        <div className="absolute top-[-10%] h-[1000px] w-[1000px] rounded-full bg-accent/5 blur-[150px] mix-blend-normal opacity-40" />
       </div>
 
       <AuthPageShell
@@ -63,7 +63,7 @@ export default function ForgotPasswordPage() {
         description="Enter your email address and Dotly will send a one-time reset link if the account exists."
       >
         <form
-          className="premium-card space-y-6 rounded-[2rem] p-8 md:p-10 relative z-10"
+          className="space-y-6 rounded-[2.5rem] p-8 md:p-12 relative z-10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl"
           onSubmit={handleSubmit}
         >
           <div className="space-y-2">

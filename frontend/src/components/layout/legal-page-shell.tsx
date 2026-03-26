@@ -50,7 +50,7 @@ export function LegalPageShell({
             {eyebrow}
           </motion.span>
 
-          <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-foreground text-balance mb-6 leading-[1.1]">
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tighter text-foreground text-balance mb-6 leading-[1.1]">
             {title}
           </h1>
           <p className="text-[17px] leading-relaxed text-muted font-medium text-balance max-w-[50ch] mb-8">
@@ -96,10 +96,10 @@ export function LegalPageShell({
                 },
               }}
               key={section.title}
-              className="premium-card rounded-[2rem] p-8 md:p-12 transition-transform duration-500 hover:scale-[1.01]"
+              className="rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-12 border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-transform duration-500 hover:scale-[1.01]"
             >
               <div className="relative space-y-4">
-                <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-6">
+                <h2 className="text-2xl font-bold tracking-tight text-foreground mb-6">
                   {section.title}
                 </h2>
                 <div className="space-y-5 text-[16px] leading-relaxed text-muted font-medium prose-p:mb-3 last:prose-p:mb-0 prose-a:text-foreground prose-a:font-semibold prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-accent prose-a:transition-colors">

@@ -1,4 +1,6 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable, Optional } from "@nestjs/common";
+
+export const PERMISSION_AUDIT_MAX_EVENTS = "PERMISSION_AUDIT_MAX_EVENTS";
 
 export enum PermissionAuditEventType {
   ResolutionComputed = "RESOLUTION_COMPUTED",
@@ -52,7 +54,11 @@ export class PermissionAuditService {
 
   private sequence = 0;
 
-  constructor(private readonly maxEvents = 500) {}
+  constructor(
+    @Optional()
+    @Inject(PERMISSION_AUDIT_MAX_EVENTS)
+    private readonly maxEvents = 500,
+  ) {}
 
   async recordEvent(
     input: PermissionAuditEventRecordInput,

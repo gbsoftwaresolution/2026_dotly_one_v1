@@ -82,8 +82,8 @@ export default function ResetPasswordPage() {
 
   const BackgroundGlow = () => (
     <div className="fixed inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden">
-      <div className="absolute top-[0%] right-[-10%] h-[800px] w-[800px] rounded-full bg-accent/5 blur-[130px] mix-blend-normal opacity-60" />
-      <div className="absolute bottom-[-10%] left-[-10%] h-[600px] w-[600px] rounded-full bg-accent/5 blur-[120px] mix-blend-normal opacity-40" />
+      <div className="absolute top-[-20%] right-[-10%] h-[1000px] w-[1000px] rounded-full bg-accent/5 blur-[150px] mix-blend-normal opacity-40" />
+      <div className="absolute bottom-[-10%] left-[-10%] h-[800px] w-[800px] rounded-full bg-accent/5 blur-[120px] mix-blend-normal opacity-30" />
     </div>
   );
 
@@ -95,7 +95,7 @@ export default function ResetPasswordPage() {
           title="Invalid link."
           description="This reset link is missing what it needs to continue. Request a new one and try again."
         >
-          <div className="premium-card rounded-[2.5rem] p-8 md:p-12 relative z-10 text-center shadow-[0_12px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_40px_-10px_rgba(0,0,0,0.5)]">
+          <div className="rounded-[2.5rem] p-8 md:p-12 relative z-10 text-center shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl">
             <Link
               href={routes.public.forgotPassword}
               className="inline-flex h-14 items-center rounded-full bg-foreground px-8 text-[15px] font-semibold text-background transition-transform hover:scale-[0.98] shadow-md tap-feedback"
@@ -119,7 +119,7 @@ export default function ResetPasswordPage() {
             "This reset link is no longer valid. Request a fresh one to keep going."
           }
         >
-          <div className="premium-card rounded-[2.5rem] p-8 md:p-12 relative z-10 text-center shadow-[0_12px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_40px_-10px_rgba(0,0,0,0.5)]">
+          <div className="rounded-[2.5rem] p-8 md:p-12 relative z-10 text-center shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl">
             <Link
               href={routes.public.forgotPassword}
               className="inline-flex h-14 items-center rounded-full bg-foreground px-8 text-[15px] font-semibold text-background transition-transform hover:scale-[0.98] shadow-md tap-feedback"
@@ -140,7 +140,7 @@ export default function ResetPasswordPage() {
         description="This reset link is single-use and signs every device out when the reset completes."
       >
         <form
-          className="premium-card space-y-6 rounded-[2rem] md:rounded-[2.5rem] p-6 sm:p-8 md:p-12 relative z-10 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_40px_-10px_rgba(0,0,0,0.5)]"
+          className="space-y-6 rounded-[2.5rem] md:rounded-[3rem] p-8 sm:p-10 md:p-14 relative z-10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl"
           onSubmit={handleSubmit}
         >
           <div className="flex justify-center mb-6">

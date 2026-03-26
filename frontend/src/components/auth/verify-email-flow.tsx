@@ -135,11 +135,11 @@ export function VerifyEmailFlow({
   return (
     <>
       <div className="fixed inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden">
-        <div className="absolute top-[-10%] h-[600px] w-[600px] rounded-full bg-accent/5 blur-[120px] mix-blend-normal opacity-50" />
+        <div className="absolute top-[-20%] right-[-10%] h-[1000px] w-[1000px] rounded-full bg-accent/5 blur-[150px] mix-blend-normal opacity-40" />
       </div>
 
       <AuthPageShell title={title} description={description}>
-        <div className="premium-card rounded-[2rem] p-8 md:p-10 relative z-10">
+        <div className="rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-14 relative z-10 border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
           {status === "verifying" ? (
             <div className="space-y-4 text-center py-6">
               <div className="mx-auto h-10 w-10 animate-spin rounded-full border-[3px] border-current border-t-transparent text-accent" />
