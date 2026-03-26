@@ -2,6 +2,7 @@ import type { ConnectionType } from "../../common/enums/connection-type.enum";
 import type { IdentityType } from "../../common/enums/identity-type.enum";
 import type { PermissionEffect } from "../../common/enums/permission-effect.enum";
 import type { TrustState } from "../../common/enums/trust-state.enum";
+import type { RiskSeverity, RiskSignal, RiskSignalRecord } from "./risk-engine";
 
 import type { PermissionKey } from "./permission-keys";
 import { PERMISSION_KEYS } from "./permission-keys";
@@ -140,17 +141,26 @@ export type PermissionMergeReasonCode =
   | "OVERRIDE_LIMITS_MERGED"
   | "OVERRIDE_BLOCKED_BY_GUARDRAIL"
   | "OVERRIDE_SKIPPED_HARD_DENY"
-  | "OVERRIDE_PRESERVED_SYSTEM_PERMISSION";
+  | "OVERRIDE_PRESERVED_SYSTEM_PERMISSION"
+  | "RISK_NO_CHANGE"
+  | "RISK_RESTRICTED"
+  | "RISK_BLOCKED"
+  | "RISK_MULTI_SIGNAL_RESTRICTED"
+  | "RISK_PRESERVED_SYSTEM_PERMISSION";
 
 export interface PermissionResolutionStageTrace {
   baseEffect: PermissionEffect;
   adjustmentEffect: PermissionEffect | null;
   postTrustEffect: PermissionEffect;
   manualOverrideEffect: PermissionEffect | null;
+  preRiskEffect: PermissionEffect;
+  riskAdjustmentEffect: PermissionEffect | null;
   finalEffect: PermissionEffect;
   mergeMode: MergeMode;
   overrideApplied: boolean;
   guardrailApplied: boolean;
+  riskApplied: boolean;
+  riskReasons: RiskSignal[];
   reasonCode: PermissionMergeReasonCode;
 }
 
@@ -275,6 +285,15 @@ export interface ConnectionPermissionResolutionSummary {
   overriddenKeys: PermissionKey[];
 }
 
+export interface RiskEvaluationSummary {
+  appliedSignals: RiskSignal[];
+  highestSeverity: RiskSeverity | null;
+  blockedProtectedMode: boolean;
+  blockedPayments: boolean;
+  blockedCalls: boolean;
+  aiRestricted: boolean;
+}
+
 export interface ResolvedPermissionValue extends PermissionTemplateValue {
   postTrustEffect: PermissionEffect;
   manualOverrideEffect: PermissionEffect | null;
@@ -299,6 +318,7 @@ export interface ResolvedConnectionPermissions {
     policyVersion: number;
   };
   overridesSummary: ConnectionPermissionResolutionSummary;
+  riskSummary: RiskEvaluationSummary;
   permissions: ResolvedPermissionMap;
   trace: PermissionMergeTrace;
   resolvedAt: Date;
@@ -310,4 +330,25 @@ export interface ConnectionPermissionSnapshotRecord {
   policyVersion: number;
   permissionsJson: ConnectionPolicyTemplatePermissions;
   computedAt: Date;
+}
+
+export interface PreviewPermissionsWithRiskResult {
+  sourceIdentityType: IdentityType | null;
+  connectionType: ConnectionType;
+  trustState: TrustState;
+  template: Pick<
+    ConnectionPolicyTemplateRecord,
+    | "id"
+    | "sourceIdentityType"
+    | "connectionType"
+    | "templateKey"
+    | "displayName"
+    | "description"
+    | "policyVersion"
+  >;
+  overridesSummary: ConnectionPermissionResolutionSummary;
+  riskSummary: RiskEvaluationSummary;
+  finalPermissions: ConnectionPolicyTemplatePermissions;
+  mergeTrace: PermissionMergeTrace;
+  previewRiskSignals: RiskSignalRecord[];
 }

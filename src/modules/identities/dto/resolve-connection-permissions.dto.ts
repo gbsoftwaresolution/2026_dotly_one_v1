@@ -1,4 +1,21 @@
-import { IsBoolean, IsOptional, IsUUID } from "class-validator";
+import { Type } from "class-transformer";
+import {
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsUUID,
+  ValidateNested,
+} from "class-validator";
+
+import { RiskSeverity, RiskSignal } from "../risk-engine";
+
+class ResolveRiskSignalRecordDto {
+  @IsEnum(RiskSignal)
+  signal!: RiskSignal;
+
+  @IsEnum(RiskSeverity)
+  severity!: RiskSeverity;
+}
 
 export class ResolveConnectionPermissionsDto {
   @IsUUID()
@@ -7,4 +24,13 @@ export class ResolveConnectionPermissionsDto {
   @IsOptional()
   @IsBoolean()
   persistSnapshot?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  applyRiskOverlay?: boolean;
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => ResolveRiskSignalRecordDto)
+  previewRiskSignals?: ResolveRiskSignalRecordDto[];
 }

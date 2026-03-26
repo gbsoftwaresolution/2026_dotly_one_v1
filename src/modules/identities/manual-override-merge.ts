@@ -226,6 +226,9 @@ function createOverrideTraceEntry(
       existingTrace?.finalEffect ??
       finalEffect,
     manualOverrideEffect: manualOverrideEffect ?? null,
+    preRiskEffect:
+      existingTrace?.preRiskEffect ?? existingTrace?.finalEffect ?? finalEffect,
+    riskAdjustmentEffect: null,
     finalEffect,
     mergeMode: existingTrace?.mergeMode ?? "RESTRICTIVE",
     overrideApplied,
@@ -233,6 +236,8 @@ function createOverrideTraceEntry(
       reasonCode === "OVERRIDE_BLOCKED_BY_GUARDRAIL" ||
       reasonCode === "OVERRIDE_SKIPPED_HARD_DENY" ||
       reasonCode === "OVERRIDE_PRESERVED_SYSTEM_PERMISSION",
+    riskApplied: false,
+    riskReasons: [],
     reasonCode,
   };
 }

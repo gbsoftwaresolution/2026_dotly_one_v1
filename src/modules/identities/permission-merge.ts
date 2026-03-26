@@ -198,10 +198,14 @@ function createTraceEntry(
     adjustmentEffect,
     postTrustEffect: finalEffect,
     manualOverrideEffect: null,
+    preRiskEffect: finalEffect,
+    riskAdjustmentEffect: null,
     finalEffect,
     mergeMode,
     overrideApplied: false,
     guardrailApplied: false,
+    riskApplied: false,
+    riskReasons: [],
     reasonCode,
   };
 }

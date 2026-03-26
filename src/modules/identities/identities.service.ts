@@ -32,24 +32,26 @@ import { GetConnectionPolicyTemplateDto } from "./dto/get-connection-policy-temp
 import { GetLatestPermissionSnapshotDto } from "./dto/get-latest-permission-snapshot.dto";
 import { ListConnectionsForIdentityDto } from "./dto/list-connections-for-identity.dto";
 import { ListPermissionOverridesForConnectionDto } from "./dto/list-permission-overrides-for-connection.dto";
-import { PreviewResolvedPermissionsForConnectionDto } from "./dto/preview-resolved-permissions-for-connection.dto";
+import { PreviewPermissionsWithRiskDto } from "./dto/preview-permissions-with-risk.dto";
 import { PreviewPermissionsWithTrustStateDto } from "./dto/preview-permissions-with-trust-state.dto";
+import { PreviewResolvedPermissionsForConnectionDto } from "./dto/preview-resolved-permissions-for-connection.dto";
 import { ResolveConnectionPermissionsDto } from "./dto/resolve-connection-permissions.dto";
 import { SetPermissionOverrideDto } from "./dto/set-permission-override.dto";
 import { UpdateConnectionStatusDto } from "./dto/update-connection-status.dto";
 import { UpdateConnectionTypeDto } from "./dto/update-connection-type.dto";
 import { UpdateTrustStateDto } from "./dto/update-trust-state.dto";
 import type {
+  ConnectionPermissionOverrideRecord,
   ConnectionPermissionResolutionSummary,
   ConnectionPermissionSnapshotRecord,
-  ConnectionPermissionOverrideRecord,
   ConnectionPolicyTemplateLimits,
   ConnectionPolicyTemplatePermissions,
   ConnectionPolicyTemplateRecord,
   ConnectionPolicyTemplateSeedDefinition,
   ManualOverrideMap,
-  PreviewResolvedPermissionsForConnectionResult,
+  PreviewPermissionsWithRiskResult,
   PreviewPermissionsWithTrustStateResult,
+  PreviewResolvedPermissionsForConnectionResult,
   ResolvedConnectionPermissions,
   ResolvedPermissionMap,
   TrustStateAdjustmentDefinition,
@@ -59,6 +61,12 @@ import {
   applyTrustStateAdjustment,
   getTrustStateAdjustment as getTrustStateAdjustmentDefinition,
 } from "./permission-merge";
+import {
+  applyRiskOverlay,
+  createEmptyRiskSummary,
+  deriveRiskSignalsFromTrustState,
+  type RiskSignalRecord,
+} from "./risk-engine";
 import {
   CONNECTION_POLICY_TEMPLATE_SEEDS,
   validateTemplatePermissions,
@@ -358,7 +366,6 @@ export class IdentitiesService {
       sourceIdentityType: previewDto.sourceIdentityType ?? null,
       connectionType: previewDto.connectionType,
     });
-
     const trustAdjustedPermissions = applyTrustStateAdjustment(
       template.permissionsJson,
       previewDto.trustState,
@@ -452,6 +459,10 @@ export class IdentitiesService {
     const resolveDto = normalizeResolveConnectionPermissionsInput(resolveInput);
     const resolutionCore = await this.resolveConnectionPermissionsCore(
       resolveDto.connectionId,
+      {
+        applyRiskOverlay: resolveDto.applyRiskOverlay,
+        previewRiskSignals: resolveDto.previewRiskSignals,
+      },
     );
 
     if (resolveDto.persistSnapshot === true) {
@@ -462,6 +473,70 @@ export class IdentitiesService {
     }
 
     return resolutionCore;
+  }
+
+  async previewPermissionsWithRisk(
+    previewDto: PreviewPermissionsWithRiskDto,
+  ): Promise<PreviewPermissionsWithRiskResult> {
+    const template = await this.getConnectionPolicyTemplate({
+      sourceIdentityType: previewDto.sourceIdentityType ?? null,
+      connectionType: previewDto.connectionType,
+    });
+    const trustAdjustedPermissions = applyTrustStateAdjustment(
+      template.permissionsJson,
+      previewDto.trustState,
+    );
+    const overridesByPermissionKey = mapManualOverridesFromPreview(
+      previewDto.manualOverrides,
+    );
+    const overrideAdjustedPermissions =
+      this.applyOverridePreviewToPermissionSet(
+        trustAdjustedPermissions.mergedPermissions,
+        overridesByPermissionKey,
+        {
+          trustState: previewDto.trustState,
+          templateKey: template.templateKey,
+          mergeTrace: trustAdjustedPermissions.mergeTrace,
+        },
+      );
+    const mergedRiskSignals = mergeRiskSignals(
+      deriveRiskSignalsFromTrustState(previewDto.trustState),
+      previewDto.previewRiskSignals ?? [],
+    );
+    const riskAdjustedPermissions =
+      previewDto.applyRiskOverlay === false
+        ? {
+            mergedPermissions: overrideAdjustedPermissions.mergedPermissions,
+            mergeTrace: overrideAdjustedPermissions.mergeTrace,
+            riskSummary: createEmptyRiskSummary(),
+          }
+        : applyRiskOverlay(
+            overrideAdjustedPermissions.mergedPermissions,
+            mergedRiskSignals,
+            {
+              mergeTrace: overrideAdjustedPermissions.mergeTrace,
+            },
+          );
+
+    return {
+      sourceIdentityType: previewDto.sourceIdentityType ?? null,
+      connectionType: previewDto.connectionType,
+      trustState: previewDto.trustState,
+      template: {
+        id: template.id,
+        sourceIdentityType: template.sourceIdentityType,
+        connectionType: template.connectionType,
+        templateKey: template.templateKey,
+        displayName: template.displayName,
+        description: template.description,
+        policyVersion: template.policyVersion,
+      },
+      overridesSummary: createOverrideSummaryFromMap(overridesByPermissionKey),
+      riskSummary: riskAdjustedPermissions.riskSummary,
+      finalPermissions: riskAdjustedPermissions.mergedPermissions,
+      mergeTrace: riskAdjustedPermissions.mergeTrace,
+      previewRiskSignals: mergedRiskSignals,
+    };
   }
 
   async persistResolvedPermissionSnapshot(
@@ -529,6 +604,10 @@ export class IdentitiesService {
 
   private async resolveConnectionPermissionsCore(
     connectionId: string,
+    options?: {
+      applyRiskOverlay?: boolean;
+      previewRiskSignals?: RiskSignalRecord[];
+    },
   ): Promise<ResolvedConnectionPermissions> {
     const connection = await this.requireConnection(connectionId);
     const sourceIdentity = await this.prismaService.identity.findUnique({
@@ -575,6 +654,24 @@ export class IdentitiesService {
           mergeTrace: trustAdjustedPermissions.mergeTrace,
         },
       );
+    const mergedRiskSignals = mergeRiskSignals(
+      deriveRiskSignalsFromTrustState(resolvedTrustState),
+      options?.previewRiskSignals ?? [],
+    );
+    const riskAdjustedPermissions =
+      options?.applyRiskOverlay === false
+        ? {
+            mergedPermissions: overrideAdjustedPermissions.mergedPermissions,
+            mergeTrace: overrideAdjustedPermissions.mergeTrace,
+            riskSummary: createEmptyRiskSummary(),
+          }
+        : applyRiskOverlay(
+            overrideAdjustedPermissions.mergedPermissions,
+            mergedRiskSignals,
+            {
+              mergeTrace: overrideAdjustedPermissions.mergeTrace,
+            },
+          );
 
     return {
       connectionId: connection.id,
@@ -589,11 +686,12 @@ export class IdentitiesService {
         policyVersion: template.policyVersion,
       },
       overridesSummary: createOverrideSummary(overrideItems),
+      riskSummary: riskAdjustedPermissions.riskSummary,
       permissions: toResolvedPermissionMap(
-        overrideAdjustedPermissions.mergedPermissions,
-        overrideAdjustedPermissions.mergeTrace,
+        riskAdjustedPermissions.mergedPermissions,
+        riskAdjustedPermissions.mergeTrace,
       ),
-      trace: sortTraceEntries(overrideAdjustedPermissions.mergeTrace),
+      trace: sortTraceEntries(riskAdjustedPermissions.mergeTrace),
       resolvedAt: new Date(),
     };
   }
@@ -973,6 +1071,79 @@ function createOverrideSummary(
       ...overrides.map((override) => override.permissionKey),
     ].sort(),
   };
+}
+
+function createOverrideSummaryFromMap(
+  overrides: ManualOverrideMap,
+): ConnectionPermissionResolutionSummary {
+  const overrideKeys = Object.keys(
+    overrides,
+  ).sort() as ConnectionPermissionResolutionSummary["overriddenKeys"];
+
+  return {
+    count: overrideKeys.length,
+    overriddenKeys: overrideKeys,
+  };
+}
+
+function mapManualOverridesFromPreview(
+  manualOverrides: PreviewPermissionsWithRiskDto["manualOverrides"],
+): ManualOverrideMap {
+  return (manualOverrides ?? []).reduce<ManualOverrideMap>(
+    (accumulator, override, index) => {
+      accumulator[override.permissionKey] = {
+        permissionKey: override.permissionKey,
+        effect: override.effect,
+        limits: null,
+        reason: "preview override",
+        createdAt: new Date(1000 + index),
+        createdByIdentityId: "preview",
+      };
+
+      return accumulator;
+    },
+    {},
+  );
+}
+
+function mergeRiskSignals(
+  implicitSignals: RiskSignalRecord[],
+  explicitSignals: RiskSignalRecord[],
+): RiskSignalRecord[] {
+  const mergedSignals = [...implicitSignals, ...explicitSignals];
+  const deduplicatedSignals = new Map<string, RiskSignalRecord>();
+
+  for (const signal of mergedSignals) {
+    const existingSignal = deduplicatedSignals.get(signal.signal);
+
+    if (
+      !existingSignal ||
+      riskSeverityRank(signal.severity) >
+        riskSeverityRank(existingSignal.severity)
+    ) {
+      deduplicatedSignals.set(signal.signal, signal);
+    }
+  }
+
+  return [...deduplicatedSignals.values()].sort(
+    (left, right) =>
+      riskSeverityRank(right.severity) - riskSeverityRank(left.severity),
+  );
+}
+
+function riskSeverityRank(severity: RiskSignalRecord["severity"]): number {
+  switch (severity) {
+    case "LOW":
+      return 0;
+    case "MEDIUM":
+      return 1;
+    case "HIGH":
+      return 2;
+    case "CRITICAL":
+      return 3;
+  }
+
+  throw new Error("Unsupported risk severity");
 }
 
 function toResolvedPermissionMap(
