@@ -17,7 +17,6 @@ import {
 import type {
   ConnectionPolicyTemplate,
   Identity,
-  IdentityConnection,
 } from "../../generated/prisma/client";
 
 import { ConnectionStatus } from "../../common/enums/connection-status.enum";
@@ -39,9 +38,14 @@ import { GetConversationByIdDto } from "./dto/get-conversation-by-id.dto";
 import { GetConnectionPolicyTemplateDto } from "./dto/get-connection-policy-template.dto";
 import { GetOrCreateDirectConversationDto } from "./dto/get-or-create-direct-conversation.dto";
 import { GetLatestPermissionSnapshotDto } from "./dto/get-latest-permission-snapshot.dto";
+import { ExplainConversationPermissionContextDto } from "./dto/explain-conversation-permission-context.dto";
+import { ExplainResolvedPermissionDto } from "./dto/explain-resolved-permission.dto";
+import { ExplainResolvedPermissionsDto } from "./dto/explain-resolved-permissions.dto";
+import { DiffCurrentPermissionsAgainstSnapshotDto } from "./dto/diff-current-permissions-against-snapshot.dto";
 import { ListConnectionsForIdentityDto } from "./dto/list-connections-for-identity.dto";
 import { ListConversationsForIdentityDto } from "./dto/list-conversations-for-identity.dto";
 import { ListContentAccessRulesForContentDto } from "./dto/list-content-access-rules-for-content.dto";
+import { ListPermissionAuditEventsDto } from "./dto/list-permission-audit-events.dto";
 import { ListPermissionOverridesForConnectionDto } from "./dto/list-permission-overrides-for-connection.dto";
 import { PreviewContentPermissionsDto } from "./dto/preview-content-permissions.dto";
 import { PreviewPermissionsWithIdentityBehaviorDto } from "./dto/preview-permissions-with-identity-behavior.dto";
@@ -97,6 +101,21 @@ import {
   RecordPolicy,
   ScreenshotPolicy,
 } from "./identity.types";
+import {
+  PermissionDebugVerbosity,
+  diffResolvedPermissions,
+  explainResolvedPermission as buildResolvedPermissionExplanation,
+  explainResolvedPermissions as buildResolvedPermissionsExplanation,
+  type PermissionDebugSummary,
+  type PermissionDiffResult,
+  type PermissionExplainResult,
+} from "./permission-debug";
+import {
+  PermissionAuditEventType,
+  PermissionAuditService,
+  type PermissionAuditEvent,
+  type PermissionAuditEventRecordInput,
+} from "./permission-audit";
 import {
   deriveContentPermissionSubset,
   deriveContentPermissionSubsetFromFinalPermissions,
@@ -202,7 +221,10 @@ export class IdentitiesService {
 
   private readonly conversationContextCache = new PermissionCacheStore();
 
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly permissionAuditService: PermissionAuditService = new PermissionAuditService(),
+  ) {}
 
   async createIdentity(
     createIdentityDto: CreateIdentityDto,
@@ -792,10 +814,154 @@ export class IdentitiesService {
     };
   }
 
+  async explainResolvedPermission(
+    explainDto: ExplainResolvedPermissionDto,
+  ): Promise<PermissionExplainResult> {
+    const resolved = await this.resolveConnectionPermissions({
+      connectionId: explainDto.connectionId,
+      applyRiskOverlay: explainDto.applyRiskOverlay,
+      forceRefresh: explainDto.forceRefresh,
+      previewRiskSignals: explainDto.previewRiskSignals,
+      persistSnapshot: false,
+    });
+
+    return buildResolvedPermissionExplanation(
+      explainDto.permissionKey,
+      resolved.permissions[explainDto.permissionKey],
+      {
+        connectionId: resolved.connectionId,
+        verbosity: explainDto.verbosity ?? PermissionDebugVerbosity.Basic,
+      },
+    );
+  }
+
+  async explainResolvedPermissions(
+    explainDto: ExplainResolvedPermissionsDto,
+  ): Promise<PermissionDebugSummary> {
+    const cacheInfo = await this.inspectResolutionCacheInfo(explainDto);
+    const resolved = await this.resolveConnectionPermissions({
+      connectionId: explainDto.connectionId,
+      applyRiskOverlay: explainDto.applyRiskOverlay,
+      forceRefresh: explainDto.forceRefresh,
+      preferCache: explainDto.preferCache,
+      preferSnapshot: explainDto.preferSnapshot,
+      previewRiskSignals: explainDto.previewRiskSignals,
+      persistSnapshot: false,
+    });
+
+    return buildResolvedPermissionsExplanation(resolved, {
+      verbosity: explainDto.verbosity ?? PermissionDebugVerbosity.Basic,
+      cacheInfo,
+    });
+  }
+
+  async diffCurrentPermissionsAgainstSnapshot(
+    diffDto: DiffCurrentPermissionsAgainstSnapshotDto,
+  ): Promise<
+    | {
+        status: "NO_SNAPSHOT";
+        connectionId: string;
+        summaryText: string;
+      }
+    | {
+        status: "DIFF_COMPUTED";
+        connectionId: string;
+        snapshotId: string;
+        snapshotComputedAt: Date;
+        diff: PermissionDiffResult;
+        summaryText: string;
+      }
+  > {
+    const snapshot = await this.getLatestPermissionSnapshot({
+      connectionId: diffDto.connectionId,
+    });
+
+    if (!snapshot) {
+      return {
+        status: "NO_SNAPSHOT",
+        connectionId: diffDto.connectionId,
+        summaryText: `No stored permission snapshot exists for connection ${diffDto.connectionId}.`,
+      };
+    }
+
+    const current = await this.resolveConnectionPermissions({
+      connectionId: diffDto.connectionId,
+      applyRiskOverlay: diffDto.applyRiskOverlay,
+      forceRefresh: diffDto.forceRefresh,
+      persistSnapshot: false,
+    });
+    const diff = diffResolvedPermissions(snapshot.permissionsJson, current);
+
+    return {
+      status: "DIFF_COMPUTED",
+      connectionId: diffDto.connectionId,
+      snapshotId: snapshot.id,
+      snapshotComputedAt: snapshot.computedAt,
+      diff,
+      summaryText: diff.explanationText,
+    };
+  }
+
+  async listPermissionAuditEvents(
+    filter: ListPermissionAuditEventsDto,
+  ): Promise<PermissionAuditEvent[]> {
+    return this.permissionAuditService.listEvents(filter);
+  }
+
+  async recordPermissionAuditEvent(
+    input: PermissionAuditEventRecordInput,
+  ): Promise<PermissionAuditEvent | null> {
+    try {
+      return await this.permissionAuditService.recordEvent(input);
+    } catch {
+      return null;
+    }
+  }
+
+  async safeRecordPermissionAuditEvent(
+    input: PermissionAuditEventRecordInput,
+  ): Promise<void> {
+    try {
+      await this.recordPermissionAuditEvent(input);
+    } catch {
+      // Ignore audit failures so core permission flows stay unchanged.
+    }
+  }
+
+  async explainConversationPermissionContext(
+    explainDto: ExplainConversationPermissionContextDto,
+  ) {
+    const context = await this.resolveConversationContext({
+      conversationId: explainDto.conversationId,
+    });
+
+    return {
+      conversationId: context.conversation.conversationId,
+      connectionId: context.conversation.connectionId,
+      stale: context.stale,
+      bindingSummary: context.bindingSummary,
+      traceSummary: context.traceSummary,
+      permissionSummary: buildResolvedPermissionsExplanation(
+        context.resolvedPermissions,
+        {
+          verbosity: PermissionDebugVerbosity.Basic,
+        },
+      ),
+    };
+  }
+
   invalidateConnectionPermissionCache(connectionId: string) {
     this.permissionCache.delete(
       createConnectionPermissionCacheKey(connectionId),
     );
+    void this.safeRecordPermissionAuditEvent({
+      eventType: PermissionAuditEventType.CacheInvalidated,
+      connectionId,
+      summaryText: `Permission cache invalidated for connection ${connectionId}.`,
+      payloadJson: {
+        scope: "connection_permission_cache",
+      },
+    });
   }
 
   invalidateConversationContextCache(conversationId: string) {
@@ -824,6 +990,63 @@ export class IdentitiesService {
     for (const conversation of conversations) {
       this.invalidateConversationContextCache(conversation.id);
     }
+  }
+
+  private async inspectResolutionCacheInfo(input: {
+    connectionId: string;
+    applyRiskOverlay?: boolean;
+    forceRefresh?: boolean;
+    preferCache?: boolean;
+    preferSnapshot?: boolean;
+    previewRiskSignals?: RiskSignalRecord[];
+  }): Promise<PermissionDebugSummary["cacheInfo"]> {
+    const preferCache = input.preferCache ?? true;
+    const preferSnapshot = input.preferSnapshot ?? false;
+    const forceRefresh = input.forceRefresh ?? false;
+    const previewSignalsProvided = (input.previewRiskSignals?.length ?? 0) > 0;
+    const cacheKey = createConnectionPermissionCacheKey(input.connectionId);
+    const cached =
+      this.permissionCache.get<CachedResolvedConnectionPermissions>(cacheKey);
+    let cacheHit = false;
+
+    if (
+      cached &&
+      !forceRefresh &&
+      preferCache &&
+      !previewSignalsProvided &&
+      cached.versionTag === PERMISSION_RESOLVER_VERSION
+    ) {
+      const sourceHash = await this.computePermissionSourceHash(
+        input.connectionId,
+        {
+          applyRiskOverlay: input.applyRiskOverlay,
+          previewRiskSignals: input.previewRiskSignals,
+        },
+      );
+      cacheHit = cached.value.sourceHash === sourceHash;
+    }
+
+    const snapshot = await this.getLatestPermissionSnapshot({
+      connectionId: input.connectionId,
+    });
+    const freshness = snapshot
+      ? await this.isSnapshotFresh(input.connectionId, snapshot, {
+          applyRiskOverlay: input.applyRiskOverlay,
+          previewRiskSignals: input.previewRiskSignals,
+        })
+      : null;
+
+    return {
+      preferCache,
+      preferSnapshot,
+      forceRefresh,
+      cacheHit,
+      snapshotAvailable: snapshot !== null,
+      snapshotFresh: freshness?.fresh ?? false,
+      snapshotFreshnessReason: freshness?.reason ?? null,
+      previewSignalsProvided,
+      resolvedVia: cacheHit ? "CACHE" : "RECOMPUTED",
+    };
   }
 
   async previewPermissionsWithTrustState(
@@ -1098,6 +1321,21 @@ export class IdentitiesService {
       );
     }
 
+    void this.safeRecordPermissionAuditEvent({
+      eventType: PermissionAuditEventType.ResolutionComputed,
+      connectionId: resolveDto.connectionId,
+      actorIdentityId: resolutionCore.sourceIdentityId,
+      subjectIdentityId: resolutionCore.targetIdentityId,
+      summaryText: `Resolved permissions were recomputed for connection ${resolveDto.connectionId}.`,
+      payloadJson: {
+        forceRefresh,
+        applyRiskOverlay: resolveDto.applyRiskOverlay ?? true,
+        previewSignalsProvided: hasEphemeralPreviewInputs,
+        templateKey: resolutionCore.template.templateKey,
+        policyVersion: resolutionCore.template.policyVersion,
+      },
+    });
+
     return resolutionCore;
   }
 
@@ -1188,7 +1426,7 @@ export class IdentitiesService {
       },
     );
 
-    return {
+    const result = {
       connection: {
         id: resolvedConnection.connectionId,
         sourceIdentityId: resolvedConnection.sourceIdentityId,
@@ -1207,6 +1445,21 @@ export class IdentitiesService {
       contentTrace: contentResolution.contentTrace,
       restrictionSummary: contentResolution.restrictionSummary,
     };
+
+    void this.safeRecordPermissionAuditEvent({
+      eventType: PermissionAuditEventType.ContentResolved,
+      connectionId: resolveDto.connectionId,
+      actorIdentityId: resolvedConnection.sourceIdentityId,
+      subjectIdentityId: resolvedConnection.targetIdentityId,
+      contentId: resolveDto.contentId,
+      summaryText: `Content permissions resolved for content ${resolveDto.contentId}.`,
+      payloadJson: {
+        blockedActions: result.restrictionSummary.blockedActions,
+        reasons: result.restrictionSummary.reasons,
+      },
+    });
+
+    return result;
   }
 
   async previewContentPermissions(
@@ -1283,7 +1536,7 @@ export class IdentitiesService {
     );
     this.invalidateConversationContextCache(bindDto.conversationId);
 
-    return {
+    const result = {
       conversationId: updatedConversation.id,
       connectionId: updatedConversation.connectionId,
       sourceIdentityId: updatedConversation.sourceIdentityId,
@@ -1302,6 +1555,21 @@ export class IdentitiesService {
       resolvedAt: resolvedPermissions.resolvedAt,
       stale: false,
     };
+
+    void this.safeRecordPermissionAuditEvent({
+      eventType: PermissionAuditEventType.ConversationBound,
+      connectionId: updatedConversation.connectionId,
+      conversationId: updatedConversation.id,
+      actorIdentityId: updatedConversation.sourceIdentityId,
+      subjectIdentityId: updatedConversation.targetIdentityId,
+      summaryText: `Resolved permissions were bound to conversation ${updatedConversation.id}.`,
+      payloadJson: {
+        permissionHash: currentHash,
+        stale: false,
+      },
+    });
+
+    return result;
   }
 
   async isConversationPermissionBindingStale(
@@ -1407,7 +1675,7 @@ export class IdentitiesService {
         },
       });
 
-    return {
+    const result = {
       id: snapshot.id,
       connectionId: snapshot.connectionId,
       policyVersion: snapshot.policyVersion,
@@ -1416,6 +1684,21 @@ export class IdentitiesService {
       metadataJson: metadata,
       computedAt: snapshot.computedAt,
     };
+
+    void this.safeRecordPermissionAuditEvent({
+      eventType: PermissionAuditEventType.SnapshotPersisted,
+      connectionId,
+      actorIdentityId: resolved.sourceIdentityId,
+      subjectIdentityId: resolved.targetIdentityId,
+      summaryText: `Permission snapshot persisted for connection ${connectionId}.`,
+      payloadJson: {
+        snapshotId: snapshot.id,
+        policyVersion: resolved.template.policyVersion,
+        templateKey: resolved.template.templateKey,
+      },
+    });
+
+    return result;
   }
 
   async getLatestPermissionSnapshot(

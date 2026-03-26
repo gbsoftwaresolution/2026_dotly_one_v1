@@ -1,13 +1,11 @@
 import { Injectable } from "@nestjs/common";
 
 import { PermissionEffect } from "../../common/enums/permission-effect.enum";
-import { IdentityType } from "../../common/enums/identity-type.enum";
 
 import {
   ActionDecisionEffect,
   ActionType,
   type ActionDecision,
-  type ActionDecisionReasonCode,
   type ActionPermissionDefinition,
   getActionPermissionDefinition,
 } from "./action-permission";
@@ -19,6 +17,7 @@ import {
 } from "./identity.types";
 import { getIdentityTypeBehavior } from "./identity-type-behaviors";
 import { IdentitiesService } from "./identities.service";
+import { PermissionAuditEventType } from "./permission-audit";
 import { PERMISSION_KEYS, type PermissionKey } from "./permission-keys";
 
 @Injectable()
@@ -58,24 +57,27 @@ export class ActionEnforcementService {
     if (
       !this.validateActorInConversation(input.actorIdentityId, conversation)
     ) {
-      return this.buildDecision({
-        allowed: false,
-        effect: ActionDecisionEffect.Deny,
-        actionType: input.actionType,
-        permissionKey: null,
-        conversationId: input.conversationId,
-        actorIdentityId: input.actorIdentityId,
-        reasonCode: "ACTION_INVALID_ACTOR",
-        reasons: ["Actor is not part of this conversation"],
-        trace: {
-          staleBinding: staleCheck.stale,
-          conversationStatus: conversation.conversationStatus,
-          conversationType: conversation.conversationType,
-          baseEffect: null,
-          contentEffect: null,
-          contentAction: null,
-        },
-      });
+      return this.finalizeDecision(
+        this.buildDecision({
+          allowed: false,
+          effect: ActionDecisionEffect.Deny,
+          actionType: input.actionType,
+          permissionKey: null,
+          conversationId: input.conversationId,
+          actorIdentityId: input.actorIdentityId,
+          reasonCode: "ACTION_INVALID_ACTOR",
+          reasons: ["Actor is not part of this conversation"],
+          trace: {
+            staleBinding: staleCheck.stale,
+            conversationStatus: conversation.conversationStatus,
+            conversationType: conversation.conversationType,
+            baseEffect: null,
+            contentEffect: null,
+            contentAction: null,
+          },
+        }),
+        resolvedPermissions.connectionId,
+      );
     }
 
     const stateDecision = this.enforceConversationState(
@@ -87,54 +89,63 @@ export class ActionEnforcementService {
     );
 
     if (stateDecision) {
-      return stateDecision;
+      return this.finalizeDecision(
+        stateDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const actionDefinition = this.mapActionToPermissionKey(input.actionType);
 
     if (!actionDefinition) {
-      return this.buildDecision({
-        allowed: false,
-        effect: ActionDecisionEffect.Deny,
-        actionType: input.actionType,
-        permissionKey: null,
-        conversationId: input.conversationId,
-        actorIdentityId: input.actorIdentityId,
-        reasonCode: "ACTION_DENIED_PERMISSION",
-        reasons: ["Unknown action type"],
-        trace: {
-          staleBinding: staleCheck.stale,
-          conversationStatus: conversation.conversationStatus,
-          conversationType: conversation.conversationType,
-          baseEffect: null,
-          contentEffect: null,
-          contentAction: null,
-        },
-      });
+      return this.finalizeDecision(
+        this.buildDecision({
+          allowed: false,
+          effect: ActionDecisionEffect.Deny,
+          actionType: input.actionType,
+          permissionKey: null,
+          conversationId: input.conversationId,
+          actorIdentityId: input.actorIdentityId,
+          reasonCode: "ACTION_DENIED_PERMISSION",
+          reasons: ["Unknown action type"],
+          trace: {
+            staleBinding: staleCheck.stale,
+            conversationStatus: conversation.conversationStatus,
+            conversationType: conversation.conversationType,
+            baseEffect: null,
+            contentEffect: null,
+            contentAction: null,
+          },
+        }),
+        resolvedPermissions.connectionId,
+      );
     }
 
     const resolvedPermission =
       resolvedPermissions.permissions[actionDefinition.permissionKey];
 
     if (!resolvedPermission) {
-      return this.buildDecision({
-        allowed: false,
-        effect: ActionDecisionEffect.Deny,
-        actionType: input.actionType,
-        permissionKey: actionDefinition.permissionKey,
-        conversationId: input.conversationId,
-        actorIdentityId: input.actorIdentityId,
-        reasonCode: "ACTION_DENIED_PERMISSION",
-        reasons: ["Missing permission resolution"],
-        trace: {
-          staleBinding: staleCheck.stale,
-          conversationStatus: conversation.conversationStatus,
-          conversationType: conversation.conversationType,
-          baseEffect: null,
-          contentEffect: null,
-          contentAction: actionDefinition.contentAction,
-        },
-      });
+      return this.finalizeDecision(
+        this.buildDecision({
+          allowed: false,
+          effect: ActionDecisionEffect.Deny,
+          actionType: input.actionType,
+          permissionKey: actionDefinition.permissionKey,
+          conversationId: input.conversationId,
+          actorIdentityId: input.actorIdentityId,
+          reasonCode: "ACTION_DENIED_PERMISSION",
+          reasons: ["Missing permission resolution"],
+          trace: {
+            staleBinding: staleCheck.stale,
+            conversationStatus: conversation.conversationStatus,
+            conversationType: conversation.conversationType,
+            baseEffect: null,
+            contentEffect: null,
+            contentAction: actionDefinition.contentAction,
+          },
+        }),
+        resolvedPermissions.connectionId,
+      );
     }
 
     const identityBehaviorDecision = this.applyIdentityBehaviorToActionDecision(
@@ -148,7 +159,10 @@ export class ActionEnforcementService {
     );
 
     if (identityBehaviorDecision) {
-      return identityBehaviorDecision;
+      return this.finalizeDecision(
+        identityBehaviorDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const protectedModeDecision = this.enforceProtectedConversationOverrides(
@@ -161,7 +175,10 @@ export class ActionEnforcementService {
     );
 
     if (protectedModeDecision) {
-      return protectedModeDecision;
+      return this.finalizeDecision(
+        protectedModeDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const permissionDecision = this.evaluateBasePermission(
@@ -177,7 +194,10 @@ export class ActionEnforcementService {
       permissionDecision.effect === ActionDecisionEffect.Deny ||
       permissionDecision.effect === ActionDecisionEffect.RequestApproval
     ) {
-      return permissionDecision;
+      return this.finalizeDecision(
+        permissionDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const contentDecision = await this.enforceContentIfNeeded(
@@ -193,7 +213,10 @@ export class ActionEnforcementService {
       contentDecision &&
       contentDecision.effect === ActionDecisionEffect.Deny
     ) {
-      return contentDecision;
+      return this.finalizeDecision(
+        contentDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const riskDecision = this.enforceRiskSummary(
@@ -208,22 +231,49 @@ export class ActionEnforcementService {
     );
 
     if (riskDecision) {
-      return riskDecision;
+      return this.finalizeDecision(
+        riskDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     if (
       permissionDecision.effect === ActionDecisionEffect.AllowWithLimits ||
       contentDecision?.effect === ActionDecisionEffect.AllowWithLimits
     ) {
-      return this.buildDecision({
+      return this.finalizeDecision(
+        this.buildDecision({
+          allowed: true,
+          effect: ActionDecisionEffect.AllowWithLimits,
+          actionType: input.actionType,
+          permissionKey: actionDefinition.permissionKey,
+          conversationId: input.conversationId,
+          actorIdentityId: input.actorIdentityId,
+          reasonCode: "ACTION_ALLOWED_WITH_LIMITS",
+          reasons: ["Action allowed with limits"],
+          trace: {
+            staleBinding: staleCheck.stale,
+            conversationStatus: conversation.conversationStatus,
+            conversationType: conversation.conversationType,
+            baseEffect: resolvedPermission.finalEffect,
+            contentEffect: contentDecision?.trace?.contentEffect ?? null,
+            contentAction: actionDefinition.contentAction,
+          },
+        }),
+        resolvedPermissions.connectionId,
+      );
+    }
+
+    return this.finalizeDecision(
+      this.buildDecision({
         allowed: true,
-        effect: ActionDecisionEffect.AllowWithLimits,
+        effect: ActionDecisionEffect.Allow,
         actionType: input.actionType,
         permissionKey: actionDefinition.permissionKey,
         conversationId: input.conversationId,
         actorIdentityId: input.actorIdentityId,
-        reasonCode: "ACTION_ALLOWED_WITH_LIMITS",
-        reasons: ["Action allowed with limits"],
+        reasonCode: "ACTION_ALLOWED",
+        reasons: ["Action allowed"],
         trace: {
           staleBinding: staleCheck.stale,
           conversationStatus: conversation.conversationStatus,
@@ -232,27 +282,9 @@ export class ActionEnforcementService {
           contentEffect: contentDecision?.trace?.contentEffect ?? null,
           contentAction: actionDefinition.contentAction,
         },
-      });
-    }
-
-    return this.buildDecision({
-      allowed: true,
-      effect: ActionDecisionEffect.Allow,
-      actionType: input.actionType,
-      permissionKey: actionDefinition.permissionKey,
-      conversationId: input.conversationId,
-      actorIdentityId: input.actorIdentityId,
-      reasonCode: "ACTION_ALLOWED",
-      reasons: ["Action allowed"],
-      trace: {
-        staleBinding: staleCheck.stale,
-        conversationStatus: conversation.conversationStatus,
-        conversationType: conversation.conversationType,
-        baseEffect: resolvedPermission.finalEffect,
-        contentEffect: contentDecision?.trace?.contentEffect ?? null,
-        contentAction: actionDefinition.contentAction,
-      },
-    });
+      }),
+      resolvedPermissions.connectionId,
+    );
   }
 
   validateActorInConversation(
@@ -391,6 +423,33 @@ export class ActionEnforcementService {
       ...input,
       evaluatedAt: new Date(),
     };
+  }
+
+  private finalizeDecision(
+    decision: ActionDecision,
+    connectionId: string | null,
+  ): ActionDecision {
+    const auditResult = this.identitiesService.safeRecordPermissionAuditEvent?.(
+      {
+        eventType: PermissionAuditEventType.ActionEnforced,
+        connectionId,
+        conversationId: decision.conversationId,
+        permissionKey: decision.permissionKey,
+        actorIdentityId: decision.actorIdentityId,
+        summaryText: `Action ${decision.actionType} evaluated as ${decision.effect}.`,
+        payloadJson: {
+          allowed: decision.allowed,
+          effect: decision.effect,
+          reasonCode: decision.reasonCode,
+          reasons: decision.reasons,
+          trace: decision.trace ?? null,
+        },
+      },
+    );
+
+    void Promise.resolve(auditResult).catch(() => undefined);
+
+    return decision;
   }
 
   private enforceConversationState(

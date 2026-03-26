@@ -14,6 +14,7 @@ import {
 import { EnforceAICapabilityDto } from "./dto/enforce-ai-capability.dto";
 import { ConversationType } from "./identity.types";
 import { IdentitiesService } from "./identities.service";
+import { PermissionAuditEventType } from "./permission-audit";
 import { type PermissionKey } from "./permission-keys";
 import { RiskSignal } from "./risk-engine";
 
@@ -43,61 +44,70 @@ export class AIEnforcementService {
     if (
       !this.validateActorInConversation(input.actorIdentityId, conversation)
     ) {
-      return this.buildAIDecision({
-        allowed: false,
-        restrictionLevel: AIRestrictionLevel.Denied,
-        capability: input.capability,
-        permissionKey: null,
-        conversationId: input.conversationId,
-        actorIdentityId: input.actorIdentityId,
-        contextType: input.contextType,
-        reasonCode: AIReasonCode.DeniedContext,
-        reasons: ["Actor is not part of this conversation"],
-        trace: this.createTrace({
-          staleBinding: staleCheck.stale,
-          conversationType: conversation.conversationType,
+      return this.finalizeDecision(
+        this.buildAIDecision({
+          allowed: false,
+          restrictionLevel: AIRestrictionLevel.Denied,
+          capability: input.capability,
+          permissionKey: null,
+          conversationId: input.conversationId,
+          actorIdentityId: input.actorIdentityId,
+          contextType: input.contextType,
+          reasonCode: AIReasonCode.DeniedContext,
+          reasons: ["Actor is not part of this conversation"],
+          trace: this.createTrace({
+            staleBinding: staleCheck.stale,
+            conversationType: conversation.conversationType,
+          }),
         }),
-      });
+        resolvedPermissions.connectionId,
+      );
     }
 
     const permissionKey = this.mapAICapabilityToPermissionKey(input.capability);
 
     if (!permissionKey) {
-      return this.buildAIDecision({
-        allowed: false,
-        restrictionLevel: AIRestrictionLevel.Denied,
-        capability: input.capability,
-        permissionKey: null,
-        conversationId: input.conversationId,
-        actorIdentityId: input.actorIdentityId,
-        contextType: input.contextType,
-        reasonCode: AIReasonCode.DeniedPermission,
-        reasons: ["Unknown AI capability"],
-        trace: this.createTrace({
-          staleBinding: staleCheck.stale,
-          conversationType: conversation.conversationType,
+      return this.finalizeDecision(
+        this.buildAIDecision({
+          allowed: false,
+          restrictionLevel: AIRestrictionLevel.Denied,
+          capability: input.capability,
+          permissionKey: null,
+          conversationId: input.conversationId,
+          actorIdentityId: input.actorIdentityId,
+          contextType: input.contextType,
+          reasonCode: AIReasonCode.DeniedPermission,
+          reasons: ["Unknown AI capability"],
+          trace: this.createTrace({
+            staleBinding: staleCheck.stale,
+            conversationType: conversation.conversationType,
+          }),
         }),
-      });
+        resolvedPermissions.connectionId,
+      );
     }
 
     const resolvedPermission = resolvedPermissions.permissions[permissionKey];
 
     if (!resolvedPermission) {
-      return this.buildAIDecision({
-        allowed: false,
-        restrictionLevel: AIRestrictionLevel.Denied,
-        capability: input.capability,
-        permissionKey,
-        conversationId: input.conversationId,
-        actorIdentityId: input.actorIdentityId,
-        contextType: input.contextType,
-        reasonCode: AIReasonCode.DeniedPermission,
-        reasons: ["Missing AI permission resolution"],
-        trace: this.createTrace({
-          staleBinding: staleCheck.stale,
-          conversationType: conversation.conversationType,
+      return this.finalizeDecision(
+        this.buildAIDecision({
+          allowed: false,
+          restrictionLevel: AIRestrictionLevel.Denied,
+          capability: input.capability,
+          permissionKey,
+          conversationId: input.conversationId,
+          actorIdentityId: input.actorIdentityId,
+          contextType: input.contextType,
+          reasonCode: AIReasonCode.DeniedPermission,
+          reasons: ["Missing AI permission resolution"],
+          trace: this.createTrace({
+            staleBinding: staleCheck.stale,
+            conversationType: conversation.conversationType,
+          }),
         }),
-      });
+        resolvedPermissions.connectionId,
+      );
     }
 
     const basePermissionDecision = this.evaluateBasePermission(
@@ -109,7 +119,10 @@ export class AIEnforcementService {
     );
 
     if (basePermissionDecision) {
-      return basePermissionDecision;
+      return this.finalizeDecision(
+        basePermissionDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const contentDecision = await this.enforceAIContentRules(
@@ -122,7 +135,10 @@ export class AIEnforcementService {
     );
 
     if (contentDecision) {
-      return contentDecision;
+      return this.finalizeDecision(
+        contentDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const vaultDecision = this.enforceAIVaultRules(
@@ -134,7 +150,10 @@ export class AIEnforcementService {
     );
 
     if (vaultDecision) {
-      return vaultDecision;
+      return this.finalizeDecision(
+        vaultDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const riskDecision = this.enforceAIRiskRules(
@@ -147,7 +166,10 @@ export class AIEnforcementService {
     );
 
     if (riskDecision) {
-      return riskDecision;
+      return this.finalizeDecision(
+        riskDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const protectedDecision = this.enforceProtectedContextRules(
@@ -159,28 +181,34 @@ export class AIEnforcementService {
     );
 
     if (protectedDecision) {
-      return protectedDecision;
+      return this.finalizeDecision(
+        protectedDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
-    return this.buildAIDecision({
-      allowed: true,
-      restrictionLevel: AIRestrictionLevel.Full,
-      capability: input.capability,
-      permissionKey,
-      conversationId: input.conversationId,
-      actorIdentityId: input.actorIdentityId,
-      contextType: input.contextType,
-      reasonCode: AIReasonCode.Allowed,
-      reasons: ["AI capability allowed within resolved permissions"],
-      trace: this.createTrace({
-        staleBinding: staleCheck.stale,
-        conversationType: conversation.conversationType,
-        baseEffect: resolvedPermission.finalEffect,
-        protectedContent: input.isProtectedContent ?? false,
-        vaultContent: input.isVaultContent ?? false,
-        riskSignals: resolvedPermissions.riskSummary.appliedSignals,
+    return this.finalizeDecision(
+      this.buildAIDecision({
+        allowed: true,
+        restrictionLevel: AIRestrictionLevel.Full,
+        capability: input.capability,
+        permissionKey,
+        conversationId: input.conversationId,
+        actorIdentityId: input.actorIdentityId,
+        contextType: input.contextType,
+        reasonCode: AIReasonCode.Allowed,
+        reasons: ["AI capability allowed within resolved permissions"],
+        trace: this.createTrace({
+          staleBinding: staleCheck.stale,
+          conversationType: conversation.conversationType,
+          baseEffect: resolvedPermission.finalEffect,
+          protectedContent: input.isProtectedContent ?? false,
+          vaultContent: input.isVaultContent ?? false,
+          riskSignals: resolvedPermissions.riskSummary.appliedSignals,
+        }),
       }),
-    });
+      resolvedPermissions.connectionId,
+    );
   }
 
   mapAICapabilityToPermissionKey(
@@ -393,6 +421,33 @@ export class AIEnforcementService {
       ...decision,
       evaluatedAt: new Date(),
     };
+  }
+
+  private finalizeDecision(
+    decision: AICapabilityDecision,
+    connectionId: string | null,
+  ): AICapabilityDecision {
+    const auditResult = this.identitiesService.safeRecordPermissionAuditEvent?.(
+      {
+        eventType: PermissionAuditEventType.AIEnforced,
+        connectionId,
+        conversationId: decision.conversationId,
+        permissionKey: decision.permissionKey,
+        actorIdentityId: decision.actorIdentityId,
+        summaryText: `AI capability ${decision.capability} evaluated as ${decision.restrictionLevel}.`,
+        payloadJson: {
+          allowed: decision.allowed,
+          restrictionLevel: decision.restrictionLevel,
+          reasonCode: decision.reasonCode,
+          reasons: decision.reasons,
+          trace: decision.trace,
+        },
+      },
+    );
+
+    void Promise.resolve(auditResult).catch(() => undefined);
+
+    return decision;
   }
 
   private validateActorInConversation(

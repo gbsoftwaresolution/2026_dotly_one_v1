@@ -6,7 +6,6 @@ import {
   CallDecisionEffect,
   CallInitiationMode,
   CallType,
-  type CallDecisionReasonCode,
   type CallPermissionDecision,
   type CallPermissionDefinition,
   type CallRestrictionSummary,
@@ -21,6 +20,7 @@ import {
 } from "./identity.types";
 import { getIdentityTypeBehavior } from "./identity-type-behaviors";
 import { IdentitiesService } from "./identities.service";
+import { PermissionAuditEventType } from "./permission-audit";
 
 @Injectable()
 export class CallEnforcementService {
@@ -58,29 +58,32 @@ export class CallEnforcementService {
     if (
       !this.validateActorInConversation(input.actorIdentityId, conversation)
     ) {
-      return this.buildDecision({
-        allowed: false,
-        effect: CallDecisionEffect.Deny,
-        callType: input.callType,
-        initiationMode: input.initiationMode,
-        permissionKey: null,
-        conversationId: input.conversationId,
-        actorIdentityId: input.actorIdentityId,
-        conversationType: conversation.conversationType,
-        reasonCode: "CALL_DENIED_INVALID_ACTOR",
-        reasons: ["Actor is not part of this conversation"],
-        restrictionSummary: createRestrictionSummary(),
-        trace: {
-          staleBinding: staleCheck.stale,
-          baseEffect: null,
-          runtimeRestrictions: this.buildProtectedRuntimeFlags(
-            input,
-            resolvedPermissions.riskSummary.blockedProtectedMode,
-            conversation.conversationType,
-          ),
-          blockedCallsByRisk: resolvedPermissions.riskSummary.blockedCalls,
-        },
-      });
+      return this.finalizeDecision(
+        this.buildDecision({
+          allowed: false,
+          effect: CallDecisionEffect.Deny,
+          callType: input.callType,
+          initiationMode: input.initiationMode,
+          permissionKey: null,
+          conversationId: input.conversationId,
+          actorIdentityId: input.actorIdentityId,
+          conversationType: conversation.conversationType,
+          reasonCode: "CALL_DENIED_INVALID_ACTOR",
+          reasons: ["Actor is not part of this conversation"],
+          restrictionSummary: createRestrictionSummary(),
+          trace: {
+            staleBinding: staleCheck.stale,
+            baseEffect: null,
+            runtimeRestrictions: this.buildProtectedRuntimeFlags(
+              input,
+              resolvedPermissions.riskSummary.blockedProtectedMode,
+              conversation.conversationType,
+            ),
+            blockedCallsByRisk: resolvedPermissions.riskSummary.blockedCalls,
+          },
+        }),
+        resolvedPermissions.connectionId,
+      );
     }
 
     const stateDecision = this.enforceConversationState(
@@ -91,7 +94,10 @@ export class CallEnforcementService {
     );
 
     if (stateDecision) {
-      return stateDecision;
+      return this.finalizeDecision(
+        stateDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const compatibilityDecision = this.enforceConversationCompatibility(
@@ -103,7 +109,10 @@ export class CallEnforcementService {
     );
 
     if (compatibilityDecision) {
-      return compatibilityDecision;
+      return this.finalizeDecision(
+        compatibilityDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const callDefinition = this.mapCallToPermissionKey(
@@ -112,58 +121,64 @@ export class CallEnforcementService {
     );
 
     if (!callDefinition) {
-      return this.buildDecision({
-        allowed: false,
-        effect: CallDecisionEffect.Deny,
-        callType: input.callType,
-        initiationMode: input.initiationMode,
-        permissionKey: null,
-        conversationId: input.conversationId,
-        actorIdentityId: input.actorIdentityId,
-        conversationType: conversation.conversationType,
-        reasonCode: "CALL_DENIED_CALL_TYPE_UNSUPPORTED",
-        reasons: ["Unsupported call type or initiation mode"],
-        restrictionSummary: createRestrictionSummary(),
-        trace: {
-          staleBinding: staleCheck.stale,
-          baseEffect: null,
-          runtimeRestrictions: this.buildProtectedRuntimeFlags(
-            input,
-            resolvedPermissions.riskSummary.blockedProtectedMode,
-            conversation.conversationType,
-          ),
-          blockedCallsByRisk: resolvedPermissions.riskSummary.blockedCalls,
-        },
-      });
+      return this.finalizeDecision(
+        this.buildDecision({
+          allowed: false,
+          effect: CallDecisionEffect.Deny,
+          callType: input.callType,
+          initiationMode: input.initiationMode,
+          permissionKey: null,
+          conversationId: input.conversationId,
+          actorIdentityId: input.actorIdentityId,
+          conversationType: conversation.conversationType,
+          reasonCode: "CALL_DENIED_CALL_TYPE_UNSUPPORTED",
+          reasons: ["Unsupported call type or initiation mode"],
+          restrictionSummary: createRestrictionSummary(),
+          trace: {
+            staleBinding: staleCheck.stale,
+            baseEffect: null,
+            runtimeRestrictions: this.buildProtectedRuntimeFlags(
+              input,
+              resolvedPermissions.riskSummary.blockedProtectedMode,
+              conversation.conversationType,
+            ),
+            blockedCallsByRisk: resolvedPermissions.riskSummary.blockedCalls,
+          },
+        }),
+        resolvedPermissions.connectionId,
+      );
     }
 
     const basePermission =
       resolvedPermissions.permissions[callDefinition.permissionKey];
 
     if (!basePermission) {
-      return this.buildDecision({
-        allowed: false,
-        effect: CallDecisionEffect.Deny,
-        callType: input.callType,
-        initiationMode: input.initiationMode,
-        permissionKey: callDefinition.permissionKey,
-        conversationId: input.conversationId,
-        actorIdentityId: input.actorIdentityId,
-        conversationType: conversation.conversationType,
-        reasonCode: "CALL_DENIED_PERMISSION",
-        reasons: ["Missing call permission resolution"],
-        restrictionSummary: createRestrictionSummary(),
-        trace: {
-          staleBinding: staleCheck.stale,
-          baseEffect: null,
-          runtimeRestrictions: this.buildProtectedRuntimeFlags(
-            input,
-            resolvedPermissions.riskSummary.blockedProtectedMode,
-            conversation.conversationType,
-          ),
-          blockedCallsByRisk: resolvedPermissions.riskSummary.blockedCalls,
-        },
-      });
+      return this.finalizeDecision(
+        this.buildDecision({
+          allowed: false,
+          effect: CallDecisionEffect.Deny,
+          callType: input.callType,
+          initiationMode: input.initiationMode,
+          permissionKey: callDefinition.permissionKey,
+          conversationId: input.conversationId,
+          actorIdentityId: input.actorIdentityId,
+          conversationType: conversation.conversationType,
+          reasonCode: "CALL_DENIED_PERMISSION",
+          reasons: ["Missing call permission resolution"],
+          restrictionSummary: createRestrictionSummary(),
+          trace: {
+            staleBinding: staleCheck.stale,
+            baseEffect: null,
+            runtimeRestrictions: this.buildProtectedRuntimeFlags(
+              input,
+              resolvedPermissions.riskSummary.blockedProtectedMode,
+              conversation.conversationType,
+            ),
+            blockedCallsByRisk: resolvedPermissions.riskSummary.blockedCalls,
+          },
+        }),
+        resolvedPermissions.connectionId,
+      );
     }
 
     const schedulingRequired = this.isSchedulingRequired(
@@ -193,7 +208,10 @@ export class CallEnforcementService {
       permissionDecision.effect === CallDecisionEffect.Deny ||
       permissionDecision.effect === CallDecisionEffect.RequestApproval
     ) {
-      return permissionDecision;
+      return this.finalizeDecision(
+        permissionDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const protectedDecision = this.enforceProtectedMode(
@@ -208,7 +226,10 @@ export class CallEnforcementService {
     );
 
     if (protectedDecision) {
-      return protectedDecision;
+      return this.finalizeDecision(
+        protectedDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const riskDecision = this.enforceRiskRestrictions(
@@ -222,7 +243,10 @@ export class CallEnforcementService {
     );
 
     if (riskDecision) {
-      return riskDecision;
+      return this.finalizeDecision(
+        riskDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
     const modeDecision = this.applyInitiationModeRules(
@@ -237,39 +261,45 @@ export class CallEnforcementService {
     );
 
     if (modeDecision) {
-      return modeDecision;
+      return this.finalizeDecision(
+        modeDecision,
+        resolvedPermissions.connectionId,
+      );
     }
 
-    return this.buildDecision({
-      allowed: true,
-      effect:
-        basePermission.finalEffect === PermissionEffect.AllowWithLimits
-          ? CallDecisionEffect.AllowWithLimits
-          : CallDecisionEffect.Allow,
-      callType: input.callType,
-      initiationMode: input.initiationMode,
-      permissionKey: callDefinition.permissionKey,
-      conversationId: input.conversationId,
-      actorIdentityId: input.actorIdentityId,
-      conversationType: conversation.conversationType,
-      reasonCode: "CALL_ALLOWED",
-      reasons: ["Call initiation allowed"],
-      restrictionSummary: this.createDecisionRestrictionSummary(
-        schedulingRequired,
-        runtimeRestrictions,
-        input.initiationMode,
-      ),
-      trace: {
-        staleBinding: staleCheck.stale,
-        baseEffect: basePermission.finalEffect,
-        runtimeRestrictions,
-        blockedCallsByRisk: resolvedPermissions.riskSummary.blockedCalls,
-        identityBehaviorApplied:
-          identityBehaviorSummary.restrictionFlags.schedulingBiasForCalls,
-        identityBehaviorReasonCodes: identityBehaviorSummary.reasonCodes,
-        identityBehaviorSummary,
-      },
-    });
+    return this.finalizeDecision(
+      this.buildDecision({
+        allowed: true,
+        effect:
+          basePermission.finalEffect === PermissionEffect.AllowWithLimits
+            ? CallDecisionEffect.AllowWithLimits
+            : CallDecisionEffect.Allow,
+        callType: input.callType,
+        initiationMode: input.initiationMode,
+        permissionKey: callDefinition.permissionKey,
+        conversationId: input.conversationId,
+        actorIdentityId: input.actorIdentityId,
+        conversationType: conversation.conversationType,
+        reasonCode: "CALL_ALLOWED",
+        reasons: ["Call initiation allowed"],
+        restrictionSummary: this.createDecisionRestrictionSummary(
+          schedulingRequired,
+          runtimeRestrictions,
+          input.initiationMode,
+        ),
+        trace: {
+          staleBinding: staleCheck.stale,
+          baseEffect: basePermission.finalEffect,
+          runtimeRestrictions,
+          blockedCallsByRisk: resolvedPermissions.riskSummary.blockedCalls,
+          identityBehaviorApplied:
+            identityBehaviorSummary.restrictionFlags.schedulingBiasForCalls,
+          identityBehaviorReasonCodes: identityBehaviorSummary.reasonCodes,
+          identityBehaviorSummary,
+        },
+      }),
+      resolvedPermissions.connectionId,
+    );
   }
 
   validateActorInConversation(
@@ -299,6 +329,34 @@ export class CallEnforcementService {
       ...input,
       evaluatedAt: new Date(),
     };
+  }
+
+  private finalizeDecision(
+    decision: CallPermissionDecision,
+    connectionId: string | null,
+  ): CallPermissionDecision {
+    const auditResult = this.identitiesService.safeRecordPermissionAuditEvent?.(
+      {
+        eventType: PermissionAuditEventType.CallEnforced,
+        connectionId,
+        conversationId: decision.conversationId,
+        permissionKey: decision.permissionKey,
+        actorIdentityId: decision.actorIdentityId,
+        summaryText: `Call ${decision.callType}:${decision.initiationMode} evaluated as ${decision.effect}.`,
+        payloadJson: {
+          allowed: decision.allowed,
+          effect: decision.effect,
+          reasonCode: decision.reasonCode,
+          reasons: decision.reasons,
+          restrictionSummary: decision.restrictionSummary,
+          trace: decision.trace,
+        },
+      },
+    );
+
+    void Promise.resolve(auditResult).catch(() => undefined);
+
+    return decision;
   }
 
   private enforceConversationState(

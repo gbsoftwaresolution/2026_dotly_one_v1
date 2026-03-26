@@ -1,10 +1,7 @@
 import { IdentityType } from "../../common/enums/identity-type.enum";
 import { PermissionEffect } from "../../common/enums/permission-effect.enum";
 
-import type {
-  ConnectionPolicyTemplatePermissions,
-  PermissionTemplateValue,
-} from "./identity.types";
+import type { PermissionTemplateValue } from "./identity.types";
 import { PERMISSION_KEYS, type PermissionKey } from "./permission-keys";
 
 export type IdentityBehaviorReasonCode =

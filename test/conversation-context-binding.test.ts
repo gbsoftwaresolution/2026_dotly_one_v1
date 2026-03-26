@@ -3,15 +3,8 @@ import { describe, it } from "node:test";
 
 import { BadRequestException } from "@nestjs/common";
 
-import { ConnectionType } from "../src/common/enums/connection-type.enum";
-import { IdentityType } from "../src/common/enums/identity-type.enum";
-import { PermissionEffect } from "../src/common/enums/permission-effect.enum";
-import { TrustState } from "../src/common/enums/trust-state.enum";
 import { IdentitiesService } from "../src/modules/identities/identities.service";
-import {
-  ConversationStatus,
-  ConversationType,
-} from "../src/modules/identities/identity.types";
+import { ConversationType } from "../src/modules/identities/identity.types";
 import { CONNECTION_POLICY_TEMPLATE_SEEDS } from "../src/modules/identities/policy-template-seeds";
 import { PERMISSION_KEYS } from "../src/modules/identities/permission-keys";
 

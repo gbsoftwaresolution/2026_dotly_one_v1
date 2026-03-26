@@ -1,8 +1,6 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
-import { ConnectionType } from "../src/common/enums/connection-type.enum";
-import { IdentityType } from "../src/common/enums/identity-type.enum";
 import { PermissionEffect } from "../src/common/enums/permission-effect.enum";
 import { TrustState } from "../src/common/enums/trust-state.enum";
 import { IdentitiesService } from "../src/modules/identities/identities.service";

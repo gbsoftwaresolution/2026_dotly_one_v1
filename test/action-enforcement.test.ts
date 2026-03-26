@@ -211,6 +211,7 @@ function createService(overrides?: Partial<Record<string, unknown>>) {
       identityId === "identity-source"
         ? IdentityType.Personal
         : IdentityType.Personal,
+    safeRecordPermissionAuditEvent: async () => undefined,
     resolveContentPermissionsForConnection: async () =>
       createContentResolution(PermissionEffect.Allow),
     ...overrides,

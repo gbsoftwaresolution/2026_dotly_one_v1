@@ -1,0 +1,15 @@
+export {
+  PermissionDebugVerbosity,
+  debugPermissionMap,
+  diffResolvedPermissions,
+  explainPermissionDiff,
+  explainResolvedPermission,
+  explainResolvedPermissions,
+  formatPermissionTrace,
+  type PermissionDebugSummary,
+  type PermissionDiffEntry,
+  type PermissionDiffResult,
+  type PermissionExplainRequest,
+  type PermissionExplainResult,
+  type PermissionStageExplanation,
+} from "./permission-debug";

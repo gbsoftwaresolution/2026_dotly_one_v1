@@ -154,6 +154,7 @@ function createService(overrides?: Partial<Record<string, unknown>>) {
     bindResolvedPermissionsToConversation: async () => ({
       resolvedConnectionPermissions: createResolvedPermissions(),
     }),
+    safeRecordPermissionAuditEvent: async () => undefined,
     resolveContentPermissionsForConnection: async () =>
       createContentResolution(),
     ...overrides,
