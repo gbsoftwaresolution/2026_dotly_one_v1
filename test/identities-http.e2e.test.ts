@@ -110,11 +110,62 @@ const identitiesServiceMock = {
   },
   getConnectionById: async (payload: { connectionId: string }) => {
     getConnectionCalls.push(payload);
-    return { id: payload.connectionId };
+    return {
+      id: payload.connectionId,
+      sourceIdentityId: "identity-source",
+      targetIdentityId: "identity-target",
+      sourceIdentity: {
+        id: "identity-source",
+        displayName: "Source Identity",
+        handle: "source",
+        identityType: "personal",
+        verificationLevel: "basic",
+        status: "active",
+      },
+      targetIdentity: {
+        id: "identity-target",
+        displayName: "Target Identity",
+        handle: "target",
+        identityType: "business",
+        verificationLevel: "verified",
+        status: "active",
+      },
+    };
   },
   listConnectionsForIdentity: async (payload: unknown) => {
     listConnectionsCalls.push(payload);
-    return [];
+    return [
+      {
+        id: "connection-1",
+        sourceIdentityId: "identity-source",
+        targetIdentityId: "identity-target",
+        connectionType: "known",
+        relationshipType: "friend",
+        trustState: "basic_verified",
+        status: "active",
+        createdByIdentityId: "identity-source",
+        note: null,
+        metadataJson: null,
+        createdAt: new Date("2026-03-26T10:00:00.000Z"),
+        updatedAt: new Date("2026-03-26T10:00:00.000Z"),
+        sourceIdentity: {
+          id: "identity-source",
+          displayName: "Source Identity",
+          handle: "source",
+          identityType: "personal",
+          verificationLevel: "basic",
+          status: "active",
+        },
+        targetIdentity: {
+          id: "identity-target",
+          displayName: "Target Identity",
+          handle: "target",
+          identityType: "business",
+          verificationLevel: "verified",
+          status: "active",
+        },
+      },
+    ];
   },
   updateConnectionType: async (payload: unknown) => {
     updateConnectionTypeCalls.push(payload);
@@ -138,7 +189,28 @@ const identitiesServiceMock = {
   },
   resolveConnectionPermissions: async (payload: unknown) => {
     resolvePermissionsCalls.push(payload);
-    return { connectionId: "connection-1", permissions: {} };
+    return {
+      connectionId: "connection-1",
+      sourceIdentityId: "identity-source",
+      targetIdentityId: "identity-target",
+      sourceIdentity: {
+        id: "identity-source",
+        displayName: "Source Identity",
+        handle: "source",
+        identityType: "personal",
+        verificationLevel: "basic",
+        status: "active",
+      },
+      targetIdentity: {
+        id: "identity-target",
+        displayName: "Target Identity",
+        handle: "target",
+        identityType: "business",
+        verificationLevel: "verified",
+        status: "active",
+      },
+      permissions: {},
+    };
   },
   explainResolvedPermission: async (payload: unknown) => {
     explainPermissionCalls.push(payload);
@@ -407,9 +479,13 @@ describe("Identities HTTP E2E", () => {
       `${baseUrl}/v1/identities/11111111-1111-4111-8111-111111111111/connections?status=active`,
       { headers },
     );
+    const getBody = await getResponse.json();
+    const listBody = await listResponse.json();
 
     assert.equal(getResponse.status, 200);
     assert.equal(listResponse.status, 200);
+    assert.equal(getBody.data.targetIdentity.displayName, "Target Identity");
+    assert.equal(listBody.data[0].targetIdentity.handle, "target");
     assert.equal(getConnectionCalls.length, 1);
     assert.equal(listConnectionsCalls.length, 1);
   });
@@ -493,11 +569,16 @@ describe("Identities HTTP E2E", () => {
       `${baseUrl}/v1/identity-connections/11111111-1111-4111-8111-111111111111/permissions/diff-against-snapshot`,
       { headers },
     );
+    const resolvedBody = await resolvedResponse.json();
 
     assert.equal(resolvedResponse.status, 200);
     assert.equal(explainOneResponse.status, 200);
     assert.equal(explainAllResponse.status, 200);
     assert.equal(diffResponse.status, 200);
+    assert.equal(
+      resolvedBody.data.targetIdentity.displayName,
+      "Target Identity",
+    );
     assert.equal(resolvePermissionsCalls.length, 1);
     assert.equal(explainPermissionCalls.length, 1);
     assert.equal(explainPermissionsCalls.length, 1);

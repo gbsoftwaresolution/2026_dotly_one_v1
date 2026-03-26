@@ -15,6 +15,7 @@ import {
   Prisma,
   ConnectionStatus as PrismaConnectionStatus,
   ConnectionType as PrismaConnectionType,
+  IdentityType as PrismaIdentityType,
   RelationshipType as PrismaRelationshipType,
   TrustState as PrismaTrustState,
 } from "../src/generated/prisma/client";
@@ -519,6 +520,22 @@ describe("IdentitiesService", () => {
               metadataJson: null,
               createdAt: new Date("2026-03-26T10:00:00.000Z"),
               updatedAt: new Date("2026-03-26T10:00:00.000Z"),
+              sourceIdentity: {
+                id: "identity-1",
+                displayName: "Alice",
+                handle: "alice",
+                identityType: PrismaIdentityType.PERSONAL,
+                verificationLevel: "basic",
+                status: "active",
+              },
+              targetIdentity: {
+                id: "identity-2",
+                displayName: "Bob",
+                handle: "bob",
+                identityType: PrismaIdentityType.PROFESSIONAL,
+                verificationLevel: "strong",
+                status: "active",
+              },
             },
             {
               id: "connection-b",
@@ -533,6 +550,22 @@ describe("IdentitiesService", () => {
               metadataJson: null,
               createdAt: new Date("2026-03-26T09:00:00.000Z"),
               updatedAt: new Date("2026-03-26T09:00:00.000Z"),
+              sourceIdentity: {
+                id: "identity-3",
+                displayName: "Carol",
+                handle: "carol",
+                identityType: PrismaIdentityType.BUSINESS,
+                verificationLevel: "basic",
+                status: "active",
+              },
+              targetIdentity: {
+                id: "identity-1",
+                displayName: "Alice",
+                handle: "alice",
+                identityType: PrismaIdentityType.PERSONAL,
+                verificationLevel: "basic",
+                status: "active",
+              },
             },
           ];
         },
@@ -544,6 +577,8 @@ describe("IdentitiesService", () => {
     });
 
     assert.equal(result.length, 2);
+    assert.equal(result[0]?.targetIdentity.displayName, "Bob");
+    assert.equal(result[1]?.sourceIdentity.identityType, IdentityType.Business);
     assert.deepEqual(capturedWhere, {
       OR: [
         {

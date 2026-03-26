@@ -165,6 +165,26 @@ const identityConnectionSelect = {
   metadataJson: true,
   createdAt: true,
   updatedAt: true,
+  sourceIdentity: {
+    select: {
+      id: true,
+      displayName: true,
+      handle: true,
+      identityType: true,
+      verificationLevel: true,
+      status: true,
+    },
+  },
+  targetIdentity: {
+    select: {
+      id: true,
+      displayName: true,
+      handle: true,
+      identityType: true,
+      verificationLevel: true,
+      status: true,
+    },
+  },
 } satisfies Prisma.IdentityConnectionSelect;
 
 const contentAccessRuleSelect = {
@@ -214,6 +234,13 @@ type ContentAccessRuleRecord = Prisma.ContentAccessRuleGetPayload<{
 type IdentityConversationRecord = Prisma.IdentityConversationGetPayload<{
   select: typeof identityConversationSelect;
 }>;
+
+type IdentitySummaryRecord = Pick<
+  Identity,
+  "id" | "displayName" | "handle" | "verificationLevel" | "status"
+> & {
+  identityType: PrismaIdentityType;
+};
 
 @Injectable()
 export class IdentitiesService {
@@ -693,16 +720,18 @@ export class IdentitiesService {
     return toConnectionRelationshipType(connection);
   }
 
-  async getConnectionById(
-    getConnectionByIdDto: GetConnectionByIdDto,
-  ): Promise<IdentityConnectionRecord> {
-    return this.requireConnection(getConnectionByIdDto.connectionId);
+  async getConnectionById(getConnectionByIdDto: GetConnectionByIdDto) {
+    const connection = await this.requireConnection(
+      getConnectionByIdDto.connectionId,
+    );
+
+    return this.summarizeConnectionRecord(connection);
   }
 
   async listConnectionsForIdentity(
     listConnectionsForIdentityDto: ListConnectionsForIdentityDto,
-  ): Promise<IdentityConnectionRecord[]> {
-    return this.prismaService.identityConnection.findMany({
+  ) {
+    const connections = await this.prismaService.identityConnection.findMany({
       where: {
         OR: [
           {
@@ -723,6 +752,10 @@ export class IdentitiesService {
       orderBy: [{ createdAt: "desc" }, { id: "asc" }],
       select: identityConnectionSelect,
     });
+
+    return connections.map((connection) =>
+      this.summarizeConnectionRecord(connection),
+    );
   }
 
   async seedConnectionPolicyTemplates(): Promise<ConnectionPolicyTemplate[]> {
@@ -1963,7 +1996,11 @@ export class IdentitiesService {
       },
       select: {
         id: true,
+        displayName: true,
+        handle: true,
         identityType: true,
+        verificationLevel: true,
+        status: true,
       },
     });
 
@@ -1982,7 +2019,11 @@ export class IdentitiesService {
       },
       select: {
         id: true,
+        displayName: true,
+        handle: true,
         identityType: true,
+        verificationLevel: true,
+        status: true,
       },
     });
 
@@ -2063,6 +2104,8 @@ export class IdentitiesService {
       connectionId: connection.id,
       sourceIdentityId: connection.sourceIdentityId,
       targetIdentityId: connection.targetIdentityId,
+      sourceIdentity: toIdentitySummary(sourceIdentity),
+      targetIdentity: toIdentitySummary(targetIdentity),
       sourceIdentityType,
       relationshipType,
       connectionType,
@@ -2101,6 +2144,25 @@ export class IdentitiesService {
     }
 
     return connection;
+  }
+
+  private summarizeConnectionRecord(connection: IdentityConnectionRecord) {
+    return {
+      id: connection.id,
+      sourceIdentityId: connection.sourceIdentityId,
+      targetIdentityId: connection.targetIdentityId,
+      connectionType: toApiConnectionType(connection.connectionType),
+      relationshipType: toConnectionRelationshipType(connection),
+      trustState: toApiTrustState(connection.trustState),
+      status: toApiConnectionStatus(connection.status),
+      createdByIdentityId: connection.createdByIdentityId,
+      note: connection.note,
+      metadataJson: connection.metadataJson as Record<string, unknown> | null,
+      createdAt: connection.createdAt,
+      updatedAt: connection.updatedAt,
+      sourceIdentity: toIdentitySummary(connection.sourceIdentity),
+      targetIdentity: toIdentitySummary(connection.targetIdentity),
+    };
   }
 
   private async requireConversation(
@@ -2605,6 +2667,17 @@ function toConnectionRelationshipType(
       toApiConnectionType(connection.connectionType),
     )
   );
+}
+
+function toIdentitySummary(identity: IdentitySummaryRecord) {
+  return {
+    id: identity.id,
+    displayName: identity.displayName,
+    handle: identity.handle,
+    identityType: toApiIdentityType(identity.identityType)!,
+    verificationLevel: identity.verificationLevel,
+    status: identity.status,
+  };
 }
 
 function toContentAccessRuleValue(

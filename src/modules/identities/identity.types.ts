@@ -618,6 +618,8 @@ export interface ResolvedConnectionPermissions {
   connectionId: string;
   sourceIdentityId: string;
   targetIdentityId: string;
+  sourceIdentity?: ConnectionIdentitySummary;
+  targetIdentity?: ConnectionIdentitySummary;
   sourceIdentityType: IdentityType;
   relationshipType: RelationshipType;
   connectionType: ConnectionType;
@@ -634,6 +636,15 @@ export interface ResolvedConnectionPermissions {
   permissions: ResolvedPermissionMap;
   trace: PermissionMergeTrace;
   resolvedAt: Date;
+}
+
+export interface ConnectionIdentitySummary {
+  id: string;
+  displayName: string;
+  handle: string | null;
+  identityType: IdentityType;
+  verificationLevel: string;
+  status: string;
 }
 
 export interface ConnectionPermissionSnapshotRecord {

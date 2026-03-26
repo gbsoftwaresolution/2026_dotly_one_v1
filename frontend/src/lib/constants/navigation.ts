@@ -11,7 +11,7 @@ export type AppNavIconKey =
 export const appNavItems = [
   { href: routes.app.home, label: "Home", icon: "home" },
   { href: routes.app.requests, label: "Requests", icon: "requests" },
-  { href: routes.app.contacts, label: "Connections", icon: "contacts" },
+  { href: routes.app.connections, label: "Connections", icon: "contacts" },
   { href: routes.app.followUps, label: "Follow-ups", icon: "followUps" },
   { href: routes.app.settings, label: "Settings", icon: "settings" },
 ] as const;
@@ -21,7 +21,7 @@ export const appSectionItems = [
   { href: routes.app.qr, label: "Share" },
   { href: routes.app.personas, label: "Dotlys" },
   { href: routes.app.requests, label: "Requests" },
-  { href: routes.app.contacts, label: "Connections" },
+  { href: routes.app.connections, label: "Connections" },
   { href: routes.app.followUps, label: "Follow-ups" },
   { href: routes.app.events, label: "Events" },
   { href: routes.app.notifications, label: "Alerts" },
@@ -43,7 +43,7 @@ export function getAppSectionDescription(pathname: string): string {
     return "Keep incoming connections simple and clear.";
   }
 
-  if (pathname.startsWith(routes.app.contacts)) {
+  if (pathname.startsWith(routes.app.connections)) {
     return "Keep real relationships easy to pick back up.";
   }
 
