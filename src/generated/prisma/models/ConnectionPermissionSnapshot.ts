@@ -53,6 +53,7 @@ export type ConnectionPermissionSnapshotCountAggregateOutputType = {
   connectionId: number
   policyVersion: number
   permissionsJson: number
+  metadataJson: number
   computedAt: number
   _all: number
 }
@@ -85,6 +86,7 @@ export type ConnectionPermissionSnapshotCountAggregateInputType = {
   connectionId?: true
   policyVersion?: true
   permissionsJson?: true
+  metadataJson?: true
   computedAt?: true
   _all?: true
 }
@@ -180,6 +182,7 @@ export type ConnectionPermissionSnapshotGroupByOutputType = {
   connectionId: string
   policyVersion: number
   permissionsJson: runtime.JsonValue
+  metadataJson: runtime.JsonValue | null
   computedAt: Date
   _count: ConnectionPermissionSnapshotCountAggregateOutputType | null
   _avg: ConnectionPermissionSnapshotAvgAggregateOutputType | null
@@ -211,6 +214,7 @@ export type ConnectionPermissionSnapshotWhereInput = {
   connectionId?: Prisma.UuidFilter<"ConnectionPermissionSnapshot"> | string
   policyVersion?: Prisma.IntFilter<"ConnectionPermissionSnapshot"> | number
   permissionsJson?: Prisma.JsonFilter<"ConnectionPermissionSnapshot">
+  metadataJson?: Prisma.JsonNullableFilter<"ConnectionPermissionSnapshot">
   computedAt?: Prisma.DateTimeFilter<"ConnectionPermissionSnapshot"> | Date | string
   connection?: Prisma.XOR<Prisma.IdentityConnectionScalarRelationFilter, Prisma.IdentityConnectionWhereInput>
 }
@@ -220,6 +224,7 @@ export type ConnectionPermissionSnapshotOrderByWithRelationInput = {
   connectionId?: Prisma.SortOrder
   policyVersion?: Prisma.SortOrder
   permissionsJson?: Prisma.SortOrder
+  metadataJson?: Prisma.SortOrderInput | Prisma.SortOrder
   computedAt?: Prisma.SortOrder
   connection?: Prisma.IdentityConnectionOrderByWithRelationInput
 }
@@ -232,6 +237,7 @@ export type ConnectionPermissionSnapshotWhereUniqueInput = Prisma.AtLeast<{
   connectionId?: Prisma.UuidFilter<"ConnectionPermissionSnapshot"> | string
   policyVersion?: Prisma.IntFilter<"ConnectionPermissionSnapshot"> | number
   permissionsJson?: Prisma.JsonFilter<"ConnectionPermissionSnapshot">
+  metadataJson?: Prisma.JsonNullableFilter<"ConnectionPermissionSnapshot">
   computedAt?: Prisma.DateTimeFilter<"ConnectionPermissionSnapshot"> | Date | string
   connection?: Prisma.XOR<Prisma.IdentityConnectionScalarRelationFilter, Prisma.IdentityConnectionWhereInput>
 }, "id">
@@ -241,6 +247,7 @@ export type ConnectionPermissionSnapshotOrderByWithAggregationInput = {
   connectionId?: Prisma.SortOrder
   policyVersion?: Prisma.SortOrder
   permissionsJson?: Prisma.SortOrder
+  metadataJson?: Prisma.SortOrderInput | Prisma.SortOrder
   computedAt?: Prisma.SortOrder
   _count?: Prisma.ConnectionPermissionSnapshotCountOrderByAggregateInput
   _avg?: Prisma.ConnectionPermissionSnapshotAvgOrderByAggregateInput
@@ -257,6 +264,7 @@ export type ConnectionPermissionSnapshotScalarWhereWithAggregatesInput = {
   connectionId?: Prisma.UuidWithAggregatesFilter<"ConnectionPermissionSnapshot"> | string
   policyVersion?: Prisma.IntWithAggregatesFilter<"ConnectionPermissionSnapshot"> | number
   permissionsJson?: Prisma.JsonWithAggregatesFilter<"ConnectionPermissionSnapshot">
+  metadataJson?: Prisma.JsonNullableWithAggregatesFilter<"ConnectionPermissionSnapshot">
   computedAt?: Prisma.DateTimeWithAggregatesFilter<"ConnectionPermissionSnapshot"> | Date | string
 }
 
@@ -264,6 +272,7 @@ export type ConnectionPermissionSnapshotCreateInput = {
   id?: string
   policyVersion: number
   permissionsJson: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   computedAt: Date | string
   connection: Prisma.IdentityConnectionCreateNestedOneWithoutPermissionSnapshotsInput
 }
@@ -273,6 +282,7 @@ export type ConnectionPermissionSnapshotUncheckedCreateInput = {
   connectionId: string
   policyVersion: number
   permissionsJson: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   computedAt: Date | string
 }
 
@@ -280,6 +290,7 @@ export type ConnectionPermissionSnapshotUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   policyVersion?: Prisma.IntFieldUpdateOperationsInput | number
   permissionsJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   computedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   connection?: Prisma.IdentityConnectionUpdateOneRequiredWithoutPermissionSnapshotsNestedInput
 }
@@ -289,6 +300,7 @@ export type ConnectionPermissionSnapshotUncheckedUpdateInput = {
   connectionId?: Prisma.StringFieldUpdateOperationsInput | string
   policyVersion?: Prisma.IntFieldUpdateOperationsInput | number
   permissionsJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   computedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -297,6 +309,7 @@ export type ConnectionPermissionSnapshotCreateManyInput = {
   connectionId: string
   policyVersion: number
   permissionsJson: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   computedAt: Date | string
 }
 
@@ -304,6 +317,7 @@ export type ConnectionPermissionSnapshotUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   policyVersion?: Prisma.IntFieldUpdateOperationsInput | number
   permissionsJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   computedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -312,6 +326,7 @@ export type ConnectionPermissionSnapshotUncheckedUpdateManyInput = {
   connectionId?: Prisma.StringFieldUpdateOperationsInput | string
   policyVersion?: Prisma.IntFieldUpdateOperationsInput | number
   permissionsJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   computedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -330,6 +345,7 @@ export type ConnectionPermissionSnapshotCountOrderByAggregateInput = {
   connectionId?: Prisma.SortOrder
   policyVersion?: Prisma.SortOrder
   permissionsJson?: Prisma.SortOrder
+  metadataJson?: Prisma.SortOrder
   computedAt?: Prisma.SortOrder
 }
 
@@ -401,6 +417,7 @@ export type ConnectionPermissionSnapshotCreateWithoutConnectionInput = {
   id?: string
   policyVersion: number
   permissionsJson: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   computedAt: Date | string
 }
 
@@ -408,6 +425,7 @@ export type ConnectionPermissionSnapshotUncheckedCreateWithoutConnectionInput = 
   id?: string
   policyVersion: number
   permissionsJson: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   computedAt: Date | string
 }
 
@@ -445,6 +463,7 @@ export type ConnectionPermissionSnapshotScalarWhereInput = {
   connectionId?: Prisma.UuidFilter<"ConnectionPermissionSnapshot"> | string
   policyVersion?: Prisma.IntFilter<"ConnectionPermissionSnapshot"> | number
   permissionsJson?: Prisma.JsonFilter<"ConnectionPermissionSnapshot">
+  metadataJson?: Prisma.JsonNullableFilter<"ConnectionPermissionSnapshot">
   computedAt?: Prisma.DateTimeFilter<"ConnectionPermissionSnapshot"> | Date | string
 }
 
@@ -452,6 +471,7 @@ export type ConnectionPermissionSnapshotCreateManyConnectionInput = {
   id?: string
   policyVersion: number
   permissionsJson: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   computedAt: Date | string
 }
 
@@ -459,6 +479,7 @@ export type ConnectionPermissionSnapshotUpdateWithoutConnectionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   policyVersion?: Prisma.IntFieldUpdateOperationsInput | number
   permissionsJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   computedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -466,6 +487,7 @@ export type ConnectionPermissionSnapshotUncheckedUpdateWithoutConnectionInput = 
   id?: Prisma.StringFieldUpdateOperationsInput | string
   policyVersion?: Prisma.IntFieldUpdateOperationsInput | number
   permissionsJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   computedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -473,6 +495,7 @@ export type ConnectionPermissionSnapshotUncheckedUpdateManyWithoutConnectionInpu
   id?: Prisma.StringFieldUpdateOperationsInput | string
   policyVersion?: Prisma.IntFieldUpdateOperationsInput | number
   permissionsJson?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   computedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -483,6 +506,7 @@ export type ConnectionPermissionSnapshotSelect<ExtArgs extends runtime.Types.Ext
   connectionId?: boolean
   policyVersion?: boolean
   permissionsJson?: boolean
+  metadataJson?: boolean
   computedAt?: boolean
   connection?: boolean | Prisma.IdentityConnectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["connectionPermissionSnapshot"]>
@@ -492,6 +516,7 @@ export type ConnectionPermissionSnapshotSelectCreateManyAndReturn<ExtArgs extend
   connectionId?: boolean
   policyVersion?: boolean
   permissionsJson?: boolean
+  metadataJson?: boolean
   computedAt?: boolean
   connection?: boolean | Prisma.IdentityConnectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["connectionPermissionSnapshot"]>
@@ -501,6 +526,7 @@ export type ConnectionPermissionSnapshotSelectUpdateManyAndReturn<ExtArgs extend
   connectionId?: boolean
   policyVersion?: boolean
   permissionsJson?: boolean
+  metadataJson?: boolean
   computedAt?: boolean
   connection?: boolean | Prisma.IdentityConnectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["connectionPermissionSnapshot"]>
@@ -510,10 +536,11 @@ export type ConnectionPermissionSnapshotSelectScalar = {
   connectionId?: boolean
   policyVersion?: boolean
   permissionsJson?: boolean
+  metadataJson?: boolean
   computedAt?: boolean
 }
 
-export type ConnectionPermissionSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "connectionId" | "policyVersion" | "permissionsJson" | "computedAt", ExtArgs["result"]["connectionPermissionSnapshot"]>
+export type ConnectionPermissionSnapshotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "connectionId" | "policyVersion" | "permissionsJson" | "metadataJson" | "computedAt", ExtArgs["result"]["connectionPermissionSnapshot"]>
 export type ConnectionPermissionSnapshotInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   connection?: boolean | Prisma.IdentityConnectionDefaultArgs<ExtArgs>
 }
@@ -534,6 +561,7 @@ export type $ConnectionPermissionSnapshotPayload<ExtArgs extends runtime.Types.E
     connectionId: string
     policyVersion: number
     permissionsJson: runtime.JsonValue
+    metadataJson: runtime.JsonValue | null
     computedAt: Date
   }, ExtArgs["result"]["connectionPermissionSnapshot"]>
   composites: {}
@@ -963,6 +991,7 @@ export interface ConnectionPermissionSnapshotFieldRefs {
   readonly connectionId: Prisma.FieldRef<"ConnectionPermissionSnapshot", 'String'>
   readonly policyVersion: Prisma.FieldRef<"ConnectionPermissionSnapshot", 'Int'>
   readonly permissionsJson: Prisma.FieldRef<"ConnectionPermissionSnapshot", 'Json'>
+  readonly metadataJson: Prisma.FieldRef<"ConnectionPermissionSnapshot", 'Json'>
   readonly computedAt: Prisma.FieldRef<"ConnectionPermissionSnapshot", 'DateTime'>
 }
     

@@ -277,6 +277,7 @@ describe("canonical permission resolver", () => {
 
   it("persistSnapshot option true writes snapshot", async () => {
     let snapshotCreateCalls = 0;
+    let persistedPayload: Record<string, unknown> | null = null;
     const service = new IdentitiesService({
       identityConnection: {
         findUnique: async () =>
@@ -297,11 +298,13 @@ describe("canonical permission resolver", () => {
       connectionPermissionSnapshot: {
         create: async ({ data }: any) => {
           snapshotCreateCalls += 1;
+          persistedPayload = data;
           return {
             id: "snapshot-1",
             connectionId: data.connectionId,
             policyVersion: data.policyVersion,
             permissionsJson: data.permissionsJson,
+            metadataJson: data.metadataJson,
             computedAt: data.computedAt,
           };
         },
@@ -314,6 +317,10 @@ describe("canonical permission resolver", () => {
     });
 
     assert.equal(snapshotCreateCalls, 1);
+    assert.equal(
+      typeof (persistedPayload as Record<string, unknown> | null)?.metadataJson,
+      "object",
+    );
   });
 
   it("getLatestPermissionSnapshot returns most recent snapshot deterministically", async () => {
@@ -325,6 +332,7 @@ describe("canonical permission resolver", () => {
           policyVersion: 2,
           permissionsJson:
             createTemplateRecord("generic.trusted").permissionsJson,
+          metadataJson: null,
           computedAt: new Date("2026-03-27T12:00:00.000Z"),
         }),
       },
@@ -336,6 +344,335 @@ describe("canonical permission resolver", () => {
 
     assert.equal(result?.id, "snapshot-2");
     assert.equal(result?.policyVersion, 2);
+  });
+
+  it("resolveConnectionPermissions uses cache on repeat call when fresh", async () => {
+    let connectionLookups = 0;
+    const service = new IdentitiesService({
+      identityConnection: {
+        findUnique: async () => {
+          connectionLookups += 1;
+          return createConnectionRecord({ trustState: "UNVERIFIED" });
+        },
+      },
+      identity: {
+        findUnique: async ({ where }: any) => ({
+          id: where.id,
+          identityType: "BUSINESS",
+          updatedAt: new Date("2026-03-26T12:00:00.000Z"),
+        }),
+      },
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("business.client"),
+      },
+      connectionPermissionOverride: {
+        findMany: async () => [],
+      },
+      connectionPermissionSnapshot: {
+        findFirst: async () => null,
+      },
+    } as any);
+
+    await service.resolveConnectionPermissions({
+      connectionId: "cache-repeat-1",
+    });
+    await service.resolveConnectionPermissions({
+      connectionId: "cache-repeat-1",
+    });
+
+    assert.equal(connectionLookups, 3);
+  });
+
+  it("forceRefresh bypasses cache", async () => {
+    let connectionLookups = 0;
+    const service = new IdentitiesService({
+      identityConnection: {
+        findUnique: async () => {
+          connectionLookups += 1;
+          return createConnectionRecord({ trustState: "UNVERIFIED" });
+        },
+      },
+      identity: {
+        findUnique: async ({ where }: any) => ({
+          id: where.id,
+          identityType: "BUSINESS",
+          updatedAt: new Date("2026-03-26T12:00:00.000Z"),
+        }),
+      },
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("business.client"),
+      },
+      connectionPermissionOverride: {
+        findMany: async () => [],
+      },
+      connectionPermissionSnapshot: {
+        findFirst: async () => null,
+      },
+    } as any);
+
+    await service.resolveConnectionPermissions({
+      connectionId: "cache-force-1",
+    });
+    await service.resolveConnectionPermissions({
+      connectionId: "cache-force-1",
+      forceRefresh: true,
+    });
+
+    assert.ok(connectionLookups > 3);
+  });
+
+  it("stale snapshot is not reused", async () => {
+    let snapshotReads = 0;
+    const service = new IdentitiesService({
+      identityConnection: {
+        findUnique: async () =>
+          createConnectionRecord({
+            trustState: "UNVERIFIED",
+            connectionType: "CLIENT",
+            updatedAt: new Date("2026-03-26T12:30:00.000Z"),
+          }),
+      },
+      identity: {
+        findUnique: async ({ where }: any) => ({
+          id: where.id,
+          identityType: "BUSINESS",
+          updatedAt: new Date("2026-03-26T12:30:00.000Z"),
+        }),
+      },
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("business.client"),
+      },
+      connectionPermissionOverride: {
+        findMany: async () => [],
+      },
+      connectionPermissionSnapshot: {
+        findFirst: async () => {
+          snapshotReads += 1;
+          return {
+            id: "snapshot-1",
+            connectionId: "connection-1",
+            policyVersion: 1,
+            permissionsJson:
+              createTemplateRecord("business.client").permissionsJson,
+            metadataJson: {
+              resolverVersion: "2026-03-26.prompt-114",
+              templateKey: "business.client",
+              templatePolicyVersion: 1,
+              trustState: TrustState.Unverified,
+              connectionType: ConnectionType.Client,
+              relationshipType: RelationshipType.Client,
+              overrideCount: 0,
+              riskSummaryHash: "hash",
+              sourceHash: "stale-hash",
+              computedAt: new Date("2026-03-26T12:00:00.000Z"),
+            },
+            computedAt: new Date("2026-03-26T12:00:00.000Z"),
+          };
+        },
+      },
+    } as any);
+
+    const result = await service.resolveConnectionPermissions({
+      connectionId: "snapshot-stale-1",
+      preferSnapshot: true,
+    });
+
+    assert.equal(snapshotReads, 1);
+    assert.equal(result.template.templateKey, "business.client");
+  });
+
+  it("resolverVersion mismatch invalidates snapshot", async () => {
+    const service = new IdentitiesService({
+      identityConnection: {
+        findUnique: async () =>
+          createConnectionRecord({
+            trustState: "UNVERIFIED",
+            connectionType: "CLIENT",
+          }),
+      },
+      identity: {
+        findUnique: async ({ where }: any) => ({
+          id: where.id,
+          identityType: "BUSINESS",
+          updatedAt: new Date("2026-03-26T12:00:00.000Z"),
+        }),
+      },
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("business.client"),
+      },
+      connectionPermissionOverride: {
+        findMany: async () => [],
+      },
+    } as any);
+
+    const freshness = await service.isSnapshotFresh(
+      "connection-1",
+      {
+        id: "snapshot-old-version",
+        connectionId: "connection-1",
+        policyVersion: 1,
+        permissionsJson:
+          createTemplateRecord("business.client").permissionsJson,
+        metadataJson: {
+          resolverVersion: "older-version",
+          templateKey: "business.client",
+          templatePolicyVersion: 1,
+          trustState: TrustState.Unverified,
+          connectionType: ConnectionType.Client,
+          relationshipType: RelationshipType.Client,
+          overrideCount: 0,
+          riskSummaryHash: "hash",
+          sourceHash: "hash",
+          computedAt: new Date("2026-03-26T12:00:00.000Z"),
+        },
+        computedAt: new Date("2026-03-26T12:00:00.000Z"),
+      },
+      {},
+    );
+
+    assert.equal(freshness.fresh, false);
+    assert.equal(freshness.reason, "RESOLVER_VERSION_MISMATCH");
+  });
+
+  it("preferSnapshot false recomputes without snapshot reuse", async () => {
+    let snapshotReads = 0;
+    const service = new IdentitiesService({
+      identityConnection: {
+        findUnique: async () =>
+          createConnectionRecord({
+            trustState: "UNVERIFIED",
+            connectionType: "CLIENT",
+          }),
+      },
+      identity: {
+        findUnique: async ({ where }: any) => ({
+          id: where.id,
+          identityType: "BUSINESS",
+          updatedAt: new Date("2026-03-26T12:00:00.000Z"),
+        }),
+      },
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("business.client"),
+      },
+      connectionPermissionOverride: {
+        findMany: async () => [],
+      },
+      connectionPermissionSnapshot: {
+        findFirst: async () => {
+          snapshotReads += 1;
+          return null;
+        },
+      },
+    } as any);
+
+    await service.resolveConnectionPermissions({
+      connectionId: "prefer-snapshot-off-1",
+      preferSnapshot: false,
+    });
+
+    assert.equal(snapshotReads, 0);
+  });
+
+  it("preferSnapshot true consults snapshot only when fresh and safe", async () => {
+    let snapshotReads = 0;
+    const service = new IdentitiesService({
+      identityConnection: {
+        findUnique: async () =>
+          createConnectionRecord({
+            trustState: "UNVERIFIED",
+            connectionType: "CLIENT",
+          }),
+      },
+      identity: {
+        findUnique: async ({ where }: any) => ({
+          id: where.id,
+          identityType: "BUSINESS",
+          updatedAt: new Date("2026-03-26T12:00:00.000Z"),
+        }),
+      },
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("business.client"),
+      },
+      connectionPermissionOverride: {
+        findMany: async () => [],
+      },
+      connectionPermissionSnapshot: {
+        findFirst: async () => {
+          snapshotReads += 1;
+          return {
+            id: "snapshot-fresh-1",
+            connectionId: "connection-1",
+            policyVersion: 1,
+            permissionsJson:
+              createTemplateRecord("business.client").permissionsJson,
+            metadataJson: {
+              resolverVersion: "2026-03-26.prompt-114",
+              templateKey: "business.client",
+              templatePolicyVersion: 1,
+              trustState: TrustState.Unverified,
+              connectionType: ConnectionType.Client,
+              relationshipType: RelationshipType.Client,
+              overrideCount: 0,
+              riskSummaryHash: "hash",
+              sourceHash: await service.computePermissionSourceHash(
+                "connection-1",
+                {},
+              ),
+              computedAt: new Date("2026-03-26T12:00:00.000Z"),
+            },
+            computedAt: new Date("2026-03-26T12:00:00.000Z"),
+          };
+        },
+      },
+    } as any);
+
+    await service.resolveConnectionPermissions({
+      connectionId: "prefer-snapshot-on-1",
+      preferSnapshot: true,
+    });
+
+    assert.equal(snapshotReads, 1);
+  });
+
+  it("previewRiskSignals do not poison stable cache entries", async () => {
+    const service = new IdentitiesService({
+      identityConnection: {
+        findUnique: async () =>
+          createConnectionRecord({
+            trustState: "UNVERIFIED",
+            connectionType: "CLIENT",
+          }),
+      },
+      identity: {
+        findUnique: async ({ where }: any) => ({
+          id: where.id,
+          identityType: "BUSINESS",
+          updatedAt: new Date("2026-03-26T12:00:00.000Z"),
+        }),
+      },
+      connectionPolicyTemplate: {
+        findFirst: async () => createTemplateRecord("business.client"),
+      },
+      connectionPermissionOverride: {
+        findMany: async () => [],
+      },
+      connectionPermissionSnapshot: {
+        findFirst: async () => null,
+      },
+    } as any);
+
+    const preview = await service.resolveConnectionPermissions({
+      connectionId: "cache-risk-preview-1",
+      previewRiskSignals: [
+        { signal: "AI_SAFETY_RISK" as any, severity: "HIGH" as any },
+      ],
+    });
+    const stable = await service.resolveConnectionPermissions({
+      connectionId: "cache-risk-preview-1",
+    });
+
+    assert.equal(preview.riskSummary.aiRestricted, true);
+    assert.equal(stable.riskSummary.aiRestricted, false);
   });
 
   it("blocked trust-state still preserves hard deny in final resolver", async () => {

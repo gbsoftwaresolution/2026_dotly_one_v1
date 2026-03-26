@@ -61,6 +61,8 @@ import { UpdateConnectionTypeDto } from "./dto/update-connection-type.dto";
 import { UpdateTrustStateDto } from "./dto/update-trust-state.dto";
 import type {
   BoundConversationPermissions,
+  CachedConversationContext,
+  CachedResolvedConnectionPermissions,
   ConversationBindingStalenessResult,
   ConversationPermissionBindingSummary,
   ConversationResolutionTrace,
@@ -81,6 +83,8 @@ import type {
   PreviewPermissionsWithTrustStateResult,
   PreviewResolvedPermissionsForConnectionResult,
   PermissionMergeTrace,
+  PermissionSnapshotMetadata,
+  SnapshotFreshnessCheckResult,
   ResolveConversationContextResult,
   ResolvedContentPermissionsForConnectionResult,
   ResolvedConnectionPermissions,
@@ -121,6 +125,12 @@ import {
   CONNECTION_POLICY_TEMPLATE_SEEDS,
   validateTemplatePermissions,
 } from "./policy-template-seeds";
+import {
+  createConnectionPermissionCacheKey,
+  createConversationContextCacheKey,
+  PERMISSION_RESOLVER_VERSION,
+  PermissionCacheStore,
+} from "./permission-cache";
 import { PERMISSION_KEYS, type PermissionKey } from "./permission-keys";
 
 const identityConnectionSelect = {
@@ -188,6 +198,10 @@ type IdentityConversationRecord = Prisma.IdentityConversationGetPayload<{
 
 @Injectable()
 export class IdentitiesService {
+  private readonly permissionCache = new PermissionCacheStore();
+
+  private readonly conversationContextCache = new PermissionCacheStore();
+
   constructor(private readonly prismaService: PrismaService) {}
 
   async createIdentity(
@@ -263,25 +277,31 @@ export class IdentitiesService {
       toApiConnectionStatus(existingConnection.status),
     );
 
-    return this.prismaService.identityConnection.update({
-      where: {
-        id: updateConnectionTypeDto.connectionId,
-      },
-      data: {
-        connectionType: toPrismaConnectionType(
-          updateConnectionTypeDto.connectionType,
-        ),
-        relationshipType:
-          existingConnection.relationshipType ??
-          toPrismaRelationshipType(
-            inferRelationshipTypeFromConnectionType(
-              updateConnectionTypeDto.connectionType,
-            ),
+    const updatedConnection =
+      await this.prismaService.identityConnection.update({
+        where: {
+          id: updateConnectionTypeDto.connectionId,
+        },
+        data: {
+          connectionType: toPrismaConnectionType(
+            updateConnectionTypeDto.connectionType,
           ),
-        status: toPrismaConnectionStatus(nextStatus),
-      },
-      select: identityConnectionSelect,
-    });
+          relationshipType:
+            existingConnection.relationshipType ??
+            toPrismaRelationshipType(
+              inferRelationshipTypeFromConnectionType(
+                updateConnectionTypeDto.connectionType,
+              ),
+            ),
+          status: toPrismaConnectionStatus(nextStatus),
+        },
+        select: identityConnectionSelect,
+      });
+
+    await this.invalidateCachesForConnection(
+      updateConnectionTypeDto.connectionId,
+    );
+    return updatedConnection;
   }
 
   async updateConnectionRelationshipType(
@@ -291,17 +311,23 @@ export class IdentitiesService {
       updateConnectionRelationshipTypeDto.connectionId,
     );
 
-    return this.prismaService.identityConnection.update({
-      where: {
-        id: updateConnectionRelationshipTypeDto.connectionId,
-      },
-      data: {
-        relationshipType: toPrismaRelationshipType(
-          updateConnectionRelationshipTypeDto.relationshipType,
-        ),
-      },
-      select: identityConnectionSelect,
-    });
+    const updatedConnection =
+      await this.prismaService.identityConnection.update({
+        where: {
+          id: updateConnectionRelationshipTypeDto.connectionId,
+        },
+        data: {
+          relationshipType: toPrismaRelationshipType(
+            updateConnectionRelationshipTypeDto.relationshipType,
+          ),
+        },
+        select: identityConnectionSelect,
+      });
+
+    await this.invalidateCachesForConnection(
+      updateConnectionRelationshipTypeDto.connectionId,
+    );
+    return updatedConnection;
   }
 
   async updateTrustState(
@@ -316,16 +342,20 @@ export class IdentitiesService {
       toApiConnectionStatus(existingConnection.status),
     );
 
-    return this.prismaService.identityConnection.update({
-      where: {
-        id: updateTrustStateDto.connectionId,
-      },
-      data: {
-        trustState: toPrismaTrustState(updateTrustStateDto.trustState),
-        status: toPrismaConnectionStatus(nextStatus),
-      },
-      select: identityConnectionSelect,
-    });
+    const updatedConnection =
+      await this.prismaService.identityConnection.update({
+        where: {
+          id: updateTrustStateDto.connectionId,
+        },
+        data: {
+          trustState: toPrismaTrustState(updateTrustStateDto.trustState),
+          status: toPrismaConnectionStatus(nextStatus),
+        },
+        select: identityConnectionSelect,
+      });
+
+    await this.invalidateCachesForConnection(updateTrustStateDto.connectionId);
+    return updatedConnection;
   }
 
   async updateConnectionStatus(
@@ -356,29 +386,35 @@ export class IdentitiesService {
   ) {
     await this.requireConnection(setPermissionOverrideDto.connectionId);
 
-    return this.prismaService.connectionPermissionOverride.upsert({
-      where: {
-        connectionId_permissionKey: {
+    const override =
+      await this.prismaService.connectionPermissionOverride.upsert({
+        where: {
+          connectionId_permissionKey: {
+            connectionId: setPermissionOverrideDto.connectionId,
+            permissionKey: setPermissionOverrideDto.permissionKey,
+          },
+        },
+        update: {
+          effect: toPrismaPermissionEffect(setPermissionOverrideDto.effect),
+          limitsJson: toNullableJsonInput(setPermissionOverrideDto.limitsJson),
+          reason: setPermissionOverrideDto.reason ?? null,
+          createdByIdentityId: setPermissionOverrideDto.createdByIdentityId,
+          createdAt: new Date(),
+        },
+        create: {
           connectionId: setPermissionOverrideDto.connectionId,
           permissionKey: setPermissionOverrideDto.permissionKey,
+          effect: toPrismaPermissionEffect(setPermissionOverrideDto.effect),
+          limitsJson: toNullableJsonInput(setPermissionOverrideDto.limitsJson),
+          reason: setPermissionOverrideDto.reason ?? null,
+          createdByIdentityId: setPermissionOverrideDto.createdByIdentityId,
         },
-      },
-      update: {
-        effect: toPrismaPermissionEffect(setPermissionOverrideDto.effect),
-        limitsJson: toNullableJsonInput(setPermissionOverrideDto.limitsJson),
-        reason: setPermissionOverrideDto.reason ?? null,
-        createdByIdentityId: setPermissionOverrideDto.createdByIdentityId,
-        createdAt: new Date(),
-      },
-      create: {
-        connectionId: setPermissionOverrideDto.connectionId,
-        permissionKey: setPermissionOverrideDto.permissionKey,
-        effect: toPrismaPermissionEffect(setPermissionOverrideDto.effect),
-        limitsJson: toNullableJsonInput(setPermissionOverrideDto.limitsJson),
-        reason: setPermissionOverrideDto.reason ?? null,
-        createdByIdentityId: setPermissionOverrideDto.createdByIdentityId,
-      },
-    });
+      });
+
+    await this.invalidateCachesForConnection(
+      setPermissionOverrideDto.connectionId,
+    );
+    return override;
   }
 
   async setContentAccessRule(
@@ -756,6 +792,40 @@ export class IdentitiesService {
     };
   }
 
+  invalidateConnectionPermissionCache(connectionId: string) {
+    this.permissionCache.delete(
+      createConnectionPermissionCacheKey(connectionId),
+    );
+  }
+
+  invalidateConversationContextCache(conversationId: string) {
+    this.conversationContextCache.delete(
+      createConversationContextCacheKey(conversationId),
+    );
+  }
+
+  async invalidateCachesForConnection(connectionId: string) {
+    this.invalidateConnectionPermissionCache(connectionId);
+
+    if (!this.prismaService.identityConversation?.findMany) {
+      return;
+    }
+
+    const conversations =
+      await this.prismaService.identityConversation.findMany({
+        where: {
+          connectionId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    for (const conversation of conversations) {
+      this.invalidateConversationContextCache(conversation.id);
+    }
+  }
+
   async previewPermissionsWithTrustState(
     previewDto: PreviewPermissionsWithTrustStateDto,
   ): Promise<PreviewPermissionsWithTrustStateResult> {
@@ -953,6 +1023,55 @@ export class IdentitiesService {
     resolveInput: string | ResolveConnectionPermissionsDto,
   ): Promise<ResolvedConnectionPermissions> {
     const resolveDto = normalizeResolveConnectionPermissionsInput(resolveInput);
+    const preferCache = resolveDto.preferCache ?? true;
+    const preferSnapshot = resolveDto.preferSnapshot ?? false;
+    const forceRefresh = resolveDto.forceRefresh ?? false;
+    const hasEphemeralPreviewInputs =
+      (resolveDto.previewRiskSignals?.length ?? 0) > 0;
+
+    if (!forceRefresh && preferCache && !hasEphemeralPreviewInputs) {
+      const cached = await this.getFreshCachedResolvedPermissions(
+        resolveDto.connectionId,
+        {
+          applyRiskOverlay: resolveDto.applyRiskOverlay,
+          previewRiskSignals: resolveDto.previewRiskSignals,
+        },
+      );
+
+      if (cached) {
+        return cached.resolved;
+      }
+    }
+
+    if (!forceRefresh && preferSnapshot && !hasEphemeralPreviewInputs) {
+      const snapshot = await this.getLatestPermissionSnapshot({
+        connectionId: resolveDto.connectionId,
+      });
+      const freshness = await this.isSnapshotFresh(
+        resolveDto.connectionId,
+        snapshot,
+        {
+          applyRiskOverlay: resolveDto.applyRiskOverlay,
+          previewRiskSignals: resolveDto.previewRiskSignals,
+        },
+      );
+
+      if (snapshot && freshness.fresh && snapshot.metadataJson) {
+        const hydrated = await this.hydrateResolvedPermissionsFromSnapshot(
+          resolveDto.connectionId,
+          snapshot,
+          {
+            applyRiskOverlay: resolveDto.applyRiskOverlay,
+            previewRiskSignals: resolveDto.previewRiskSignals,
+          },
+        );
+
+        if (hydrated) {
+          return hydrated;
+        }
+      }
+    }
+
     const resolutionCore = await this.resolveConnectionPermissionsCore(
       resolveDto.connectionId,
       {
@@ -960,6 +1079,17 @@ export class IdentitiesService {
         previewRiskSignals: resolveDto.previewRiskSignals,
       },
     );
+
+    if (!hasEphemeralPreviewInputs) {
+      await this.storeResolvedPermissionsInCache(
+        resolveDto.connectionId,
+        resolutionCore,
+        {
+          applyRiskOverlay: resolveDto.applyRiskOverlay,
+          previewRiskSignals: resolveDto.previewRiskSignals,
+        },
+      );
+    }
 
     if (resolveDto.persistSnapshot === true) {
       await this.persistResolvedPermissionSnapshot(
@@ -1151,6 +1281,7 @@ export class IdentitiesService {
       updatedConversation.lastResolvedAt,
       resolvedPermissions.resolvedAt,
     );
+    this.invalidateConversationContextCache(bindDto.conversationId);
 
     return {
       conversationId: updatedConversation.id,
@@ -1202,6 +1333,22 @@ export class IdentitiesService {
     const conversation = await this.requireConversation(
       resolveDto.conversationId,
     );
+    const cacheKey = createConversationContextCacheKey(
+      resolveDto.conversationId,
+    );
+    const cachedContext =
+      this.conversationContextCache.get<CachedConversationContext>(cacheKey);
+
+    if (
+      cachedContext &&
+      cachedContext.versionTag === PERMISSION_RESOLVER_VERSION &&
+      cachedContext.value.context.conversation.updatedAt.getTime() ===
+        conversation.updatedAt.getTime() &&
+      !cachedContext.value.context.stale
+    ) {
+      return cachedContext.value.context;
+    }
+
     const resolvedPermissions = await this.resolveConnectionPermissions({
       connectionId: conversation.connectionId,
       persistSnapshot: false,
@@ -1214,19 +1361,39 @@ export class IdentitiesService {
       resolvedPermissions.resolvedAt,
     );
 
-    return {
+    const result = {
       conversation: toIdentityConversationContext(conversation),
       resolvedPermissions,
       stale: bindingSummary.stale,
       bindingSummary,
       traceSummary: createConversationTraceSummary(resolvedPermissions),
     };
+
+    if (!result.stale) {
+      this.conversationContextCache.set<CachedConversationContext>(
+        cacheKey,
+        {
+          cacheKey,
+          context: result,
+          permissionHash: currentHash,
+          resolverVersion: PERMISSION_RESOLVER_VERSION,
+        },
+        30_000,
+        PERMISSION_RESOLVER_VERSION,
+      );
+    }
+
+    return result;
   }
 
   async persistResolvedPermissionSnapshot(
     connectionId: string,
     resolved: ResolvedConnectionPermissions,
   ): Promise<ConnectionPermissionSnapshotRecord> {
+    const metadata = await this.buildPermissionSnapshotMetadata(
+      connectionId,
+      resolved,
+    );
     const snapshot =
       await this.prismaService.connectionPermissionSnapshot.create({
         data: {
@@ -1235,6 +1402,7 @@ export class IdentitiesService {
           permissionsJson: toRequiredJsonInput(
             toConnectionPolicyTemplatePermissions(resolved.permissions),
           ),
+          metadataJson: toNullableJsonInput(metadata),
           computedAt: resolved.resolvedAt,
         },
       });
@@ -1245,6 +1413,7 @@ export class IdentitiesService {
       policyVersion: snapshot.policyVersion,
       permissionsJson:
         snapshot.permissionsJson as unknown as ConnectionPolicyTemplatePermissions,
+      metadataJson: metadata,
       computedAt: snapshot.computedAt,
     };
   }
@@ -1270,7 +1439,218 @@ export class IdentitiesService {
       policyVersion: snapshot.policyVersion,
       permissionsJson:
         snapshot.permissionsJson as unknown as ConnectionPolicyTemplatePermissions,
+      metadataJson:
+        (snapshot.metadataJson as PermissionSnapshotMetadata | null) ?? null,
       computedAt: snapshot.computedAt,
+    };
+  }
+
+  async isSnapshotFresh(
+    connectionId: string,
+    snapshot: ConnectionPermissionSnapshotRecord | null,
+    options?: {
+      applyRiskOverlay?: boolean;
+      previewRiskSignals?: RiskSignalRecord[];
+    },
+  ): Promise<SnapshotFreshnessCheckResult> {
+    if (!snapshot) {
+      return {
+        fresh: false,
+        reason: "MISSING",
+        expectedSourceHash: null,
+        actualSourceHash: null,
+      };
+    }
+
+    if (!snapshot.metadataJson) {
+      return {
+        fresh: false,
+        reason: "MISSING_METADATA",
+        expectedSourceHash: null,
+        actualSourceHash: null,
+      };
+    }
+
+    if ((options?.previewRiskSignals?.length ?? 0) > 0) {
+      return {
+        fresh: false,
+        reason: "RISK_PREVIEW_UNSAFE",
+        expectedSourceHash: null,
+        actualSourceHash: snapshot.metadataJson.sourceHash,
+      };
+    }
+
+    if (snapshot.metadataJson.resolverVersion !== PERMISSION_RESOLVER_VERSION) {
+      return {
+        fresh: false,
+        reason: "RESOLVER_VERSION_MISMATCH",
+        expectedSourceHash: null,
+        actualSourceHash: snapshot.metadataJson.sourceHash,
+      };
+    }
+
+    const expectedSourceHash = await this.computePermissionSourceHash(
+      connectionId,
+      options,
+    );
+
+    return {
+      fresh: expectedSourceHash === snapshot.metadataJson.sourceHash,
+      reason:
+        expectedSourceHash === snapshot.metadataJson.sourceHash
+          ? "FRESH"
+          : "SOURCE_HASH_MISMATCH",
+      expectedSourceHash,
+      actualSourceHash: snapshot.metadataJson.sourceHash,
+    };
+  }
+
+  async computePermissionSourceHash(
+    connectionId: string,
+    options?: {
+      applyRiskOverlay?: boolean;
+      previewRiskSignals?: RiskSignalRecord[];
+    },
+  ): Promise<string> {
+    const connection = await this.requireConnection(connectionId);
+    const sourceIdentity = await this.requireIdentity(
+      connection.sourceIdentityId,
+    );
+    const template = await this.getConnectionPolicyTemplate({
+      sourceIdentityType: toApiIdentityType(sourceIdentity.identityType),
+      connectionType: toApiConnectionType(connection.connectionType),
+    });
+    const overrides = await this.listPermissionOverridesForConnection({
+      connectionId,
+    });
+    const latestOverrideCreatedAt = overrides.reduce<number>(
+      (latest, override) => Math.max(latest, override.createdAt.getTime()),
+      0,
+    );
+    const sourcePayload = {
+      connectionUpdatedAt: (
+        connection.updatedAt ?? connection.createdAt
+      ).toISOString(),
+      sourceIdentityUpdatedAt: (
+        sourceIdentity.updatedAt ??
+        sourceIdentity.createdAt ??
+        new Date(0)
+      ).toISOString(),
+      connectionType: toApiConnectionType(connection.connectionType),
+      trustState: toApiTrustState(connection.trustState),
+      relationshipType: toConnectionRelationshipType(connection),
+      templateKey: template.templateKey,
+      templatePolicyVersion: template.policyVersion,
+      overrideCount: overrides.length,
+      latestOverrideCreatedAt,
+      applyRiskOverlay: options?.applyRiskOverlay ?? true,
+      previewRiskSignals: options?.previewRiskSignals ?? [],
+      resolverVersion: PERMISSION_RESOLVER_VERSION,
+    };
+
+    return createHash("sha256")
+      .update(JSON.stringify(sourcePayload))
+      .digest("hex");
+  }
+
+  private async getFreshCachedResolvedPermissions(
+    connectionId: string,
+    options?: {
+      applyRiskOverlay?: boolean;
+      previewRiskSignals?: RiskSignalRecord[];
+    },
+  ): Promise<CachedResolvedConnectionPermissions | null> {
+    const cacheKey = createConnectionPermissionCacheKey(connectionId);
+    const cached =
+      this.permissionCache.get<CachedResolvedConnectionPermissions>(cacheKey);
+
+    if (!cached) {
+      return null;
+    }
+
+    if (cached.versionTag !== PERMISSION_RESOLVER_VERSION) {
+      this.permissionCache.delete(cacheKey);
+      return null;
+    }
+
+    const sourceHash = await this.computePermissionSourceHash(
+      connectionId,
+      options,
+    );
+
+    if (cached.value.sourceHash !== sourceHash) {
+      this.permissionCache.delete(cacheKey);
+      return null;
+    }
+
+    return cached.value;
+  }
+
+  private async storeResolvedPermissionsInCache(
+    connectionId: string,
+    resolved: ResolvedConnectionPermissions,
+    options?: {
+      applyRiskOverlay?: boolean;
+      previewRiskSignals?: RiskSignalRecord[];
+    },
+  ) {
+    const sourceHash = await this.computePermissionSourceHash(
+      connectionId,
+      options,
+    );
+    const cacheKey = createConnectionPermissionCacheKey(connectionId);
+
+    this.permissionCache.set<CachedResolvedConnectionPermissions>(
+      cacheKey,
+      {
+        cacheKey,
+        resolved,
+        sourceHash,
+        resolverVersion: PERMISSION_RESOLVER_VERSION,
+      },
+      30_000,
+      PERMISSION_RESOLVER_VERSION,
+    );
+  }
+
+  private async hydrateResolvedPermissionsFromSnapshot(
+    connectionId: string,
+    snapshot: ConnectionPermissionSnapshotRecord,
+    options?: {
+      applyRiskOverlay?: boolean;
+      previewRiskSignals?: RiskSignalRecord[];
+    },
+  ): Promise<ResolvedConnectionPermissions | null> {
+    const resolved = await this.resolveConnectionPermissionsCore(connectionId, {
+      applyRiskOverlay: options?.applyRiskOverlay,
+      previewRiskSignals: options?.previewRiskSignals,
+    });
+
+    await this.storeResolvedPermissionsInCache(connectionId, resolved, options);
+    return resolved;
+  }
+
+  private async buildPermissionSnapshotMetadata(
+    connectionId: string,
+    resolved: ResolvedConnectionPermissions,
+  ): Promise<PermissionSnapshotMetadata> {
+    const sourceHash = await this.computePermissionSourceHash(connectionId, {
+      applyRiskOverlay: true,
+    });
+
+    return {
+      resolverVersion: PERMISSION_RESOLVER_VERSION,
+      templateKey: resolved.template.templateKey,
+      templatePolicyVersion: resolved.template.policyVersion,
+      trustState: resolved.trustState,
+      connectionType: resolved.connectionType,
+      relationshipType: resolved.relationshipType,
+      overrideCount: resolved.overridesSummary.count,
+      riskSummaryHash: createHash("sha256")
+        .update(JSON.stringify(resolved.riskSummary))
+        .digest("hex"),
+      sourceHash,
+      computedAt: resolved.resolvedAt,
     };
   }
 

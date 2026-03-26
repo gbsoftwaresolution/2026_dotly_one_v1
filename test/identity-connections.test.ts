@@ -22,6 +22,7 @@ import { CreateIdentityDto } from "../src/modules/identities/dto/create-identity
 import { UpdateConnectionRelationshipTypeDto } from "../src/modules/identities/dto/update-connection-relationship-type.dto";
 import { SetPermissionOverrideDto } from "../src/modules/identities/dto/set-permission-override.dto";
 import { IdentitiesService } from "../src/modules/identities/identities.service";
+import { CONNECTION_POLICY_TEMPLATE_SEEDS } from "../src/modules/identities/policy-template-seeds";
 import { PERMISSION_KEYS } from "../src/modules/identities/permission-keys";
 
 describe("Identity domain DTO validation", () => {
@@ -332,6 +333,170 @@ describe("IdentitiesService", () => {
     });
 
     assert.equal(result.relationshipType, PrismaRelationshipType.PARTNER);
+  });
+
+  it("cache invalidates after trust-state update", async () => {
+    let connectionLookups = 0;
+    const service = new IdentitiesService({
+      identityConnection: {
+        findUnique: async () => {
+          connectionLookups += 1;
+          return {
+            id: "connection-1",
+            sourceIdentityId: "identity-1",
+            targetIdentityId: "identity-2",
+            connectionType: PrismaConnectionType.KNOWN,
+            relationshipType: PrismaRelationshipType.UNKNOWN,
+            trustState: PrismaTrustState.BASIC_VERIFIED,
+            status: PrismaConnectionStatus.ACTIVE,
+            createdByIdentityId: "identity-1",
+            note: null,
+            metadataJson: null,
+            createdAt: new Date("2026-03-26T10:00:00.000Z"),
+            updatedAt: new Date("2026-03-26T10:00:00.000Z"),
+          };
+        },
+        update: async () => ({
+          id: "connection-1",
+          sourceIdentityId: "identity-1",
+          targetIdentityId: "identity-2",
+          connectionType: PrismaConnectionType.KNOWN,
+          relationshipType: PrismaRelationshipType.UNKNOWN,
+          trustState: PrismaTrustState.HIGH_RISK,
+          status: PrismaConnectionStatus.RESTRICTED,
+          createdByIdentityId: "identity-1",
+          note: null,
+          metadataJson: null,
+          createdAt: new Date("2026-03-26T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-26T11:00:00.000Z"),
+        }),
+      },
+      identity: {
+        findUnique: async ({ where }: any) => ({
+          id: where.id,
+          identityType: "PERSONAL",
+          updatedAt: new Date("2026-03-26T10:00:00.000Z"),
+        }),
+      },
+      connectionPolicyTemplate: {
+        findFirst: async () => ({
+          id: "template-1",
+          sourceIdentityType: "PERSONAL",
+          connectionType: "KNOWN",
+          templateKey: "personal.trusted",
+          displayName: "Personal Trusted",
+          description: null,
+          policyVersion: 1,
+          permissionsJson: CONNECTION_POLICY_TEMPLATE_SEEDS.find(
+            (template) => template.templateKey === "personal.trusted",
+          )?.permissions,
+          limitsJson: null,
+          isSystem: true,
+          isActive: true,
+          createdAt: new Date("2026-03-26T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-26T10:00:00.000Z"),
+        }),
+      },
+      connectionPermissionOverride: {
+        findMany: async () => [],
+      },
+      connectionPermissionSnapshot: {
+        findFirst: async () => null,
+      },
+    } as any);
+
+    await service.resolveConnectionPermissions({
+      connectionId: "connection-1",
+    });
+    await service.updateTrustState({
+      connectionId: "connection-1",
+      trustState: TrustState.HighRisk,
+    });
+    await service.resolveConnectionPermissions({
+      connectionId: "connection-1",
+      forceRefresh: true,
+    });
+
+    assert.ok(connectionLookups > 3);
+  });
+
+  it("cache invalidates after manual override change", async () => {
+    let overrideWrites = 0;
+    const service = new IdentitiesService({
+      identityConnection: {
+        findUnique: async () => ({
+          id: "connection-1",
+          sourceIdentityId: "identity-1",
+          targetIdentityId: "identity-2",
+          connectionType: PrismaConnectionType.KNOWN,
+          relationshipType: PrismaRelationshipType.UNKNOWN,
+          trustState: PrismaTrustState.BASIC_VERIFIED,
+          status: PrismaConnectionStatus.ACTIVE,
+          createdByIdentityId: "identity-1",
+          note: null,
+          metadataJson: null,
+          createdAt: new Date("2026-03-26T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-26T10:00:00.000Z"),
+        }),
+      },
+      identity: {
+        findUnique: async ({ where }: any) => ({
+          id: where.id,
+          identityType: "PERSONAL",
+          updatedAt: new Date("2026-03-26T10:00:00.000Z"),
+        }),
+      },
+      connectionPolicyTemplate: {
+        findFirst: async () => ({
+          id: "template-1",
+          sourceIdentityType: "PERSONAL",
+          connectionType: "KNOWN",
+          templateKey: "personal.trusted",
+          displayName: "Personal Trusted",
+          description: null,
+          policyVersion: 1,
+          permissionsJson: CONNECTION_POLICY_TEMPLATE_SEEDS.find(
+            (template) => template.templateKey === "personal.trusted",
+          )?.permissions,
+          limitsJson: null,
+          isSystem: true,
+          isActive: true,
+          createdAt: new Date("2026-03-26T10:00:00.000Z"),
+          updatedAt: new Date("2026-03-26T10:00:00.000Z"),
+        }),
+      },
+      connectionPermissionOverride: {
+        findMany: async () => [],
+        upsert: async ({ where, update, create }: any) => {
+          overrideWrites += 1;
+          return {
+            id: "override-1",
+            connectionId: where.connectionId_permissionKey.connectionId,
+            permissionKey: where.connectionId_permissionKey.permissionKey,
+            effect: update.effect ?? create.effect,
+            limitsJson: null,
+            reason: null,
+            createdByIdentityId: "identity-1",
+            createdAt: new Date("2026-03-26T11:00:00.000Z"),
+          };
+        },
+      },
+      connectionPermissionSnapshot: {
+        findFirst: async () => null,
+      },
+    } as any);
+
+    await service.resolveConnectionPermissions({
+      connectionId: "connection-1",
+    });
+    await service.setPermissionOverride({
+      connectionId: "connection-1",
+      permissionKey: PERMISSION_KEYS.ai.summaryUse,
+      effect: PermissionEffect.Deny,
+      createdByIdentityId: "identity-1",
+    });
+
+    assert.equal(overrideWrites, 1);
   });
 
   it("lists connections for an identity across both directions", async () => {

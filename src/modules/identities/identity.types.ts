@@ -641,7 +641,48 @@ export interface ConnectionPermissionSnapshotRecord {
   connectionId: string;
   policyVersion: number;
   permissionsJson: ConnectionPolicyTemplatePermissions;
+  metadataJson: PermissionSnapshotMetadata | null;
   computedAt: Date;
+}
+
+export interface PermissionSnapshotMetadata {
+  resolverVersion: string;
+  templateKey: string;
+  templatePolicyVersion: number;
+  trustState: TrustState;
+  connectionType: ConnectionType;
+  relationshipType: RelationshipType;
+  overrideCount: number;
+  riskSummaryHash: string;
+  sourceHash: string;
+  computedAt: Date;
+}
+
+export interface SnapshotFreshnessCheckResult {
+  fresh: boolean;
+  reason:
+    | "FRESH"
+    | "MISSING"
+    | "RESOLVER_VERSION_MISMATCH"
+    | "SOURCE_HASH_MISMATCH"
+    | "RISK_PREVIEW_UNSAFE"
+    | "MISSING_METADATA";
+  expectedSourceHash: string | null;
+  actualSourceHash: string | null;
+}
+
+export interface CachedResolvedConnectionPermissions {
+  cacheKey: string;
+  resolved: ResolvedConnectionPermissions;
+  sourceHash: string;
+  resolverVersion: string;
+}
+
+export interface CachedConversationContext {
+  cacheKey: string;
+  context: ResolveConversationContextResult;
+  permissionHash: string;
+  resolverVersion: string;
 }
 
 export interface PreviewPermissionsWithRiskResult {

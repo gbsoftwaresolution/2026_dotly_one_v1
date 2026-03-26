@@ -717,6 +717,7 @@ model ConnectionPermissionSnapshot {
   connectionId    String             @db.Uuid
   policyVersion   Int
   permissionsJson Json
+  metadataJson    Json?
   computedAt      DateTime
   connection      IdentityConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
 

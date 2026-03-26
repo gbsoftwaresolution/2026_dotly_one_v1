@@ -486,6 +486,7 @@ export const ConnectionPermissionSnapshotScalarFieldEnum = {
   connectionId: 'connectionId',
   policyVersion: 'policyVersion',
   permissionsJson: 'permissionsJson',
+  metadataJson: 'metadataJson',
   computedAt: 'computedAt'
 } as const
 

@@ -27,6 +27,18 @@ export class ResolveConnectionPermissionsDto {
 
   @IsOptional()
   @IsBoolean()
+  preferCache?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  preferSnapshot?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  forceRefresh?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   applyRiskOverlay?: boolean;
 
   @IsOptional()

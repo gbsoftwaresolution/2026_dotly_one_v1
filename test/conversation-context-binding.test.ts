@@ -432,4 +432,79 @@ describe("conversation context binding", () => {
     assert.equal(result.stale, true);
     assert.equal(result.traceSummary.templateKey, "personal.trusted");
   });
+
+  it("resolveConversationContext uses conversation cache when fresh", async () => {
+    let conversationLookups = 0;
+    const service = createBaseService({
+      identityConversation: {
+        findUnique: async () => {
+          conversationLookups += 1;
+          return createConversationRecord({
+            lastResolvedAt: new Date("2026-03-26T12:00:00.000Z"),
+            lastPermissionHash: null,
+          });
+        },
+        findMany: async () => [createConversationRecord()],
+        update: async ({ data }: any) => ({
+          ...createConversationRecord(),
+          ...data,
+        }),
+      },
+    });
+
+    await service.resolveConversationContext({
+      conversationId: "conversation-1",
+    });
+    await service.resolveConversationContext({
+      conversationId: "conversation-1",
+    });
+
+    assert.equal(conversationLookups, 2);
+  });
+
+  it("conversation cache invalidates when binding becomes stale", async () => {
+    let denyAi = false;
+    const service = createBaseService({
+      identityConversation: {
+        findUnique: async () =>
+          createConversationRecord({
+            lastResolvedAt: new Date("2026-03-26T12:00:00.000Z"),
+            lastPermissionHash: null,
+          }),
+        findMany: async () => [createConversationRecord()],
+        update: async ({ data }: any) => ({
+          ...createConversationRecord(),
+          ...data,
+        }),
+      },
+      connectionPermissionOverride: {
+        findMany: async () =>
+          denyAi
+            ? [
+                {
+                  permissionKey: PERMISSION_KEYS.ai.summaryUse,
+                  effect: "DENY",
+                  limitsJson: null,
+                  reason: null,
+                  createdAt: new Date("2026-03-26T12:30:00.000Z"),
+                  createdByIdentityId: "identity-source",
+                },
+              ]
+            : [],
+      },
+    });
+
+    await service.resolveConversationContext({
+      conversationId: "conversation-1",
+    });
+    denyAi = true;
+    await service.bindResolvedPermissionsToConversation({
+      conversationId: "conversation-1",
+    });
+    const refreshed = await service.resolveConversationContext({
+      conversationId: "conversation-1",
+    });
+
+    assert.equal(typeof refreshed.bindingSummary.currentHash, "string");
+  });
 });
