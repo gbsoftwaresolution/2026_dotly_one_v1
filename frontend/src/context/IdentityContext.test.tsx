@@ -2,7 +2,7 @@ import React from "react";
 
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IdentitySwitcher } from "@/components/identities/identity-switcher";
 import {
@@ -10,6 +10,14 @@ import {
   useIdentityContext,
 } from "@/context/IdentityContext";
 import { IdentityType, type Identity } from "@/types/identity";
+
+const mocks = vi.hoisted(() => ({
+  listMyIdentities: vi.fn(),
+}));
+
+vi.mock("@/lib/api/identities", () => ({
+  listMyIdentities: mocks.listMyIdentities,
+}));
 
 const identities: Identity[] = [
   {
@@ -39,6 +47,11 @@ function ActiveIdentityProbe() {
 }
 
 describe("IdentityContext", () => {
+  beforeEach(() => {
+    mocks.listMyIdentities.mockReset();
+    mocks.listMyIdentities.mockResolvedValue([]);
+  });
+
   it("switches the active identity from the switcher", async () => {
     const user = userEvent.setup();
 
@@ -63,5 +76,18 @@ describe("IdentityContext", () => {
     expect(screen.getAllByText(/^Joe's Repair Shop$/).length).toBeGreaterThan(
       0,
     );
+  });
+
+  it("loads identities from the API when initial identities are not provided", async () => {
+    mocks.listMyIdentities.mockResolvedValue(identities);
+
+    render(
+      <IdentityProvider>
+        <IdentitySwitcher />
+        <ActiveIdentityProbe />
+      </IdentityProvider>,
+    );
+
+    expect(await screen.findAllByText(/grandpa joe/i)).toHaveLength(3);
   });
 });

@@ -273,6 +273,15 @@ export class IdentitiesService {
     }
   }
 
+  async listIdentitiesForUser(userId: string): Promise<Identity[]> {
+    return this.prismaService.identity.findMany({
+      where: {
+        personId: userId,
+      },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    });
+  }
+
   async createConnection(
     createConnectionDto: CreateConnectionDto,
   ): Promise<IdentityConnectionRecord> {

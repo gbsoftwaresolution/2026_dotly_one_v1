@@ -12,6 +12,7 @@ import {
 
 import type { Identity } from "@/types/identity";
 import { IdentityType } from "@/types/identity";
+import { listMyIdentities } from "@/lib/api/identities";
 
 const STORAGE_KEY = "dotly.active-identity-id";
 
@@ -91,11 +92,17 @@ export function IdentityProvider({
     setIsLoading(true);
 
     try {
-      const identities = initialIdentities ?? mockIdentities;
+      const identities =
+        initialIdentities ?? (await listMyIdentities().catch(() => []));
+      const safeIdentities =
+        identities.length > 0 ? identities : mockIdentities;
       const preferredId = readStoredIdentityId();
-      const nextActiveIdentity = chooseActiveIdentity(identities, preferredId);
+      const nextActiveIdentity = chooseActiveIdentity(
+        safeIdentities,
+        preferredId,
+      );
 
-      setAvailableIdentities(identities);
+      setAvailableIdentities(safeIdentities);
       setActiveIdentity(nextActiveIdentity);
 
       if (nextActiveIdentity && typeof window !== "undefined") {

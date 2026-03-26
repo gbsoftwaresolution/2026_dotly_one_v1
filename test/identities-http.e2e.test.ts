@@ -38,8 +38,10 @@ const JWT_ISSUER = "dotly-backend";
 const JWT_AUDIENCE = "dotly-clients";
 const JWT_SECRET = "test-secret";
 const TEST_SESSION_ID = "session-current";
+const TEST_USER_ID = "user-84";
 
 const createIdentityCalls: unknown[] = [];
+const listIdentitiesCalls: unknown[] = [];
 const createConnectionCalls: unknown[] = [];
 const getConnectionCalls: unknown[] = [];
 const listConnectionsCalls: unknown[] = [];
@@ -70,6 +72,7 @@ const explainConversationContextCalls: unknown[] = [];
 
 function resetCalls() {
   createIdentityCalls.length = 0;
+  listIdentitiesCalls.length = 0;
   createConnectionCalls.length = 0;
   getConnectionCalls.length = 0;
   listConnectionsCalls.length = 0;
@@ -100,6 +103,21 @@ function resetCalls() {
 }
 
 const identitiesServiceMock = {
+  listIdentitiesForUser: async (userId: string) => {
+    listIdentitiesCalls.push(userId);
+    return [
+      {
+        id: "identity-1",
+        personId: userId,
+        identityType: "personal",
+        displayName: "Grandpa Joe",
+        handle: "grandpa-joe",
+        verificationLevel: "basic_verified",
+        status: "active",
+        metadataJson: null,
+      },
+    ];
+  },
   createIdentity: async (payload: CreateIdentityDto) => {
     createIdentityCalls.push(payload);
     return { id: "identity-1", ...payload };
@@ -424,7 +442,7 @@ describe("Identities HTTP E2E", () => {
 
   async function authHeaders() {
     const token = await jwtService.signAsync({
-      sub: "user-84",
+      sub: TEST_USER_ID,
       email: "user84@example.com",
       sessionId: TEST_SESSION_ID,
     });
@@ -449,6 +467,17 @@ describe("Identities HTTP E2E", () => {
 
     assert.equal(response.status, 201);
     assert.equal(createIdentityCalls.length, 1);
+  });
+
+  it("lists identities for the authenticated user through GET /identities", async () => {
+    const headers = await authHeaders();
+    const response = await fetch(`${baseUrl}/v1/identities`, { headers });
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.data[0].displayName, "Grandpa Joe");
+    assert.equal(listIdentitiesCalls.length, 1);
+    assert.equal(listIdentitiesCalls[0], TEST_USER_ID);
   });
 
   it("creates a connection through POST /identity-connections", async () => {

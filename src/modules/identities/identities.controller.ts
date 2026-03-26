@@ -10,6 +10,8 @@ import {
   UseGuards,
 } from "@nestjs/common";
 
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import type { AuthenticatedUser } from "../../common/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 
 import { CreateConnectionDto } from "./dto/create-connection.dto";
@@ -33,6 +35,11 @@ import { IdentitiesService } from "./identities.service";
 @Controller()
 export class IdentitiesController {
   constructor(private readonly identitiesService: IdentitiesService) {}
+
+  @Get("identities")
+  listMyIdentities(@CurrentUser() user: AuthenticatedUser) {
+    return this.identitiesService.listIdentitiesForUser(user.id);
+  }
 
   @Post("identities")
   createIdentity(@Body() body: CreateIdentityDto) {

@@ -1,12 +1,17 @@
 import { apiRequest } from "@/lib/api/client";
 import type {
-  CreateConnectionRequest,
   IdentityConnection,
   IdentityConnectionFilters,
 } from "@/types/connection";
 import type { CreateIdentityRequest, Identity } from "@/types/identity";
 
 export const identitiesApi = {
+  listMyIdentities: () =>
+    apiRequest<Identity[]>("/api/identities", {
+      baseUrl: "",
+      credentials: "same-origin",
+    }),
+
   createIdentity: (data: CreateIdentityRequest) =>
     apiRequest<Identity>("/identities", {
       method: "POST",
@@ -31,13 +36,7 @@ export const identitiesApi = {
       }`,
     );
   },
-
-  createConnection: (data: CreateConnectionRequest) =>
-    apiRequest<IdentityConnection>("/identity-connections", {
-      method: "POST",
-      body: data,
-    }),
 };
 
-export const { createIdentity, getIdentityConnections, createConnection } =
+export const { listMyIdentities, createIdentity, getIdentityConnections } =
   identitiesApi;
