@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   usePathname: vi.fn(),
+  postSignupPasskeyPrompt: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -18,6 +19,13 @@ vi.mock("@/components/auth/email-verification-banner", () => ({
 
 vi.mock("@/components/navigation/bottom-nav", () => ({
   BottomNav: () => React.createElement("div", null, "BottomNav"),
+}));
+
+vi.mock("@/components/auth/post-signup-passkey-prompt", () => ({
+  PostSignupPasskeyPrompt: (props: { initialPasskeyCount?: number }) => {
+    mocks.postSignupPasskeyPrompt(props);
+    return React.createElement("div", null, "PostSignupPasskeyPrompt");
+  },
 }));
 
 vi.mock("@/components/notifications/notification-badge", () => ({
@@ -36,6 +44,7 @@ describe("AppShell", () => {
   beforeEach(() => {
     mocks.usePathname.mockReset();
     mocks.usePathname.mockReturnValue("/app/requests");
+    mocks.postSignupPasskeyPrompt.mockReset();
   });
 
   it("surfaces the current section description in the premium shell header", () => {
@@ -59,5 +68,8 @@ describe("AppShell", () => {
       "aria-describedby",
       "app-shell-page-meta",
     );
+    expect(mocks.postSignupPasskeyPrompt).toHaveBeenCalledWith({
+      initialPasskeyCount: undefined,
+    });
   });
 });

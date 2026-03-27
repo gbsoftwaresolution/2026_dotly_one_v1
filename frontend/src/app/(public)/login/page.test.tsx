@@ -10,7 +10,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/components/auth/login-auth-panel", () => ({
-  LoginAuthPanel: (props: { redirectTo?: string; initialEmail?: string }) => {
+  LoginAuthPanel: (props: {
+    redirectTo?: string;
+    initialEmail?: string;
+    shouldPromptPasskeyEnrollment?: boolean;
+  }) => {
     mocks.loginAuthPanel(props);
 
     return React.createElement("div", { "data-testid": "login-auth-panel" });
@@ -49,12 +53,18 @@ describe("LoginPage", () => {
       ),
     ).toBeInTheDocument();
     expect(
+      screen.getByText(
+        /sign in with your password once and dotly will guide you straight into passkey setup right after/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole("link", { name: /resend verification/i }),
     ).toHaveAttribute("href", "/verify-email?email=new%40dotly.one");
     expect(mocks.loginAuthPanel).toHaveBeenCalledWith(
       expect.objectContaining({
         redirectTo: routes.app.home,
         initialEmail: "new@dotly.one",
+        shouldPromptPasskeyEnrollment: true,
       }),
     );
   });
@@ -87,6 +97,22 @@ describe("LoginPage", () => {
     expect(
       screen.getByText(
         /start with a passkey\. password sign-in stays right underneath/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("explains the immediate passkey step after post-signup password login", async () => {
+    const page = await LoginPage({
+      searchParams: Promise.resolve({
+        created: "1",
+      }),
+    });
+
+    render(page);
+
+    expect(
+      screen.getByText(
+        /if you sign in with your password today, dotly will guide you into passkey setup right after/i,
       ),
     ).toBeInTheDocument();
   });

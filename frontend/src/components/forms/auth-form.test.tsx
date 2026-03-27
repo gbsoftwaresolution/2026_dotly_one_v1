@@ -184,4 +184,38 @@ describe("AuthForm", () => {
     ).toBeInTheDocument();
     expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
   });
+
+  it("adds the one-time passkey enrollment flag after password login", async () => {
+    mocks.login.mockResolvedValue({
+      success: true,
+      sessionId: "session-1",
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(AuthForm, {
+        mode: "login",
+        redirectTo: "/app/requests?view=assigned",
+        shouldPromptPasskeyEnrollment: true,
+      }),
+    );
+
+    await user.type(screen.getByLabelText(/email/i), "ava@dotly.one");
+    await user.type(screen.getByLabelText(/^password$/i), "SecurePass123!");
+    await user.click(screen.getByRole("button", { name: /sign in to dotly/i }));
+
+    await waitFor(() => {
+      expect(mocks.login).toHaveBeenCalledWith({
+        email: "ava@dotly.one",
+        password: "SecurePass123!",
+      });
+    });
+
+    await waitFor(() => {
+      expect(mocks.replace).toHaveBeenCalledWith(
+        "/app/requests?view=assigned&enrollPasskey=1",
+      );
+    });
+  });
 });

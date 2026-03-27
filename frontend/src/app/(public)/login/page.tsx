@@ -143,8 +143,9 @@ export default async function LoginPage({
                       Your Dotly is ready. Check your inbox, including spam, for
                       your confirmation email. You can still sign in now, but
                       verified-only sharing stays limited until you confirm it.
-                      Add a passkey after signing in for the smoothest return
-                      next time. Need another link?{" "}
+                      Sign in with your password once and Dotly will guide you
+                      straight into passkey setup right after. Need another
+                      link?{" "}
                       <Link
                         href={resendHref}
                         className="underline underline-offset-4 hover:opacity-80 transition-opacity"
@@ -156,7 +157,9 @@ export default async function LoginPage({
                   ) : (
                     <p className="text-[14px] leading-relaxed font-medium text-status-warning">
                       Your Dotly is ready. Email confirmation is still required,
-                      but delivery is not configured in this environment. Use{" "}
+                      but delivery is not configured in this environment. Sign
+                      in with your password once and Dotly will guide you into
+                      passkey setup right after. Use{" "}
                       <Link
                         href={resendHref}
                         className="underline underline-offset-4 hover:opacity-80 transition-opacity"
@@ -176,12 +179,15 @@ export default async function LoginPage({
                   Passkey-first sign in
                 </h2>
                 <p className="text-[16px] md:text-[17px] text-muted font-medium">
-                  Start with a passkey. Password sign-in stays right underneath.
+                  {created
+                    ? "Start with a passkey. If you sign in with your password today, Dotly will guide you into passkey setup right after."
+                    : "Start with a passkey. Password sign-in stays right underneath."}
                 </p>
               </div>
               <LoginAuthPanel
                 redirectTo={redirectTo}
                 initialEmail={initialEmail}
+                shouldPromptPasskeyEnrollment={created}
               />
             </div>
 

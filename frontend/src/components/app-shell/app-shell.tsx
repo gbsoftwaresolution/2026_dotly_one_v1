@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
+import { PostSignupPasskeyPrompt } from "@/components/auth/post-signup-passkey-prompt";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { NotificationBadge } from "@/components/notifications/notification-badge";
 import { ActivationNudgeProvider } from "@/context/ActivationNudgeContext";
@@ -111,6 +112,11 @@ export function AppShell({ children, session }: AppShellProps) {
                 className={cn(isShareRoute ? "min-h-screen-dvh" : "space-y-4")}
               >
                 {!isShareRoute ? <EmailVerificationBanner /> : null}
+                {!isShareRoute ? (
+                  <PostSignupPasskeyPrompt
+                    initialPasskeyCount={session.user?.security.passkeyCount}
+                  />
+                ) : null}
                 {children}
               </div>
             </main>

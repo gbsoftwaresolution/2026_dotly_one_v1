@@ -21,6 +21,7 @@ import { dotlyPositioning } from "@/lib/constants/positioning";
 import { E2E_MOCK_ACCESS_TOKEN } from "@/lib/e2e/mock-data";
 import { isE2eMockMode } from "@/lib/e2e/mock-mode";
 import { routes } from "@/lib/constants/routes";
+import { POST_SIGNUP_PASSKEY_QUERY_PARAM } from "@/lib/passkeys/post-signup-enrollment";
 import { prefetchMyFastShare } from "@/lib/share-fast-store";
 import { cn } from "@/lib/utils/cn";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,6 +35,7 @@ interface AuthFormProps {
   description?: string;
   collapsible?: boolean;
   defaultExpanded?: boolean;
+  shouldPromptPasskeyEnrollment?: boolean;
 }
 
 const INPUT_CLASSES =
@@ -51,6 +53,18 @@ function sanitizeRedirectPath(path: string): string {
   }
 
   return path;
+}
+
+function appendQueryParam(path: string, key: string, value: string): string {
+  const [pathWithSearch, hash = ""] = path.split("#", 2);
+  const [pathname, search = ""] = pathWithSearch.split("?", 2);
+  const params = new URLSearchParams(search);
+
+  params.set(key, value);
+
+  const nextSearch = params.toString();
+
+  return `${pathname}${nextSearch ? `?${nextSearch}` : ""}${hash ? `#${hash}` : ""}`;
 }
 
 function getPasswordStrength(password: string): {
@@ -100,6 +114,7 @@ export function AuthForm({
   description,
   collapsible = false,
   defaultExpanded = true,
+  shouldPromptPasskeyEnrollment = false,
 }: AuthFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState(initialEmail);
@@ -208,7 +223,14 @@ export function AuthForm({
         return;
       }
 
-      const nextPath = sanitizeRedirectPath(redirectTo);
+      const sanitizedRedirectPath = sanitizeRedirectPath(redirectTo);
+      const nextPath = shouldPromptPasskeyEnrollment
+        ? appendQueryParam(
+            sanitizedRedirectPath,
+            POST_SIGNUP_PASSKEY_QUERY_PARAM,
+            "1",
+          )
+        : sanitizedRedirectPath;
 
       if (isE2eMockMode()) {
         document.cookie = `${ACCESS_TOKEN_COOKIE}=${E2E_MOCK_ACCESS_TOKEN}; path=/; SameSite=Lax`;

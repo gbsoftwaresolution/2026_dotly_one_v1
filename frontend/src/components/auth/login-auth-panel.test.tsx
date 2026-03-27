@@ -59,4 +59,21 @@ describe("LoginAuthPanel", () => {
 
     expect(screen.getByText("expanded")).toBeInTheDocument();
   });
+
+  it("passes post-signup passkey enrollment guidance into the password fallback", () => {
+    render(
+      React.createElement(LoginAuthPanel, {
+        redirectTo: "/app",
+        shouldPromptPasskeyEnrollment: true,
+      }),
+    );
+
+    expect(mocks.authForm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        shouldPromptPasskeyEnrollment: true,
+        description:
+          "Use your email and password once, and Dotly will guide you straight into passkey setup after sign-in.",
+      }),
+    );
+  });
 });
