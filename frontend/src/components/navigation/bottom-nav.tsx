@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils/cn";
 
 const navIcons: Record<AppNavIconKey, typeof QrCode> = {
   home: LayoutGrid,
+  inbox: MessageSquareMore,
   qr: QrCode,
   requests: MessageSquareMore,
   contacts: Users,

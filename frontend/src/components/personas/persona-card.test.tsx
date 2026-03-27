@@ -11,6 +11,7 @@ describe("PersonaCard", () => {
       React.createElement(PersonaCard, {
         persona: {
           id: "persona-1",
+          identityId: "identity-1",
           type: "professional",
           username: "jane-doe",
           publicUrl: "https://dotly.id/jane-doe",
@@ -37,6 +38,7 @@ describe("PersonaCard", () => {
     expect(
       screen.getByText(/trusted identity with calm signal/i),
     ).toBeInTheDocument();
+    expect(screen.getByText(/public handle @jane-doe/i)).toBeInTheDocument();
     expect(screen.getByText(/^verified$/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /dotly\.one/i })).toHaveAttribute(
       "href",
@@ -49,6 +51,7 @@ describe("PersonaCard", () => {
       React.createElement(PersonaCard, {
         persona: {
           id: "persona-2",
+          identityId: "identity-1",
           type: "professional",
           username: "jane-doe",
           publicUrl: "https://dotly.id/jane-doe",
@@ -73,10 +76,48 @@ describe("PersonaCard", () => {
     );
 
     expect(screen.queryByText(/^verified$/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/public handle @jane-doe/i)).toBeInTheDocument();
     expect(
       screen.queryByText(/trusted identity with calm signal/i),
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/^company$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^website$/i)).not.toBeInTheDocument();
+  });
+
+  it("shows internal route context for business routing personas", () => {
+    render(
+      React.createElement(PersonaCard, {
+        persona: {
+          id: "persona-3",
+          identityId: "identity-1",
+          type: "business",
+          username: "acme-studio",
+          publicUrl: "https://dotly.id/acme-studio",
+          fullName: "Acme Studio",
+          jobTitle: "Customer Desk",
+          companyName: "Acme",
+          tagline: null,
+          websiteUrl: null,
+          isVerified: false,
+          profilePhotoUrl: null,
+          accessMode: "open",
+          verifiedOnly: false,
+          sharingMode: "controlled",
+          smartCardConfig: null,
+          publicPhone: null,
+          publicWhatsappNumber: null,
+          publicEmail: null,
+          routingDisplayName: "Customer Care",
+          routingKey: "care",
+          isDefaultRouting: false,
+          createdAt: "2026-03-24T00:00:00.000Z",
+          updatedAt: "2026-03-24T00:00:00.000Z",
+        },
+      }),
+    );
+
+    expect(screen.getByText(/team destination/i)).toBeInTheDocument();
+    expect(screen.getByText(/customer care/i)).toBeInTheDocument();
+    expect(screen.getByText(/internal route #care/i)).toBeInTheDocument();
   });
 });

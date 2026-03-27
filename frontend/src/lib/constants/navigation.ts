@@ -2,6 +2,7 @@ import { routes } from "./routes";
 
 export type AppNavIconKey =
   | "home"
+  | "inbox"
   | "qr"
   | "requests"
   | "contacts"
@@ -10,9 +11,9 @@ export type AppNavIconKey =
 
 export const appNavItems = [
   { href: routes.app.home, label: "Home", icon: "home" },
+  { href: routes.app.inbox, label: "Inbox", icon: "inbox" },
   { href: routes.app.requests, label: "Requests", icon: "requests" },
-  { href: routes.app.connections, label: "Connections", icon: "contacts" },
-  { href: routes.app.followUps, label: "Follow-ups", icon: "followUps" },
+  { href: routes.app.contacts, label: "Contacts", icon: "contacts" },
   { href: routes.app.settings, label: "Settings", icon: "settings" },
 ] as const;
 
@@ -39,6 +40,18 @@ export function getAppSectionDescription(pathname: string): string {
     return "Open one screen and share with confidence.";
   }
 
+  if (pathname === routes.app.inbox) {
+    return "Review routed conversations by identity and persona inbox.";
+  }
+
+  if (pathname.startsWith("/app/conversations/")) {
+    return "Review routed conversations by identity and persona inbox.";
+  }
+
+  if (pathname.startsWith(`${routes.app.inbox}/`)) {
+    return "Manage persona inbox coverage and team assignment scope for the active identity.";
+  }
+
   if (pathname.startsWith(routes.app.requests)) {
     return "Keep incoming connections simple and clear.";
   }
@@ -59,6 +72,10 @@ export function getAppSectionDescription(pathname: string): string {
 }
 
 export function getAppSectionLabel(pathname: string): string {
+  if (pathname.startsWith("/app/conversations/")) {
+    return "Inbox";
+  }
+
   const matchedItem = [...appSectionItems]
     .sort((left, right) => right.href.length - left.href.length)
     .find(

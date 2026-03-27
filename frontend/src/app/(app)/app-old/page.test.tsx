@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { routes } from "@/lib/constants/routes";
 
 const mocks = vi.hoisted(() => ({
   requireServerSession: vi.fn(),
@@ -41,7 +40,7 @@ describe("AppHomePage", () => {
   it("loads the dashboard with user analytics", async () => {
     const result = await AppHomePage();
 
-    expect(mocks.requireServerSession).toHaveBeenCalledWith(routes.app.home);
+    expect(mocks.requireServerSession).toHaveBeenCalledWith("/app-old");
     expect(mocks.userApi.meAnalytics).toHaveBeenCalledWith("token");
     expect(result).toBeTruthy();
   });

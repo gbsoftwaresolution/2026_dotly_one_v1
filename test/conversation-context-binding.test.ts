@@ -1,9 +1,10 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 
 import { IdentitiesService } from "../src/modules/identities/identities.service";
+import { ConversationStatus } from "../src/modules/identities/identity.types";
 import { ConversationType } from "../src/modules/identities/identity.types";
 import { CONNECTION_POLICY_TEMPLATE_SEEDS } from "../src/modules/identities/policy-template-seeds";
 import { PERMISSION_KEYS } from "../src/modules/identities/permission-keys";
@@ -90,13 +91,30 @@ function createBaseService(overrides?: Partial<Record<string, unknown>>) {
         createdAt: new Date("2026-03-26T12:00:00.000Z"),
         updatedAt: new Date("2026-03-26T12:00:00.000Z"),
       }),
+      findFirst: async ({ where }: any) => ({
+        id: where.id,
+        personId: where.id === "identity-target" ? "user-1" : null,
+        members: [],
+        operators: [],
+      }),
     },
     persona: {
       findUnique: async ({ where }: any) => ({
         id: where.id,
         identityId:
-          where.id === "persona-target" ? "identity-target" : "identity-source",
+          where.id === "persona-target" || where.id === "persona-target-default"
+            ? "identity-target"
+            : "identity-source",
       }),
+      findFirst: async ({ where }: any) => {
+        if (where.identityId === "identity-target" && where.isDefaultRouting) {
+          return {
+            id: "persona-target-default",
+          };
+        }
+
+        return null;
+      },
     },
     connectionPolicyTemplate: {
       findFirst: async ({ where }: any) =>
@@ -220,6 +238,32 @@ describe("conversation context binding", () => {
     assert.equal(createCalls, 0);
   });
 
+  it("uses the target default routing persona when personaId is omitted", async () => {
+    let createdPersonaId: string | null = null;
+    const service = createBaseService({
+      identityConversation: {
+        findFirst: async () => null,
+        create: async ({ data }: any) => {
+          createdPersonaId = data.personaId;
+          return createConversationRecord({
+            personaId: data.personaId,
+          });
+        },
+      },
+    });
+
+    const result = await service.getOrCreateDirectConversation({
+      sourceIdentityId: "identity-source",
+      targetIdentityId: "identity-target",
+      connectionId: "connection-1",
+      createdByIdentityId: "identity-source",
+      conversationType: ConversationType.Direct,
+    });
+
+    assert.equal(result.personaId, "persona-target-default");
+    assert.equal(createdPersonaId, "persona-target-default");
+  });
+
   it("rejects conversation persona when it does not belong to target identity", async () => {
     const service = createBaseService({
       persona: {
@@ -303,6 +347,164 @@ describe("conversation context binding", () => {
       ],
       personaId: "persona-target",
     });
+  });
+
+  it("listAccessibleConversationsForUser narrows member access to assigned personas", async () => {
+    const service = createBaseService({
+      identity: {
+        findFirst: async () => ({
+          id: "identity-target",
+          personId: null,
+          members: [
+            {
+              id: "member-1",
+              personaAssignments: [{ personaId: "persona-target" }],
+            },
+          ],
+          operators: [],
+        }),
+      },
+      identityConversation: {
+        findMany: async () => [
+          createConversationRecord({ personaId: "persona-target" }),
+          createConversationRecord({
+            id: "conversation-2",
+            personaId: "persona-other",
+          }),
+          createConversationRecord({
+            id: "conversation-3",
+            personaId: null,
+          }),
+        ],
+      },
+    });
+
+    const result = await service.listAccessibleConversationsForUser({
+      userId: "user-member",
+      identityId: "identity-target",
+    });
+
+    assert.deepEqual(
+      result.map((conversation) => conversation.personaId),
+      ["persona-target"],
+    );
+  });
+
+  it("listAccessibleConversationsForUser preserves full member access when no assignments exist", async () => {
+    const service = createBaseService({
+      identity: {
+        findFirst: async () => ({
+          id: "identity-target",
+          personId: null,
+          members: [
+            {
+              id: "member-1",
+              personaAssignments: [],
+            },
+          ],
+          operators: [],
+        }),
+      },
+      identityConversation: {
+        findMany: async () => [
+          createConversationRecord({ personaId: "persona-target" }),
+          createConversationRecord({
+            id: "conversation-2",
+            personaId: null,
+          }),
+        ],
+      },
+    });
+
+    const result = await service.listAccessibleConversationsForUser({
+      userId: "user-member",
+      identityId: "identity-target",
+    });
+
+    assert.equal(result.length, 2);
+  });
+
+  it("updateConversationStatus rejects scoped members outside assigned persona threads", async () => {
+    let updateCalls = 0;
+    const service = createBaseService({
+      identity: {
+        findFirst: async ({ where }: any) =>
+          where.id === "identity-target"
+            ? {
+                id: where.id,
+                personId: null,
+                members: [
+                  {
+                    id: "member-1",
+                    personaAssignments: [{ personaId: "persona-target" }],
+                  },
+                ],
+                operators: [],
+              }
+            : null,
+      },
+      identityConversation: {
+        findUnique: async () =>
+          createConversationRecord({ personaId: "persona-other" }),
+        update: async () => {
+          updateCalls += 1;
+          return createConversationRecord({
+            personaId: "persona-other",
+            status: ConversationStatus.Archived,
+          });
+        },
+      },
+    });
+
+    await assert.rejects(
+      service.updateConversationStatus({
+        conversationId: "conversation-1",
+        currentUserId: "user-member",
+        status: ConversationStatus.Archived,
+      }),
+      (error: unknown) => error instanceof NotFoundException,
+    );
+
+    assert.equal(updateCalls, 0);
+  });
+
+  it("updateConversationStatus allows scoped members inside assigned persona threads", async () => {
+    const service = createBaseService({
+      identity: {
+        findFirst: async ({ where }: any) =>
+          where.id === "identity-target"
+            ? {
+                id: where.id,
+                personId: null,
+                members: [
+                  {
+                    id: "member-1",
+                    personaAssignments: [{ personaId: "persona-target" }],
+                  },
+                ],
+                operators: [],
+              }
+            : null,
+      },
+      identityConversation: {
+        findUnique: async () =>
+          createConversationRecord({ personaId: "persona-target" }),
+        update: async ({ data }: any) =>
+          createConversationRecord({
+            personaId: "persona-target",
+            status: data.status,
+          }),
+      },
+    });
+
+    const result = await service.updateConversationStatus({
+      conversationId: "conversation-1",
+      currentUserId: "user-member",
+      status: ConversationStatus.Archived,
+    });
+
+    assert.equal(result.personaId, "persona-target");
+    assert.equal(result.conversationStatus, ConversationStatus.Archived);
   });
 
   it("protected conversation requires protected-capable permissions", async () => {

@@ -44,7 +44,9 @@ function normalizeExplainResponse(data: any): ExplainResponse {
   };
 }
 
-function normalizeConversationContext(data: any): IdentityConversationContext {
+export function normalizeConversationContext(
+  data: any,
+): IdentityConversationContext {
   return {
     conversationId: data.conversationId,
     connectionId: data.connectionId,

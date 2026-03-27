@@ -4,7 +4,6 @@ import { PersonaSharingSettingsForm } from "@/components/personas/persona-sharin
 import { PageHeader } from "@/components/shared/page-header";
 import { ApiError, apiRequest } from "@/lib/api/client";
 import { requireServerSession } from "@/lib/auth/protected-route";
-import { routes } from "@/lib/constants/routes";
 import type { PersonaSummary } from "@/types/persona";
 
 export default async function PersonaSharingSettingsPage({
@@ -13,9 +12,7 @@ export default async function PersonaSharingSettingsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { accessToken } = await requireServerSession(
-    routes.app.personaSettings(id),
-  );
+  const { accessToken } = await requireServerSession(`/app-old/personas/settings/${id}`);
 
   let persona: PersonaSummary | null = null;
   let loadError: string | null = null;

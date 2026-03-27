@@ -10,6 +10,7 @@ import {
   readSessionCache,
   writeSessionCache,
 } from "@/lib/client-session-cache";
+import { getCanonicalPublicProfilePath } from "@/lib/persona/public-profile-path";
 import type { PublicProfile } from "@/types/persona";
 
 const PUBLIC_PROFILE_CACHE_PREFIX = "dotly.public-profile";
@@ -18,8 +19,10 @@ interface PublicUserPageProps {
   username: string;
 }
 
-function buildLoginHref(username: string): string {
-  return `/login?next=${encodeURIComponent(`/u/${username}`)}`;
+function buildLoginHref(publicUrl: string, username: string): string {
+  return `/login?next=${encodeURIComponent(
+    getCanonicalPublicProfilePath(publicUrl, username),
+  )}`;
 }
 
 export async function PublicUserPage({ username }: PublicUserPageProps) {
@@ -37,7 +40,7 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
 
     const isSmartCard = profile.sharingMode === "smart_card";
     const showRequestAccessPanel = profile.sharingMode === "controlled";
-    const loginHref = buildLoginHref(profile.username);
+    const loginHref = buildLoginHref(profile.publicUrl, profile.username);
 
     return (
       <main

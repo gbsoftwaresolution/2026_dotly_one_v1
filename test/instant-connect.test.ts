@@ -1304,12 +1304,99 @@ describe("RelationshipsService", () => {
       },
     );
 
-    assert.equal(usernameLookups.length, 1);
-    assert.equal((usernameLookups[0] as any)?.username, "private-user");
+    assert.equal(usernameLookups.length, 2);
+    assert.equal((usernameLookups[0] as any)?.identity?.is?.handle, "private-user");
+    assert.equal((usernameLookups[1] as any)?.username, "private-user");
     assert.equal(
-      (usernameLookups[0] as any)?.accessMode?.not,
+      (usernameLookups[1] as any)?.accessMode?.not,
       PrismaPersonaAccessMode.PRIVATE,
     );
+  });
+
+  it("resolves public instant connect targets by identity handle before username aliases", async () => {
+    const service = new RelationshipsService(
+      {
+        $transaction: async <T>(callback: (tx: any) => Promise<T>) =>
+          callback({
+            persona: {
+              findFirst: async ({ where }: any) => {
+                if (where.userId) {
+                  return {
+                    id: "actor-persona",
+                  };
+                }
+
+                if (where.identity?.is?.handle === "acme") {
+                  return {
+                    id: "target-persona",
+                    userId: "target-user",
+                    accessMode: PrismaPersonaAccessMode.OPEN,
+                    sharingMode: PrismaPersonaSharingMode.SMART_CARD,
+                    smartCardConfig: {
+                      primaryAction: "instant_connect",
+                    },
+                    verifiedOnly: false,
+                  };
+                }
+
+                return null;
+              },
+              findUnique: async () => ({
+                id: "target-persona",
+              }),
+            },
+            user: {
+              findUnique: async () => ({
+                id: "actor-user",
+                isVerified: true,
+                phoneVerifiedAt: new Date("2026-03-23T00:00:00.000Z"),
+              }),
+            },
+            qRAccessToken: {
+              findFirst: async () => ({ id: "profile-qr-1" }),
+            },
+            contactRelationship: {
+              findUnique: async () => null,
+              findFirst: async () => null,
+              create: async ({ data }: any) => ({
+                id:
+                  data.ownerUserId === "actor-user"
+                    ? "relationship-id"
+                    : "reciprocal-relationship-id",
+              }),
+              updateMany: async () => ({ count: 1 }),
+              update: async ({ where }: any) => ({ id: where.id }),
+            },
+            contactMemory: {
+              findFirst: async () => null,
+              create: async () => ({ id: "memory-id" }),
+            },
+          }),
+      } as any,
+      {
+        assertNoInteractionBlockInTransaction: async () => undefined,
+      } as any,
+      {
+        upsertInteractionMemory: async (tx: any, payload: Record<string, unknown>) =>
+          tx.contactMemory.create({ data: payload }),
+      } as any,
+      {
+        assertUserIsVerified: async () => undefined,
+      } as any,
+      {
+        assertSourceAccess: async () => undefined,
+      } as any,
+    );
+
+    const result = await service.instantConnectByUsername("actor-user", "acme", {
+      fromPersonaId: "actor-persona",
+      source: ContactRequestSourceType.Profile,
+    });
+
+    assert.deepEqual(result, {
+      relationshipId: "relationship-id",
+      status: "connected",
+    });
   });
 
   it("returns 403 when the target user is blocked", async () => {

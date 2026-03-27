@@ -73,7 +73,9 @@ export const ModelName = {
   PersonaAnalytics: 'PersonaAnalytics',
   Identity: 'Identity',
   IdentityMember: 'IdentityMember',
+  IdentityMemberPersonaAssignment: 'IdentityMemberPersonaAssignment',
   IdentityOperator: 'IdentityOperator',
+  IdentityOperatorPersonaAssignment: 'IdentityOperatorPersonaAssignment',
   IdentityConnection: 'IdentityConnection',
   ConnectionPermissionOverride: 'ConnectionPermissionOverride',
   ConnectionPermissionSnapshot: 'ConnectionPermissionSnapshot',
@@ -470,6 +472,17 @@ export const IdentityMemberScalarFieldEnum = {
 export type IdentityMemberScalarFieldEnum = (typeof IdentityMemberScalarFieldEnum)[keyof typeof IdentityMemberScalarFieldEnum]
 
 
+export const IdentityMemberPersonaAssignmentScalarFieldEnum = {
+  id: 'id',
+  identityMemberId: 'identityMemberId',
+  personaId: 'personaId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityMemberPersonaAssignmentScalarFieldEnum = (typeof IdentityMemberPersonaAssignmentScalarFieldEnum)[keyof typeof IdentityMemberPersonaAssignmentScalarFieldEnum]
+
+
 export const IdentityOperatorScalarFieldEnum = {
   id: 'id',
   identityId: 'identityId',
@@ -483,6 +496,17 @@ export const IdentityOperatorScalarFieldEnum = {
 } as const
 
 export type IdentityOperatorScalarFieldEnum = (typeof IdentityOperatorScalarFieldEnum)[keyof typeof IdentityOperatorScalarFieldEnum]
+
+
+export const IdentityOperatorPersonaAssignmentScalarFieldEnum = {
+  id: 'id',
+  identityOperatorId: 'identityOperatorId',
+  personaId: 'personaId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityOperatorPersonaAssignmentScalarFieldEnum = (typeof IdentityOperatorPersonaAssignmentScalarFieldEnum)[keyof typeof IdentityOperatorPersonaAssignmentScalarFieldEnum]
 
 
 export const IdentityConnectionScalarFieldEnum = {

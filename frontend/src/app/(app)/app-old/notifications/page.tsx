@@ -1,10 +1,9 @@
 import { NotificationsScreen } from "@/components/notifications/notifications-screen";
 import { PageHeader } from "@/components/shared/page-header";
 import { requireServerSession } from "@/lib/auth/protected-route";
-import { routes } from "@/lib/constants/routes";
 
 export default async function NotificationsPage() {
-  await requireServerSession(routes.app.notifications);
+  await requireServerSession("/app-old/notifications");
 
   return (
     <section className="flex flex-col mx-auto w-full max-w-2xl gap-6 animate-fade-up [animation-duration:700ms] pb-safe">

@@ -9,7 +9,7 @@ import { requireServerSession } from "@/lib/auth/protected-route";
 import { routes } from "@/lib/constants/routes";
 
 export default async function SettingsPage() {
-  const { accessToken, user } = await requireServerSession(routes.app.settings);
+  const { accessToken, user } = await requireServerSession("/app-old/settings");
   const analytics = await userApi.meAnalytics(accessToken).catch(() => null);
 
   const shortcuts = [

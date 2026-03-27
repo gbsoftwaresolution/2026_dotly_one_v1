@@ -1,7 +1,6 @@
 import React from "react";
 
 import { describe, expect, it, vi } from "vitest";
-import { routes } from "@/lib/constants/routes";
 
 const mocks = vi.hoisted(() => ({
   requireServerSession: vi.fn(),
@@ -82,9 +81,7 @@ describe("SettingsPage", () => {
 
     const element = await SettingsPage();
 
-    expect(mocks.requireServerSession).toHaveBeenCalledWith(
-      routes.app.settings,
-    );
+    expect(mocks.requireServerSession).toHaveBeenCalledWith("/app-old/settings");
     expect(mocks.meAnalytics).toHaveBeenCalledWith("token");
     expect(JSON.stringify(element)).toContain('"totalConnections":24');
     expect(JSON.stringify(element)).toContain('"connectionsThisMonth":5');

@@ -18,6 +18,7 @@ function createPersonas() {
   return [
     {
       id: "persona-1",
+      identityId: "identity-1",
       type: "personal" as const,
       username: "jane-personal",
       publicUrl: "https://dotly.id/jane-personal",
@@ -40,6 +41,7 @@ function createPersonas() {
     },
     {
       id: "persona-2",
+      identityId: "identity-1",
       type: "professional" as const,
       username: "jane-work",
       publicUrl: "https://dotly.id/jane-work",

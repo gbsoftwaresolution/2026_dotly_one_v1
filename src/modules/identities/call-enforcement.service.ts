@@ -30,6 +30,13 @@ export class CallEnforcementService {
     const context = await this.identitiesService.resolveConversationContext({
       conversationId: input.conversationId,
     });
+    if (input.currentUserId) {
+      await this.identitiesService.assertConversationActionAccessibleToUser({
+        userId: input.currentUserId,
+        conversation: context.conversation,
+        actorIdentityId: input.actorIdentityId,
+      });
+    }
     const staleCheck =
       await this.identitiesService.isConversationPermissionBindingStale(
         input.conversationId,

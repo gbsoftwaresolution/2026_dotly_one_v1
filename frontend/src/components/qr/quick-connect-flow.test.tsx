@@ -31,6 +31,7 @@ describe("QuickConnectFlow", () => {
         personas: [
           {
             id: "persona-1",
+            identityId: "identity-1",
             type: "professional",
             fullName: "Alex Sender",
             username: "alex",
@@ -74,6 +75,7 @@ describe("QuickConnectFlow", () => {
         personas: [
           {
             id: "persona-1",
+            identityId: "identity-1",
             type: "professional",
             fullName: "Alex Sender",
             username: "alex",
@@ -141,6 +143,7 @@ describe("QuickConnectFlow", () => {
         personas: [
           {
             id: "persona-1",
+            identityId: "identity-1",
             type: "professional",
             fullName: "Alex Sender",
             username: "alex",

@@ -4,6 +4,16 @@ import Link from "next/link";
 import { ArrowUpRight, Check } from "lucide-react";
 
 import { routes } from "@/lib/constants/routes";
+import {
+  getCanonicalPublicProfilePath,
+  getCanonicalPublicSlug,
+} from "@/lib/persona/public-profile-path";
+import {
+  formatPublicHandle,
+  getInternalRouteHeadline,
+  getInternalRouteLabel,
+  getInternalRouteSummary,
+} from "@/lib/persona/routing-ux";
 import { formatAccessMode } from "@/lib/persona/labels";
 import { cn } from "@/lib/utils/cn";
 import type { PersonaSummary } from "@/types/persona";
@@ -27,6 +37,18 @@ export function PersonaCard({ persona }: PersonaCardProps) {
   const tagline = persona.tagline?.trim() || null;
   const companyName = persona.companyName?.trim() || null;
   const websiteUrl = persona.websiteUrl?.trim() || null;
+  const publicSlug = getCanonicalPublicSlug(persona.publicUrl, persona.username);
+  const publicProfilePath = getCanonicalPublicProfilePath(
+    persona.publicUrl,
+    persona.username,
+  );
+  const publicHandle = formatPublicHandle(persona.username);
+  const hasInternalRoutingContext = Boolean(
+    persona.routingDisplayName || persona.routingKey || persona.isDefaultRouting,
+  );
+  const routeHeadline = getInternalRouteHeadline(persona);
+  const routeSummary = getInternalRouteSummary(persona);
+  const routeLabel = getInternalRouteLabel(persona);
 
   return (
     <article
@@ -65,7 +87,10 @@ export function PersonaCard({ persona }: PersonaCardProps) {
               ) : null}
             </div>
             <p className="mt-1 text-[11px] font-medium text-muted truncate">
-              dotly.id/{persona.username}
+              Public handle {publicHandle}
+            </p>
+            <p className="mt-1 text-[11px] font-medium text-muted truncate">
+              dotly.id/{publicSlug}
             </p>
           </div>
 
@@ -130,6 +155,18 @@ export function PersonaCard({ persona }: PersonaCardProps) {
           </dl>
         ) : null}
 
+        {hasInternalRoutingContext ? (
+          <div className="rounded-2xl bg-white/50 px-4 py-3.5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+              {routeSummary}
+            </p>
+            <p className="mt-1 text-sm font-semibold text-foreground">
+              {routeHeadline}
+            </p>
+            <p className="mt-1 text-xs font-medium text-muted">{routeLabel}</p>
+          </div>
+        ) : null}
+
         <div className="flex flex-col gap-3">
           <Link
             href={routes.app.personaDetail(persona.id)}
@@ -142,7 +179,7 @@ export function PersonaCard({ persona }: PersonaCardProps) {
 
           {isOpen ? (
             <Link
-              href={`/${persona.username}`}
+              href={publicProfilePath}
               className={cn(
                 "inline-flex h-[52px] w-full items-center justify-center rounded-2xl bg-foreground text-[15px] font-medium text-background shadow-xl transition-all hover:scale-[0.995] active:scale-[0.98]",
               )}
@@ -178,7 +215,7 @@ export function PersonaCard({ persona }: PersonaCardProps) {
           <p className="text-[11px] leading-relaxed text-muted">
             Set access mode to{" "}
             <strong className="font-semibold text-foreground/80">open</strong>{" "}
-            to publish at dotly.id/{persona.username}
+            to publish {publicHandle} at dotly.id/{publicSlug}
           </p>
         ) : null}
       </div>

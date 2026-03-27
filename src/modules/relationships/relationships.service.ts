@@ -28,6 +28,7 @@ import { PersonaSmartCardPrimaryAction } from "../../common/enums/persona-smart-
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { BlocksService } from "../blocks/blocks.service";
 import { ContactMemoryService } from "../contact-memory/contact-memory.service";
+import { normalizePublicSlug } from "../personas/public-url";
 import { toSafeSmartCardConfig } from "../personas/persona-sharing";
 import {
   userHasActiveTrustFactor,
@@ -83,11 +84,20 @@ const failClosedVerificationPolicyService: Pick<
 const instantConnectTargetSelect = {
   id: true,
   userId: true,
+  isPrimary: true,
+  isDefaultRouting: true,
   accessMode: true,
   sharingMode: true,
   smartCardConfig: true,
   verifiedOnly: true,
 } as const;
+
+const canonicalPublicPersonaOrderBy: Prisma.PersonaOrderByWithRelationInput[] = [
+  { isDefaultRouting: "desc" },
+  { isPrimary: "desc" },
+  { createdAt: "asc" },
+  { id: "asc" },
+];
 
 type InstantConnectTarget = {
   id: string;
@@ -237,15 +247,31 @@ export class RelationshipsService {
     );
 
     return this.prismaService.$transaction(async (tx) => {
-      const targetPersona = await tx.persona.findFirst({
-        where: {
-          username: username.trim().toLowerCase(),
-          accessMode: {
-            not: PrismaPersonaAccessMode.PRIVATE,
+      const normalizedSlug = normalizePublicSlug(username);
+      const targetPersona =
+        (await tx.persona.findFirst({
+          where: {
+            identity: {
+              is: {
+                handle: normalizedSlug,
+              },
+            },
+            accessMode: {
+              not: PrismaPersonaAccessMode.PRIVATE,
+            },
           },
-        },
-        select: instantConnectTargetSelect,
-      });
+          orderBy: canonicalPublicPersonaOrderBy,
+          select: instantConnectTargetSelect,
+        })) ??
+        (await tx.persona.findFirst({
+          where: {
+            username: normalizedSlug,
+            accessMode: {
+              not: PrismaPersonaAccessMode.PRIVATE,
+            },
+          },
+          select: instantConnectTargetSelect,
+        }));
 
       return this.instantConnectInTransaction(
         tx,

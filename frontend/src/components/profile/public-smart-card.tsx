@@ -24,6 +24,10 @@ import { useNetworkStatus } from "@/lib/network/use-network-status";
 import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
 import { getPublicTrustPresentation } from "@/lib/persona/public-trust";
 import {
+  formatPublicHandle,
+  getPublicIdentityLine,
+} from "@/lib/persona/routing-ux";
+import {
   getPublicSmartCardActionLinks,
   getPublicSmartCardDirectActions,
   hasPublicSmartCardDirectActions,
@@ -531,6 +535,8 @@ export function PublicSmartCard({
   const trimmedCompanyName = profile.companyName?.trim() || null;
   const websiteUrl = getSafeExternalWebsiteUrl(profile.websiteUrl);
   const websiteLabel = websiteUrl ? getCompactWebsiteLabel(websiteUrl) : null;
+  const publicHandle = formatPublicHandle(profile.username);
+  const publicIdentityLine = getPublicIdentityLine(profile);
   const contextSummary =
     profile.tagline?.trim() || dotlyPositioning.shortExplainer;
   const canSendRequest = hasUnlockedTrustRequirement(
@@ -947,8 +953,13 @@ export function PublicSmartCard({
               ) : null}
             </div>
             <h1 className="text-[2.2rem] font-semibold leading-none tracking-[-0.03em] text-foreground sm:text-[2.5rem]">
-              {profile.fullName}
+              {publicHandle}
             </h1>
+            {publicIdentityLine ? (
+              <p className="mx-auto max-w-[30ch] text-sm font-medium leading-6 text-muted/90 sm:text-[15px]">
+                {publicIdentityLine}
+              </p>
+            ) : null}
             {trimmedTagline ? (
               <p
                 className="mx-auto max-w-[31ch] text-sm leading-6 text-muted/95 line-clamp-2 sm:text-[15px]"
@@ -1078,7 +1089,7 @@ export function PublicSmartCard({
                     {selectedPersona.fullName}
                   </p>
                   <p className="truncate font-mono text-xs text-muted">
-                    @{selectedPersona.username}
+                    {formatPublicHandle(selectedPersona.username)}
                   </p>
                 </div>
               ) : null}
@@ -1093,7 +1104,7 @@ export function PublicSmartCard({
               >
                 {initialPersonas.map((persona) => (
                   <option key={persona.id} value={persona.id}>
-                    {persona.fullName} @{persona.username}
+                    {persona.fullName} {formatPublicHandle(persona.username)}
                   </option>
                 ))}
               </select>

@@ -18,7 +18,7 @@ function buildLoginRedirect(nextPath: string): string {
 }
 
 export async function requireServerAccessToken(
-  nextPath = "/app-old",
+  nextPath = "/app",
 ): Promise<string> {
   const accessToken = await getServerAccessToken();
 
@@ -30,7 +30,7 @@ export async function requireServerAccessToken(
 }
 
 export async function requireServerSession(
-  nextPath = "/app-old",
+  nextPath = "/app",
 ): Promise<{
   accessToken: string;
   user: Awaited<ReturnType<typeof userApi.me>>;

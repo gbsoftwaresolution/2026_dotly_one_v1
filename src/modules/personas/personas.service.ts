@@ -50,10 +50,12 @@ import {
   buildPublicPersonaTrustSignals,
   buildStoredPersonaTrustState,
 } from "./persona-trust";
+import { normalizePersonaRoutingDisplayName } from "./persona-routing";
 import {
   PERSONA_USERNAME_STANDARD_MIN_LENGTH,
   validatePersonaUsernameCandidate,
 } from "./persona-username";
+import { resolveCanonicalPublicSlug } from "./public-url";
 
 interface PersonaSmartDefaultsTarget {
   id: string;
@@ -74,6 +76,13 @@ interface PersonaSmartDefaults {
 
 const fastSharePersonaSelect = {
   id: true,
+  identity: {
+    select: {
+      handle: true,
+    },
+  },
+  isPrimary: true,
+  isDefaultRouting: true,
   username: true,
   fullName: true,
   profilePhotoUrl: true,
@@ -171,6 +180,14 @@ interface ResolvedPreferredShareConfig {
 
 const FAST_SHARE_CACHE_TTL_MS = 45_000;
 
+interface PersonaRoutingSnapshot {
+  identityId: string;
+  routingKey: string | null;
+  routingDisplayName: string | null;
+  isDefaultRouting: boolean;
+  routingRulesJson: unknown | null;
+}
+
 const defaultingConfigService: Pick<ConfigService, "get"> = {
   get: <T>(_propertyPath: string, defaultValue?: T) => {
     if (defaultValue === undefined) {
@@ -246,42 +263,72 @@ export class PersonasService {
         userId,
         createPersonaDto,
       );
-      const persona = await (
-        this.prismaService.persona.create as unknown as (
-          args: Record<string, unknown>,
-        ) => Promise<PrivatePersonaRecord>
-      )({
-        data: {
-          userId,
-          identity: {
-            connect: {
-              id: resolvedIdentityId,
+      const routingSnapshot = this.buildRoutingSnapshot({
+        identityId: resolvedIdentityId,
+        routingKey: createPersonaDto.routingKey ?? null,
+        routingDisplayName: createPersonaDto.routingDisplayName ?? null,
+        isDefaultRouting: createPersonaDto.isDefaultRouting ?? false,
+        routingRulesJson:
+          createPersonaDto.routingRulesJson === undefined
+            ? null
+            : createPersonaDto.routingRulesJson,
+      });
+
+      await this.ensureRoutingKeyAvailable(
+        routingSnapshot.identityId,
+        routingSnapshot.routingKey,
+      );
+
+      const persona = await this.withPersonaTransaction(async (tx) => {
+        const createdPersona = await (
+          tx.persona.create as unknown as (
+            args: Record<string, unknown>,
+          ) => Promise<PrivatePersonaRecord>
+        )({
+          data: {
+            userId,
+            identity: {
+              connect: {
+                id: resolvedIdentityId,
+              },
             },
+            type: toPrismaPersonaType(createPersonaDto.type),
+            isPrimary: existingPersonaCount === 0,
+            username: createPersonaDto.username,
+            publicUrl: buildPublicUrl(createPersonaDto.username),
+            fullName: createPersonaDto.fullName,
+            jobTitle: createPersonaDto.jobTitle,
+            companyName: createPersonaDto.companyName ?? null,
+            tagline: createPersonaDto.tagline ?? null,
+            websiteUrl: createPersonaDto.websiteUrl ?? null,
+            isVerified: createPersonaDto.isVerified ?? false,
+            profilePhotoUrl: createPersonaDto.profilePhotoUrl ?? null,
+            accessMode: toPrismaAccessMode(createPersonaDto.accessMode),
+            verifiedOnly: createPersonaDto.verifiedOnly ?? false,
+            routingKey: routingSnapshot.routingKey,
+            routingDisplayName: routingSnapshot.routingDisplayName,
+            isDefaultRouting: routingSnapshot.isDefaultRouting,
+            routingRulesJson:
+              createPersonaDto.routingRulesJson === null
+                ? Prisma.JsonNull
+                : ((createPersonaDto.routingRulesJson as Prisma.InputJsonValue) ??
+                  null),
+            ...trustState,
           },
-          type: toPrismaPersonaType(createPersonaDto.type),
-          isPrimary: existingPersonaCount === 0,
-          username: createPersonaDto.username,
-          publicUrl: buildPublicUrl(createPersonaDto.username),
-          fullName: createPersonaDto.fullName,
-          jobTitle: createPersonaDto.jobTitle,
-          companyName: createPersonaDto.companyName ?? null,
-          tagline: createPersonaDto.tagline ?? null,
-          websiteUrl: createPersonaDto.websiteUrl ?? null,
-          isVerified: createPersonaDto.isVerified ?? false,
-          profilePhotoUrl: createPersonaDto.profilePhotoUrl ?? null,
-          accessMode: toPrismaAccessMode(createPersonaDto.accessMode),
-          verifiedOnly: createPersonaDto.verifiedOnly ?? false,
-          routingKey: createPersonaDto.routingKey ?? null,
-          routingDisplayName: createPersonaDto.routingDisplayName ?? null,
-          isDefaultRouting: createPersonaDto.isDefaultRouting ?? false,
-          routingRulesJson:
-            createPersonaDto.routingRulesJson === null
-              ? Prisma.JsonNull
-              : ((createPersonaDto.routingRulesJson as Prisma.InputJsonValue) ??
-                null),
-          ...trustState,
-        },
-        select: privatePersonaSelect,
+          select: privatePersonaSelect,
+        });
+
+        await this.synchronizeIdentityDefaultRouting(
+          routingSnapshot.identityId,
+          {
+            preferredPersonaId: routingSnapshot.isDefaultRouting
+              ? createdPersona.id
+              : undefined,
+          },
+          tx,
+        );
+
+        return this.readPersonaById(tx, createdPersona.id, createdPersona);
       });
 
       const personaWithDefaults = await this.applySmartDefaultsOnPersonaCreate(
@@ -296,7 +343,7 @@ export class PersonasService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === "P2002"
       ) {
-        throw new ConflictException("Username already in use");
+        this.rethrowPersonaConstraintConflict(error);
       }
 
       throw error;
@@ -538,7 +585,7 @@ export class PersonasService {
         args: Record<string, unknown>,
       ) => Promise<{
         id: string;
-        identityId?: string | null;
+        identityId: string;
         fullName: string;
       } | null>
     )({
@@ -559,8 +606,7 @@ export class PersonasService {
 
     return {
       id: persona.id,
-      identityId:
-        (persona as { identityId?: string | null }).identityId ?? null,
+      identityId: persona.identityId,
       fullName: persona.fullName,
     };
   }
@@ -589,109 +635,170 @@ export class PersonasService {
     personaId: string,
     updatePersonaDto: UpdatePersonaDto,
   ) {
-    const existingPersona = await this.findOwnedPersona(userId, personaId);
+    try {
+      const existingPersona = await this.findOwnedPersona(userId, personaId);
+      const nextIdentityId =
+        updatePersonaDto.identityId === undefined
+          ? existingPersona.identityId
+          : await this.ensureIdentityOwnership(userId, updatePersonaDto.identityId);
 
-    const data: Prisma.PersonaUpdateInput = {};
+      const routingSnapshot = this.buildRoutingSnapshot({
+        identityId: nextIdentityId,
+        routingKey:
+          updatePersonaDto.routingKey !== undefined
+            ? updatePersonaDto.routingKey ?? null
+            : existingPersona.routingKey,
+        routingDisplayName:
+          updatePersonaDto.routingDisplayName !== undefined
+            ? updatePersonaDto.routingDisplayName ?? null
+            : existingPersona.routingDisplayName,
+        isDefaultRouting:
+          updatePersonaDto.isDefaultRouting !== undefined
+            ? updatePersonaDto.isDefaultRouting
+            : existingPersona.isDefaultRouting,
+        routingRulesJson:
+          updatePersonaDto.routingRulesJson !== undefined
+            ? updatePersonaDto.routingRulesJson
+            : existingPersona.routingRulesJson,
+      });
 
-    if (updatePersonaDto.type) {
-      data.type = toPrismaPersonaType(updatePersonaDto.type);
+      await this.ensureRoutingKeyAvailable(
+        routingSnapshot.identityId,
+        routingSnapshot.routingKey,
+        personaId,
+      );
+
+      const data: Prisma.PersonaUpdateInput = {};
+
+      if (updatePersonaDto.type) {
+        data.type = toPrismaPersonaType(updatePersonaDto.type);
+      }
+
+      if (updatePersonaDto.identityId !== undefined) {
+        (data as Prisma.PersonaUpdateInput & { identity?: unknown }).identity = {
+          connect: {
+            id: nextIdentityId,
+          },
+        };
+      }
+
+      if (updatePersonaDto.fullName !== undefined) {
+        data.fullName = updatePersonaDto.fullName;
+      }
+
+      if (updatePersonaDto.jobTitle !== undefined) {
+        data.jobTitle = updatePersonaDto.jobTitle;
+      }
+
+      if (updatePersonaDto.companyName !== undefined) {
+        data.companyName = updatePersonaDto.companyName;
+      }
+
+      if (updatePersonaDto.tagline !== undefined) {
+        data.tagline = updatePersonaDto.tagline;
+      }
+
+      if (updatePersonaDto.websiteUrl !== undefined) {
+        data.websiteUrl = updatePersonaDto.websiteUrl;
+      }
+
+      if (updatePersonaDto.isVerified !== undefined) {
+        data.isVerified = updatePersonaDto.isVerified;
+      }
+
+      if (updatePersonaDto.profilePhotoUrl !== undefined) {
+        data.profilePhotoUrl = updatePersonaDto.profilePhotoUrl;
+      }
+
+      if (updatePersonaDto.accessMode) {
+        data.accessMode = toPrismaAccessMode(updatePersonaDto.accessMode);
+      }
+
+      if (updatePersonaDto.verifiedOnly !== undefined) {
+        data.verifiedOnly = updatePersonaDto.verifiedOnly;
+      }
+
+      if (updatePersonaDto.routingKey !== undefined) {
+        data.routingKey = routingSnapshot.routingKey;
+      }
+
+      if (updatePersonaDto.routingDisplayName !== undefined) {
+        data.routingDisplayName = routingSnapshot.routingDisplayName;
+      }
+
+      if (updatePersonaDto.isDefaultRouting !== undefined) {
+        data.isDefaultRouting = routingSnapshot.isDefaultRouting;
+      }
+
+      if (updatePersonaDto.routingRulesJson !== undefined) {
+        data.routingRulesJson =
+          updatePersonaDto.routingRulesJson === null
+            ? Prisma.JsonNull
+            : (updatePersonaDto.routingRulesJson as Prisma.InputJsonValue);
+      }
+
+      const nextPersona = this.buildUpdatedPersonaSnapshot(
+        existingPersona,
+        updatePersonaDto,
+      );
+      const sharingUpdate = await this.resolveSharingUpdateForPersonaChanges(
+        existingPersona,
+        nextPersona,
+        updatePersonaDto,
+      );
+      const nextDefaultRoutingOptions = {
+        preferredPersonaId:
+          updatePersonaDto.isDefaultRouting === true ? personaId : undefined,
+        excludedPersonaId:
+          updatePersonaDto.isDefaultRouting === false &&
+          existingPersona.identityId === nextIdentityId &&
+          existingPersona.isDefaultRouting
+            ? personaId
+            : undefined,
+      };
+
+      const persona = await this.withPersonaTransaction(async (tx) => {
+        const updatedPersona = await tx.persona.update({
+          where: {
+            id: personaId,
+          },
+          data: {
+            ...data,
+            ...sharingUpdate,
+          },
+          select: privatePersonaSelect,
+        });
+
+        if (existingPersona.identityId !== nextIdentityId) {
+          await this.synchronizeIdentityDefaultRouting(
+            existingPersona.identityId,
+            {},
+            tx,
+          );
+        }
+
+        await this.synchronizeIdentityDefaultRouting(
+          nextIdentityId,
+          nextDefaultRoutingOptions,
+          tx,
+        );
+
+        return this.readPersonaById(tx, personaId, updatedPersona);
+      });
+
+      this.invalidateFastShareCache(userId);
+
+      return this.toPrivatePersonaSummary(persona);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        this.rethrowPersonaConstraintConflict(error);
+      }
+
+      throw error;
     }
-
-    if (updatePersonaDto.identityId !== undefined) {
-      (data as Prisma.PersonaUpdateInput & { identity?: unknown }).identity =
-        updatePersonaDto.identityId
-          ? {
-              connect: {
-                id: await this.ensureIdentityOwnership(
-                  userId,
-                  updatePersonaDto.identityId,
-                ),
-              },
-            }
-          : {
-              disconnect: true,
-            };
-    }
-
-    if (updatePersonaDto.fullName !== undefined) {
-      data.fullName = updatePersonaDto.fullName;
-    }
-
-    if (updatePersonaDto.jobTitle !== undefined) {
-      data.jobTitle = updatePersonaDto.jobTitle;
-    }
-
-    if (updatePersonaDto.companyName !== undefined) {
-      data.companyName = updatePersonaDto.companyName;
-    }
-
-    if (updatePersonaDto.tagline !== undefined) {
-      data.tagline = updatePersonaDto.tagline;
-    }
-
-    if (updatePersonaDto.websiteUrl !== undefined) {
-      data.websiteUrl = updatePersonaDto.websiteUrl;
-    }
-
-    if (updatePersonaDto.isVerified !== undefined) {
-      data.isVerified = updatePersonaDto.isVerified;
-    }
-
-    if (updatePersonaDto.profilePhotoUrl !== undefined) {
-      data.profilePhotoUrl = updatePersonaDto.profilePhotoUrl;
-    }
-
-    if (updatePersonaDto.accessMode) {
-      data.accessMode = toPrismaAccessMode(updatePersonaDto.accessMode);
-    }
-
-    if (updatePersonaDto.verifiedOnly !== undefined) {
-      data.verifiedOnly = updatePersonaDto.verifiedOnly;
-    }
-
-    if (updatePersonaDto.routingKey !== undefined) {
-      data.routingKey = updatePersonaDto.routingKey ?? null;
-    }
-
-    if (updatePersonaDto.routingDisplayName !== undefined) {
-      data.routingDisplayName = updatePersonaDto.routingDisplayName ?? null;
-    }
-
-    if (updatePersonaDto.isDefaultRouting !== undefined) {
-      data.isDefaultRouting = updatePersonaDto.isDefaultRouting;
-    }
-
-    if (updatePersonaDto.routingRulesJson !== undefined) {
-      data.routingRulesJson =
-        updatePersonaDto.routingRulesJson === null
-          ? Prisma.JsonNull
-          : (updatePersonaDto.routingRulesJson as Prisma.InputJsonValue);
-    }
-
-    const nextPersona = this.buildUpdatedPersonaSnapshot(
-      existingPersona,
-      updatePersonaDto,
-    );
-    const sharingUpdate = await this.resolveSharingUpdateForPersonaChanges(
-      existingPersona,
-      nextPersona,
-      updatePersonaDto,
-    );
-
-    const persona = await this.prismaService.persona.update({
-      where: {
-        id: personaId,
-      },
-      data: {
-        ...data,
-        ...sharingUpdate,
-      },
-      select: privatePersonaSelect,
-    });
-
-    this.invalidateFastShareCache(userId);
-
-    return this.toPrivatePersonaSummary(persona);
   }
 
   async updateSharingMode(
@@ -1083,6 +1190,187 @@ export class PersonasService {
     return persona;
   }
 
+  private buildRoutingSnapshot(input: PersonaRoutingSnapshot): PersonaRoutingSnapshot {
+    return {
+      identityId: input.identityId,
+      routingKey: input.routingKey,
+      routingDisplayName: normalizePersonaRoutingDisplayName(
+        input.routingDisplayName,
+      ) as string | null,
+      isDefaultRouting: input.isDefaultRouting,
+      routingRulesJson: input.routingRulesJson,
+    };
+  }
+
+  private async ensureRoutingKeyAvailable(
+    identityId: string,
+    routingKey: string | null,
+    currentPersonaId?: string,
+    db: Pick<PrismaService, "persona"> = this.prismaService,
+  ): Promise<void> {
+    if (routingKey === null || typeof db.persona.findFirst !== "function") {
+      return;
+    }
+
+    const existingPersona = await db.persona.findFirst({
+      where: {
+        identityId,
+        routingKey,
+        ...(currentPersonaId
+          ? {
+              NOT: {
+                id: currentPersonaId,
+              },
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (existingPersona) {
+      throw new ConflictException(
+        "Routing key already in use for this identity.",
+      );
+    }
+  }
+
+  private async synchronizeIdentityDefaultRouting(
+    identityId: string,
+    options: {
+      preferredPersonaId?: string;
+      excludedPersonaId?: string;
+    },
+    db: Pick<PrismaService, "persona"> = this.prismaService,
+  ): Promise<void> {
+    if (
+      typeof db.persona.findMany !== "function" ||
+      typeof db.persona.updateMany !== "function" ||
+      typeof db.persona.update !== "function"
+    ) {
+      return;
+    }
+
+    const personas = await db.persona.findMany({
+      where: {
+        identityId,
+      },
+      orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }, { id: "asc" }],
+      select: {
+        id: true,
+        isDefaultRouting: true,
+      },
+    });
+
+    if (personas.length === 0) {
+      return;
+    }
+
+    const preferredPersona =
+      options.preferredPersonaId !== undefined
+        ? personas.find((persona) => persona.id === options.preferredPersonaId)
+        : undefined;
+    const currentDefaultPersona = personas.find(
+      (persona) =>
+        persona.isDefaultRouting && persona.id !== options.excludedPersonaId,
+    );
+    const firstEligiblePersona = personas.find(
+      (persona) => persona.id !== options.excludedPersonaId,
+    );
+    const nextDefaultPersonaId =
+      preferredPersona?.id ??
+      currentDefaultPersona?.id ??
+      firstEligiblePersona?.id ??
+      personas[0]?.id;
+
+    if (!nextDefaultPersonaId) {
+      return;
+    }
+
+    await db.persona.updateMany({
+      where: {
+        identityId,
+        isDefaultRouting: true,
+        NOT: {
+          id: nextDefaultPersonaId,
+        },
+      },
+      data: {
+        isDefaultRouting: false,
+      },
+    });
+
+    if (
+      !personas.some(
+        (persona) =>
+          persona.id === nextDefaultPersonaId && persona.isDefaultRouting,
+      )
+    ) {
+      await db.persona.update({
+        where: {
+          id: nextDefaultPersonaId,
+        },
+        data: {
+          isDefaultRouting: true,
+        },
+      });
+    }
+  }
+
+  private async readPersonaById(
+    db: Pick<PrismaService, "persona">,
+    personaId: string,
+    fallbackPersona: PrivatePersonaRecord,
+  ): Promise<PrivatePersonaRecord> {
+    if (typeof db.persona.findUnique !== "function") {
+      return fallbackPersona;
+    }
+
+    const persona = await db.persona.findUnique({
+      where: {
+        id: personaId,
+      },
+      select: privatePersonaSelect,
+    });
+
+    return persona ?? fallbackPersona;
+  }
+
+  private async withPersonaTransaction<T>(
+    callback: (tx: Pick<PrismaService, "persona">) => Promise<T>,
+  ): Promise<T> {
+    if (typeof this.prismaService.$transaction !== "function") {
+      return callback(this.prismaService);
+    }
+
+    return this.prismaService.$transaction(async (tx) => callback(tx));
+  }
+
+  private rethrowPersonaConstraintConflict(
+    error: Prisma.PrismaClientKnownRequestError,
+  ): never {
+    const target = JSON.stringify(error.meta?.target ?? "");
+
+    if (target.includes("username")) {
+      throw new ConflictException("Username already in use");
+    }
+
+    if (target.includes("routingKey")) {
+      throw new ConflictException(
+        "Routing key already in use for this identity.",
+      );
+    }
+
+    if (target.includes("isDefaultRouting")) {
+      throw new ConflictException(
+        "Default routing persona already exists for this identity.",
+      );
+    }
+
+    throw error;
+  }
+
   private async resolvePersonaIdentityId(
     userId: string,
     createPersonaDto: CreatePersonaDto,
@@ -1264,6 +1552,9 @@ export class PersonasService {
       FastSharePersonaRecord,
       | "id"
       | "username"
+      | "identity"
+      | "isPrimary"
+      | "isDefaultRouting"
       | "accessMode"
       | "sharingMode"
       | "smartCardConfig"
@@ -1272,7 +1563,7 @@ export class PersonasService {
       | "publicEmail"
     >,
   ): Promise<ResolvedPreferredShareConfig> {
-    const canonicalShareUrl = this.buildShareProfileUrl(persona.username);
+    const canonicalShareUrl = this.buildShareProfileUrl(persona);
     const fallback = this.buildPreferredShareFallback(canonicalShareUrl);
 
     if (persona.sharingMode !== PrismaPersonaSharingMode.SMART_CARD) {
@@ -1449,10 +1740,22 @@ export class PersonasService {
     };
   }
 
-  private buildShareProfileUrl(username: string): string {
-    return `${this.getFrontendShareBaseUrl()}/u/${encodeURIComponent(
-      username.trim().toLowerCase(),
-    )}`;
+  private buildShareProfileUrl(
+    persona: Pick<
+      FastSharePersonaRecord,
+      "username" | "identity" | "isPrimary" | "isDefaultRouting"
+    >,
+  ): string {
+    const shareSlug =
+      persona.identity?.handle &&
+      (persona.isDefaultRouting || persona.isPrimary)
+        ? resolveCanonicalPublicSlug({
+            username: persona.username,
+            handle: persona.identity.handle,
+          })
+        : persona.username.trim().toLowerCase();
+
+    return `${this.getFrontendShareBaseUrl()}/u/${encodeURIComponent(shareSlug)}`;
   }
 
   private buildQuickConnectShareUrl(code: string): string {

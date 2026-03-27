@@ -1,13 +1,13 @@
 import { InstantShareExperience } from "@/components/share/instant-share-experience";
 import { requireServerSession } from "@/lib/auth/protected-route";
 import { userApi } from "@/lib/api/user-api";
-import { routes } from "@/lib/constants/routes";
 import { personaApi } from "@/lib/api/persona-api";
+import { routes } from "@/lib/constants/routes";
 import Link from "next/link";
 import { X } from "lucide-react";
 
 export default async function QrPage() {
-  const { accessToken, user } = await requireServerSession(routes.app.qr);
+  const { accessToken, user } = await requireServerSession("/app-old/qr");
   const initialFastShare = await personaApi
     .getMyFastShare(accessToken)
     .catch(() => null);

@@ -10,6 +10,8 @@ import {
 } from "@nestjs/common";
 
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import type { AuthenticatedUser } from "../../common/decorators/current-user.decorator";
 
 import { AIEnforcementService } from "./ai-enforcement.service";
 import { ActionEnforcementService } from "./action-enforcement.service";
@@ -56,10 +58,12 @@ export class IdentityConversationsController {
 
   @Get("identities/:identityId/conversations")
   listConversationsForIdentity(
+    @CurrentUser() user: AuthenticatedUser,
     @Param() params: IdentityIdParamDto,
     @Query() query: ListConversationsForIdentityQueryDto,
   ) {
-    return this.identitiesService.listConversationsForIdentity({
+    return this.identitiesService.listAccessibleConversationsForUser({
+      userId: user.id,
       identityId: params.identityId,
       personaId: query.personaId,
       status: query.status,
@@ -68,11 +72,13 @@ export class IdentityConversationsController {
 
   @Patch("identity-conversations/:conversationId/status")
   updateConversationStatus(
+    @CurrentUser() user: AuthenticatedUser,
     @Param() params: ConversationIdParamDto,
     @Body() body: UpdateConversationStatusRequestDto,
   ) {
     return this.identitiesService.updateConversationStatus({
       conversationId: params.conversationId,
+      currentUserId: user.id,
       status: body.status,
     });
   }
@@ -107,11 +113,13 @@ export class IdentityConversationsController {
 
   @Post("identity-conversations/:conversationId/enforce-action")
   enforceAction(
+    @CurrentUser() user: AuthenticatedUser,
     @Param() params: ConversationIdParamDto,
     @Body() body: EnforceActionRequestDto,
   ) {
     return this.actionEnforcementService.enforceAction({
       conversationId: params.conversationId,
+      currentUserId: user.id,
       actorIdentityId: body.actorIdentityId,
       actionType: body.actionType,
       contentId: body.contentId,
@@ -122,11 +130,13 @@ export class IdentityConversationsController {
 
   @Post("identity-conversations/:conversationId/enforce-call")
   enforceCall(
+    @CurrentUser() user: AuthenticatedUser,
     @Param() params: ConversationIdParamDto,
     @Body() body: EnforceCallRequestDto,
   ) {
     return this.callEnforcementService.enforceCall({
       conversationId: params.conversationId,
+      currentUserId: user.id,
       actorIdentityId: body.actorIdentityId,
       callType: body.callType,
       initiationMode: body.initiationMode,
@@ -140,11 +150,13 @@ export class IdentityConversationsController {
 
   @Post("identity-conversations/:conversationId/enforce-ai")
   enforceAICapability(
+    @CurrentUser() user: AuthenticatedUser,
     @Param() params: ConversationIdParamDto,
     @Body() body: EnforceAICapabilityRequestDto,
   ) {
     return this.aiEnforcementService.enforceAICapability({
       conversationId: params.conversationId,
+      currentUserId: user.id,
       actorIdentityId: body.actorIdentityId,
       capability: body.capability,
       contextType: body.contextType,

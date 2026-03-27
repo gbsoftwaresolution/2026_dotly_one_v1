@@ -356,7 +356,7 @@ export type PersonaGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 export type PersonaGroupByOutputType = {
   id: string
   userId: string
-  identityId: string | null
+  identityId: string
   agencyProfileId: string | null
   type: $Enums.PersonaType
   isPrimary: boolean
@@ -418,7 +418,7 @@ export type PersonaWhereInput = {
   NOT?: Prisma.PersonaWhereInput | Prisma.PersonaWhereInput[]
   id?: Prisma.UuidFilter<"Persona"> | string
   userId?: Prisma.UuidFilter<"Persona"> | string
-  identityId?: Prisma.UuidNullableFilter<"Persona"> | string | null
+  identityId?: Prisma.UuidFilter<"Persona"> | string
   agencyProfileId?: Prisma.UuidNullableFilter<"Persona"> | string | null
   type?: Prisma.EnumPersonaTypeFilter<"Persona"> | $Enums.PersonaType
   isPrimary?: Prisma.BoolFilter<"Persona"> | boolean
@@ -453,12 +453,14 @@ export type PersonaWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
   agencyProfile?: Prisma.XOR<Prisma.AgencyProfileNullableScalarRelationFilter, Prisma.AgencyProfileWhereInput> | null
-  identity?: Prisma.XOR<Prisma.IdentityNullableScalarRelationFilter, Prisma.IdentityWhereInput> | null
+  identity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   qrAccessTokens?: Prisma.QRAccessTokenListRelationFilter
   analyticsEvents?: Prisma.AnalyticsEventListRelationFilter
   analytics?: Prisma.XOR<Prisma.PersonaAnalyticsNullableScalarRelationFilter, Prisma.PersonaAnalyticsWhereInput> | null
   identityConversations?: Prisma.IdentityConversationListRelationFilter
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentListRelationFilter
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentListRelationFilter
   eventParticipations?: Prisma.EventParticipantListRelationFilter
   outgoingContactRequests?: Prisma.ContactRequestListRelationFilter
   incomingContactRequests?: Prisma.ContactRequestListRelationFilter
@@ -469,7 +471,7 @@ export type PersonaWhereInput = {
 export type PersonaOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  identityId?: Prisma.SortOrderInput | Prisma.SortOrder
+  identityId?: Prisma.SortOrder
   agencyProfileId?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   isPrimary?: Prisma.SortOrder
@@ -510,6 +512,8 @@ export type PersonaOrderByWithRelationInput = {
   analyticsEvents?: Prisma.AnalyticsEventOrderByRelationAggregateInput
   analytics?: Prisma.PersonaAnalyticsOrderByWithRelationInput
   identityConversations?: Prisma.IdentityConversationOrderByRelationAggregateInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentOrderByRelationAggregateInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentOrderByRelationAggregateInput
   eventParticipations?: Prisma.EventParticipantOrderByRelationAggregateInput
   outgoingContactRequests?: Prisma.ContactRequestOrderByRelationAggregateInput
   incomingContactRequests?: Prisma.ContactRequestOrderByRelationAggregateInput
@@ -527,7 +531,7 @@ export type PersonaWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.PersonaWhereInput[]
   NOT?: Prisma.PersonaWhereInput | Prisma.PersonaWhereInput[]
   userId?: Prisma.UuidFilter<"Persona"> | string
-  identityId?: Prisma.UuidNullableFilter<"Persona"> | string | null
+  identityId?: Prisma.UuidFilter<"Persona"> | string
   agencyProfileId?: Prisma.UuidNullableFilter<"Persona"> | string | null
   type?: Prisma.EnumPersonaTypeFilter<"Persona"> | $Enums.PersonaType
   isPrimary?: Prisma.BoolFilter<"Persona"> | boolean
@@ -560,12 +564,14 @@ export type PersonaWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
   agencyProfile?: Prisma.XOR<Prisma.AgencyProfileNullableScalarRelationFilter, Prisma.AgencyProfileWhereInput> | null
-  identity?: Prisma.XOR<Prisma.IdentityNullableScalarRelationFilter, Prisma.IdentityWhereInput> | null
+  identity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   qrAccessTokens?: Prisma.QRAccessTokenListRelationFilter
   analyticsEvents?: Prisma.AnalyticsEventListRelationFilter
   analytics?: Prisma.XOR<Prisma.PersonaAnalyticsNullableScalarRelationFilter, Prisma.PersonaAnalyticsWhereInput> | null
   identityConversations?: Prisma.IdentityConversationListRelationFilter
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentListRelationFilter
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentListRelationFilter
   eventParticipations?: Prisma.EventParticipantListRelationFilter
   outgoingContactRequests?: Prisma.ContactRequestListRelationFilter
   incomingContactRequests?: Prisma.ContactRequestListRelationFilter
@@ -576,7 +582,7 @@ export type PersonaWhereUniqueInput = Prisma.AtLeast<{
 export type PersonaOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  identityId?: Prisma.SortOrderInput | Prisma.SortOrder
+  identityId?: Prisma.SortOrder
   agencyProfileId?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   isPrimary?: Prisma.SortOrder
@@ -623,7 +629,7 @@ export type PersonaScalarWhereWithAggregatesInput = {
   NOT?: Prisma.PersonaScalarWhereWithAggregatesInput | Prisma.PersonaScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"Persona"> | string
   userId?: Prisma.UuidWithAggregatesFilter<"Persona"> | string
-  identityId?: Prisma.UuidNullableWithAggregatesFilter<"Persona"> | string | null
+  identityId?: Prisma.UuidWithAggregatesFilter<"Persona"> | string
   agencyProfileId?: Prisma.UuidNullableWithAggregatesFilter<"Persona"> | string | null
   type?: Prisma.EnumPersonaTypeWithAggregatesFilter<"Persona"> | $Enums.PersonaType
   isPrimary?: Prisma.BoolWithAggregatesFilter<"Persona"> | boolean
@@ -694,12 +700,14 @@ export type PersonaCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
-  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -710,7 +718,7 @@ export type PersonaCreateInput = {
 export type PersonaUncheckedCreateInput = {
   id?: string
   userId: string
-  identityId?: string | null
+  identityId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -748,6 +756,8 @@ export type PersonaUncheckedCreateInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -790,12 +800,14 @@ export type PersonaUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
-  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -806,7 +818,7 @@ export type PersonaUpdateInput = {
 export type PersonaUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -844,6 +856,8 @@ export type PersonaUncheckedUpdateInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -854,7 +868,7 @@ export type PersonaUncheckedUpdateInput = {
 export type PersonaCreateManyInput = {
   id?: string
   userId: string
-  identityId?: string | null
+  identityId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -929,7 +943,7 @@ export type PersonaUpdateManyMutationInput = {
 export type PersonaUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1378,6 +1392,34 @@ export type PersonaUncheckedUpdateManyWithoutIdentityNestedInput = {
   deleteMany?: Prisma.PersonaScalarWhereInput | Prisma.PersonaScalarWhereInput[]
 }
 
+export type PersonaCreateNestedOneWithoutMemberAssignmentsInput = {
+  create?: Prisma.XOR<Prisma.PersonaCreateWithoutMemberAssignmentsInput, Prisma.PersonaUncheckedCreateWithoutMemberAssignmentsInput>
+  connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutMemberAssignmentsInput
+  connect?: Prisma.PersonaWhereUniqueInput
+}
+
+export type PersonaUpdateOneRequiredWithoutMemberAssignmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.PersonaCreateWithoutMemberAssignmentsInput, Prisma.PersonaUncheckedCreateWithoutMemberAssignmentsInput>
+  connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutMemberAssignmentsInput
+  upsert?: Prisma.PersonaUpsertWithoutMemberAssignmentsInput
+  connect?: Prisma.PersonaWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PersonaUpdateToOneWithWhereWithoutMemberAssignmentsInput, Prisma.PersonaUpdateWithoutMemberAssignmentsInput>, Prisma.PersonaUncheckedUpdateWithoutMemberAssignmentsInput>
+}
+
+export type PersonaCreateNestedOneWithoutOperatorAssignmentsInput = {
+  create?: Prisma.XOR<Prisma.PersonaCreateWithoutOperatorAssignmentsInput, Prisma.PersonaUncheckedCreateWithoutOperatorAssignmentsInput>
+  connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutOperatorAssignmentsInput
+  connect?: Prisma.PersonaWhereUniqueInput
+}
+
+export type PersonaUpdateOneRequiredWithoutOperatorAssignmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.PersonaCreateWithoutOperatorAssignmentsInput, Prisma.PersonaUncheckedCreateWithoutOperatorAssignmentsInput>
+  connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutOperatorAssignmentsInput
+  upsert?: Prisma.PersonaUpsertWithoutOperatorAssignmentsInput
+  connect?: Prisma.PersonaWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PersonaUpdateToOneWithWhereWithoutOperatorAssignmentsInput, Prisma.PersonaUpdateWithoutOperatorAssignmentsInput>, Prisma.PersonaUncheckedUpdateWithoutOperatorAssignmentsInput>
+}
+
 export type PersonaCreateNestedOneWithoutIdentityConversationsInput = {
   create?: Prisma.XOR<Prisma.PersonaCreateWithoutIdentityConversationsInput, Prisma.PersonaUncheckedCreateWithoutIdentityConversationsInput>
   connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutIdentityConversationsInput
@@ -1429,11 +1471,13 @@ export type PersonaCreateWithoutUserInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
-  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -1443,7 +1487,7 @@ export type PersonaCreateWithoutUserInput = {
 
 export type PersonaUncheckedCreateWithoutUserInput = {
   id?: string
-  identityId?: string | null
+  identityId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -1481,6 +1525,8 @@ export type PersonaUncheckedCreateWithoutUserInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -1520,7 +1566,7 @@ export type PersonaScalarWhereInput = {
   NOT?: Prisma.PersonaScalarWhereInput | Prisma.PersonaScalarWhereInput[]
   id?: Prisma.UuidFilter<"Persona"> | string
   userId?: Prisma.UuidFilter<"Persona"> | string
-  identityId?: Prisma.UuidNullableFilter<"Persona"> | string | null
+  identityId?: Prisma.UuidFilter<"Persona"> | string
   agencyProfileId?: Prisma.UuidNullableFilter<"Persona"> | string | null
   type?: Prisma.EnumPersonaTypeFilter<"Persona"> | $Enums.PersonaType
   isPrimary?: Prisma.BoolFilter<"Persona"> | boolean
@@ -1590,12 +1636,14 @@ export type PersonaCreateWithoutAgencyProfileInput = {
   socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
-  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -1606,7 +1654,7 @@ export type PersonaCreateWithoutAgencyProfileInput = {
 export type PersonaUncheckedCreateWithoutAgencyProfileInput = {
   id?: string
   userId: string
-  identityId?: string | null
+  identityId: string
   type: $Enums.PersonaType
   isPrimary?: boolean
   username: string
@@ -1643,6 +1691,8 @@ export type PersonaUncheckedCreateWithoutAgencyProfileInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -1711,11 +1761,13 @@ export type PersonaCreateWithoutQrAccessTokensInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
-  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -1726,7 +1778,7 @@ export type PersonaCreateWithoutQrAccessTokensInput = {
 export type PersonaUncheckedCreateWithoutQrAccessTokensInput = {
   id?: string
   userId: string
-  identityId?: string | null
+  identityId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -1763,6 +1815,8 @@ export type PersonaUncheckedCreateWithoutQrAccessTokensInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -1821,11 +1875,13 @@ export type PersonaUpdateWithoutQrAccessTokensInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
-  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -1836,7 +1892,7 @@ export type PersonaUpdateWithoutQrAccessTokensInput = {
 export type PersonaUncheckedUpdateWithoutQrAccessTokensInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1873,6 +1929,8 @@ export type PersonaUncheckedUpdateWithoutQrAccessTokensInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -1915,12 +1973,14 @@ export type PersonaCreateWithoutEventParticipationsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
-  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerPersonaInput
@@ -1930,7 +1990,7 @@ export type PersonaCreateWithoutEventParticipationsInput = {
 export type PersonaUncheckedCreateWithoutEventParticipationsInput = {
   id?: string
   userId: string
-  identityId?: string | null
+  identityId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -1968,6 +2028,8 @@ export type PersonaUncheckedCreateWithoutEventParticipationsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerPersonaInput
@@ -2025,12 +2087,14 @@ export type PersonaUpdateWithoutEventParticipationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
-  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerPersonaNestedInput
@@ -2040,7 +2104,7 @@ export type PersonaUpdateWithoutEventParticipationsInput = {
 export type PersonaUncheckedUpdateWithoutEventParticipationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2078,6 +2142,8 @@ export type PersonaUncheckedUpdateWithoutEventParticipationsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerPersonaNestedInput
@@ -2119,12 +2185,14 @@ export type PersonaCreateWithoutOutgoingContactRequestsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
-  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerPersonaInput
@@ -2134,7 +2202,7 @@ export type PersonaCreateWithoutOutgoingContactRequestsInput = {
 export type PersonaUncheckedCreateWithoutOutgoingContactRequestsInput = {
   id?: string
   userId: string
-  identityId?: string | null
+  identityId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -2172,6 +2240,8 @@ export type PersonaUncheckedCreateWithoutOutgoingContactRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerPersonaInput
@@ -2218,12 +2288,14 @@ export type PersonaCreateWithoutIncomingContactRequestsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
-  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerPersonaInput
@@ -2233,7 +2305,7 @@ export type PersonaCreateWithoutIncomingContactRequestsInput = {
 export type PersonaUncheckedCreateWithoutIncomingContactRequestsInput = {
   id?: string
   userId: string
-  identityId?: string | null
+  identityId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -2271,6 +2343,8 @@ export type PersonaUncheckedCreateWithoutIncomingContactRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerPersonaInput
@@ -2328,12 +2402,14 @@ export type PersonaUpdateWithoutOutgoingContactRequestsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
-  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerPersonaNestedInput
@@ -2343,7 +2419,7 @@ export type PersonaUpdateWithoutOutgoingContactRequestsInput = {
 export type PersonaUncheckedUpdateWithoutOutgoingContactRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2381,6 +2457,8 @@ export type PersonaUncheckedUpdateWithoutOutgoingContactRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerPersonaNestedInput
@@ -2433,12 +2511,14 @@ export type PersonaUpdateWithoutIncomingContactRequestsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
-  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerPersonaNestedInput
@@ -2448,7 +2528,7 @@ export type PersonaUpdateWithoutIncomingContactRequestsInput = {
 export type PersonaUncheckedUpdateWithoutIncomingContactRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2486,6 +2566,8 @@ export type PersonaUncheckedUpdateWithoutIncomingContactRequestsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerPersonaNestedInput
@@ -2527,12 +2609,14 @@ export type PersonaCreateWithoutOwnedRelationshipsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
-  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -2542,7 +2626,7 @@ export type PersonaCreateWithoutOwnedRelationshipsInput = {
 export type PersonaUncheckedCreateWithoutOwnedRelationshipsInput = {
   id?: string
   userId: string
-  identityId?: string | null
+  identityId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -2580,6 +2664,8 @@ export type PersonaUncheckedCreateWithoutOwnedRelationshipsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -2626,12 +2712,14 @@ export type PersonaCreateWithoutTargetRelationshipsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
-  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -2641,7 +2729,7 @@ export type PersonaCreateWithoutTargetRelationshipsInput = {
 export type PersonaUncheckedCreateWithoutTargetRelationshipsInput = {
   id?: string
   userId: string
-  identityId?: string | null
+  identityId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -2679,6 +2767,8 @@ export type PersonaUncheckedCreateWithoutTargetRelationshipsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -2736,12 +2826,14 @@ export type PersonaUpdateWithoutOwnedRelationshipsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
-  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -2751,7 +2843,7 @@ export type PersonaUpdateWithoutOwnedRelationshipsInput = {
 export type PersonaUncheckedUpdateWithoutOwnedRelationshipsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2789,6 +2881,8 @@ export type PersonaUncheckedUpdateWithoutOwnedRelationshipsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -2841,12 +2935,14 @@ export type PersonaUpdateWithoutTargetRelationshipsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
-  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -2856,7 +2952,7 @@ export type PersonaUpdateWithoutTargetRelationshipsInput = {
 export type PersonaUncheckedUpdateWithoutTargetRelationshipsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2894,6 +2990,8 @@ export type PersonaUncheckedUpdateWithoutTargetRelationshipsInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -2935,11 +3033,13 @@ export type PersonaCreateWithoutAnalyticsEventsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
-  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -2950,7 +3050,7 @@ export type PersonaCreateWithoutAnalyticsEventsInput = {
 export type PersonaUncheckedCreateWithoutAnalyticsEventsInput = {
   id?: string
   userId: string
-  identityId?: string | null
+  identityId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -2987,6 +3087,8 @@ export type PersonaUncheckedCreateWithoutAnalyticsEventsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -3045,11 +3147,13 @@ export type PersonaUpdateWithoutAnalyticsEventsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
-  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -3060,7 +3164,7 @@ export type PersonaUpdateWithoutAnalyticsEventsInput = {
 export type PersonaUncheckedUpdateWithoutAnalyticsEventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3097,6 +3201,8 @@ export type PersonaUncheckedUpdateWithoutAnalyticsEventsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -3139,11 +3245,13 @@ export type PersonaCreateWithoutAnalyticsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
-  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -3154,7 +3262,7 @@ export type PersonaCreateWithoutAnalyticsInput = {
 export type PersonaUncheckedCreateWithoutAnalyticsInput = {
   id?: string
   userId: string
-  identityId?: string | null
+  identityId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -3191,6 +3299,8 @@ export type PersonaUncheckedCreateWithoutAnalyticsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -3249,11 +3359,13 @@ export type PersonaUpdateWithoutAnalyticsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
-  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -3264,7 +3376,7 @@ export type PersonaUpdateWithoutAnalyticsInput = {
 export type PersonaUncheckedUpdateWithoutAnalyticsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3301,6 +3413,8 @@ export type PersonaUncheckedUpdateWithoutAnalyticsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -3348,6 +3462,8 @@ export type PersonaCreateWithoutIdentityInput = {
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -3395,6 +3511,8 @@ export type PersonaUncheckedCreateWithoutIdentityInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
   identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -3426,6 +3544,430 @@ export type PersonaUpdateWithWhereUniqueWithoutIdentityInput = {
 export type PersonaUpdateManyWithWhereWithoutIdentityInput = {
   where: Prisma.PersonaScalarWhereInput
   data: Prisma.XOR<Prisma.PersonaUpdateManyMutationInput, Prisma.PersonaUncheckedUpdateManyWithoutIdentityInput>
+}
+
+export type PersonaCreateWithoutMemberAssignmentsInput = {
+  id?: string
+  type: $Enums.PersonaType
+  isPrimary?: boolean
+  username: string
+  publicUrl: string
+  fullName: string
+  jobTitle: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
+  profilePhotoUrl?: string | null
+  accessMode: $Enums.PersonaAccessMode
+  verifiedOnly?: boolean
+  emailVerified?: boolean
+  phoneVerified?: boolean
+  businessVerified?: boolean
+  trustScore?: number | null
+  sharingMode?: $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: string | null
+  publicWhatsappNumber?: string | null
+  publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  user: Prisma.UserCreateNestedOneWithoutPersonasInput
+  qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
+  analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
+  analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
+  outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
+  incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
+  ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerPersonaInput
+  targetRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutTargetPersonaInput
+}
+
+export type PersonaUncheckedCreateWithoutMemberAssignmentsInput = {
+  id?: string
+  userId: string
+  identityId: string
+  agencyProfileId?: string | null
+  type: $Enums.PersonaType
+  isPrimary?: boolean
+  username: string
+  publicUrl: string
+  fullName: string
+  jobTitle: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
+  profilePhotoUrl?: string | null
+  accessMode: $Enums.PersonaAccessMode
+  verifiedOnly?: boolean
+  emailVerified?: boolean
+  phoneVerified?: boolean
+  businessVerified?: boolean
+  trustScore?: number | null
+  sharingMode?: $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: string | null
+  publicWhatsappNumber?: string | null
+  publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
+  analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerPersonaInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutTargetPersonaInput
+}
+
+export type PersonaCreateOrConnectWithoutMemberAssignmentsInput = {
+  where: Prisma.PersonaWhereUniqueInput
+  create: Prisma.XOR<Prisma.PersonaCreateWithoutMemberAssignmentsInput, Prisma.PersonaUncheckedCreateWithoutMemberAssignmentsInput>
+}
+
+export type PersonaUpsertWithoutMemberAssignmentsInput = {
+  update: Prisma.XOR<Prisma.PersonaUpdateWithoutMemberAssignmentsInput, Prisma.PersonaUncheckedUpdateWithoutMemberAssignmentsInput>
+  create: Prisma.XOR<Prisma.PersonaCreateWithoutMemberAssignmentsInput, Prisma.PersonaUncheckedCreateWithoutMemberAssignmentsInput>
+  where?: Prisma.PersonaWhereInput
+}
+
+export type PersonaUpdateToOneWithWhereWithoutMemberAssignmentsInput = {
+  where?: Prisma.PersonaWhereInput
+  data: Prisma.XOR<Prisma.PersonaUpdateWithoutMemberAssignmentsInput, Prisma.PersonaUncheckedUpdateWithoutMemberAssignmentsInput>
+}
+
+export type PersonaUpdateWithoutMemberAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
+  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
+  verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  businessVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
+  qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
+  analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerPersonaNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUpdateManyWithoutTargetPersonaNestedInput
+}
+
+export type PersonaUncheckedUpdateWithoutMemberAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
+  agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
+  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
+  verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  businessVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
+  analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerPersonaNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutTargetPersonaNestedInput
+}
+
+export type PersonaCreateWithoutOperatorAssignmentsInput = {
+  id?: string
+  type: $Enums.PersonaType
+  isPrimary?: boolean
+  username: string
+  publicUrl: string
+  fullName: string
+  jobTitle: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
+  profilePhotoUrl?: string | null
+  accessMode: $Enums.PersonaAccessMode
+  verifiedOnly?: boolean
+  emailVerified?: boolean
+  phoneVerified?: boolean
+  businessVerified?: boolean
+  trustScore?: number | null
+  sharingMode?: $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: string | null
+  publicWhatsappNumber?: string | null
+  publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  user: Prisma.UserCreateNestedOneWithoutPersonasInput
+  qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
+  analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
+  analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
+  outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
+  incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
+  ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerPersonaInput
+  targetRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutTargetPersonaInput
+}
+
+export type PersonaUncheckedCreateWithoutOperatorAssignmentsInput = {
+  id?: string
+  userId: string
+  identityId: string
+  agencyProfileId?: string | null
+  type: $Enums.PersonaType
+  isPrimary?: boolean
+  username: string
+  publicUrl: string
+  fullName: string
+  jobTitle: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
+  profilePhotoUrl?: string | null
+  accessMode: $Enums.PersonaAccessMode
+  verifiedOnly?: boolean
+  emailVerified?: boolean
+  phoneVerified?: boolean
+  businessVerified?: boolean
+  trustScore?: number | null
+  sharingMode?: $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: string | null
+  publicWhatsappNumber?: string | null
+  publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
+  analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerPersonaInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutTargetPersonaInput
+}
+
+export type PersonaCreateOrConnectWithoutOperatorAssignmentsInput = {
+  where: Prisma.PersonaWhereUniqueInput
+  create: Prisma.XOR<Prisma.PersonaCreateWithoutOperatorAssignmentsInput, Prisma.PersonaUncheckedCreateWithoutOperatorAssignmentsInput>
+}
+
+export type PersonaUpsertWithoutOperatorAssignmentsInput = {
+  update: Prisma.XOR<Prisma.PersonaUpdateWithoutOperatorAssignmentsInput, Prisma.PersonaUncheckedUpdateWithoutOperatorAssignmentsInput>
+  create: Prisma.XOR<Prisma.PersonaCreateWithoutOperatorAssignmentsInput, Prisma.PersonaUncheckedCreateWithoutOperatorAssignmentsInput>
+  where?: Prisma.PersonaWhereInput
+}
+
+export type PersonaUpdateToOneWithWhereWithoutOperatorAssignmentsInput = {
+  where?: Prisma.PersonaWhereInput
+  data: Prisma.XOR<Prisma.PersonaUpdateWithoutOperatorAssignmentsInput, Prisma.PersonaUncheckedUpdateWithoutOperatorAssignmentsInput>
+}
+
+export type PersonaUpdateWithoutOperatorAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
+  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
+  verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  businessVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
+  qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
+  analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerPersonaNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUpdateManyWithoutTargetPersonaNestedInput
+}
+
+export type PersonaUncheckedUpdateWithoutOperatorAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
+  agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
+  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
+  verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  businessVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
+  analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerPersonaNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutTargetPersonaNestedInput
 }
 
 export type PersonaCreateWithoutIdentityConversationsInput = {
@@ -3463,11 +4005,13 @@ export type PersonaCreateWithoutIdentityConversationsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
-  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  identity: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -3478,7 +4022,7 @@ export type PersonaCreateWithoutIdentityConversationsInput = {
 export type PersonaUncheckedCreateWithoutIdentityConversationsInput = {
   id?: string
   userId: string
-  identityId?: string | null
+  identityId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -3515,6 +4059,8 @@ export type PersonaUncheckedCreateWithoutIdentityConversationsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -3573,11 +4119,13 @@ export type PersonaUpdateWithoutIdentityConversationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
-  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -3588,7 +4136,7 @@ export type PersonaUpdateWithoutIdentityConversationsInput = {
 export type PersonaUncheckedUpdateWithoutIdentityConversationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3625,6 +4173,8 @@ export type PersonaUncheckedUpdateWithoutIdentityConversationsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -3634,7 +4184,7 @@ export type PersonaUncheckedUpdateWithoutIdentityConversationsInput = {
 
 export type PersonaCreateManyUserInput = {
   id?: string
-  identityId?: string | null
+  identityId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -3705,11 +4255,13 @@ export type PersonaUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
-  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -3719,7 +4271,7 @@ export type PersonaUpdateWithoutUserInput = {
 
 export type PersonaUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3757,6 +4309,8 @@ export type PersonaUncheckedUpdateWithoutUserInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -3766,7 +4320,7 @@ export type PersonaUncheckedUpdateWithoutUserInput = {
 
 export type PersonaUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3805,7 +4359,7 @@ export type PersonaUncheckedUpdateManyWithoutUserInput = {
 export type PersonaCreateManyAgencyProfileInput = {
   id?: string
   userId: string
-  identityId?: string | null
+  identityId: string
   type: $Enums.PersonaType
   isPrimary?: boolean
   username: string
@@ -3874,12 +4428,14 @@ export type PersonaUpdateWithoutAgencyProfileInput = {
   socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -3890,7 +4446,7 @@ export type PersonaUpdateWithoutAgencyProfileInput = {
 export type PersonaUncheckedUpdateWithoutAgencyProfileInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
   username?: Prisma.StringFieldUpdateOperationsInput | string
@@ -3927,6 +4483,8 @@ export type PersonaUncheckedUpdateWithoutAgencyProfileInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -3937,7 +4495,7 @@ export type PersonaUncheckedUpdateWithoutAgencyProfileInput = {
 export type PersonaUncheckedUpdateManyWithoutAgencyProfileInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
   username?: Prisma.StringFieldUpdateOperationsInput | string
@@ -4050,6 +4608,8 @@ export type PersonaUpdateWithoutIdentityInput = {
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -4097,6 +4657,8 @@ export type PersonaUncheckedUpdateWithoutIdentityInput = {
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
   identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  memberAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
+  operatorAssignments?: Prisma.IdentityOperatorPersonaAssignmentUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -4151,6 +4713,8 @@ export type PersonaCountOutputType = {
   qrAccessTokens: number
   analyticsEvents: number
   identityConversations: number
+  memberAssignments: number
+  operatorAssignments: number
   eventParticipations: number
   outgoingContactRequests: number
   incomingContactRequests: number
@@ -4162,6 +4726,8 @@ export type PersonaCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   qrAccessTokens?: boolean | PersonaCountOutputTypeCountQrAccessTokensArgs
   analyticsEvents?: boolean | PersonaCountOutputTypeCountAnalyticsEventsArgs
   identityConversations?: boolean | PersonaCountOutputTypeCountIdentityConversationsArgs
+  memberAssignments?: boolean | PersonaCountOutputTypeCountMemberAssignmentsArgs
+  operatorAssignments?: boolean | PersonaCountOutputTypeCountOperatorAssignmentsArgs
   eventParticipations?: boolean | PersonaCountOutputTypeCountEventParticipationsArgs
   outgoingContactRequests?: boolean | PersonaCountOutputTypeCountOutgoingContactRequestsArgs
   incomingContactRequests?: boolean | PersonaCountOutputTypeCountIncomingContactRequestsArgs
@@ -4198,6 +4764,20 @@ export type PersonaCountOutputTypeCountAnalyticsEventsArgs<ExtArgs extends runti
  */
 export type PersonaCountOutputTypeCountIdentityConversationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.IdentityConversationWhereInput
+}
+
+/**
+ * PersonaCountOutputType without action
+ */
+export type PersonaCountOutputTypeCountMemberAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IdentityMemberPersonaAssignmentWhereInput
+}
+
+/**
+ * PersonaCountOutputType without action
+ */
+export type PersonaCountOutputTypeCountOperatorAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IdentityOperatorPersonaAssignmentWhereInput
 }
 
 /**
@@ -4274,12 +4854,14 @@ export type PersonaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   createdAt?: boolean
   updatedAt?: boolean
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
-  identity?: boolean | Prisma.Persona$identityArgs<ExtArgs>
+  identity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   qrAccessTokens?: boolean | Prisma.Persona$qrAccessTokensArgs<ExtArgs>
   analyticsEvents?: boolean | Prisma.Persona$analyticsEventsArgs<ExtArgs>
   analytics?: boolean | Prisma.Persona$analyticsArgs<ExtArgs>
   identityConversations?: boolean | Prisma.Persona$identityConversationsArgs<ExtArgs>
+  memberAssignments?: boolean | Prisma.Persona$memberAssignmentsArgs<ExtArgs>
+  operatorAssignments?: boolean | Prisma.Persona$operatorAssignmentsArgs<ExtArgs>
   eventParticipations?: boolean | Prisma.Persona$eventParticipationsArgs<ExtArgs>
   outgoingContactRequests?: boolean | Prisma.Persona$outgoingContactRequestsArgs<ExtArgs>
   incomingContactRequests?: boolean | Prisma.Persona$incomingContactRequestsArgs<ExtArgs>
@@ -4326,7 +4908,7 @@ export type PersonaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   createdAt?: boolean
   updatedAt?: boolean
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
-  identity?: boolean | Prisma.Persona$identityArgs<ExtArgs>
+  identity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["persona"]>
 
@@ -4368,7 +4950,7 @@ export type PersonaSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   createdAt?: boolean
   updatedAt?: boolean
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
-  identity?: boolean | Prisma.Persona$identityArgs<ExtArgs>
+  identity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["persona"]>
 
@@ -4414,12 +4996,14 @@ export type PersonaSelectScalar = {
 export type PersonaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "identityId" | "agencyProfileId" | "type" | "isPrimary" | "username" | "publicUrl" | "fullName" | "jobTitle" | "companyName" | "tagline" | "websiteUrl" | "isVerified" | "profilePhotoUrl" | "accessMode" | "verifiedOnly" | "emailVerified" | "phoneVerified" | "businessVerified" | "trustScore" | "sharingMode" | "smartCardConfig" | "routingKey" | "routingDisplayName" | "isDefaultRouting" | "routingRulesJson" | "publicPhone" | "publicWhatsappNumber" | "publicEmail" | "locationAddress" | "locationMapUrl" | "socialLinks" | "socialLinksDisplayMode" | "createdAt" | "updatedAt", ExtArgs["result"]["persona"]>
 export type PersonaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
-  identity?: boolean | Prisma.Persona$identityArgs<ExtArgs>
+  identity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   qrAccessTokens?: boolean | Prisma.Persona$qrAccessTokensArgs<ExtArgs>
   analyticsEvents?: boolean | Prisma.Persona$analyticsEventsArgs<ExtArgs>
   analytics?: boolean | Prisma.Persona$analyticsArgs<ExtArgs>
   identityConversations?: boolean | Prisma.Persona$identityConversationsArgs<ExtArgs>
+  memberAssignments?: boolean | Prisma.Persona$memberAssignmentsArgs<ExtArgs>
+  operatorAssignments?: boolean | Prisma.Persona$operatorAssignmentsArgs<ExtArgs>
   eventParticipations?: boolean | Prisma.Persona$eventParticipationsArgs<ExtArgs>
   outgoingContactRequests?: boolean | Prisma.Persona$outgoingContactRequestsArgs<ExtArgs>
   incomingContactRequests?: boolean | Prisma.Persona$incomingContactRequestsArgs<ExtArgs>
@@ -4429,12 +5013,12 @@ export type PersonaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
 }
 export type PersonaIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
-  identity?: boolean | Prisma.Persona$identityArgs<ExtArgs>
+  identity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type PersonaIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
-  identity?: boolean | Prisma.Persona$identityArgs<ExtArgs>
+  identity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
@@ -4442,12 +5026,14 @@ export type $PersonaPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   name: "Persona"
   objects: {
     agencyProfile: Prisma.$AgencyProfilePayload<ExtArgs> | null
-    identity: Prisma.$IdentityPayload<ExtArgs> | null
+    identity: Prisma.$IdentityPayload<ExtArgs>
     user: Prisma.$UserPayload<ExtArgs>
     qrAccessTokens: Prisma.$QRAccessTokenPayload<ExtArgs>[]
     analyticsEvents: Prisma.$AnalyticsEventPayload<ExtArgs>[]
     analytics: Prisma.$PersonaAnalyticsPayload<ExtArgs> | null
     identityConversations: Prisma.$IdentityConversationPayload<ExtArgs>[]
+    memberAssignments: Prisma.$IdentityMemberPersonaAssignmentPayload<ExtArgs>[]
+    operatorAssignments: Prisma.$IdentityOperatorPersonaAssignmentPayload<ExtArgs>[]
     eventParticipations: Prisma.$EventParticipantPayload<ExtArgs>[]
     outgoingContactRequests: Prisma.$ContactRequestPayload<ExtArgs>[]
     incomingContactRequests: Prisma.$ContactRequestPayload<ExtArgs>[]
@@ -4457,7 +5043,7 @@ export type $PersonaPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     userId: string
-    identityId: string | null
+    identityId: string
     agencyProfileId: string | null
     type: $Enums.PersonaType
     isPrimary: boolean
@@ -4886,12 +5472,14 @@ readonly fields: PersonaFieldRefs;
 export interface Prisma__PersonaClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   agencyProfile<T extends Prisma.Persona$agencyProfileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$agencyProfileArgs<ExtArgs>>): Prisma.Prisma__AgencyProfileClient<runtime.Types.Result.GetResult<Prisma.$AgencyProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  identity<T extends Prisma.Persona$identityArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$identityArgs<ExtArgs>>): Prisma.Prisma__IdentityClient<runtime.Types.Result.GetResult<Prisma.$IdentityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  identity<T extends Prisma.IdentityDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IdentityDefaultArgs<ExtArgs>>): Prisma.Prisma__IdentityClient<runtime.Types.Result.GetResult<Prisma.$IdentityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   qrAccessTokens<T extends Prisma.Persona$qrAccessTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$qrAccessTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QRAccessTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   analyticsEvents<T extends Prisma.Persona$analyticsEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$analyticsEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AnalyticsEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   analytics<T extends Prisma.Persona$analyticsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$analyticsArgs<ExtArgs>>): Prisma.Prisma__PersonaAnalyticsClient<runtime.Types.Result.GetResult<Prisma.$PersonaAnalyticsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   identityConversations<T extends Prisma.Persona$identityConversationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$identityConversationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdentityConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  memberAssignments<T extends Prisma.Persona$memberAssignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$memberAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdentityMemberPersonaAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  operatorAssignments<T extends Prisma.Persona$operatorAssignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$operatorAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdentityOperatorPersonaAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   eventParticipations<T extends Prisma.Persona$eventParticipationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$eventParticipationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   outgoingContactRequests<T extends Prisma.Persona$outgoingContactRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$outgoingContactRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContactRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   incomingContactRequests<T extends Prisma.Persona$incomingContactRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$incomingContactRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContactRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -5382,25 +5970,6 @@ export type Persona$agencyProfileArgs<ExtArgs extends runtime.Types.Extensions.I
 }
 
 /**
- * Persona.identity
- */
-export type Persona$identityArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Identity
-   */
-  select?: Prisma.IdentitySelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Identity
-   */
-  omit?: Prisma.IdentityOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.IdentityInclude<ExtArgs> | null
-  where?: Prisma.IdentityWhereInput
-}
-
-/**
  * Persona.qrAccessTokens
  */
 export type Persona$qrAccessTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -5489,6 +6058,54 @@ export type Persona$identityConversationsArgs<ExtArgs extends runtime.Types.Exte
   take?: number
   skip?: number
   distinct?: Prisma.IdentityConversationScalarFieldEnum | Prisma.IdentityConversationScalarFieldEnum[]
+}
+
+/**
+ * Persona.memberAssignments
+ */
+export type Persona$memberAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IdentityMemberPersonaAssignment
+   */
+  select?: Prisma.IdentityMemberPersonaAssignmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the IdentityMemberPersonaAssignment
+   */
+  omit?: Prisma.IdentityMemberPersonaAssignmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IdentityMemberPersonaAssignmentInclude<ExtArgs> | null
+  where?: Prisma.IdentityMemberPersonaAssignmentWhereInput
+  orderBy?: Prisma.IdentityMemberPersonaAssignmentOrderByWithRelationInput | Prisma.IdentityMemberPersonaAssignmentOrderByWithRelationInput[]
+  cursor?: Prisma.IdentityMemberPersonaAssignmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.IdentityMemberPersonaAssignmentScalarFieldEnum | Prisma.IdentityMemberPersonaAssignmentScalarFieldEnum[]
+}
+
+/**
+ * Persona.operatorAssignments
+ */
+export type Persona$operatorAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IdentityOperatorPersonaAssignment
+   */
+  select?: Prisma.IdentityOperatorPersonaAssignmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the IdentityOperatorPersonaAssignment
+   */
+  omit?: Prisma.IdentityOperatorPersonaAssignmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IdentityOperatorPersonaAssignmentInclude<ExtArgs> | null
+  where?: Prisma.IdentityOperatorPersonaAssignmentWhereInput
+  orderBy?: Prisma.IdentityOperatorPersonaAssignmentOrderByWithRelationInput | Prisma.IdentityOperatorPersonaAssignmentOrderByWithRelationInput[]
+  cursor?: Prisma.IdentityOperatorPersonaAssignmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.IdentityOperatorPersonaAssignmentScalarFieldEnum | Prisma.IdentityOperatorPersonaAssignmentScalarFieldEnum[]
 }
 
 /**

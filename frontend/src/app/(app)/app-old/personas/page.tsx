@@ -7,6 +7,7 @@ import { SecondaryButton } from "@/components/shared/secondary-button";
 import { personaApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { requireServerSession } from "@/lib/auth/protected-route";
+import { routes } from "@/lib/constants/routes";
 
 export default async function PersonasPage() {
   const { accessToken } = await requireServerSession("/app-old/personas");
@@ -20,7 +21,7 @@ export default async function PersonasPage() {
           title="Personas"
           description="Manage the Dotly identities you share in real life."
           action={
-            <Link href="/app-old/personas/create">
+            <Link href={routes.app.createPersona}>
               <SecondaryButton className="w-full sm:w-auto">
                 Create persona
               </SecondaryButton>
@@ -43,7 +44,7 @@ export default async function PersonasPage() {
     );
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
-      redirect("/login?next=/app-old/personas&reason=expired");
+      redirect(`/login?next=${encodeURIComponent(routes.app.personas)}&reason=expired`);
     }
 
     return (

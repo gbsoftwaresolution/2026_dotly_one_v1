@@ -15,6 +15,7 @@ import { isApiError } from "@/lib/api/client";
 import { personaApi } from "@/lib/api/persona-api";
 import { routes } from "@/lib/constants/routes";
 import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
+import { formatPublicHandle } from "@/lib/persona/routing-ux";
 import { getShareInstruction } from "@/lib/persona/share-copy";
 import { useNetworkStatus } from "@/lib/network/use-network-status";
 import {
@@ -170,12 +171,12 @@ export function QrGeneratorPanel({
     .join(" • ");
   const isVerified = user.security.trustBadge === "verified";
   const shareTitle = selectedPersona
-    ? `${selectedPersona.fullName} on Dotly`
+    ? `${formatPublicHandle(selectedPersona.username)} on Dotly`
     : "Dotly";
   const shareText = selectedPersona
     ? sharePayload?.preferredShareType === "instant_connect"
-      ? `Connect with ${selectedPersona.fullName} on Dotly.`
-      : `Open ${selectedPersona.fullName}'s profile on Dotly.`
+      ? `Connect with ${formatPublicHandle(selectedPersona.username)} on Dotly.`
+      : `Open ${formatPublicHandle(selectedPersona.username)} on Dotly.`
     : "Open this Dotly profile.";
   const personaOptions = personas.map((persona) => ({
     value: persona.id,
@@ -455,7 +456,7 @@ export function QrGeneratorPanel({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h1 className="truncate text-[1.1rem] font-semibold tracking-tight text-foreground">
-                      {selectedPersona.fullName}
+                      {formatPublicHandle(selectedPersona.username)}
                     </h1>
                     {isVerified ? (
                       <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400">
@@ -466,7 +467,9 @@ export function QrGeneratorPanel({
                   </div>
 
                   <p className="truncate text-sm leading-6 text-muted">
-                    {identityMetaLine}
+                    {[selectedPersona.fullName, identityMetaLine]
+                      .filter(Boolean)
+                      .join(" • ")}
                   </p>
                 </div>
               </div>

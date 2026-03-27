@@ -90,7 +90,7 @@ export default function ConnectionDetailsPage({
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-5">
         <Link
           className="inline-flex items-center gap-2 text-base font-semibold text-sky-700"
-          href={routes.app.connections}
+          href="/app-old/connections"
         >
           <ArrowLeft className="h-5 w-5" />
           Back to connections
@@ -151,7 +151,7 @@ export default function ConnectionDetailsPage({
       <div className="space-y-5 rounded-3xl bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-6 shadow-sm ring-1 ring-slate-200">
         <Link
           className="inline-flex items-center gap-2 text-base font-semibold text-sky-700"
-          href={routes.app.connections}
+          href="/app-old/connections"
         >
           <ArrowLeft className="h-5 w-5" />
           Back to connections

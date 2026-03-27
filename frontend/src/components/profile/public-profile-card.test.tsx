@@ -31,6 +31,7 @@ describe("PublicProfileCard", () => {
     );
 
     expect(screen.getByText(/request access/i)).toBeInTheDocument();
+    expect(screen.getByText(/^@jane$/i)).toBeInTheDocument();
     expect(
       screen.getByText(/you control who can contact you/i),
     ).toBeInTheDocument();
@@ -77,6 +78,7 @@ describe("PublicProfileCard", () => {
     );
 
     expect(screen.getByText(/^next$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^@jane$/i)).toBeInTheDocument();
     expect(screen.getByText(/^connect$/i)).toBeInTheDocument();
     expect(
       screen.getByText(/tap the main button to continue with this person/i),

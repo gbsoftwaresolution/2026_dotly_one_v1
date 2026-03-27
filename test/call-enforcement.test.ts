@@ -1,6 +1,8 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
+import { NotFoundException } from "@nestjs/common";
+
 import { PermissionEffect } from "../src/common/enums/permission-effect.enum";
 import { IdentityType } from "../src/common/enums/identity-type.enum";
 import {
@@ -98,6 +100,7 @@ function createConversationContext(
 function createService(overrides?: Partial<Record<string, unknown>>) {
   const identitiesService = {
     resolveConversationContext: async () => createConversationContext(),
+    assertConversationActionAccessibleToUser: async () => undefined,
     isConversationPermissionBindingStale: async () => ({
       stale: false,
       currentHash: "hash-1",
@@ -374,6 +377,25 @@ describe("call enforcement", () => {
     });
 
     assert.equal(result.reasonCode, "CALL_DENIED_INVALID_ACTOR");
+  });
+
+  it("rejects when the authenticated user lacks persona-scoped call access", async () => {
+    const service = createService({
+      assertConversationActionAccessibleToUser: async () => {
+        throw new NotFoundException("Identity not found");
+      },
+    });
+
+    await assert.rejects(
+      service.enforceCall({
+        conversationId: "conversation-1",
+        currentUserId: "user-member",
+        actorIdentityId: "identity-target",
+        callType: CallType.Video,
+        initiationMode: CallInitiationMode.Direct,
+      }),
+      (error: unknown) => error instanceof NotFoundException,
+    );
   });
 
   it("business conversation returns identity incompatible", async () => {

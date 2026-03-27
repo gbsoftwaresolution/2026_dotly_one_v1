@@ -466,6 +466,61 @@ describe("PersonasService share mode", () => {
     assert.equal(result.qrValue, "https://dotly.one/u/alice");
   });
 
+  it("uses the identity handle for canonical share urls on default routing personas", async () => {
+    const service = new PersonasService(
+      {
+        user: {
+          update: async () => ({ id: "user-1" }),
+        },
+        persona: {
+          findFirst: async () => ({
+            id: "persona-1",
+            identity: { handle: "acme" },
+            type: "PROFESSIONAL",
+            isPrimary: true,
+            isDefaultRouting: true,
+            username: "alice",
+            publicUrl: "https://dotly.id/alice",
+            fullName: "Alice Demo",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: PrismaPersonaAccessMode.OPEN,
+            verifiedOnly: false,
+            emailVerified: true,
+            phoneVerified: true,
+            businessVerified: false,
+            sharingMode: PrismaPersonaSharingMode.CONTROLLED,
+            smartCardConfig: null,
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+            createdAt: new Date("2026-03-23T10:00:00.000Z"),
+            updatedAt: new Date("2026-03-23T10:00:00.000Z"),
+          }),
+        },
+        qRAccessToken: {
+          findMany: async () => [],
+        },
+      } as any,
+      {
+        get: (key: string, fallback?: string) => {
+          if (key === "mail.frontendVerificationUrlBase") {
+            return "https://dotly.one/verify-email";
+          }
+
+          return fallback;
+        },
+      } as any,
+    );
+
+    const result = await service.getPersonaShareMode("user-1", "persona-1");
+
+    assert.equal(result.shareUrl, "https://dotly.one/u/acme");
+    assert.equal(result.qrValue, "https://dotly.one/u/acme");
+  });
+
   it("keeps owner-only share reads scoped by user id", async () => {
     const service = new PersonasService(
       {

@@ -456,9 +456,9 @@ export type IdentityUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type IdentityNullableScalarRelationFilter = {
-  is?: Prisma.IdentityWhereInput | null
-  isNot?: Prisma.IdentityWhereInput | null
+export type IdentityScalarRelationFilter = {
+  is?: Prisma.IdentityWhereInput
+  isNot?: Prisma.IdentityWhereInput
 }
 
 export type IdentityCountOrderByAggregateInput = {
@@ -498,23 +498,16 @@ export type IdentityMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
-export type IdentityScalarRelationFilter = {
-  is?: Prisma.IdentityWhereInput
-  isNot?: Prisma.IdentityWhereInput
-}
-
 export type IdentityCreateNestedOneWithoutPersonasInput = {
   create?: Prisma.XOR<Prisma.IdentityCreateWithoutPersonasInput, Prisma.IdentityUncheckedCreateWithoutPersonasInput>
   connectOrCreate?: Prisma.IdentityCreateOrConnectWithoutPersonasInput
   connect?: Prisma.IdentityWhereUniqueInput
 }
 
-export type IdentityUpdateOneWithoutPersonasNestedInput = {
+export type IdentityUpdateOneRequiredWithoutPersonasNestedInput = {
   create?: Prisma.XOR<Prisma.IdentityCreateWithoutPersonasInput, Prisma.IdentityUncheckedCreateWithoutPersonasInput>
   connectOrCreate?: Prisma.IdentityCreateOrConnectWithoutPersonasInput
   upsert?: Prisma.IdentityUpsertWithoutPersonasInput
-  disconnect?: Prisma.IdentityWhereInput | boolean
-  delete?: Prisma.IdentityWhereInput | boolean
   connect?: Prisma.IdentityWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.IdentityUpdateToOneWithWhereWithoutPersonasInput, Prisma.IdentityUpdateWithoutPersonasInput>, Prisma.IdentityUncheckedUpdateWithoutPersonasInput>
 }

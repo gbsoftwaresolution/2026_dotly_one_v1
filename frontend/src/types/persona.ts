@@ -65,7 +65,7 @@ export interface PersonaSharingCapabilities {
 
 export interface PersonaSummary {
   id: string;
-  identityId?: string | null;
+  identityId: string;
   type: PersonaType;
   isPrimary?: boolean;
   username: string;

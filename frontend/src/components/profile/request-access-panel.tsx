@@ -17,6 +17,8 @@ import { buildRequestKey } from "@/lib/network/request-key";
 import { useNetworkStatus } from "@/lib/network/use-network-status";
 import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
 import { formatPrimaryAction } from "@/lib/persona/labels";
+import { getCanonicalPublicProfilePath } from "@/lib/persona/public-profile-path";
+import { formatPublicHandle } from "@/lib/persona/routing-ux";
 import {
   hasPublicSmartCardDirectActions,
   resolvePublicSmartCardPrimaryCta,
@@ -39,8 +41,10 @@ interface RequestAccessPanelProps {
   personaLoadError?: string | null;
 }
 
-function buildLoginHref(username: string): string {
-  return `${routes.public.login}?next=${encodeURIComponent(`/u/${username}`)}`;
+function buildLoginHref(publicUrl: string, username: string): string {
+  return `${routes.public.login}?next=${encodeURIComponent(
+    getCanonicalPublicProfilePath(publicUrl, username),
+  )}`;
 }
 
 function toFriendlyMessage(error: unknown): string {
@@ -109,7 +113,11 @@ export function RequestAccessPanel({
   const [showSlowHint, setShowSlowHint] = useState(false);
 
   const loginHref = useMemo(
-    () => buildLoginHref(profile.username),
+    () => buildLoginHref(profile.publicUrl, profile.username),
+    [profile.publicUrl, profile.username],
+  );
+  const publicHandle = useMemo(
+    () => formatPublicHandle(profile.username),
     [profile.username],
   );
   const isOwnProfile = useMemo(
@@ -139,7 +147,7 @@ export function RequestAccessPanel({
   const smartCardRequestDescription =
     smartCardPrimaryAction === null
       ? `This profile isn't available right now. Try again later.`
-      : `Send a simple connection request to ${profile.fullName}.`;
+      : `Send a simple connection request to ${publicHandle}.`;
   const isSmartCardMisconfigured =
     profile.sharingMode === "smart_card" && profile.smartCard === null;
   const supportsRequestAccess =
@@ -242,7 +250,7 @@ export function RequestAccessPanel({
           <p className="text-sm leading-6 text-muted">
             {profile.sharingMode === "smart_card"
               ? smartCardLoginDescription
-              : `Log in to request access to ${profile.fullName}.`}
+              : `Log in to request access to ${publicHandle}.`}
           </p>
         </div>
         <Link href={loginHref} className="block">
@@ -309,7 +317,7 @@ export function RequestAccessPanel({
       <VerificationPrompt
         email={currentUser.email}
         title="Verify your account before sending a request"
-        description={`Verify your email or phone before requesting access to ${profile.fullName}.`}
+        description={`Verify your email or phone before requesting access to ${publicHandle}.`}
       />
     );
   }
@@ -335,12 +343,12 @@ export function RequestAccessPanel({
           Connect
         </p>
         <h2 className="font-sans text-lg font-semibold text-foreground">
-          Request to connect
+          Request to connect with {publicHandle}
         </h2>
         <p className="text-sm leading-6 text-muted">
           {profile.sharingMode === "smart_card"
             ? smartCardRequestDescription
-            : `Send a request to ${profile.fullName} instantly with your default persona.`}
+            : `Send a request to ${publicHandle} instantly with your default persona.`}
         </p>
       </div>
 

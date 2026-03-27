@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -22,6 +23,14 @@ import type {
 import { ConnectionStatus } from "../../common/enums/connection-status.enum";
 import { ConnectionType } from "../../common/enums/connection-type.enum";
 import { IdentityType } from "../../common/enums/identity-type.enum";
+import {
+  IdentityMemberRole,
+  IdentityMemberStatus,
+} from "../../common/enums/identity-member-role.enum";
+import {
+  IdentityOperatorRole,
+  IdentityOperatorStatus,
+} from "../../common/enums/identity-operator-role.enum";
 import { PermissionEffect } from "../../common/enums/permission-effect.enum";
 import { RelationshipType } from "../../common/enums/relationship-type.enum";
 import { TrustState } from "../../common/enums/trust-state.enum";
@@ -224,6 +233,47 @@ const identityConversationSelect = {
   updatedAt: true,
 } satisfies Prisma.IdentityConversationSelect;
 
+const teamAccessPersonaSelect = {
+  id: true,
+  username: true,
+  fullName: true,
+  routingKey: true,
+  routingDisplayName: true,
+  isDefaultRouting: true,
+} satisfies Prisma.PersonaSelect;
+
+const identityMemberTeamAccessSelect = {
+  id: true,
+  personId: true,
+  role: true,
+  status: true,
+  createdAt: true,
+  personaAssignments: {
+    select: {
+      personaId: true,
+      persona: {
+        select: teamAccessPersonaSelect,
+      },
+    },
+  },
+} satisfies Prisma.IdentityMemberSelect;
+
+const identityOperatorTeamAccessSelect = {
+  id: true,
+  personId: true,
+  role: true,
+  status: true,
+  createdAt: true,
+  personaAssignments: {
+    select: {
+      personaId: true,
+      persona: {
+        select: teamAccessPersonaSelect,
+      },
+    },
+  },
+} satisfies Prisma.IdentityOperatorSelect;
+
 type IdentityConnectionRecord = Prisma.IdentityConnectionGetPayload<{
   select: typeof identityConnectionSelect;
 }>;
@@ -236,11 +286,47 @@ type IdentityConversationRecord = Prisma.IdentityConversationGetPayload<{
   select: typeof identityConversationSelect;
 }>;
 
+type TeamAccessPersonaRecord = Prisma.PersonaGetPayload<{
+  select: typeof teamAccessPersonaSelect;
+}>;
+
+type IdentityMemberTeamAccessRecord = Prisma.IdentityMemberGetPayload<{
+  select: typeof identityMemberTeamAccessSelect;
+}>;
+
+type IdentityOperatorTeamAccessRecord = Prisma.IdentityOperatorGetPayload<{
+  select: typeof identityOperatorTeamAccessSelect;
+}>;
+
 type IdentitySummaryRecord = Pick<
   Identity,
   "id" | "displayName" | "handle" | "verificationLevel" | "status"
 > & {
   identityType: PrismaIdentityType;
+};
+
+type IdentityTeamAccessEntry = {
+  id: string;
+  personId: string;
+  email: string | null;
+  role: string;
+  status: string;
+  assignedPersonaIds: string[];
+  assignedPersonas: TeamAccessPersonaRecord[];
+  accessMode: "full" | "restricted";
+};
+
+type TeamManagementAccessLevel =
+  | "owner"
+  | "super-admin-operator"
+  | "admin-operator";
+
+type IdentityTeamManagementContext = {
+  id: string;
+  personId: string | null;
+  displayName: string;
+  handle: string | null;
+  accessLevel: TeamManagementAccessLevel;
 };
 
 @Injectable()
@@ -291,10 +377,761 @@ export class IdentitiesService {
   async listIdentitiesForUser(userId: string): Promise<Identity[]> {
     return this.prismaService.identity.findMany({
       where: {
-        personId: userId,
+        OR: [
+          {
+            personId: userId,
+          },
+          {
+            members: {
+              some: {
+                personId: userId,
+                status: "ACTIVE",
+              },
+            },
+          },
+          {
+            operators: {
+              some: {
+                personId: userId,
+                status: "ACTIVE",
+              },
+            },
+          },
+        ],
       },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     });
+  }
+
+  async listAccessibleConversationsForUser(input: {
+    userId: string;
+    identityId: string;
+    personaId?: string;
+    status?: ConversationStatus;
+  }): Promise<IdentityConversationContext[]> {
+    const access = await this.assertIdentityAccessibleToUser(
+      input.userId,
+      input.identityId,
+    );
+
+    if (
+      access.allowedPersonaIds &&
+      input.personaId &&
+      !access.allowedPersonaIds.has(input.personaId)
+    ) {
+      throw new NotFoundException("Identity not found");
+    }
+
+    const conversations = await this.listConversationsForIdentity({
+      identityId: input.identityId,
+      personaId: input.personaId,
+      status: input.status,
+    });
+
+    if (!access.allowedPersonaIds) {
+      return conversations;
+    }
+
+    return conversations.filter(
+      (conversation) =>
+        conversation.personaId !== null &&
+        access.allowedPersonaIds?.has(conversation.personaId),
+    );
+  }
+
+  async getIdentityTeamPersonaAccess(userId: string, identityId: string) {
+    const manageableIdentity = await this.assertIdentityManageableByUser(
+      userId,
+      identityId,
+    );
+
+    const [personas, members, operators] = await Promise.all([
+      this.prismaService.persona.findMany({
+        where: {
+          identityId,
+        },
+        select: teamAccessPersonaSelect,
+        orderBy: [
+          { isDefaultRouting: "desc" },
+          { username: "asc" },
+          { id: "asc" },
+        ],
+      }),
+      this.prismaService.identityMember.findMany({
+        where: {
+          identityId,
+          status: IdentityMemberStatus.Active,
+        },
+        select: identityMemberTeamAccessSelect,
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      }),
+      this.prismaService.identityOperator.findMany({
+        where: {
+          identityId,
+          status: IdentityOperatorStatus.Active,
+        },
+        select: identityOperatorTeamAccessSelect,
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      }),
+    ]);
+
+    const emailByPersonId = await this.getUserEmailMap([
+      ...members.map((member) => member.personId),
+      ...operators.map((operator) => operator.personId),
+    ]);
+
+    return {
+      identity: {
+        id: manageableIdentity.id,
+        displayName: manageableIdentity.displayName,
+        handle: manageableIdentity.handle,
+      },
+      personas: personas.map((persona) => this.mapTeamAccessPersona(persona)),
+      members: members.map((member) =>
+        this.mapIdentityMemberTeamAccess(
+          member,
+          emailByPersonId.get(member.personId) ?? null,
+        ),
+      ),
+      operators: operators.map((operator) =>
+        this.mapIdentityOperatorTeamAccess(
+          operator,
+          emailByPersonId.get(operator.personId) ?? null,
+        ),
+      ),
+    };
+  }
+
+  async listIdentityMembers(userId: string, identityId: string) {
+    const manageableIdentity = await this.assertIdentityManageableByUser(
+      userId,
+      identityId,
+    );
+
+    const members = await this.prismaService.identityMember.findMany({
+      where: {
+        identityId,
+      },
+      select: identityMemberTeamAccessSelect,
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    });
+
+    const emailByPersonId = await this.getUserEmailMap(
+      members.map((member) => member.personId),
+    );
+
+    return {
+      identity: {
+        id: manageableIdentity.id,
+        displayName: manageableIdentity.displayName,
+        handle: manageableIdentity.handle,
+      },
+      members: members.map((member) =>
+        this.mapIdentityMemberTeamAccess(
+          member,
+          emailByPersonId.get(member.personId) ?? null,
+        ),
+      ),
+    };
+  }
+
+  async createIdentityMember(
+    userId: string,
+    input: {
+      identityId: string;
+      personId: string;
+      role: IdentityMemberRole;
+      status?: IdentityMemberStatus;
+      personaIds?: string[];
+    },
+  ) {
+    const managementContext = await this.assertIdentityMemberManageableByUser(
+      userId,
+      input.identityId,
+    );
+
+    this.assertTeamTargetIsNotIdentityOwner(
+      managementContext,
+      input.personId,
+      "member",
+    );
+
+    const requestedStatus = input.status ?? IdentityMemberStatus.Invited;
+    this.assertCreatableMemberStatus(requestedStatus);
+
+    const user = await this.getRequiredUser(input.personId);
+    const personaIds = this.normalizePersonaAssignmentIds(input.personaIds ?? []);
+    await this.validatePersonaAssignmentsForIdentity(input.identityId, personaIds);
+
+    const member = await this.runInTransaction(async (tx) => {
+      const existingMember = await tx.identityMember.findFirst({
+        where: {
+          identityId: input.identityId,
+          personId: input.personId,
+        },
+        select: {
+          id: true,
+          status: true,
+        },
+      });
+
+      let memberId: string;
+
+      if (existingMember) {
+        if (existingMember.status !== IdentityMemberStatus.Removed) {
+          throw new ConflictException("Identity member already exists");
+        }
+
+        const restoredMember = await tx.identityMember.update({
+          where: {
+            id: existingMember.id,
+          },
+          data: {
+            role: input.role,
+            status: requestedStatus,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        memberId = restoredMember.id;
+      } else {
+        const createdMember = await tx.identityMember.create({
+          data: {
+            identityId: input.identityId,
+            personId: input.personId,
+            role: input.role,
+            status: requestedStatus,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        memberId = createdMember.id;
+      }
+
+      await tx.identityMemberPersonaAssignment.deleteMany({
+        where: {
+          identityMemberId: memberId,
+        },
+      });
+
+      if (personaIds.length > 0) {
+        await tx.identityMemberPersonaAssignment.createMany({
+          data: personaIds.map((personaId) => ({
+            identityMemberId: memberId,
+            personaId,
+          })),
+        });
+      }
+
+      return tx.identityMember.findFirst({
+        where: {
+          id: memberId,
+        },
+        select: identityMemberTeamAccessSelect,
+      });
+    });
+
+    if (!member) {
+      throw new NotFoundException("Identity member not found");
+    }
+
+    return this.mapIdentityMemberTeamAccess(member, user.email);
+  }
+
+  async updateIdentityMember(
+    userId: string,
+    input: {
+      identityId: string;
+      memberId: string;
+      role?: IdentityMemberRole;
+      status?: IdentityMemberStatus;
+    },
+  ) {
+    await this.assertIdentityMemberManageableByUser(userId, input.identityId);
+    this.assertHasMutableTeamFields({ role: input.role, status: input.status });
+
+    if (input.status) {
+      this.assertUpdatableMemberStatus(input.status);
+    }
+
+    const member = await this.prismaService.identityMember.findFirst({
+      where: {
+        id: input.memberId,
+        identityId: input.identityId,
+        status: {
+          not: IdentityMemberStatus.Removed,
+        },
+      },
+      select: identityMemberTeamAccessSelect,
+    });
+
+    if (!member) {
+      throw new NotFoundException("Identity member not found");
+    }
+
+    const updatedMember = await this.prismaService.identityMember.update({
+      where: {
+        id: member.id,
+      },
+      data: {
+        role: input.role,
+        status: input.status,
+      },
+      select: identityMemberTeamAccessSelect,
+    });
+
+    const emailByPersonId = await this.getUserEmailMap([updatedMember.personId]);
+
+    return this.mapIdentityMemberTeamAccess(
+      updatedMember,
+      emailByPersonId.get(updatedMember.personId) ?? null,
+    );
+  }
+
+  async removeIdentityMemberAccess(
+    userId: string,
+    input: {
+      identityId: string;
+      memberId: string;
+    },
+  ) {
+    await this.assertIdentityMemberManageableByUser(userId, input.identityId);
+
+    const member = await this.runInTransaction(async (tx) => {
+      const existingMember = await tx.identityMember.findFirst({
+        where: {
+          id: input.memberId,
+          identityId: input.identityId,
+          status: {
+            not: IdentityMemberStatus.Removed,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!existingMember) {
+        throw new NotFoundException("Identity member not found");
+      }
+
+      await tx.identityMemberPersonaAssignment.deleteMany({
+        where: {
+          identityMemberId: existingMember.id,
+        },
+      });
+
+      return tx.identityMember.update({
+        where: {
+          id: existingMember.id,
+        },
+        data: {
+          status: IdentityMemberStatus.Removed,
+        },
+        select: identityMemberTeamAccessSelect,
+      });
+    });
+
+    const emailByPersonId = await this.getUserEmailMap([member.personId]);
+
+    return this.mapIdentityMemberTeamAccess(
+      member,
+      emailByPersonId.get(member.personId) ?? null,
+    );
+  }
+
+  async listIdentityOperators(userId: string, identityId: string) {
+    const manageableIdentity = await this.assertIdentityManageableByUser(
+      userId,
+      identityId,
+    );
+
+    const operators = await this.prismaService.identityOperator.findMany({
+      where: {
+        identityId,
+      },
+      select: identityOperatorTeamAccessSelect,
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    });
+
+    const emailByPersonId = await this.getUserEmailMap(
+      operators.map((operator) => operator.personId),
+    );
+
+    return {
+      identity: {
+        id: manageableIdentity.id,
+        displayName: manageableIdentity.displayName,
+        handle: manageableIdentity.handle,
+      },
+      operators: operators.map((operator) =>
+        this.mapIdentityOperatorTeamAccess(
+          operator,
+          emailByPersonId.get(operator.personId) ?? null,
+        ),
+      ),
+    };
+  }
+
+  async createIdentityOperator(
+    userId: string,
+    input: {
+      identityId: string;
+      personId: string;
+      role: IdentityOperatorRole;
+      status?: IdentityOperatorStatus;
+      personaIds?: string[];
+    },
+  ) {
+    const managementContext = await this.assertIdentityOperatorManageableByUser(
+      userId,
+      input.identityId,
+      input.role,
+    );
+
+    this.assertTeamTargetIsNotIdentityOwner(
+      managementContext,
+      input.personId,
+      "operator",
+    );
+
+    const requestedStatus = input.status ?? IdentityOperatorStatus.Invited;
+    this.assertCreatableOperatorStatus(requestedStatus);
+
+    const user = await this.getRequiredUser(input.personId);
+    const personaIds = this.normalizePersonaAssignmentIds(input.personaIds ?? []);
+    await this.validatePersonaAssignmentsForIdentity(input.identityId, personaIds);
+
+    const operator = await this.runInTransaction(async (tx) => {
+      const existingOperator = await tx.identityOperator.findFirst({
+        where: {
+          identityId: input.identityId,
+          personId: input.personId,
+        },
+        select: {
+          id: true,
+          status: true,
+        },
+      });
+
+      let operatorId: string;
+
+      if (existingOperator) {
+        if (existingOperator.status !== IdentityOperatorStatus.Revoked) {
+          throw new ConflictException("Identity operator already exists");
+        }
+
+        const restoredOperator = await tx.identityOperator.update({
+          where: {
+            id: existingOperator.id,
+          },
+          data: {
+            role: input.role,
+            status: requestedStatus,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        operatorId = restoredOperator.id;
+      } else {
+        const createdOperator = await tx.identityOperator.create({
+          data: {
+            identityId: input.identityId,
+            personId: input.personId,
+            role: input.role,
+            status: requestedStatus,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        operatorId = createdOperator.id;
+      }
+
+      await tx.identityOperatorPersonaAssignment.deleteMany({
+        where: {
+          identityOperatorId: operatorId,
+        },
+      });
+
+      if (personaIds.length > 0) {
+        await tx.identityOperatorPersonaAssignment.createMany({
+          data: personaIds.map((personaId) => ({
+            identityOperatorId: operatorId,
+            personaId,
+          })),
+        });
+      }
+
+      return tx.identityOperator.findFirst({
+        where: {
+          id: operatorId,
+        },
+        select: identityOperatorTeamAccessSelect,
+      });
+    });
+
+    if (!operator) {
+      throw new NotFoundException("Identity operator not found");
+    }
+
+    return this.mapIdentityOperatorTeamAccess(operator, user.email);
+  }
+
+  async updateIdentityOperator(
+    userId: string,
+    input: {
+      identityId: string;
+      operatorId: string;
+      role?: IdentityOperatorRole;
+      status?: IdentityOperatorStatus;
+    },
+  ) {
+    const managementContext = await this.assertIdentityManageableByUserContext(
+      userId,
+      input.identityId,
+    );
+
+    this.assertCanManageOperators(managementContext, input.role);
+    this.assertHasMutableTeamFields({ role: input.role, status: input.status });
+
+    if (input.status) {
+      this.assertUpdatableOperatorStatus(input.status);
+    }
+
+    const operator = await this.prismaService.identityOperator.findFirst({
+      where: {
+        id: input.operatorId,
+        identityId: input.identityId,
+        status: {
+          not: IdentityOperatorStatus.Revoked,
+        },
+      },
+      select: identityOperatorTeamAccessSelect,
+    });
+
+    if (!operator) {
+      throw new NotFoundException("Identity operator not found");
+    }
+
+    this.assertCanManageOperatorTarget(managementContext, operator.role);
+
+    const updatedOperator = await this.prismaService.identityOperator.update({
+      where: {
+        id: operator.id,
+      },
+      data: {
+        role: input.role,
+        status: input.status,
+      },
+      select: identityOperatorTeamAccessSelect,
+    });
+
+    const emailByPersonId = await this.getUserEmailMap([updatedOperator.personId]);
+
+    return this.mapIdentityOperatorTeamAccess(
+      updatedOperator,
+      emailByPersonId.get(updatedOperator.personId) ?? null,
+    );
+  }
+
+  async revokeIdentityOperatorAccess(
+    userId: string,
+    input: {
+      identityId: string;
+      operatorId: string;
+    },
+  ) {
+    const managementContext = await this.assertIdentityManageableByUserContext(
+      userId,
+      input.identityId,
+    );
+
+    this.assertCanManageOperators(managementContext);
+
+    const operator = await this.runInTransaction(async (tx) => {
+      const existingOperator = await tx.identityOperator.findFirst({
+        where: {
+          id: input.operatorId,
+          identityId: input.identityId,
+          status: {
+            not: IdentityOperatorStatus.Revoked,
+          },
+        },
+        select: {
+          id: true,
+          role: true,
+        },
+      });
+
+      if (!existingOperator) {
+        throw new NotFoundException("Identity operator not found");
+      }
+
+      this.assertCanManageOperatorTarget(managementContext, existingOperator.role);
+
+      await tx.identityOperatorPersonaAssignment.deleteMany({
+        where: {
+          identityOperatorId: existingOperator.id,
+        },
+      });
+
+      return tx.identityOperator.update({
+        where: {
+          id: existingOperator.id,
+        },
+        data: {
+          status: IdentityOperatorStatus.Revoked,
+        },
+        select: identityOperatorTeamAccessSelect,
+      });
+    });
+
+    const emailByPersonId = await this.getUserEmailMap([operator.personId]);
+
+    return this.mapIdentityOperatorTeamAccess(
+      operator,
+      emailByPersonId.get(operator.personId) ?? null,
+    );
+  }
+
+  async updateIdentityMemberPersonaAssignments(
+    userId: string,
+    input: {
+      identityId: string;
+      memberId: string;
+      personaIds: string[];
+    },
+  ) {
+    await this.assertIdentityManageableByUser(userId, input.identityId);
+
+    const member = await this.prismaService.identityMember.findFirst({
+      where: {
+        id: input.memberId,
+        identityId: input.identityId,
+        status: IdentityMemberStatus.Active,
+      },
+      select: {
+        id: true,
+        personId: true,
+        role: true,
+        status: true,
+      },
+    });
+
+    if (!member) {
+      throw new NotFoundException("Identity member not found");
+    }
+
+    const personaIds = this.normalizePersonaAssignmentIds(input.personaIds);
+    const assignedPersonas = await this.validatePersonaAssignmentsForIdentity(
+      input.identityId,
+      personaIds,
+    );
+
+    await this.runInTransaction(async (tx) => {
+      await tx.identityMemberPersonaAssignment.deleteMany({
+        where: {
+          identityMemberId: member.id,
+        },
+      });
+
+      if (personaIds.length > 0) {
+        await tx.identityMemberPersonaAssignment.createMany({
+          data: personaIds.map((personaId) => ({
+            identityMemberId: member.id,
+            personaId,
+          })),
+        });
+      }
+    });
+
+    const emailByPersonId = await this.getUserEmailMap([member.personId]);
+
+    return this.mapIdentityMemberTeamAccess(
+      {
+        ...member,
+        createdAt: new Date(),
+        personaAssignments: assignedPersonas.map((persona) => ({
+          personaId: persona.id,
+          persona,
+        })),
+      },
+      emailByPersonId.get(member.personId) ?? null,
+    );
+  }
+
+  async updateIdentityOperatorPersonaAssignments(
+    userId: string,
+    input: {
+      identityId: string;
+      operatorId: string;
+      personaIds: string[];
+    },
+  ) {
+    await this.assertIdentityManageableByUser(userId, input.identityId);
+
+    const operator = await this.prismaService.identityOperator.findFirst({
+      where: {
+        id: input.operatorId,
+        identityId: input.identityId,
+        status: IdentityOperatorStatus.Active,
+      },
+      select: {
+        id: true,
+        personId: true,
+        role: true,
+        status: true,
+      },
+    });
+
+    if (!operator) {
+      throw new NotFoundException("Identity operator not found");
+    }
+
+    const personaIds = this.normalizePersonaAssignmentIds(input.personaIds);
+    const assignedPersonas = await this.validatePersonaAssignmentsForIdentity(
+      input.identityId,
+      personaIds,
+    );
+
+    await this.runInTransaction(async (tx) => {
+      await tx.identityOperatorPersonaAssignment.deleteMany({
+        where: {
+          identityOperatorId: operator.id,
+        },
+      });
+
+      if (personaIds.length > 0) {
+        await tx.identityOperatorPersonaAssignment.createMany({
+          data: personaIds.map((personaId) => ({
+            identityOperatorId: operator.id,
+            personaId,
+          })),
+        });
+      }
+    });
+
+    const emailByPersonId = await this.getUserEmailMap([operator.personId]);
+
+    return this.mapIdentityOperatorTeamAccess(
+      {
+        ...operator,
+        createdAt: new Date(),
+        personaAssignments: assignedPersonas.map((persona) => ({
+          personaId: persona.id,
+          persona,
+        })),
+      },
+      emailByPersonId.get(operator.personId) ?? null,
+    );
   }
 
   async createConnection(
@@ -703,6 +1540,17 @@ export class IdentitiesService {
   async updateConversationStatus(
     updateConversationStatusDto: UpdateConversationStatusDto,
   ): Promise<IdentityConversationContext> {
+    const existingConversation = await this.requireConversation(
+      updateConversationStatusDto.conversationId,
+    );
+
+    if (updateConversationStatusDto.currentUserId) {
+      await this.assertConversationActionAccessibleToUser({
+        userId: updateConversationStatusDto.currentUserId,
+        conversation: toIdentityConversationContext(existingConversation),
+      });
+    }
+
     const conversation = await this.prismaService.identityConversation.update({
       where: {
         id: updateConversationStatusDto.conversationId,
@@ -714,6 +1562,45 @@ export class IdentitiesService {
     });
 
     return toIdentityConversationContext(conversation);
+  }
+
+  async assertConversationActionAccessibleToUser(input: {
+    userId: string;
+    conversation: IdentityConversationContext;
+    actorIdentityId?: string;
+  }): Promise<void> {
+    const actorIdentityId = input.actorIdentityId;
+
+    if (
+      actorIdentityId === input.conversation.sourceIdentityId ||
+      actorIdentityId === input.conversation.targetIdentityId
+    ) {
+      await this.assertConversationIdentityAccessForUser(
+        input.userId,
+        input.conversation,
+        actorIdentityId,
+      );
+      return;
+    }
+
+    try {
+      await this.assertConversationIdentityAccessForUser(
+        input.userId,
+        input.conversation,
+        input.conversation.targetIdentityId,
+      );
+      return;
+    } catch (error) {
+      if (!(error instanceof NotFoundException)) {
+        throw error;
+      }
+    }
+
+    await this.assertConversationIdentityAccessForUser(
+      input.userId,
+      input.conversation,
+      input.conversation.sourceIdentityId,
+    );
   }
 
   async getOrCreateDirectConversation(
@@ -2364,7 +3251,26 @@ export class IdentitiesService {
     targetIdentityId: string,
   ): Promise<string | null> {
     if (personaId === undefined) {
-      return null;
+      if (typeof this.prismaService.persona?.findFirst !== "function") {
+        return null;
+      }
+
+      const defaultPersona = await this.prismaService.persona.findFirst({
+        where: {
+          identityId: targetIdentityId,
+          isDefaultRouting: true,
+        },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: {
+          id: true,
+        },
+      });
+
+      return defaultPersona?.id ?? null;
+    }
+
+    if (typeof this.prismaService.persona?.findUnique !== "function") {
+      return personaId;
     }
 
     const persona = await this.prismaService.persona.findUnique({
@@ -2381,7 +3287,7 @@ export class IdentitiesService {
       throw new NotFoundException("Persona not found");
     }
 
-    if (!persona.identityId || persona.identityId !== targetIdentityId) {
+    if (persona.identityId !== targetIdentityId) {
       throw new BadRequestException(
         "Conversation persona must belong to the target identity",
       );
@@ -2398,6 +3304,10 @@ export class IdentitiesService {
       return undefined;
     }
 
+    if (typeof this.prismaService.persona?.findUnique !== "function") {
+      return personaId;
+    }
+
     const persona = await this.prismaService.persona.findUnique({
       where: {
         id: personaId,
@@ -2412,13 +3322,544 @@ export class IdentitiesService {
       throw new NotFoundException("Persona not found");
     }
 
-    if (!persona.identityId || persona.identityId !== identityId) {
+    if (persona.identityId !== identityId) {
       throw new BadRequestException(
         "Conversation persona filter must belong to the requested identity",
       );
     }
 
     return persona.id;
+  }
+
+  private async assertIdentityAccessibleToUser(
+    userId: string,
+    identityId: string,
+  ): Promise<{ allowedPersonaIds?: Set<string> }> {
+    const identity = await this.prismaService.identity.findFirst({
+      where: {
+        id: identityId,
+        OR: [
+          {
+            personId: userId,
+          },
+          {
+            members: {
+              some: {
+                personId: userId,
+                status: "ACTIVE",
+              },
+            },
+          },
+          {
+            operators: {
+              some: {
+                personId: userId,
+                status: "ACTIVE",
+              },
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        personId: true,
+        members: {
+          where: {
+            personId: userId,
+            status: "ACTIVE",
+          },
+          select: {
+            id: true,
+            personaAssignments: {
+              select: {
+                personaId: true,
+              },
+            },
+          },
+        },
+        operators: {
+          where: {
+            personId: userId,
+            status: "ACTIVE",
+          },
+          select: {
+            id: true,
+            personaAssignments: {
+              select: {
+                personaId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!identity) {
+      throw new NotFoundException("Identity not found");
+    }
+
+    if (identity.personId === userId) {
+      return {};
+    }
+
+    const assignedPersonaIds = new Set<string>();
+    let hasScopedAssignments = false;
+
+    for (const member of identity.members) {
+      if (member.personaAssignments.length > 0) {
+        hasScopedAssignments = true;
+      }
+
+      for (const assignment of member.personaAssignments) {
+        assignedPersonaIds.add(assignment.personaId);
+      }
+    }
+
+    for (const operator of identity.operators) {
+      if (operator.personaAssignments.length > 0) {
+        hasScopedAssignments = true;
+      }
+
+      for (const assignment of operator.personaAssignments) {
+        assignedPersonaIds.add(assignment.personaId);
+      }
+    }
+
+    if (!hasScopedAssignments) {
+      return {};
+    }
+
+    return {
+      allowedPersonaIds: assignedPersonaIds,
+    };
+  }
+
+  private async assertConversationIdentityAccessForUser(
+    userId: string,
+    conversation: IdentityConversationContext,
+    identityId: string,
+  ): Promise<void> {
+    const access = await this.assertIdentityAccessibleToUser(userId, identityId);
+
+    if (
+      identityId === conversation.targetIdentityId &&
+      access.allowedPersonaIds &&
+      (conversation.personaId === null ||
+        !access.allowedPersonaIds.has(conversation.personaId))
+    ) {
+      throw new NotFoundException("Identity not found");
+    }
+  }
+
+  private async assertIdentityManageableByUser(
+    userId: string,
+    identityId: string,
+  ): Promise<{ id: string; displayName: string; handle: string | null }> {
+    const context = await this.assertIdentityManageableByUserContext(
+      userId,
+      identityId,
+    );
+
+    return {
+      id: context.id,
+      displayName: context.displayName,
+      handle: context.handle,
+    };
+  }
+
+  private async assertIdentityManageableByUserContext(
+    userId: string,
+    identityId: string,
+  ): Promise<IdentityTeamManagementContext> {
+    const identity = await this.prismaService.identity.findFirst({
+      where: {
+        id: identityId,
+        OR: [
+          {
+            personId: userId,
+          },
+          {
+            members: {
+              some: {
+                personId: userId,
+                status: IdentityMemberStatus.Active,
+              },
+            },
+          },
+          {
+            operators: {
+              some: {
+                personId: userId,
+                status: IdentityOperatorStatus.Active,
+              },
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        personId: true,
+        displayName: true,
+        handle: true,
+        members: {
+          where: {
+            personId: userId,
+            status: IdentityMemberStatus.Active,
+          },
+          select: {
+            role: true,
+          },
+        },
+        operators: {
+          where: {
+            personId: userId,
+            status: IdentityOperatorStatus.Active,
+          },
+          select: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!identity) {
+      throw new NotFoundException("Identity not found");
+    }
+
+    if (identity.personId === userId) {
+      return {
+        id: identity.id,
+        personId: identity.personId,
+        displayName: identity.displayName,
+        handle: identity.handle,
+        accessLevel: "owner",
+      };
+    }
+
+    const isOwnerMember = identity.members.some(
+      (member) => member.role === IdentityMemberRole.Owner,
+    );
+
+    if (isOwnerMember) {
+      return {
+        id: identity.id,
+        personId: identity.personId,
+        displayName: identity.displayName,
+        handle: identity.handle,
+        accessLevel: "owner",
+      };
+    }
+
+    const hasSuperAdminOperator = identity.operators.some(
+      (operator) => operator.role === IdentityOperatorRole.SuperAdmin,
+    );
+
+    if (hasSuperAdminOperator) {
+      return {
+        id: identity.id,
+        personId: identity.personId,
+        displayName: identity.displayName,
+        handle: identity.handle,
+        accessLevel: "super-admin-operator",
+      };
+    }
+
+    const hasAdminOperator = identity.operators.some(
+      (operator) => operator.role === IdentityOperatorRole.Admin,
+    );
+
+    if (hasAdminOperator) {
+      return {
+        id: identity.id,
+        personId: identity.personId,
+        displayName: identity.displayName,
+        handle: identity.handle,
+        accessLevel: "admin-operator",
+      };
+    }
+
+    throw new ForbiddenException(
+      "You do not have permission to manage this identity team",
+    );
+  }
+
+  private async assertIdentityMemberManageableByUser(
+    userId: string,
+    identityId: string,
+  ): Promise<IdentityTeamManagementContext> {
+    const context = await this.assertIdentityManageableByUserContext(
+      userId,
+      identityId,
+    );
+
+    if (context.accessLevel !== "owner") {
+      throw new ForbiddenException(
+        "You do not have permission to manage identity members",
+      );
+    }
+
+    return context;
+  }
+
+  private async assertIdentityOperatorManageableByUser(
+    userId: string,
+    identityId: string,
+    requestedRole?: IdentityOperatorRole,
+  ): Promise<IdentityTeamManagementContext> {
+    const context = await this.assertIdentityManageableByUserContext(
+      userId,
+      identityId,
+    );
+
+    this.assertCanManageOperators(context, requestedRole);
+
+    return context;
+  }
+
+  private normalizePersonaAssignmentIds(personaIds: string[]): string[] {
+    return Array.from(new Set(personaIds));
+  }
+
+  private async validatePersonaAssignmentsForIdentity(
+    identityId: string,
+    personaIds: string[],
+  ): Promise<TeamAccessPersonaRecord[]> {
+    if (personaIds.length === 0) {
+      return [];
+    }
+
+    const personas = await this.prismaService.persona.findMany({
+      where: {
+        id: {
+          in: personaIds,
+        },
+        identityId,
+      },
+      select: teamAccessPersonaSelect,
+    });
+
+    if (personas.length !== personaIds.length) {
+      throw new BadRequestException(
+        "Assigned personas must belong to the requested identity",
+      );
+    }
+
+    const personaById = new Map(
+      personas.map((persona) => [persona.id, persona] as const),
+    );
+
+    return personaIds
+      .map((personaId) => personaById.get(personaId))
+      .filter((persona): persona is TeamAccessPersonaRecord => Boolean(persona));
+  }
+
+  private async getUserEmailMap(personIds: string[]): Promise<Map<string, string>> {
+    const uniquePersonIds = Array.from(new Set(personIds));
+
+    if (uniquePersonIds.length === 0) {
+      return new Map();
+    }
+
+    const users = await this.prismaService.user.findMany({
+      where: {
+        id: {
+          in: uniquePersonIds,
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+      },
+    });
+
+    return new Map(users.map((user) => [user.id, user.email] as const));
+  }
+
+  private async getRequiredUser(userId: string): Promise<{ id: string; email: string }> {
+    const user = await this.prismaService.user.findFirst({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        email: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    return user;
+  }
+
+  private assertHasMutableTeamFields(input: {
+    role?: string;
+    status?: string;
+  }): void {
+    if (!input.role && !input.status) {
+      throw new BadRequestException(
+        "At least one mutable team field must be provided",
+      );
+    }
+  }
+
+  private assertCreatableMemberStatus(status: IdentityMemberStatus): void {
+    if (
+      status !== IdentityMemberStatus.Active &&
+      status !== IdentityMemberStatus.Invited
+    ) {
+      throw new BadRequestException(
+        "Identity members can only be created as active or invited",
+      );
+    }
+  }
+
+  private assertUpdatableMemberStatus(status: IdentityMemberStatus): void {
+    if (status === IdentityMemberStatus.Removed) {
+      throw new BadRequestException(
+        "Use the remove access endpoint to remove an identity member",
+      );
+    }
+  }
+
+  private assertCreatableOperatorStatus(status: IdentityOperatorStatus): void {
+    if (
+      status !== IdentityOperatorStatus.Active &&
+      status !== IdentityOperatorStatus.Invited
+    ) {
+      throw new BadRequestException(
+        "Identity operators can only be created as active or invited",
+      );
+    }
+  }
+
+  private assertUpdatableOperatorStatus(status: IdentityOperatorStatus): void {
+    if (status === IdentityOperatorStatus.Revoked) {
+      throw new BadRequestException(
+        "Use the revoke access endpoint to revoke an identity operator",
+      );
+    }
+  }
+
+  private assertTeamTargetIsNotIdentityOwner(
+    context: IdentityTeamManagementContext,
+    personId: string,
+    teamType: "member" | "operator",
+  ): void {
+    if (context.personId && context.personId === personId) {
+      throw new BadRequestException(
+        `Identity owner cannot be added as a team ${teamType}`,
+      );
+    }
+  }
+
+  private assertCanManageOperators(
+    context: IdentityTeamManagementContext,
+    requestedRole?: IdentityOperatorRole,
+  ): void {
+    if (context.accessLevel === "owner" || !requestedRole) {
+      return;
+    }
+
+    if (
+      context.accessLevel === "super-admin-operator" &&
+      requestedRole !== IdentityOperatorRole.Operator &&
+      requestedRole !== IdentityOperatorRole.Admin
+    ) {
+      throw new ForbiddenException(
+        "You do not have permission to assign this operator role",
+      );
+    }
+
+    if (
+      context.accessLevel === "admin-operator" &&
+      requestedRole !== IdentityOperatorRole.Operator
+    ) {
+      throw new ForbiddenException(
+        "You do not have permission to assign this operator role",
+      );
+    }
+  }
+
+  private assertCanManageOperatorTarget(
+    context: IdentityTeamManagementContext,
+    targetRole: string,
+  ): void {
+    if (context.accessLevel === "owner") {
+      return;
+    }
+
+    if (
+      context.accessLevel === "super-admin-operator" &&
+      targetRole === IdentityOperatorRole.SuperAdmin
+    ) {
+      throw new ForbiddenException(
+        "You do not have permission to manage this operator",
+      );
+    }
+
+    if (
+      context.accessLevel === "admin-operator" &&
+      targetRole !== IdentityOperatorRole.Operator
+    ) {
+      throw new ForbiddenException(
+        "You do not have permission to manage this operator",
+      );
+    }
+  }
+
+  private mapTeamAccessPersona(
+    persona: TeamAccessPersonaRecord,
+  ): TeamAccessPersonaRecord {
+    return {
+      id: persona.id,
+      username: persona.username,
+      fullName: persona.fullName,
+      routingKey: persona.routingKey,
+      routingDisplayName: persona.routingDisplayName,
+      isDefaultRouting: persona.isDefaultRouting,
+    };
+  }
+
+  private mapIdentityMemberTeamAccess(
+    member: IdentityMemberTeamAccessRecord,
+    email: string | null,
+  ): IdentityTeamAccessEntry {
+    const assignedPersonas = member.personaAssignments
+      .map((assignment) => this.mapTeamAccessPersona(assignment.persona))
+      .sort((left, right) => left.username.localeCompare(right.username));
+
+    return {
+      id: member.id,
+      personId: member.personId,
+      email,
+      role: member.role,
+      status: member.status,
+      assignedPersonaIds: assignedPersonas.map((persona) => persona.id),
+      assignedPersonas,
+      accessMode: assignedPersonas.length === 0 ? "full" : "restricted",
+    };
+  }
+
+  private mapIdentityOperatorTeamAccess(
+    operator: IdentityOperatorTeamAccessRecord,
+    email: string | null,
+  ): IdentityTeamAccessEntry {
+    const assignedPersonas = operator.personaAssignments
+      .map((assignment) => this.mapTeamAccessPersona(assignment.persona))
+      .sort((left, right) => left.username.localeCompare(right.username));
+
+    return {
+      id: operator.id,
+      personId: operator.personId,
+      email,
+      role: operator.role,
+      status: operator.status,
+      assignedPersonaIds: assignedPersonas.map((persona) => persona.id),
+      assignedPersonas,
+      accessMode: assignedPersonas.length === 0 ? "full" : "restricted",
+    };
   }
 
   private assertConversationMatchesConnection(

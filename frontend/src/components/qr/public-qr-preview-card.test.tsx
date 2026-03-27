@@ -26,6 +26,7 @@ describe("PublicQrPreviewCard", () => {
 
     expect(screen.getByText(/^contact$/i)).toBeInTheDocument();
     expect(screen.getByText(/contact preview/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^@jane$/i })).toBeInTheDocument();
     expect(screen.getByText(/scan to view my contact/i)).toBeInTheDocument();
     expect(
       screen.getByText(/open this person's contact and choose the next step/i),
@@ -53,6 +54,7 @@ describe("PublicQrPreviewCard", () => {
     expect(
       screen.getByText(/^connect$/i, { selector: "span" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^@jane$/i })).toBeInTheDocument();
     expect(screen.getByText(/^ready to connect$/i)).toBeInTheDocument();
     expect(
       screen.getByText(/scan to open their profile, then tap connect/i),

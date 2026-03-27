@@ -16,6 +16,9 @@ import { canonicalizePublicUrl } from "../../personas/public-url";
 interface PublicPersonaSource {
   id?: string;
   identityId?: string | null;
+  identity?: {
+    handle: string | null;
+  } | null;
   userId?: string;
   username: string;
   publicUrl: string;
@@ -171,6 +174,7 @@ export class PublicPersonaDto {
     const publicUrl = canonicalizePublicUrl(
       persona.publicUrl,
       persona.username,
+      persona.identity?.handle,
     );
     const smartCard =
       sharingMode === PersonaSharingMode.Controlled ||

@@ -110,6 +110,7 @@ describe("InstantShareExperience", () => {
       }),
     );
 
+    expect(screen.getByText(/^@sender$/i)).toBeInTheDocument();
     expect(screen.getByText(/sender persona/i)).toBeInTheDocument();
     expect(screen.getByText(/scan to view my contact/i)).toBeInTheDocument();
     expect(screen.getByText(/you've connected with/i)).toBeInTheDocument();
@@ -129,6 +130,7 @@ describe("InstantShareExperience", () => {
       }),
     );
 
+    expect(screen.getByText(/^@sender$/i)).toBeInTheDocument();
     expect(screen.getByText(/sender persona/i)).toBeInTheDocument();
     expect(screen.getByText(/scan to connect on dotly/i)).toBeInTheDocument();
     expect(screen.getByText(/verified/i)).toBeInTheDocument();

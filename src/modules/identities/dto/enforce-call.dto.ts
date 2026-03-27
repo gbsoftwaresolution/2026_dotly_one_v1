@@ -12,6 +12,10 @@ export class EnforceCallDto {
   @IsUUID()
   conversationId!: string;
 
+  @IsOptional()
+  @IsUUID()
+  currentUserId?: string;
+
   @IsUUID()
   actorIdentityId!: string;
 

@@ -1,6 +1,8 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
+import { NotFoundException } from "@nestjs/common";
+
 import { PermissionEffect } from "../src/common/enums/permission-effect.enum";
 import { TrustState } from "../src/common/enums/trust-state.enum";
 import {
@@ -144,6 +146,7 @@ function createContentResolution(overrides?: Partial<Record<string, unknown>>) {
 function createService(overrides?: Partial<Record<string, unknown>>) {
   const identitiesService = {
     resolveConversationContext: async () => createConversationContext(),
+    assertConversationActionAccessibleToUser: async () => undefined,
     isConversationPermissionBindingStale: async () => ({
       stale: false,
       currentHash: "hash-1",
@@ -516,6 +519,25 @@ describe("ai enforcement", () => {
 
     assert.equal(result.allowed, false);
     assert.equal(result.reasonCode, AIReasonCode.DeniedContext);
+  });
+
+  it("rejects when the authenticated user lacks persona-scoped AI access", async () => {
+    const service = createService({
+      assertConversationActionAccessibleToUser: async () => {
+        throw new NotFoundException("Identity not found");
+      },
+    });
+
+    await assert.rejects(
+      service.enforceAICapability({
+        conversationId: "conversation-1",
+        currentUserId: "user-member",
+        actorIdentityId: "identity-target",
+        capability: AICapability.Summary,
+        contextType: AIExecutionContext.Conversation,
+      }),
+      (error: unknown) => error instanceof NotFoundException,
+    );
   });
 
   it("missing AI permission resolution denies fail-closed", async () => {

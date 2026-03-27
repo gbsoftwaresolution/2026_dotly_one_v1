@@ -23,6 +23,13 @@ import {
   PERSONA_USERNAME_STANDARD_MIN_LENGTH,
   normalizePersonaUsername,
 } from "../persona-username";
+import {
+  PERSONA_ROUTING_DISPLAY_NAME_MAX_LENGTH,
+  PERSONA_ROUTING_KEY_MAX_LENGTH,
+  PERSONA_ROUTING_KEY_PATTERN,
+  normalizePersonaRoutingDisplayName,
+  normalizePersonaRoutingKey,
+} from "../persona-routing";
 
 function trimNullableString(value: unknown): unknown {
   if (value === null || typeof value !== "string") {
@@ -34,7 +41,7 @@ function trimNullableString(value: unknown): unknown {
 }
 
 export class CreatePersonaDto {
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   @IsUUID()
   identityId?: string;
 
@@ -116,14 +123,20 @@ export class CreatePersonaDto {
   isVerified?: boolean;
 
   @IsOptional()
+  @Transform(({ value }) => normalizePersonaRoutingKey(value))
   @IsString()
-  @MaxLength(64)
-  routingKey?: string;
+  @Matches(PERSONA_ROUTING_KEY_PATTERN, {
+    message:
+      "routingKey may only contain lowercase letters, numbers, hyphens, and underscores",
+  })
+  @MaxLength(PERSONA_ROUTING_KEY_MAX_LENGTH)
+  routingKey?: string | null;
 
   @IsOptional()
+  @Transform(({ value }) => normalizePersonaRoutingDisplayName(value))
   @IsString()
-  @MaxLength(160)
-  routingDisplayName?: string;
+  @MaxLength(PERSONA_ROUTING_DISPLAY_NAME_MAX_LENGTH)
+  routingDisplayName?: string | null;
 
   @IsOptional()
   @IsBoolean()

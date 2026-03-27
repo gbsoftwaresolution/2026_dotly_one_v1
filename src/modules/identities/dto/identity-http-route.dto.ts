@@ -1,5 +1,6 @@
 import { Type } from "class-transformer";
 import {
+  ArrayUnique,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -16,6 +17,14 @@ import {
 
 import { ConnectionStatus } from "../../../common/enums/connection-status.enum";
 import { ConnectionType } from "../../../common/enums/connection-type.enum";
+import {
+  IdentityMemberRole,
+  IdentityMemberStatus,
+} from "../../../common/enums/identity-member-role.enum";
+import {
+  IdentityOperatorRole,
+  IdentityOperatorStatus,
+} from "../../../common/enums/identity-operator-role.enum";
 import { PermissionEffect } from "../../../common/enums/permission-effect.enum";
 import { RelationshipType } from "../../../common/enums/relationship-type.enum";
 import { TrustState } from "../../../common/enums/trust-state.enum";
@@ -33,6 +42,16 @@ import { RiskSeverity, RiskSignal } from "../risk-engine";
 export class IdentityIdParamDto {
   @IsUUID()
   identityId!: string;
+}
+
+export class IdentityMemberIdParamDto extends IdentityIdParamDto {
+  @IsUUID()
+  memberId!: string;
+}
+
+export class IdentityOperatorIdParamDto extends IdentityIdParamDto {
+  @IsUUID()
+  operatorId!: string;
 }
 
 export class ConnectionIdParamDto {
@@ -152,6 +171,69 @@ export class ListConversationsForIdentityQueryDto {
 export class UpdateConversationStatusRequestDto {
   @IsEnum(ConversationStatus)
   status!: ConversationStatus;
+}
+
+export class UpdatePersonaAssignmentsRequestDto {
+  @IsArray()
+  @ArrayUnique()
+  @IsUUID("4", { each: true })
+  personaIds!: string[];
+}
+
+export class CreateIdentityMemberRequestDto {
+  @IsUUID()
+  personId!: string;
+
+  @IsEnum(IdentityMemberRole)
+  role!: IdentityMemberRole;
+
+  @IsOptional()
+  @IsEnum(IdentityMemberStatus)
+  status?: IdentityMemberStatus;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique()
+  @IsUUID("4", { each: true })
+  personaIds?: string[];
+}
+
+export class UpdateIdentityMemberRequestDto {
+  @IsOptional()
+  @IsEnum(IdentityMemberRole)
+  role?: IdentityMemberRole;
+
+  @IsOptional()
+  @IsEnum(IdentityMemberStatus)
+  status?: IdentityMemberStatus;
+}
+
+export class CreateIdentityOperatorRequestDto {
+  @IsUUID()
+  personId!: string;
+
+  @IsEnum(IdentityOperatorRole)
+  role!: IdentityOperatorRole;
+
+  @IsOptional()
+  @IsEnum(IdentityOperatorStatus)
+  status?: IdentityOperatorStatus;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique()
+  @IsUUID("4", { each: true })
+  personaIds?: string[];
+}
+
+export class UpdateIdentityOperatorRequestDto {
+  @IsOptional()
+  @IsEnum(IdentityOperatorRole)
+  role?: IdentityOperatorRole;
+
+  @IsOptional()
+  @IsEnum(IdentityOperatorStatus)
+  status?: IdentityOperatorStatus;
 }
 
 export class GetContentAccessRuleQueryDto {

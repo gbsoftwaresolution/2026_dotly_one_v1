@@ -289,6 +289,92 @@ describe("AnalyticsService", () => {
 });
 
 describe("ProfilesService analytics hook", () => {
+  it("prefers identity handles for canonical public urls while preserving persona username aliases", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findMany: async ({ where }: any) => {
+            if (where.identity?.is?.handle === "acme") {
+              return [
+                {
+                  id: "persona-default",
+                  userId: "user-default",
+                  username: "alice",
+                  publicUrl: "",
+                  identity: { handle: "acme" },
+                  fullName: "Alice Default",
+                  jobTitle: "Founder",
+                  companyName: "Dotly",
+                  tagline: "Connect fast",
+                  websiteUrl: "https://dotly.one",
+                  isVerified: true,
+                  profilePhotoUrl: null,
+                  accessMode: "OPEN",
+                  sharingMode: "CONTROLLED",
+                  smartCardConfig: null,
+                  emailVerified: false,
+                  phoneVerified: false,
+                  businessVerified: false,
+                  publicPhone: null,
+                  publicWhatsappNumber: null,
+                  publicEmail: null,
+                  qRAccessTokens: [],
+                },
+              ];
+            }
+
+            return [];
+          },
+          findFirst: async ({ where }: any) => {
+            if (where.username === "alice-ops") {
+              return {
+                id: "persona-alias",
+                userId: "user-alias",
+                username: "alice-ops",
+                publicUrl: "",
+                identity: { handle: "acme" },
+                fullName: "Alice Ops",
+                jobTitle: "Operations",
+                companyName: "Dotly",
+                tagline: "Alias profile",
+                websiteUrl: "https://dotly.one",
+                isVerified: false,
+                profilePhotoUrl: null,
+                accessMode: "OPEN",
+                sharingMode: "CONTROLLED",
+                smartCardConfig: null,
+                emailVerified: false,
+                phoneVerified: false,
+                businessVerified: false,
+                publicPhone: null,
+                publicWhatsappNumber: null,
+                publicEmail: null,
+                qRAccessTokens: [],
+              };
+            }
+
+            return null;
+          },
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+      undefined as any,
+      {
+        assertNoInteractionBlock: async () => undefined,
+      } as any,
+    );
+
+    const canonicalProfile = await service.getPublicProfile("acme");
+    const aliasProfile = await service.getPublicProfile("alice-ops");
+
+    assert.equal(canonicalProfile.username, "alice");
+    assert.equal(canonicalProfile.publicUrl, "https://dotly.id/acme");
+    assert.equal(aliasProfile.username, "alice-ops");
+    assert.equal(aliasProfile.publicUrl, "https://dotly.id/acme");
+  });
+
   it("tracks a profile view when a public profile is loaded", async () => {
     const tracked: unknown[] = [];
 

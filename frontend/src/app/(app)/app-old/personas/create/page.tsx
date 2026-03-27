@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PersonaForm } from "@/components/personas/persona-form";
 import { PageHeader } from "@/components/shared/page-header";
 import { SecondaryButton } from "@/components/shared/secondary-button";
+import { routes } from "@/lib/constants/routes";
 
 export default function CreatePersonaPage() {
   return (
@@ -11,7 +12,7 @@ export default function CreatePersonaPage() {
         title="Create a persona"
         description="Set up the version of you that people should remember after the conversation."
         action={
-          <Link href="/app-old/personas">
+          <Link href={routes.app.personas}>
             <SecondaryButton className="w-full sm:w-auto">
               Back to personas
             </SecondaryButton>

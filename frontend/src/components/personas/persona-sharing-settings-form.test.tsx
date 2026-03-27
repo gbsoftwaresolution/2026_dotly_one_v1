@@ -27,6 +27,7 @@ import { PersonaSharingSettingsForm } from "./persona-sharing-settings-form";
 
 const personaFixture = {
   id: "persona-1",
+  identityId: "identity-1",
   type: "professional" as const,
   username: "jane",
   publicUrl: "dotly.id/jane",

@@ -48,6 +48,17 @@ const listConnectionsCalls: unknown[] = [];
 const updateConnectionTypeCalls: unknown[] = [];
 const updateTrustStateCalls: unknown[] = [];
 const updateRelationshipTypeCalls: unknown[] = [];
+const listTeamAccessCalls: unknown[] = [];
+const listMembersCalls: unknown[] = [];
+const createMemberCalls: unknown[] = [];
+const updateMemberCalls: unknown[] = [];
+const removeMemberCalls: unknown[] = [];
+const listOperatorsCalls: unknown[] = [];
+const createOperatorCalls: unknown[] = [];
+const updateOperatorCalls: unknown[] = [];
+const revokeOperatorCalls: unknown[] = [];
+const updateMemberAssignmentsCalls: unknown[] = [];
+const updateOperatorAssignmentsCalls: unknown[] = [];
 const setPermissionOverrideCalls: unknown[] = [];
 const listOverridesCalls: unknown[] = [];
 const resolvePermissionsCalls: unknown[] = [];
@@ -80,6 +91,17 @@ function resetCalls() {
   updateConnectionTypeCalls.length = 0;
   updateTrustStateCalls.length = 0;
   updateRelationshipTypeCalls.length = 0;
+  listTeamAccessCalls.length = 0;
+  listMembersCalls.length = 0;
+  createMemberCalls.length = 0;
+  updateMemberCalls.length = 0;
+  removeMemberCalls.length = 0;
+  listOperatorsCalls.length = 0;
+  createOperatorCalls.length = 0;
+  updateOperatorCalls.length = 0;
+  revokeOperatorCalls.length = 0;
+  updateMemberAssignmentsCalls.length = 0;
+  updateOperatorAssignmentsCalls.length = 0;
   setPermissionOverrideCalls.length = 0;
   listOverridesCalls.length = 0;
   resolvePermissionsCalls.length = 0;
@@ -199,6 +221,249 @@ const identitiesServiceMock = {
     updateRelationshipTypeCalls.push(payload);
     return payload;
   },
+  getIdentityTeamPersonaAccess: async (userId: string, identityId: string) => {
+    listTeamAccessCalls.push({ userId, identityId });
+    return {
+      identity: {
+        id: identityId,
+        displayName: "Source Identity",
+        handle: "source",
+      },
+      personas: [
+        {
+          id: "persona-1",
+          username: "alpha",
+          fullName: "Alpha Persona",
+          routingKey: "alpha",
+          routingDisplayName: "Alpha",
+          isDefaultRouting: true,
+        },
+      ],
+      members: [
+        {
+          id: "member-1",
+          personId: "user-member",
+          email: "member@dotly.one",
+          role: "OWNER",
+          status: "ACTIVE",
+          assignedPersonaIds: ["persona-1"],
+          assignedPersonas: [
+            {
+              id: "persona-1",
+              username: "alpha",
+              fullName: "Alpha Persona",
+              routingKey: "alpha",
+              routingDisplayName: "Alpha",
+              isDefaultRouting: true,
+            },
+          ],
+          accessMode: "restricted",
+        },
+      ],
+      operators: [
+        {
+          id: "operator-1",
+          personId: "user-operator",
+          email: "operator@dotly.one",
+          role: "ADMIN",
+          status: "ACTIVE",
+          assignedPersonaIds: [],
+          assignedPersonas: [],
+          accessMode: "full",
+        },
+      ],
+    };
+  },
+  listIdentityMembers: async (userId: string, identityId: string) => {
+    listMembersCalls.push({ userId, identityId });
+    return {
+      identity: {
+        id: identityId,
+        displayName: "Source Identity",
+        handle: "source",
+      },
+      members: [
+        {
+          id: "member-1",
+          personId: "user-member",
+          email: "member@dotly.one",
+          role: "OWNER",
+          status: "ACTIVE",
+          assignedPersonaIds: ["persona-1"],
+          assignedPersonas: [
+            {
+              id: "persona-1",
+              username: "alpha",
+              fullName: "Alpha Persona",
+              routingKey: "alpha",
+              routingDisplayName: "Alpha",
+              isDefaultRouting: true,
+            },
+          ],
+          accessMode: "restricted",
+        },
+      ],
+    };
+  },
+  createIdentityMember: async (userId: string, payload: unknown) => {
+    createMemberCalls.push({ userId, payload });
+    return {
+      id: "member-2",
+      personId: "user-new-member",
+      email: "new-member@dotly.one",
+      role: "MANAGER",
+      status: "INVITED",
+      assignedPersonaIds: ["persona-1"],
+      assignedPersonas: [
+        {
+          id: "persona-1",
+          username: "alpha",
+          fullName: "Alpha Persona",
+          routingKey: "alpha",
+          routingDisplayName: "Alpha",
+          isDefaultRouting: true,
+        },
+      ],
+      accessMode: "restricted",
+    };
+  },
+  updateIdentityMember: async (userId: string, payload: unknown) => {
+    updateMemberCalls.push({ userId, payload });
+    return {
+      id: "member-1",
+      personId: "user-member",
+      email: "member@dotly.one",
+      role: "MANAGER",
+      status: "SUSPENDED",
+      assignedPersonaIds: ["persona-1"],
+      assignedPersonas: [
+        {
+          id: "persona-1",
+          username: "alpha",
+          fullName: "Alpha Persona",
+          routingKey: "alpha",
+          routingDisplayName: "Alpha",
+          isDefaultRouting: true,
+        },
+      ],
+      accessMode: "restricted",
+    };
+  },
+  removeIdentityMemberAccess: async (userId: string, payload: unknown) => {
+    removeMemberCalls.push({ userId, payload });
+    return {
+      id: "member-1",
+      personId: "user-member",
+      email: "member@dotly.one",
+      role: "MANAGER",
+      status: "REMOVED",
+      assignedPersonaIds: [],
+      assignedPersonas: [],
+      accessMode: "full",
+    };
+  },
+  listIdentityOperators: async (userId: string, identityId: string) => {
+    listOperatorsCalls.push({ userId, identityId });
+    return {
+      identity: {
+        id: identityId,
+        displayName: "Source Identity",
+        handle: "source",
+      },
+      operators: [
+        {
+          id: "operator-1",
+          personId: "user-operator",
+          email: "operator@dotly.one",
+          role: "ADMIN",
+          status: "ACTIVE",
+          assignedPersonaIds: [],
+          assignedPersonas: [],
+          accessMode: "full",
+        },
+      ],
+    };
+  },
+  createIdentityOperator: async (userId: string, payload: unknown) => {
+    createOperatorCalls.push({ userId, payload });
+    return {
+      id: "operator-2",
+      personId: "user-new-operator",
+      email: "new-operator@dotly.one",
+      role: "OPERATOR",
+      status: "INVITED",
+      assignedPersonaIds: [],
+      assignedPersonas: [],
+      accessMode: "full",
+    };
+  },
+  updateIdentityOperator: async (userId: string, payload: unknown) => {
+    updateOperatorCalls.push({ userId, payload });
+    return {
+      id: "operator-1",
+      personId: "user-operator",
+      email: "operator@dotly.one",
+      role: "OPERATOR",
+      status: "ACTIVE",
+      assignedPersonaIds: [],
+      assignedPersonas: [],
+      accessMode: "full",
+    };
+  },
+  revokeIdentityOperatorAccess: async (userId: string, payload: unknown) => {
+    revokeOperatorCalls.push({ userId, payload });
+    return {
+      id: "operator-1",
+      personId: "user-operator",
+      email: "operator@dotly.one",
+      role: "OPERATOR",
+      status: "REVOKED",
+      assignedPersonaIds: [],
+      assignedPersonas: [],
+      accessMode: "full",
+    };
+  },
+  updateIdentityMemberPersonaAssignments: async (
+    userId: string,
+    payload: unknown,
+  ) => {
+    updateMemberAssignmentsCalls.push({ userId, payload });
+    return {
+      id: "member-1",
+      personId: "user-member",
+      email: "member@dotly.one",
+      role: "OWNER",
+      status: "ACTIVE",
+      assignedPersonaIds: ["persona-1"],
+      assignedPersonas: [
+        {
+          id: "persona-1",
+          username: "alpha",
+          fullName: "Alpha Persona",
+          routingKey: "alpha",
+          routingDisplayName: "Alpha",
+          isDefaultRouting: true,
+        },
+      ],
+      accessMode: "restricted",
+    };
+  },
+  updateIdentityOperatorPersonaAssignments: async (
+    userId: string,
+    payload: unknown,
+  ) => {
+    updateOperatorAssignmentsCalls.push({ userId, payload });
+    return {
+      id: "operator-1",
+      personId: "user-operator",
+      email: "operator@dotly.one",
+      role: "ADMIN",
+      status: "ACTIVE",
+      assignedPersonaIds: [],
+      assignedPersonas: [],
+      accessMode: "full",
+    };
+  },
   setPermissionOverride: async (payload: unknown) => {
     setPermissionOverrideCalls.push(payload);
     return payload;
@@ -256,7 +521,7 @@ const identitiesServiceMock = {
     getConversationCalls.push(payload);
     return { conversationId: "conversation-1" };
   },
-  listConversationsForIdentity: async (payload: unknown) => {
+  listAccessibleConversationsForUser: async (payload: unknown) => {
     listConversationsCalls.push(payload);
     return [];
   },
@@ -525,6 +790,203 @@ describe("Identities HTTP E2E", () => {
     assert.equal(listConnectionsCalls.length, 1);
   });
 
+  it("lists team access and updates persona assignments", async () => {
+    const headers = await authHeaders();
+    const listResponse = await fetch(
+      `${baseUrl}/v1/identities/11111111-1111-4111-8111-111111111111/team-access`,
+      { headers },
+    );
+    const updateMemberResponse = await fetch(
+      `${baseUrl}/v1/identities/11111111-1111-4111-8111-111111111111/members/22222222-2222-4222-8222-222222222222/persona-assignments`,
+      {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          personaIds: ["33333333-3333-4333-8333-333333333333"],
+        }),
+      },
+    );
+    const updateOperatorResponse = await fetch(
+      `${baseUrl}/v1/identities/11111111-1111-4111-8111-111111111111/operators/44444444-4444-4444-8444-444444444444/persona-assignments`,
+      {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          personaIds: [],
+        }),
+      },
+    );
+    const listBody = await listResponse.json();
+
+    assert.equal(listResponse.status, 200);
+    assert.equal(updateMemberResponse.status, 200);
+    assert.equal(updateOperatorResponse.status, 200);
+    assert.equal(listBody.data.members[0].email, "member@dotly.one");
+    assert.equal(listTeamAccessCalls.length, 1);
+    assert.deepEqual(listTeamAccessCalls[0], {
+      userId: TEST_USER_ID,
+      identityId: "11111111-1111-4111-8111-111111111111",
+    });
+    assert.deepEqual(updateMemberAssignmentsCalls[0], {
+      userId: TEST_USER_ID,
+      payload: {
+        identityId: "11111111-1111-4111-8111-111111111111",
+        memberId: "22222222-2222-4222-8222-222222222222",
+        personaIds: ["33333333-3333-4333-8333-333333333333"],
+      },
+    });
+    assert.deepEqual(updateOperatorAssignmentsCalls[0], {
+      userId: TEST_USER_ID,
+      payload: {
+        identityId: "11111111-1111-4111-8111-111111111111",
+        operatorId: "44444444-4444-4444-8444-444444444444",
+        personaIds: [],
+      },
+    });
+  });
+
+  it("manages identity members and operators", async () => {
+    const headers = await authHeaders();
+    const listMembersResponse = await fetch(
+      `${baseUrl}/v1/identities/11111111-1111-4111-8111-111111111111/members`,
+      { headers },
+    );
+    const createMemberResponse = await fetch(
+      `${baseUrl}/v1/identities/11111111-1111-4111-8111-111111111111/members`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          personId: "55555555-5555-4555-8555-555555555555",
+          role: "MANAGER",
+          status: "INVITED",
+          personaIds: ["33333333-3333-4333-8333-333333333333"],
+        }),
+      },
+    );
+    const updateMemberResponse = await fetch(
+      `${baseUrl}/v1/identities/11111111-1111-4111-8111-111111111111/members/22222222-2222-4222-8222-222222222222`,
+      {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({
+          role: "MANAGER",
+          status: "SUSPENDED",
+        }),
+      },
+    );
+    const removeMemberResponse = await fetch(
+      `${baseUrl}/v1/identities/11111111-1111-4111-8111-111111111111/members/22222222-2222-4222-8222-222222222222`,
+      {
+        method: "DELETE",
+        headers,
+      },
+    );
+    const listOperatorsResponse = await fetch(
+      `${baseUrl}/v1/identities/11111111-1111-4111-8111-111111111111/operators`,
+      { headers },
+    );
+    const createOperatorResponse = await fetch(
+      `${baseUrl}/v1/identities/11111111-1111-4111-8111-111111111111/operators`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          personId: "66666666-6666-4666-8666-666666666666",
+          role: "OPERATOR",
+          status: "INVITED",
+        }),
+      },
+    );
+    const updateOperatorResponse = await fetch(
+      `${baseUrl}/v1/identities/11111111-1111-4111-8111-111111111111/operators/44444444-4444-4444-8444-444444444444`,
+      {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({
+          role: "OPERATOR",
+          status: "ACTIVE",
+        }),
+      },
+    );
+    const revokeOperatorResponse = await fetch(
+      `${baseUrl}/v1/identities/11111111-1111-4111-8111-111111111111/operators/44444444-4444-4444-8444-444444444444`,
+      {
+        method: "DELETE",
+        headers,
+      },
+    );
+
+    assert.equal(listMembersResponse.status, 200);
+    assert.equal(createMemberResponse.status, 201);
+    assert.equal(updateMemberResponse.status, 200);
+    assert.equal(removeMemberResponse.status, 200);
+    assert.equal(listOperatorsResponse.status, 200);
+    assert.equal(createOperatorResponse.status, 201);
+    assert.equal(updateOperatorResponse.status, 200);
+    assert.equal(revokeOperatorResponse.status, 200);
+    assert.deepEqual(listMembersCalls[0], {
+      userId: TEST_USER_ID,
+      identityId: "11111111-1111-4111-8111-111111111111",
+    });
+    assert.deepEqual(createMemberCalls[0], {
+      userId: TEST_USER_ID,
+      payload: {
+        identityId: "11111111-1111-4111-8111-111111111111",
+        personId: "55555555-5555-4555-8555-555555555555",
+        role: "MANAGER",
+        status: "INVITED",
+        personaIds: ["33333333-3333-4333-8333-333333333333"],
+      },
+    });
+    assert.deepEqual(updateMemberCalls[0], {
+      userId: TEST_USER_ID,
+      payload: {
+        identityId: "11111111-1111-4111-8111-111111111111",
+        memberId: "22222222-2222-4222-8222-222222222222",
+        role: "MANAGER",
+        status: "SUSPENDED",
+      },
+    });
+    assert.deepEqual(removeMemberCalls[0], {
+      userId: TEST_USER_ID,
+      payload: {
+        identityId: "11111111-1111-4111-8111-111111111111",
+        memberId: "22222222-2222-4222-8222-222222222222",
+      },
+    });
+    assert.deepEqual(listOperatorsCalls[0], {
+      userId: TEST_USER_ID,
+      identityId: "11111111-1111-4111-8111-111111111111",
+    });
+    assert.deepEqual(createOperatorCalls[0], {
+      userId: TEST_USER_ID,
+      payload: {
+        identityId: "11111111-1111-4111-8111-111111111111",
+        personId: "66666666-6666-4666-8666-666666666666",
+        role: "OPERATOR",
+        status: "INVITED",
+        personaIds: undefined,
+      },
+    });
+    assert.deepEqual(updateOperatorCalls[0], {
+      userId: TEST_USER_ID,
+      payload: {
+        identityId: "11111111-1111-4111-8111-111111111111",
+        operatorId: "44444444-4444-4444-8444-444444444444",
+        role: "OPERATOR",
+        status: "ACTIVE",
+      },
+    });
+    assert.deepEqual(revokeOperatorCalls[0], {
+      userId: TEST_USER_ID,
+      payload: {
+        identityId: "11111111-1111-4111-8111-111111111111",
+        operatorId: "44444444-4444-4444-8444-444444444444",
+      },
+    });
+  });
+
   it("updates trust and relationship fields", async () => {
     const headers = await authHeaders();
     const trustResponse = await fetch(
@@ -673,7 +1135,18 @@ describe("Identities HTTP E2E", () => {
     assert.equal(getOrCreateConversationCalls.length, 1);
     assert.equal(getConversationCalls.length, 1);
     assert.equal(listConversationsCalls.length, 1);
+    assert.deepEqual(listConversationsCalls[0], {
+      userId: TEST_USER_ID,
+      identityId: "11111111-1111-4111-8111-111111111111",
+      personaId: undefined,
+      status: "ACTIVE",
+    });
     assert.equal(updateConversationStatusCalls.length, 1);
+    assert.deepEqual(updateConversationStatusCalls[0], {
+      conversationId: "11111111-1111-4111-8111-111111111111",
+      currentUserId: TEST_USER_ID,
+      status: "LOCKED",
+    });
   });
 
   it("supports bind, stale, context, and explain-context conversation endpoints", async () => {
@@ -781,6 +1254,38 @@ describe("Identities HTTP E2E", () => {
     assert.equal(enforceActionCalls.length, 1);
     assert.equal(enforceCallCalls.length, 1);
     assert.equal(enforceAICalls.length, 1);
+    assert.deepEqual(enforceActionCalls[0], {
+      conversationId: "11111111-1111-4111-8111-111111111111",
+      currentUserId: TEST_USER_ID,
+      actorIdentityId: "22222222-2222-4222-8222-222222222222",
+      actionType: ActionType.SendText,
+      contentId: undefined,
+      currentViewCount: undefined,
+      metadata: undefined,
+    });
+    assert.deepEqual(enforceCallCalls[0], {
+      conversationId: "11111111-1111-4111-8111-111111111111",
+      currentUserId: TEST_USER_ID,
+      actorIdentityId: "22222222-2222-4222-8222-222222222222",
+      callType: CallType.Video,
+      initiationMode: CallInitiationMode.Direct,
+      screenCaptureDetected: undefined,
+      castingDetected: undefined,
+      deviceIntegrityCompromised: undefined,
+      currentProtectedModeExpectation: undefined,
+      metadata: undefined,
+    });
+    assert.deepEqual(enforceAICalls[0], {
+      conversationId: "11111111-1111-4111-8111-111111111111",
+      currentUserId: TEST_USER_ID,
+      actorIdentityId: "22222222-2222-4222-8222-222222222222",
+      capability: AICapability.Summary,
+      contextType: AIExecutionContext.Conversation,
+      contentId: undefined,
+      isProtectedContent: undefined,
+      isVaultContent: undefined,
+      previewRiskSignals: undefined,
+    });
   });
 
   it("lists permission audit events", async () => {

@@ -47,8 +47,8 @@ export default async function AppHomePage() {
                 Good to see you, {firstName}.
               </h1>
               <p className="max-w-[34ch] text-[16px] font-medium leading-relaxed text-muted sm:text-[17px]">
-                We moved your current workspace to `app-old` so we can redesign
-                Dotly one screen at a time without losing anything.
+                Core flows now live in the new app shell. The remaining legacy
+                areas stay available until each replacement is ready.
               </p>
             </div>
           </div>
@@ -77,17 +77,17 @@ export default async function AppHomePage() {
 
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href="/app-old"
+                  href={routes.app.inbox}
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-foreground px-6 text-[15px] font-semibold text-background transition-transform hover:scale-[0.98] active:scale-95"
                 >
-                  Open existing app
+                  Open inbox
                   <ArrowUpRight className="h-4 w-4" strokeWidth={2.2} />
                 </Link>
                 <Link
-                  href="/app-old/personas"
+                  href={routes.app.personas}
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-black/5 bg-black/[0.03] px-6 text-[15px] font-semibold text-foreground transition-colors hover:bg-black/[0.05] dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.05]"
                 >
-                  Review personas
+                  Open personas
                   <Plus className="h-4 w-4" strokeWidth={2.2} />
                 </Link>
               </div>
@@ -137,22 +137,23 @@ export default async function AppHomePage() {
         <div className="grid gap-4 md:grid-cols-3">
           {[
             {
-              title: "Home",
-              description: "Define the new authenticated landing experience.",
-              href: routes.app.home,
+              title: "Inbox",
+              description: "Review persona-routed conversations in the new app.",
+              href: routes.app.inbox,
               status: "In progress",
             },
             {
-              title: "QR share",
-              description: "Rebuild the one-screen sharing flow next.",
-              href: "/app-old/qr",
-              status: "Ready to redesign",
+              title: "Requests",
+              description:
+                "Handle inbound request flow from the new authenticated shell.",
+              href: routes.app.requests,
+              status: "Live",
             },
             {
-              title: "Personas",
-              description: "Clarify how identities are represented publicly.",
-              href: "/app-old/personas",
-              status: "Existing reference",
+              title: "QR share",
+              description: "Generate a live share code from the new authenticated shell.",
+              href: routes.app.qr,
+              status: "Live",
             },
           ].map((item) => (
             <Link

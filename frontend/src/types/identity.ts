@@ -35,3 +35,40 @@ export interface CreateIdentityRequest {
   status: IdentityLifecycleStatus;
   metadataJson?: Record<string, unknown>;
 }
+
+export type IdentityMemberRole = "MEMBER" | "MANAGER" | "OWNER";
+
+export type IdentityOperatorRole = "OPERATOR" | "ADMIN" | "SUPER_ADMIN";
+
+export type IdentityTeamAccessMode = "full" | "restricted";
+
+export interface IdentityTeamAccessPersona {
+  id: string;
+  username: string;
+  fullName: string;
+  routingKey: string | null;
+  routingDisplayName: string | null;
+  isDefaultRouting: boolean;
+}
+
+export interface IdentityTeamAccessEntry {
+  id: string;
+  personId: string;
+  email: string | null;
+  role: IdentityMemberRole | IdentityOperatorRole;
+  status: string;
+  assignedPersonaIds: string[];
+  assignedPersonas: IdentityTeamAccessPersona[];
+  accessMode: IdentityTeamAccessMode;
+}
+
+export interface IdentityTeamAccessPayload {
+  identity: {
+    id: string;
+    displayName: string;
+    handle: string | null;
+  };
+  personas: IdentityTeamAccessPersona[];
+  members: IdentityTeamAccessEntry[];
+  operators: IdentityTeamAccessEntry[];
+}

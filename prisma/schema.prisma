@@ -345,7 +345,7 @@ model AuthSession {
 model Persona {
   id                       String                @id @default(uuid()) @db.Uuid
   userId                   String                @db.Uuid
-  identityId               String?               @db.Uuid
+  identityId               String                @db.Uuid
   agencyProfileId          String?               @db.Uuid
   type                     PersonaType
   isPrimary                Boolean               @default(false)
@@ -378,12 +378,14 @@ model Persona {
   socialLinks              Json?
   socialLinksDisplayMode   PersonaSocialLinksDisplayMode @default(BUTTONS)
   agencyProfile            AgencyProfile?        @relation(fields: [agencyProfileId], references: [id], onDelete: SetNull)
-  identity                 Identity?             @relation(fields: [identityId], references: [id], onDelete: SetNull)
+  identity                 Identity              @relation(fields: [identityId], references: [id], onDelete: Cascade)
   user                     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   qrAccessTokens           QRAccessToken[]
   analyticsEvents          AnalyticsEvent[]
   analytics                PersonaAnalytics?
   identityConversations    IdentityConversation[]
+  memberAssignments        IdentityMemberPersonaAssignment[]
+  operatorAssignments      IdentityOperatorPersonaAssignment[]
   eventParticipations      EventParticipant[]
   outgoingContactRequests  ContactRequest[]      @relation("ContactRequestFromPersona")
   incomingContactRequests  ContactRequest[]      @relation("ContactRequestToPersona")
@@ -701,11 +703,26 @@ model IdentityMember {
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
   identity    Identity             @relation(fields: [identityId], references: [id], onDelete: Cascade)
+  personaAssignments IdentityMemberPersonaAssignment[]
 
   @@unique([identityId, personId])
   @@index([identityId])
   @@index([personId])
   @@index([status])
+}
+
+model IdentityMemberPersonaAssignment {
+  id               String         @id @default(uuid()) @db.Uuid
+  identityMemberId String         @db.Uuid
+  personaId        String         @db.Uuid
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  identityMember   IdentityMember @relation(fields: [identityMemberId], references: [id], onDelete: Cascade)
+  persona          Persona        @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@unique([identityMemberId, personaId])
+  @@index([identityMemberId])
+  @@index([personaId])
 }
 
 enum IdentityOperatorRole {
@@ -731,11 +748,26 @@ model IdentityOperator {
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   identity      Identity               @relation(fields: [identityId], references: [id], onDelete: Cascade)
+  personaAssignments IdentityOperatorPersonaAssignment[]
 
   @@unique([identityId, personId])
   @@index([identityId])
   @@index([personId])
   @@index([status])
+}
+
+model IdentityOperatorPersonaAssignment {
+  id                 String           @id @default(uuid()) @db.Uuid
+  identityOperatorId String           @db.Uuid
+  personaId          String           @db.Uuid
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  identityOperator   IdentityOperator @relation(fields: [identityOperatorId], references: [id], onDelete: Cascade)
+  persona            Persona          @relation(fields: [personaId], references: [id], onDelete: Cascade)
+
+  @@unique([identityOperatorId, personaId])
+  @@index([identityOperatorId])
+  @@index([personaId])
 }
 
 model IdentityConnection {

@@ -2,10 +2,9 @@ import { FollowUpsScreen } from "@/components/follow-ups/follow-ups-screen";
 import { PageHeader } from "@/components/shared/page-header";
 import { requireServerSession } from "@/lib/auth/protected-route";
 import { dotlyPositioning } from "@/lib/constants/positioning";
-import { routes } from "@/lib/constants/routes";
 
 export default async function FollowUpsPage() {
-  await requireServerSession(routes.app.followUps);
+  await requireServerSession("/app-old/follow-ups");
 
   return (
     <section className="flex flex-col mx-auto w-full max-w-2xl gap-6 animate-fade-up [animation-duration:700ms] pb-safe">

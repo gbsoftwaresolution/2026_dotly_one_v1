@@ -5,6 +5,7 @@ import {
   getVisibleSocialLinks,
   hasOverflowSocialLinks,
 } from "@/lib/persona/social-links";
+import { getCanonicalPublicLinksPath } from "@/lib/persona/public-profile-path";
 import { cn } from "@/lib/utils/cn";
 import type { PublicProfile } from "@/types/persona";
 
@@ -38,7 +39,7 @@ export function PublicSocialLinks({
         </p>
         {hasOverflow ? (
           <Link
-            href={`/u/${encodeURIComponent(username)}/links`}
+            href={getCanonicalPublicLinksPath(profile.publicUrl, username)}
             className="text-xs font-semibold text-muted transition hover:text-foreground"
           >
             View all

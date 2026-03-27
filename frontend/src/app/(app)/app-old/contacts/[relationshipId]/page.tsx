@@ -276,7 +276,7 @@ export default async function ContactDetailPage({
 }) {
   const { relationshipId } = await params;
   const { accessToken } = await requireServerSession(
-    routes.app.contactDetail(relationshipId),
+    `/app-old/contacts/${relationshipId}`,
   );
 
   let contact: ContactDetail | null = null;

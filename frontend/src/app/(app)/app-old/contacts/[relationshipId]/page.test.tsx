@@ -241,7 +241,7 @@ describe("ContactDetailPage", () => {
     render(element);
 
     expect(mocks.requireServerSession).toHaveBeenCalledWith(
-      routes.app.contactDetail("relationship-id"),
+      "/app-old/contacts/relationship-id",
     );
     expect(
       screen.getByRole("heading", { name: /^connection$/i }),

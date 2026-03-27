@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -19,12 +20,19 @@ import { CreateIdentityDto } from "./dto/create-identity.dto";
 import {
   ConnectionIdParamDto,
   ConnectionPermissionKeyParamDto,
+  CreateIdentityMemberRequestDto,
+  CreateIdentityOperatorRequestDto,
   DiffCurrentPermissionsAgainstSnapshotQueryDto,
   ExplainResolvedPermissionQueryDto,
   ExplainResolvedPermissionsQueryDto,
   IdentityIdParamDto,
+  IdentityMemberIdParamDto,
+  IdentityOperatorIdParamDto,
   ListConnectionsForIdentityQueryDto,
   SetPermissionOverrideRequestDto,
+  UpdateIdentityMemberRequestDto,
+  UpdateIdentityOperatorRequestDto,
+  UpdatePersonaAssignmentsRequestDto,
   UpdateConnectionRelationshipTypeRequestDto,
   UpdateConnectionTypeRequestDto,
   UpdateTrustStateRequestDto,
@@ -65,6 +73,151 @@ export class IdentitiesController {
       identityId: params.identityId,
       status: query.status,
     });
+  }
+
+  @Get("identities/:identityId/team-access")
+  getIdentityTeamAccess(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: IdentityIdParamDto,
+  ) {
+    return this.identitiesService.getIdentityTeamPersonaAccess(
+      user.id,
+      params.identityId,
+    );
+  }
+
+  @Get("identities/:identityId/members")
+  listIdentityMembers(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: IdentityIdParamDto,
+  ) {
+    return this.identitiesService.listIdentityMembers(
+      user.id,
+      params.identityId,
+    );
+  }
+
+  @Post("identities/:identityId/members")
+  createIdentityMember(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: IdentityIdParamDto,
+    @Body() body: CreateIdentityMemberRequestDto,
+  ) {
+    return this.identitiesService.createIdentityMember(user.id, {
+      identityId: params.identityId,
+      personId: body.personId,
+      role: body.role,
+      status: body.status,
+      personaIds: body.personaIds,
+    });
+  }
+
+  @Patch("identities/:identityId/members/:memberId")
+  updateIdentityMember(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: IdentityMemberIdParamDto,
+    @Body() body: UpdateIdentityMemberRequestDto,
+  ) {
+    return this.identitiesService.updateIdentityMember(user.id, {
+      identityId: params.identityId,
+      memberId: params.memberId,
+      role: body.role,
+      status: body.status,
+    });
+  }
+
+  @Delete("identities/:identityId/members/:memberId")
+  removeIdentityMemberAccess(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: IdentityMemberIdParamDto,
+  ) {
+    return this.identitiesService.removeIdentityMemberAccess(user.id, {
+      identityId: params.identityId,
+      memberId: params.memberId,
+    });
+  }
+
+  @Get("identities/:identityId/operators")
+  listIdentityOperators(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: IdentityIdParamDto,
+  ) {
+    return this.identitiesService.listIdentityOperators(
+      user.id,
+      params.identityId,
+    );
+  }
+
+  @Post("identities/:identityId/operators")
+  createIdentityOperator(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: IdentityIdParamDto,
+    @Body() body: CreateIdentityOperatorRequestDto,
+  ) {
+    return this.identitiesService.createIdentityOperator(user.id, {
+      identityId: params.identityId,
+      personId: body.personId,
+      role: body.role,
+      status: body.status,
+      personaIds: body.personaIds,
+    });
+  }
+
+  @Patch("identities/:identityId/operators/:operatorId")
+  updateIdentityOperator(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: IdentityOperatorIdParamDto,
+    @Body() body: UpdateIdentityOperatorRequestDto,
+  ) {
+    return this.identitiesService.updateIdentityOperator(user.id, {
+      identityId: params.identityId,
+      operatorId: params.operatorId,
+      role: body.role,
+      status: body.status,
+    });
+  }
+
+  @Delete("identities/:identityId/operators/:operatorId")
+  revokeIdentityOperatorAccess(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: IdentityOperatorIdParamDto,
+  ) {
+    return this.identitiesService.revokeIdentityOperatorAccess(user.id, {
+      identityId: params.identityId,
+      operatorId: params.operatorId,
+    });
+  }
+
+  @Put("identities/:identityId/members/:memberId/persona-assignments")
+  updateIdentityMemberPersonaAssignments(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: IdentityMemberIdParamDto,
+    @Body() body: UpdatePersonaAssignmentsRequestDto,
+  ) {
+    return this.identitiesService.updateIdentityMemberPersonaAssignments(
+      user.id,
+      {
+        identityId: params.identityId,
+        memberId: params.memberId,
+        personaIds: body.personaIds,
+      },
+    );
+  }
+
+  @Put("identities/:identityId/operators/:operatorId/persona-assignments")
+  updateIdentityOperatorPersonaAssignments(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: IdentityOperatorIdParamDto,
+    @Body() body: UpdatePersonaAssignmentsRequestDto,
+  ) {
+    return this.identitiesService.updateIdentityOperatorPersonaAssignments(
+      user.id,
+      {
+        identityId: params.identityId,
+        operatorId: params.operatorId,
+        personaIds: body.personaIds,
+      },
+    );
   }
 
   @Patch("identity-connections/:connectionId/type")

@@ -69,4 +69,57 @@ describe("Persona DTO validation", () => {
     assert.equal(dto.tagline, null);
     assert.equal(dto.websiteUrl, null);
   });
+
+  it("rejects null identity ids instead of treating them as disconnects", () => {
+    const dto = plainToInstance(UpdatePersonaDto, {
+      identityId: null,
+    });
+
+    const errors = validateSync(dto);
+    const properties = errors.map((error) => error.property);
+
+    assert.equal(properties.includes("identityId"), true);
+  });
+
+  it("normalizes safe routing fields", () => {
+    const dto = plainToInstance(CreatePersonaDto, {
+      type: PersonaType.Personal,
+      username: "alice-demo",
+      fullName: "Alice Demo",
+      jobTitle: "Founder",
+      accessMode: PersonaAccessMode.Private,
+      routingKey: "  Team_Main  ",
+      routingDisplayName: "  Team Main  ",
+      routingRulesJson: {
+        queue: "team-main",
+      },
+    });
+
+    assert.deepEqual(validateSync(dto), []);
+    assert.equal(dto.routingKey, "team_main");
+    assert.equal(dto.routingDisplayName, "Team Main");
+    assert.deepEqual(dto.routingRulesJson, {
+      queue: "team-main",
+    });
+  });
+
+  it("rejects unsafe routing keys", () => {
+    const dto = plainToInstance(UpdatePersonaDto, {
+      routingKey: "team/main",
+    });
+
+    const errors = validateSync(dto);
+    const properties = errors.map((error) => error.property);
+
+    assert.equal(properties.includes("routingKey"), true);
+  });
+
+  it("normalizes blank routing display names to null", () => {
+    const dto = plainToInstance(UpdatePersonaDto, {
+      routingDisplayName: "   ",
+    });
+
+    assert.deepEqual(validateSync(dto), []);
+    assert.equal(dto.routingDisplayName, null);
+  });
 });

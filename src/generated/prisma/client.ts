@@ -150,10 +150,20 @@ export type Identity = Prisma.IdentityModel
  */
 export type IdentityMember = Prisma.IdentityMemberModel
 /**
+ * Model IdentityMemberPersonaAssignment
+ * 
+ */
+export type IdentityMemberPersonaAssignment = Prisma.IdentityMemberPersonaAssignmentModel
+/**
  * Model IdentityOperator
  * 
  */
 export type IdentityOperator = Prisma.IdentityOperatorModel
+/**
+ * Model IdentityOperatorPersonaAssignment
+ * 
+ */
+export type IdentityOperatorPersonaAssignment = Prisma.IdentityOperatorPersonaAssignmentModel
 /**
  * Model IdentityConnection
  * 

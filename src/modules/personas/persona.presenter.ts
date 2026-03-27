@@ -7,6 +7,7 @@ import {
 import { PersonaAccessMode } from "../../common/enums/persona-access-mode.enum";
 import { PersonaType } from "../../common/enums/persona-type.enum";
 import { PublicPersonaDto } from "../profiles/dto/public-persona.dto";
+import { canonicalizePublicUrl } from "./public-url";
 import {
   getSharingConfigSource,
   toApiSharingMode,
@@ -16,7 +17,13 @@ import {
 export const privatePersonaSelect = {
   id: true,
   identityId: true,
+  identity: {
+    select: {
+      handle: true,
+    },
+  },
   type: true,
+  isPrimary: true,
   username: true,
   publicUrl: true,
   fullName: true,
@@ -47,6 +54,11 @@ export const privatePersonaSelect = {
 export const publicPersonaSelect = {
   id: true,
   identityId: true,
+  identity: {
+    select: {
+      handle: true,
+    },
+  },
   userId: true,
   username: true,
   publicUrl: true,
@@ -66,10 +78,6 @@ export const publicPersonaSelect = {
   publicPhone: true,
   publicWhatsappNumber: true,
   publicEmail: true,
-  routingKey: true,
-  routingDisplayName: true,
-  isDefaultRouting: true,
-  routingRulesJson: true,
 } as const;
 
 export type PrivatePersonaRecord = Prisma.PersonaGetPayload<{
@@ -136,8 +144,13 @@ export function toPrivatePersonaView(
     id: persona.id,
     identityId: persona.identityId,
     type: apiPersonaTypeMap[persona.type],
+    isPrimary: persona.isPrimary,
     username: persona.username,
-    publicUrl: persona.publicUrl,
+    publicUrl: canonicalizePublicUrl(
+      persona.publicUrl,
+      persona.username,
+      persona.identity?.handle,
+    ),
     fullName: persona.fullName,
     jobTitle: persona.jobTitle,
     companyName: persona.companyName,

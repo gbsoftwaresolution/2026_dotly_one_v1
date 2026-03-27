@@ -406,7 +406,9 @@ export const ModelName = {
   PersonaAnalytics: 'PersonaAnalytics',
   Identity: 'Identity',
   IdentityMember: 'IdentityMember',
+  IdentityMemberPersonaAssignment: 'IdentityMemberPersonaAssignment',
   IdentityOperator: 'IdentityOperator',
+  IdentityOperatorPersonaAssignment: 'IdentityOperatorPersonaAssignment',
   IdentityConnection: 'IdentityConnection',
   ConnectionPermissionOverride: 'ConnectionPermissionOverride',
   ConnectionPermissionSnapshot: 'ConnectionPermissionSnapshot',
@@ -428,7 +430,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "agencyProfile" | "emailVerificationToken" | "passwordResetToken" | "mobileOtpChallenge" | "authSession" | "persona" | "qRAccessToken" | "event" | "eventParticipant" | "contactRequest" | "contactRelationship" | "interaction" | "followUp" | "contactMemory" | "block" | "notification" | "supportRequest" | "analyticsEvent" | "personaAnalytics" | "identity" | "identityMember" | "identityOperator" | "identityConnection" | "connectionPermissionOverride" | "connectionPermissionSnapshot" | "contentAccessRule" | "identityConversation" | "connectionPolicyTemplate"
+    modelProps: "user" | "agencyProfile" | "emailVerificationToken" | "passwordResetToken" | "mobileOtpChallenge" | "authSession" | "persona" | "qRAccessToken" | "event" | "eventParticipant" | "contactRequest" | "contactRelationship" | "interaction" | "followUp" | "contactMemory" | "block" | "notification" | "supportRequest" | "analyticsEvent" | "personaAnalytics" | "identity" | "identityMember" | "identityMemberPersonaAssignment" | "identityOperator" | "identityOperatorPersonaAssignment" | "identityConnection" | "connectionPermissionOverride" | "connectionPermissionSnapshot" | "contentAccessRule" | "identityConversation" | "connectionPolicyTemplate"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2060,6 +2062,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    IdentityMemberPersonaAssignment: {
+      payload: Prisma.$IdentityMemberPersonaAssignmentPayload<ExtArgs>
+      fields: Prisma.IdentityMemberPersonaAssignmentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IdentityMemberPersonaAssignmentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPersonaAssignmentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IdentityMemberPersonaAssignmentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPersonaAssignmentPayload>
+        }
+        findFirst: {
+          args: Prisma.IdentityMemberPersonaAssignmentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPersonaAssignmentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IdentityMemberPersonaAssignmentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPersonaAssignmentPayload>
+        }
+        findMany: {
+          args: Prisma.IdentityMemberPersonaAssignmentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPersonaAssignmentPayload>[]
+        }
+        create: {
+          args: Prisma.IdentityMemberPersonaAssignmentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPersonaAssignmentPayload>
+        }
+        createMany: {
+          args: Prisma.IdentityMemberPersonaAssignmentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IdentityMemberPersonaAssignmentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPersonaAssignmentPayload>[]
+        }
+        delete: {
+          args: Prisma.IdentityMemberPersonaAssignmentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPersonaAssignmentPayload>
+        }
+        update: {
+          args: Prisma.IdentityMemberPersonaAssignmentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPersonaAssignmentPayload>
+        }
+        deleteMany: {
+          args: Prisma.IdentityMemberPersonaAssignmentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IdentityMemberPersonaAssignmentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IdentityMemberPersonaAssignmentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPersonaAssignmentPayload>[]
+        }
+        upsert: {
+          args: Prisma.IdentityMemberPersonaAssignmentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPersonaAssignmentPayload>
+        }
+        aggregate: {
+          args: Prisma.IdentityMemberPersonaAssignmentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIdentityMemberPersonaAssignment>
+        }
+        groupBy: {
+          args: Prisma.IdentityMemberPersonaAssignmentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityMemberPersonaAssignmentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IdentityMemberPersonaAssignmentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityMemberPersonaAssignmentCountAggregateOutputType> | number
+        }
+      }
+    }
     IdentityOperator: {
       payload: Prisma.$IdentityOperatorPayload<ExtArgs>
       fields: Prisma.IdentityOperatorFieldRefs
@@ -2131,6 +2207,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.IdentityOperatorCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.IdentityOperatorCountAggregateOutputType> | number
+        }
+      }
+    }
+    IdentityOperatorPersonaAssignment: {
+      payload: Prisma.$IdentityOperatorPersonaAssignmentPayload<ExtArgs>
+      fields: Prisma.IdentityOperatorPersonaAssignmentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IdentityOperatorPersonaAssignmentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPersonaAssignmentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IdentityOperatorPersonaAssignmentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPersonaAssignmentPayload>
+        }
+        findFirst: {
+          args: Prisma.IdentityOperatorPersonaAssignmentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPersonaAssignmentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IdentityOperatorPersonaAssignmentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPersonaAssignmentPayload>
+        }
+        findMany: {
+          args: Prisma.IdentityOperatorPersonaAssignmentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPersonaAssignmentPayload>[]
+        }
+        create: {
+          args: Prisma.IdentityOperatorPersonaAssignmentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPersonaAssignmentPayload>
+        }
+        createMany: {
+          args: Prisma.IdentityOperatorPersonaAssignmentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IdentityOperatorPersonaAssignmentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPersonaAssignmentPayload>[]
+        }
+        delete: {
+          args: Prisma.IdentityOperatorPersonaAssignmentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPersonaAssignmentPayload>
+        }
+        update: {
+          args: Prisma.IdentityOperatorPersonaAssignmentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPersonaAssignmentPayload>
+        }
+        deleteMany: {
+          args: Prisma.IdentityOperatorPersonaAssignmentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IdentityOperatorPersonaAssignmentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IdentityOperatorPersonaAssignmentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPersonaAssignmentPayload>[]
+        }
+        upsert: {
+          args: Prisma.IdentityOperatorPersonaAssignmentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPersonaAssignmentPayload>
+        }
+        aggregate: {
+          args: Prisma.IdentityOperatorPersonaAssignmentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIdentityOperatorPersonaAssignment>
+        }
+        groupBy: {
+          args: Prisma.IdentityOperatorPersonaAssignmentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityOperatorPersonaAssignmentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IdentityOperatorPersonaAssignmentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityOperatorPersonaAssignmentCountAggregateOutputType> | number
         }
       }
     }
@@ -2989,6 +3139,17 @@ export const IdentityMemberScalarFieldEnum = {
 export type IdentityMemberScalarFieldEnum = (typeof IdentityMemberScalarFieldEnum)[keyof typeof IdentityMemberScalarFieldEnum]
 
 
+export const IdentityMemberPersonaAssignmentScalarFieldEnum = {
+  id: 'id',
+  identityMemberId: 'identityMemberId',
+  personaId: 'personaId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityMemberPersonaAssignmentScalarFieldEnum = (typeof IdentityMemberPersonaAssignmentScalarFieldEnum)[keyof typeof IdentityMemberPersonaAssignmentScalarFieldEnum]
+
+
 export const IdentityOperatorScalarFieldEnum = {
   id: 'id',
   identityId: 'identityId',
@@ -3002,6 +3163,17 @@ export const IdentityOperatorScalarFieldEnum = {
 } as const
 
 export type IdentityOperatorScalarFieldEnum = (typeof IdentityOperatorScalarFieldEnum)[keyof typeof IdentityOperatorScalarFieldEnum]
+
+
+export const IdentityOperatorPersonaAssignmentScalarFieldEnum = {
+  id: 'id',
+  identityOperatorId: 'identityOperatorId',
+  personaId: 'personaId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityOperatorPersonaAssignmentScalarFieldEnum = (typeof IdentityOperatorPersonaAssignmentScalarFieldEnum)[keyof typeof IdentityOperatorPersonaAssignmentScalarFieldEnum]
 
 
 export const IdentityConnectionScalarFieldEnum = {
@@ -3791,7 +3963,9 @@ export type GlobalOmitConfig = {
   personaAnalytics?: Prisma.PersonaAnalyticsOmit
   identity?: Prisma.IdentityOmit
   identityMember?: Prisma.IdentityMemberOmit
+  identityMemberPersonaAssignment?: Prisma.IdentityMemberPersonaAssignmentOmit
   identityOperator?: Prisma.IdentityOperatorOmit
+  identityOperatorPersonaAssignment?: Prisma.IdentityOperatorPersonaAssignmentOmit
   identityConnection?: Prisma.IdentityConnectionOmit
   connectionPermissionOverride?: Prisma.ConnectionPermissionOverrideOmit
   connectionPermissionSnapshot?: Prisma.ConnectionPermissionSnapshotOmit

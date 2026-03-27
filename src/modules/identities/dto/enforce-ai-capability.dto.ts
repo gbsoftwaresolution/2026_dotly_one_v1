@@ -23,6 +23,10 @@ export class EnforceAICapabilityDto {
   @IsUUID()
   conversationId!: string;
 
+  @IsOptional()
+  @IsUUID()
+  currentUserId?: string;
+
   @IsUUID()
   actorIdentityId!: string;
 

@@ -103,12 +103,63 @@ describe("ProtectedConversationScreen", () => {
     });
 
     await act(async () => {
-      render(<ProtectedConversationScreen connectionId="connection-1" />);
+      render(
+        <ProtectedConversationScreen
+          connectionId="connection-1"
+          navigationVariant="app"
+          conversation={{
+            conversationId: "conversation-1",
+            connectionId: "connection-1",
+            personaId: "persona-1",
+            sourceIdentityId: "identity-1",
+            targetIdentityId: "identity-2",
+            conversationType: "PROTECTED_DIRECT" as any,
+            conversationStatus: "ACTIVE" as any,
+            title: null,
+            metadataJson: null,
+            lastResolvedAt: null,
+            lastPermissionHash: null,
+            createdByIdentityId: "identity-1",
+            createdAt: "2026-03-26T10:00:00.000Z",
+            updatedAt: "2026-03-26T10:15:00.000Z",
+          }}
+          routingPersona={{
+            id: "persona-1",
+            identityId: "identity-1",
+            type: "professional",
+            username: "investor-desk",
+            publicUrl: "https://dotly.id/investor-desk",
+            fullName: "Investor Desk",
+            jobTitle: "Investor Relations",
+            companyName: "Dotly",
+            tagline: null,
+            accessMode: "private",
+            verifiedOnly: false,
+            sharingMode: "controlled",
+            smartCardConfig: null,
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+            routingKey: "investor",
+            routingDisplayName: "Investor Desk",
+            isDefaultRouting: false,
+            createdAt: "2026-03-20T12:00:00Z",
+            updatedAt: "2026-03-20T12:00:00Z",
+          }}
+        />,
+      );
     });
 
     expect(
       await screen.findByText("Chat with Mary Johnson"),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /back to inbox/i })).toHaveAttribute(
+      "href",
+      "/app/inbox",
+    );
+    expect(screen.getByText("Persona route")).toBeInTheDocument();
+    expect(screen.getByText("Investor Desk")).toBeInTheDocument();
+    expect(screen.getByText(/routed via #investor/i)).toBeInTheDocument();
     expect(
       screen.getAllByText(/restricted by backend policy resolution/i),
     ).toHaveLength(2);

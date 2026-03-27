@@ -7,6 +7,10 @@ import { getPublicSmartCardDirectActions } from "@/lib/persona/smart-card";
 
 import { Card } from "@/components/shared/card";
 import { dotlyPositioning } from "@/lib/constants/positioning";
+import {
+  formatPublicHandle,
+  getPublicIdentityLine,
+} from "@/lib/persona/routing-ux";
 import type { PublicProfile } from "@/types/persona";
 
 interface PublicProfileCardProps {
@@ -17,6 +21,8 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
   const avatarHue = ((profile.username?.charCodeAt(0) ?? 72) * 137) % 360;
   const trustPresentation = getPublicTrustPresentation(profile.trust);
   const fullName = profile.fullName?.trim() || "Profile";
+  const publicHandle = formatPublicHandle(profile.username);
+  const publicIdentityLine = getPublicIdentityLine(profile);
   const tagline = profile.tagline?.trim() || null;
   const companyName = profile.companyName?.trim() || null;
   const websiteUrl = profile.websiteUrl?.trim() || null;
@@ -56,8 +62,13 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
             ) : null}
             <div className="space-y-2">
               <h2 className="text-3xl font-bold tracking-tight text-white">
-                {fullName}
+                {publicHandle}
               </h2>
+              {publicIdentityLine ? (
+                <p className="text-sm font-medium leading-6 text-white/72">
+                  {publicIdentityLine}
+                </p>
+              ) : null}
               {tagline ? (
                 <p className="max-w-[32ch] text-sm leading-6 text-white/78">
                   {tagline}
@@ -162,7 +173,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
                 </p>
               </div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                @{profile.username}
+                Share {publicHandle} when you want people to start here.
               </p>
             </div>
           </div>
@@ -175,15 +186,6 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
             </p>
           </div>
         ) : null}
-
-        {!tagline && !companyName && !websiteUrl ? null : (
-          <dl className="grid gap-4 rounded-3xl bg-foreground/[0.03] p-4 text-sm shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
-            <div className="space-y-1">
-              <dt className="label-xs text-muted">Username</dt>
-              <dd className="font-mono text-foreground">@{profile.username}</dd>
-            </div>
-          </dl>
-        )}
       </div>
     </Card>
   );

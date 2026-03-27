@@ -17,9 +17,7 @@ export default async function PersonaDetailPage({
   params: Promise<{ personaId: string }>;
 }) {
   const { personaId } = await params;
-  const { accessToken } = await requireServerSession(
-    routes.app.personaDetail(personaId),
-  );
+  const { accessToken } = await requireServerSession(`/app-old/personas/${personaId}`);
 
   let persona: PersonaSummary | null = null;
   let loadError: string | null = null;

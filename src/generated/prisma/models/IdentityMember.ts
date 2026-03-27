@@ -203,6 +203,7 @@ export type IdentityMemberWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"IdentityMember"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"IdentityMember"> | Date | string
   identity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
+  personaAssignments?: Prisma.IdentityMemberPersonaAssignmentListRelationFilter
 }
 
 export type IdentityMemberOrderByWithRelationInput = {
@@ -215,6 +216,7 @@ export type IdentityMemberOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   identity?: Prisma.IdentityOrderByWithRelationInput
+  personaAssignments?: Prisma.IdentityMemberPersonaAssignmentOrderByRelationAggregateInput
 }
 
 export type IdentityMemberWhereUniqueInput = Prisma.AtLeast<{
@@ -231,6 +233,7 @@ export type IdentityMemberWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"IdentityMember"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"IdentityMember"> | Date | string
   identity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
+  personaAssignments?: Prisma.IdentityMemberPersonaAssignmentListRelationFilter
 }, "id" | "identityId_personId">
 
 export type IdentityMemberOrderByWithAggregationInput = {
@@ -270,6 +273,7 @@ export type IdentityMemberCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   identity: Prisma.IdentityCreateNestedOneWithoutMembersInput
+  personaAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutIdentityMemberInput
 }
 
 export type IdentityMemberUncheckedCreateInput = {
@@ -281,6 +285,7 @@ export type IdentityMemberUncheckedCreateInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
+  personaAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutIdentityMemberInput
 }
 
 export type IdentityMemberUpdateInput = {
@@ -292,6 +297,7 @@ export type IdentityMemberUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   identity?: Prisma.IdentityUpdateOneRequiredWithoutMembersNestedInput
+  personaAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutIdentityMemberNestedInput
 }
 
 export type IdentityMemberUncheckedUpdateInput = {
@@ -303,6 +309,7 @@ export type IdentityMemberUncheckedUpdateInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  personaAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutIdentityMemberNestedInput
 }
 
 export type IdentityMemberCreateManyInput = {
@@ -383,6 +390,11 @@ export type IdentityMemberMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
+export type IdentityMemberScalarRelationFilter = {
+  is?: Prisma.IdentityMemberWhereInput
+  isNot?: Prisma.IdentityMemberWhereInput
+}
+
 export type IdentityMemberCreateNestedManyWithoutIdentityInput = {
   create?: Prisma.XOR<Prisma.IdentityMemberCreateWithoutIdentityInput, Prisma.IdentityMemberUncheckedCreateWithoutIdentityInput> | Prisma.IdentityMemberCreateWithoutIdentityInput[] | Prisma.IdentityMemberUncheckedCreateWithoutIdentityInput[]
   connectOrCreate?: Prisma.IdentityMemberCreateOrConnectWithoutIdentityInput | Prisma.IdentityMemberCreateOrConnectWithoutIdentityInput[]
@@ -433,6 +445,20 @@ export type EnumIdentityMemberStatusFieldUpdateOperationsInput = {
   set?: $Enums.IdentityMemberStatus
 }
 
+export type IdentityMemberCreateNestedOneWithoutPersonaAssignmentsInput = {
+  create?: Prisma.XOR<Prisma.IdentityMemberCreateWithoutPersonaAssignmentsInput, Prisma.IdentityMemberUncheckedCreateWithoutPersonaAssignmentsInput>
+  connectOrCreate?: Prisma.IdentityMemberCreateOrConnectWithoutPersonaAssignmentsInput
+  connect?: Prisma.IdentityMemberWhereUniqueInput
+}
+
+export type IdentityMemberUpdateOneRequiredWithoutPersonaAssignmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.IdentityMemberCreateWithoutPersonaAssignmentsInput, Prisma.IdentityMemberUncheckedCreateWithoutPersonaAssignmentsInput>
+  connectOrCreate?: Prisma.IdentityMemberCreateOrConnectWithoutPersonaAssignmentsInput
+  upsert?: Prisma.IdentityMemberUpsertWithoutPersonaAssignmentsInput
+  connect?: Prisma.IdentityMemberWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.IdentityMemberUpdateToOneWithWhereWithoutPersonaAssignmentsInput, Prisma.IdentityMemberUpdateWithoutPersonaAssignmentsInput>, Prisma.IdentityMemberUncheckedUpdateWithoutPersonaAssignmentsInput>
+}
+
 export type IdentityMemberCreateWithoutIdentityInput = {
   id?: string
   personId: string
@@ -441,6 +467,7 @@ export type IdentityMemberCreateWithoutIdentityInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
+  personaAssignments?: Prisma.IdentityMemberPersonaAssignmentCreateNestedManyWithoutIdentityMemberInput
 }
 
 export type IdentityMemberUncheckedCreateWithoutIdentityInput = {
@@ -451,6 +478,7 @@ export type IdentityMemberUncheckedCreateWithoutIdentityInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
+  personaAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedCreateNestedManyWithoutIdentityMemberInput
 }
 
 export type IdentityMemberCreateOrConnectWithoutIdentityInput = {
@@ -493,6 +521,66 @@ export type IdentityMemberScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"IdentityMember"> | Date | string
 }
 
+export type IdentityMemberCreateWithoutPersonaAssignmentsInput = {
+  id?: string
+  personId: string
+  role: $Enums.IdentityMemberRole
+  status?: $Enums.IdentityMemberStatus
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  identity: Prisma.IdentityCreateNestedOneWithoutMembersInput
+}
+
+export type IdentityMemberUncheckedCreateWithoutPersonaAssignmentsInput = {
+  id?: string
+  identityId: string
+  personId: string
+  role: $Enums.IdentityMemberRole
+  status?: $Enums.IdentityMemberStatus
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type IdentityMemberCreateOrConnectWithoutPersonaAssignmentsInput = {
+  where: Prisma.IdentityMemberWhereUniqueInput
+  create: Prisma.XOR<Prisma.IdentityMemberCreateWithoutPersonaAssignmentsInput, Prisma.IdentityMemberUncheckedCreateWithoutPersonaAssignmentsInput>
+}
+
+export type IdentityMemberUpsertWithoutPersonaAssignmentsInput = {
+  update: Prisma.XOR<Prisma.IdentityMemberUpdateWithoutPersonaAssignmentsInput, Prisma.IdentityMemberUncheckedUpdateWithoutPersonaAssignmentsInput>
+  create: Prisma.XOR<Prisma.IdentityMemberCreateWithoutPersonaAssignmentsInput, Prisma.IdentityMemberUncheckedCreateWithoutPersonaAssignmentsInput>
+  where?: Prisma.IdentityMemberWhereInput
+}
+
+export type IdentityMemberUpdateToOneWithWhereWithoutPersonaAssignmentsInput = {
+  where?: Prisma.IdentityMemberWhereInput
+  data: Prisma.XOR<Prisma.IdentityMemberUpdateWithoutPersonaAssignmentsInput, Prisma.IdentityMemberUncheckedUpdateWithoutPersonaAssignmentsInput>
+}
+
+export type IdentityMemberUpdateWithoutPersonaAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  personId?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumIdentityMemberRoleFieldUpdateOperationsInput | $Enums.IdentityMemberRole
+  status?: Prisma.EnumIdentityMemberStatusFieldUpdateOperationsInput | $Enums.IdentityMemberStatus
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  identity?: Prisma.IdentityUpdateOneRequiredWithoutMembersNestedInput
+}
+
+export type IdentityMemberUncheckedUpdateWithoutPersonaAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.StringFieldUpdateOperationsInput | string
+  personId?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumIdentityMemberRoleFieldUpdateOperationsInput | $Enums.IdentityMemberRole
+  status?: Prisma.EnumIdentityMemberStatusFieldUpdateOperationsInput | $Enums.IdentityMemberStatus
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type IdentityMemberCreateManyIdentityInput = {
   id?: string
   personId: string
@@ -511,6 +599,7 @@ export type IdentityMemberUpdateWithoutIdentityInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  personaAssignments?: Prisma.IdentityMemberPersonaAssignmentUpdateManyWithoutIdentityMemberNestedInput
 }
 
 export type IdentityMemberUncheckedUpdateWithoutIdentityInput = {
@@ -521,6 +610,7 @@ export type IdentityMemberUncheckedUpdateWithoutIdentityInput = {
   metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  personaAssignments?: Prisma.IdentityMemberPersonaAssignmentUncheckedUpdateManyWithoutIdentityMemberNestedInput
 }
 
 export type IdentityMemberUncheckedUpdateManyWithoutIdentityInput = {
@@ -534,6 +624,35 @@ export type IdentityMemberUncheckedUpdateManyWithoutIdentityInput = {
 }
 
 
+/**
+ * Count Type IdentityMemberCountOutputType
+ */
+
+export type IdentityMemberCountOutputType = {
+  personaAssignments: number
+}
+
+export type IdentityMemberCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  personaAssignments?: boolean | IdentityMemberCountOutputTypeCountPersonaAssignmentsArgs
+}
+
+/**
+ * IdentityMemberCountOutputType without action
+ */
+export type IdentityMemberCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IdentityMemberCountOutputType
+   */
+  select?: Prisma.IdentityMemberCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * IdentityMemberCountOutputType without action
+ */
+export type IdentityMemberCountOutputTypeCountPersonaAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IdentityMemberPersonaAssignmentWhereInput
+}
+
 
 export type IdentityMemberSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -545,6 +664,8 @@ export type IdentityMemberSelect<ExtArgs extends runtime.Types.Extensions.Intern
   createdAt?: boolean
   updatedAt?: boolean
   identity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
+  personaAssignments?: boolean | Prisma.IdentityMember$personaAssignmentsArgs<ExtArgs>
+  _count?: boolean | Prisma.IdentityMemberCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["identityMember"]>
 
 export type IdentityMemberSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -585,6 +706,8 @@ export type IdentityMemberSelectScalar = {
 export type IdentityMemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "identityId" | "personId" | "role" | "status" | "metadataJson" | "createdAt" | "updatedAt", ExtArgs["result"]["identityMember"]>
 export type IdentityMemberInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   identity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
+  personaAssignments?: boolean | Prisma.IdentityMember$personaAssignmentsArgs<ExtArgs>
+  _count?: boolean | Prisma.IdentityMemberCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type IdentityMemberIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   identity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
@@ -597,6 +720,7 @@ export type $IdentityMemberPayload<ExtArgs extends runtime.Types.Extensions.Inte
   name: "IdentityMember"
   objects: {
     identity: Prisma.$IdentityPayload<ExtArgs>
+    personaAssignments: Prisma.$IdentityMemberPersonaAssignmentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1002,6 +1126,7 @@ readonly fields: IdentityMemberFieldRefs;
 export interface Prisma__IdentityMemberClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   identity<T extends Prisma.IdentityDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IdentityDefaultArgs<ExtArgs>>): Prisma.Prisma__IdentityClient<runtime.Types.Result.GetResult<Prisma.$IdentityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  personaAssignments<T extends Prisma.IdentityMember$personaAssignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IdentityMember$personaAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdentityMemberPersonaAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1437,6 +1562,30 @@ export type IdentityMemberDeleteManyArgs<ExtArgs extends runtime.Types.Extension
    * Limit how many IdentityMembers to delete.
    */
   limit?: number
+}
+
+/**
+ * IdentityMember.personaAssignments
+ */
+export type IdentityMember$personaAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IdentityMemberPersonaAssignment
+   */
+  select?: Prisma.IdentityMemberPersonaAssignmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the IdentityMemberPersonaAssignment
+   */
+  omit?: Prisma.IdentityMemberPersonaAssignmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IdentityMemberPersonaAssignmentInclude<ExtArgs> | null
+  where?: Prisma.IdentityMemberPersonaAssignmentWhereInput
+  orderBy?: Prisma.IdentityMemberPersonaAssignmentOrderByWithRelationInput | Prisma.IdentityMemberPersonaAssignmentOrderByWithRelationInput[]
+  cursor?: Prisma.IdentityMemberPersonaAssignmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.IdentityMemberPersonaAssignmentScalarFieldEnum | Prisma.IdentityMemberPersonaAssignmentScalarFieldEnum[]
 }
 
 /**

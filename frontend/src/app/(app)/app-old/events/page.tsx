@@ -1,10 +1,9 @@
 import { EventsScreen } from "@/components/events/events-screen";
 import { PageHeader } from "@/components/shared/page-header";
 import { requireServerSession } from "@/lib/auth/protected-route";
-import { routes } from "@/lib/constants/routes";
 
 export default async function EventsPage() {
-  const { user } = await requireServerSession(routes.app.events);
+  const { user } = await requireServerSession("/app-old/events");
 
   return (
     <section className="flex flex-col mx-auto w-full max-w-2xl gap-6 animate-fade-up [animation-duration:700ms] pb-safe">

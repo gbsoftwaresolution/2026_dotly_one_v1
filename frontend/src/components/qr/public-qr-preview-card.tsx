@@ -1,4 +1,8 @@
 import { StatusBadge } from "@/components/shared/status-badge";
+import {
+  formatPublicHandle,
+  getPublicIdentityLine,
+} from "@/lib/persona/routing-ux";
 import { getShareInstruction } from "@/lib/persona/share-copy";
 import type { ResolvedQr } from "@/types/persona";
 
@@ -15,6 +19,12 @@ function avatarGradient(name: string): string {
 export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
   const isQuickConnect = qr.type === "quick_connect";
   const fullName = qr.persona.fullName?.trim() || "Profile";
+  const publicHandle = formatPublicHandle(qr.persona.username);
+  const publicIdentityLine = getPublicIdentityLine({
+    username: qr.persona.username,
+    fullName,
+    companyName: qr.persona.companyName,
+  });
   const fallbackInitial = fullName.charAt(0).toUpperCase() || "P";
   const roleLine = [qr.persona.jobTitle, qr.persona.companyName]
     .filter(Boolean)
@@ -40,8 +50,11 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
             />
             <div className="space-y-1">
               <h1 className="text-3xl font-semibold tracking-tight text-white">
-                {fullName}
+                {publicHandle}
               </h1>
+              {publicIdentityLine ? (
+                <p className="text-base text-white/82">{publicIdentityLine}</p>
+              ) : null}
               {roleLine ? (
                 <p className="text-base text-white/75">{roleLine}</p>
               ) : null}
@@ -80,8 +93,8 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
 
         <dl className="grid gap-4 rounded-3xl bg-foreground/[0.03] p-4 text-sm shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <div className="space-y-1">
-            <dt className="label-xs text-muted">Username</dt>
-            <dd className="text-foreground">@{qr.persona.username}</dd>
+            <dt className="label-xs text-muted">Public handle</dt>
+            <dd className="text-foreground">{publicHandle}</dd>
           </div>
           {isQuickConnect ? (
             <div className="space-y-1">

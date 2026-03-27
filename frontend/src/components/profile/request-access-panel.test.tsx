@@ -46,6 +46,7 @@ const profileFixture = {
 
 const personaFixture = {
   id: "persona-1",
+  identityId: "identity-1",
   type: "professional",
   fullName: "Sender Persona",
   username: "sender",
@@ -82,7 +83,7 @@ describe("RequestAccessPanel", () => {
 
     expect(
       screen.getByRole("link", { name: /log in to continue/i }),
-    ).toHaveAttribute("href", "/login?next=%2Fu%2Ftarget");
+    ).toHaveAttribute("href", "/login?next=%2Ftarget");
   });
 
   it("shows the unavailable state for signed-out visitors when smart card config is missing", () => {
@@ -351,7 +352,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /^request to connect$/i }),
+      screen.getByRole("heading", { name: /^request to connect with @target$/i }),
     ).toBeInTheDocument();
 
     await user.click(
@@ -450,7 +451,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /^request to connect$/i }),
+      screen.getByRole("heading", { name: /^request to connect with @target$/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /request to connect/i }),

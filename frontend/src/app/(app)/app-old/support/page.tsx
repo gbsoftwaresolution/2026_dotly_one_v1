@@ -1,10 +1,9 @@
 import { PageHeader } from "@/components/shared/page-header";
 import { SupportInboxScreen } from "@/components/support/support-inbox-screen";
 import { requireServerSession } from "@/lib/auth/protected-route";
-import { routes } from "@/lib/constants/routes";
 
 export default async function SupportInboxPage() {
-  await requireServerSession(routes.app.supportInbox);
+  await requireServerSession("/app-old/support");
 
   return (
     <section className="flex flex-col mx-auto w-full max-w-2xl gap-6 animate-fade-up [animation-duration:700ms] pb-safe">

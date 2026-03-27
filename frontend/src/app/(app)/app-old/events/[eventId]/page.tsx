@@ -11,7 +11,7 @@ export default async function EventDetailPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const { user } = await requireServerSession(routes.app.eventDetail(eventId));
+  const { user } = await requireServerSession(`/app-old/events/${eventId}`);
 
   return (
     <section className="space-y-4">

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ConfirmModal } from "@/components/shared/confirm-modal";
 import { blocksApi } from "@/lib/api";
 import { isApiError } from "@/lib/api/client";
+import { routes } from "@/lib/constants/routes";
 
 interface BlockUserButtonProps {
   personaId: string;
@@ -28,7 +29,7 @@ export function BlockUserButton({
     try {
       await blocksApi.blockByPersona(personaId);
       setShowModal(false);
-      router.replace("/app-old/contacts?message=node-removed");
+      router.replace(`${routes.app.contacts}?message=node-removed`);
     } catch (err) {
       setError(
         isApiError(err)

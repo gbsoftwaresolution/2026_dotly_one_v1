@@ -28,7 +28,10 @@ import {
   supportsRequestAccessFlow,
   toSafeSmartCardConfig,
 } from "../personas/persona-sharing";
-import { canonicalizePublicUrl } from "../personas/public-url";
+import {
+  canonicalizePublicUrl,
+  normalizePublicSlug,
+} from "../personas/public-url";
 import { PublicPersonaDto } from "./dto/public-persona.dto";
 import { toQrLink } from "../qr/qr.presenter";
 
@@ -67,10 +70,19 @@ const authenticatedRequestTargetSelect = {
   userId: true,
   username: true,
   fullName: true,
+  isPrimary: true,
+  isDefaultRouting: true,
   accessMode: true,
   sharingMode: true,
   smartCardConfig: true,
 } as const;
+
+const canonicalPublicPersonaOrderBy: Prisma.PersonaOrderByWithRelationInput[] = [
+  { isDefaultRouting: "desc" },
+  { isPrimary: "desc" },
+  { createdAt: "asc" },
+  { id: "asc" },
+];
 
 const publicProfilePersonaSelect = {
   ...publicPersonaSelect,
@@ -153,7 +165,7 @@ export class ProfilesService {
   }
 
   async getPublicVcard(username: string, viewerUserId?: string | null) {
-    const persona = await this.findPublicPersonaByUsername(username);
+    const persona = await this.findPublicPersonaBySlug(username);
 
     if (viewerUserId) {
       await this.blocksService.assertNoInteractionBlock(
@@ -180,19 +192,7 @@ export class ProfilesService {
   }
 
   async getRequestTarget(viewerUserId: string, username: string) {
-    const persona = await this.prismaService.persona.findFirst({
-      where: {
-        username: username.trim().toLowerCase(),
-        accessMode: {
-          in: [PrismaPersonaAccessMode.OPEN, PrismaPersonaAccessMode.REQUEST],
-        },
-      },
-      select: authenticatedRequestTargetSelect,
-    });
-
-    if (!persona) {
-      throw new NotFoundException("Public profile not found");
-    }
+    const persona = await this.findRequestTargetBySlug(username);
 
     await this.blocksService.assertNoInteractionBlock(
       viewerUserId,
@@ -248,7 +248,7 @@ export class ProfilesService {
   private async getCachedPublicProfile(
     username: string,
   ): Promise<CachedPublicProfile> {
-    const normalizedUsername = username.trim().toLowerCase();
+    const normalizedUsername = normalizePublicSlug(username);
     const cachedEntry = this.getCachedValue(
       this.publicProfileCache,
       normalizedUsername,
@@ -258,7 +258,7 @@ export class ProfilesService {
       return cachedEntry;
     }
 
-    const persona = await this.findPublicProfilePersonaByUsername(
+    const persona = await this.findPublicProfilePersonaBySlug(
       normalizedUsername,
     );
     const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
@@ -313,7 +313,48 @@ export class ProfilesService {
     return activeProfileQr?.code ?? activeProfileQr?.id ?? null;
   }
 
-  private async findPublicProfilePersonaByUsername(
+  private async findPublicProfilePersonaBySlug(
+    slug: string,
+  ): Promise<PublicProfilePersonaRecord> {
+    const canonicalPersona = await this.findCanonicalPublicProfilePersona(slug);
+
+    if (canonicalPersona) {
+      return canonicalPersona;
+    }
+
+    return this.findPublicProfilePersonaByUsernameAlias(slug);
+  }
+
+  private async findCanonicalPublicProfilePersona(
+    slug: string,
+  ): Promise<PublicProfilePersonaRecord | null> {
+    if (typeof this.prismaService.persona.findMany !== "function") {
+      return null;
+    }
+
+    const personas = await this.prismaService.persona.findMany({
+      where: {
+        identity: {
+          is: {
+            handle: slug,
+          },
+        },
+        accessMode: {
+          in: [PrismaPersonaAccessMode.OPEN, PrismaPersonaAccessMode.REQUEST],
+        },
+      },
+      orderBy: canonicalPublicPersonaOrderBy,
+      select: publicProfilePersonaSelect,
+    });
+
+    return (
+      personas.find(
+        (persona) => !this.needsSystemManagedSharingRepair(persona),
+      ) ?? null
+    );
+  }
+
+  private async findPublicProfilePersonaByUsernameAlias(
     username: string,
   ): Promise<PublicProfilePersonaRecord> {
     const persona = await this.prismaService.persona.findFirst({
@@ -337,7 +378,48 @@ export class ProfilesService {
     return persona;
   }
 
-  private async findPublicPersonaByUsername(
+  private async findPublicPersonaBySlug(
+    slug: string,
+  ): Promise<PublicPersonaRecord> {
+    const canonicalPersona = await this.findCanonicalPublicPersona(slug);
+
+    if (canonicalPersona) {
+      return canonicalPersona;
+    }
+
+    return this.findPublicPersonaByUsernameAlias(slug);
+  }
+
+  private async findCanonicalPublicPersona(
+    slug: string,
+  ): Promise<PublicPersonaRecord | null> {
+    if (typeof this.prismaService.persona.findMany !== "function") {
+      return null;
+    }
+
+    const personas = await this.prismaService.persona.findMany({
+      where: {
+        identity: {
+          is: {
+            handle: slug,
+          },
+        },
+        accessMode: {
+          in: [PrismaPersonaAccessMode.OPEN, PrismaPersonaAccessMode.REQUEST],
+        },
+      },
+      orderBy: canonicalPublicPersonaOrderBy,
+      select: publicPersonaSelect,
+    });
+
+    return (
+      personas.find(
+        (persona) => !this.needsSystemManagedSharingRepair(persona),
+      ) ?? null
+    );
+  }
+
+  private async findPublicPersonaByUsernameAlias(
     username: string,
   ): Promise<PublicPersonaRecord> {
     const persona = await this.prismaService.persona.findFirst({
@@ -359,6 +441,52 @@ export class ProfilesService {
     }
 
     return persona;
+  }
+
+  private async findRequestTargetBySlug(
+    slug: string,
+  ): Promise<Prisma.PersonaGetPayload<{ select: typeof authenticatedRequestTargetSelect }>> {
+    const normalizedSlug = normalizePublicSlug(slug);
+    const canonicalPersona =
+      typeof this.prismaService.persona.findFirst === "function"
+        ? await this.prismaService.persona.findFirst({
+            where: {
+              identity: {
+                is: {
+                  handle: normalizedSlug,
+                },
+              },
+              accessMode: {
+                in: [
+                  PrismaPersonaAccessMode.OPEN,
+                  PrismaPersonaAccessMode.REQUEST,
+                ],
+              },
+            },
+            orderBy: canonicalPublicPersonaOrderBy,
+            select: authenticatedRequestTargetSelect,
+          })
+        : null;
+
+    if (canonicalPersona) {
+      return canonicalPersona;
+    }
+
+    const aliasPersona = await this.prismaService.persona.findFirst({
+      where: {
+        username: normalizedSlug,
+        accessMode: {
+          in: [PrismaPersonaAccessMode.OPEN, PrismaPersonaAccessMode.REQUEST],
+        },
+      },
+      select: authenticatedRequestTargetSelect,
+    });
+
+    if (!aliasPersona) {
+      throw new NotFoundException("Public profile not found");
+    }
+
+    return aliasPersona;
   }
 
   private needsSystemManagedSharingRepair(
@@ -419,11 +547,13 @@ export class ProfilesService {
       | "publicWhatsappNumber"
       | "publicEmail"
       | "smartCardConfig"
+      | "identity"
     >,
   ): PublicVcardPayload {
     const publicUrl = canonicalizePublicUrl(
       persona.publicUrl,
       persona.username,
+      persona.identity?.handle,
     );
     const publicActionValues = getSafePublicContactValues({
       sharingMode: PrismaPersonaSharingMode.SMART_CARD,

@@ -32,6 +32,7 @@ import { QrGeneratorPanel } from "./qr-generator-panel";
 
 const personaFixture = {
   id: "persona-1",
+  identityId: "identity-1",
   type: "professional",
   fullName: "Sender Persona",
   username: "sender",
@@ -288,12 +289,11 @@ describe("QrGeneratorPanel", () => {
       screen.queryByRole("combobox", { name: /share persona/i }),
     ).not.toBeInTheDocument();
 
-    expect(
-      screen.getByRole("heading", { name: /sender persona/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /@sender/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/sender persona/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/scan to view my contact/i)).toBeInTheDocument();
     expect(
-      screen.queryByRole("heading", { name: /sender ops/i }),
+      screen.queryByRole("heading", { name: /@sender-ops/i }),
     ).not.toBeInTheDocument();
   });
 
