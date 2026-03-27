@@ -32,9 +32,11 @@ export const dotlyPositioning = {
     verifiedLabel: "Verified",
   },
   app: {
-    noPersonas: "Create your first Dotly to start sharing.",
-    noContacts: "Your active connections appear here.",
-    noRequests: "New connection requests appear here.",
+    noPersonas:
+      "Create your first Dotly to lead with a premium contact identity.",
+    noContacts:
+      "The people who move from first exchange to trusted relationship appear here.",
+    noRequests: "New introductions and curated access requests appear here.",
     noFollowUps: "Set reminders for people you want to reconnect with.",
   },
 } as const;

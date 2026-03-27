@@ -84,9 +84,9 @@ describe("AnalyticsScreen", () => {
     });
 
     expect(screen.getByText(/sender persona/i)).toBeInTheDocument();
-    expect(screen.getByText(/total connections/i)).toBeInTheDocument();
-    expect(screen.getByText(/verification emails/i)).toBeInTheDocument();
-    expect(screen.getByText(/trust blocks/i)).toBeInTheDocument();
+    expect(screen.getByText(/trusted contacts/i)).toBeInTheDocument();
+    expect(screen.getByText(/trust emails/i)).toBeInTheDocument();
+    expect(screen.getByText(/trust protections/i)).toBeInTheDocument();
   });
 
   it("redirects to login when the session has expired", async () => {

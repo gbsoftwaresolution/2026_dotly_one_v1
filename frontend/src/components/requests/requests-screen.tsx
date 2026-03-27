@@ -168,10 +168,10 @@ export function RequestsScreen() {
       <div className="rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
         <div className="mb-4 space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-            Step 1
+            Access flow
           </p>
           <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-            Request lanes
+            Keep the introduction moving
           </h2>
         </div>
 
@@ -245,7 +245,7 @@ export function RequestsScreen() {
       ) : activeTab === "incoming" ? (
         incoming.length === 0 ? (
           <EmptyState
-            title="No requests yet"
+            title="No introductions yet"
             description={dotlyPositioning.app.noRequests}
           />
         ) : (
@@ -274,12 +274,12 @@ export function RequestsScreen() {
         )
       ) : visibleRequests.length === 0 ? (
         <EmptyState
-          title="No requests yet"
+          title="No introductions yet"
           description={dotlyPositioning.app.noRequests}
           action={
             <Link href={routes.app.personas} className="block">
               <PrimaryButton className="w-full">
-                Browse your personas
+                Review your Dotlys
               </PrimaryButton>
             </Link>
           }

@@ -152,37 +152,53 @@ describe("ContactsScreen", () => {
 
     render(React.createElement(ContactsScreen));
 
-    const needsAttention = screen.getByRole("heading", {
-      name: "Needs attention",
-    }).closest("section");
-    const comingUp = screen.getByRole("heading", {
-      name: "Coming up",
-    }).closest("section");
-    const recentConnections = screen.getByRole("heading", {
-      name: "Recent connections",
-    }).closest("section");
-    const allContacts = screen.getByRole("heading", {
-      name: "All contacts",
-    }).closest("section");
+    const needsAttention = screen
+      .getByRole("heading", {
+        name: "Warm follow-through",
+      })
+      .closest("section");
+    const comingUp = screen
+      .getByRole("heading", {
+        name: "Planned touchpoints",
+      })
+      .closest("section");
+    const recentConnections = screen
+      .getByRole("heading", {
+        name: "Fresh momentum",
+      })
+      .closest("section");
+    const allContacts = screen
+      .getByRole("heading", {
+        name: "Trusted network",
+      })
+      .closest("section");
 
     expect(needsAttention).not.toBeNull();
-  expect(comingUp).not.toBeNull();
+    expect(comingUp).not.toBeNull();
     expect(recentConnections).not.toBeNull();
     expect(allContacts).not.toBeNull();
 
-    expect(within(needsAttention!).getByText("Avery Followup")).toBeInTheDocument();
-    expect(within(needsAttention!).getByText("Jordan Quiet")).toBeInTheDocument();
-  expect(within(needsAttention!).getByText("Overdue")).toBeInTheDocument();
+    expect(
+      within(needsAttention!).getByText("Avery Followup"),
+    ).toBeInTheDocument();
+    expect(
+      within(needsAttention!).getByText("Jordan Quiet"),
+    ).toBeInTheDocument();
+    expect(within(needsAttention!).getByText("Overdue")).toBeInTheDocument();
     expect(within(needsAttention!).getByText("Reconnect")).toBeInTheDocument();
 
-  expect(within(comingUp!).getByText("Casey Planned")).toBeInTheDocument();
-  expect(within(comingUp!).getByText("Planned")).toBeInTheDocument();
+    expect(within(comingUp!).getByText("Casey Planned")).toBeInTheDocument();
+    expect(within(comingUp!).getByText("Planned")).toBeInTheDocument();
 
-    expect(within(recentConnections!).getByText("Mina Recent")).toBeInTheDocument();
+    expect(
+      within(recentConnections!).getByText("Mina Recent"),
+    ).toBeInTheDocument();
     expect(within(recentConnections!).getByText("Recent")).toBeInTheDocument();
 
     expect(within(allContacts!).getByText("Taylor Steady")).toBeInTheDocument();
-    expect(screen.queryByText("You're all caught up")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Your follow-through is in good shape"),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText(/you haven't interacted in a while/i),
     ).not.toBeInTheDocument();
@@ -210,13 +226,17 @@ describe("ContactsScreen", () => {
 
     render(React.createElement(ContactsScreen));
 
-    expect(screen.getByText("You're all caught up")).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Recent connections" }),
+      screen.getByText("Your follow-through is in good shape"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "All contacts" })).toBeInTheDocument();
     expect(
-      screen.queryByRole("heading", { name: "Needs attention" }),
+      screen.getByRole("heading", { name: "Fresh momentum" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Trusted network" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Warm follow-through" }),
     ).not.toBeInTheDocument();
   });
 });

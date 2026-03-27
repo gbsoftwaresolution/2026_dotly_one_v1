@@ -486,10 +486,11 @@ export function QrGeneratorPanel({
         <div className="space-y-4 relative z-10">
           <div className="space-y-2 text-center">
             <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-              Your Active Persona
+              Your Active Dotly
             </h2>
             <p className="text-sm leading-relaxed text-muted max-w-[280px] mx-auto">
-              Scan to instantly connect or share this profile.
+              Let someone step into your contact identity instead of asking for
+              your number.
             </p>
           </div>
 
@@ -499,7 +500,7 @@ export function QrGeneratorPanel({
                 className="label-xs text-muted"
                 htmlFor="qr-persona-select"
               >
-                Sharing as
+                Leading with
               </label>
               <CustomSelect
                 id="qr-persona-select"
@@ -587,17 +588,17 @@ export function QrGeneratorPanel({
                 <VerificationPrompt
                   email={user.email}
                   title="QR sharing is waiting on verification"
-                  description="Verify your email or phone to unlock QR sharing."
+                  description="Verify your email or phone to unlock the premium share moment."
                   compact
                   className="w-full"
                 />
               ) : error && !generatedQr ? (
                 <div className="flex min-h-[24rem] w-full flex-col items-center justify-center rounded-3xl bg-rose-500/5 ring-1 ring-inset ring-rose-500/20 p-6 text-center shadow-inner backdrop-blur-md">
                   <p className="label-xs text-rose-600 dark:text-rose-400">
-                    Share unavailable
+                    Introduction surface unavailable
                   </p>
                   <h2 className="mt-2 text-xl font-semibold text-foreground">
-                    Could not refresh this code
+                    Could not refresh your Dotly
                   </h2>
                   <p className="mt-2 max-w-[24ch] text-sm leading-6 text-muted">
                     {error}
@@ -666,7 +667,8 @@ export function QrGeneratorPanel({
               ) : null}
               {error && generatedQr ? (
                 <p className="mx-auto max-w-[30ch] text-sm leading-6 text-amber-700 dark:text-amber-300">
-                  Showing your last ready QR while Dotly reconnects.
+                  Showing your last ready Dotly while the live share surface
+                  reconnects.
                 </p>
               ) : null}
             </div>
@@ -709,17 +711,17 @@ export function QrGeneratorPanel({
           <div className="rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
             <div className="space-y-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                {hasShareCompleted ? "Share signal" : "Share flow"}
+                {hasShareCompleted ? "Momentum signal" : "First exchange flow"}
               </p>
               <h2 className="text-base font-semibold tracking-tight text-foreground">
-                Use this in the room
+                Guide the first exchange
               </h2>
               <p className="text-sm leading-6 text-muted">
                 {hasShareCompleted
                   ? hasRequestReceived
-                    ? "Your QR is already working. A real scan or profile open already happened. Keep requests and inbox close so you can respond while the context is still warm."
-                    : "Your QR is already working. A real scan or profile open already happened. The next job is follow-through: check requests and inbox before the thread cools down."
-                  : "Keep the first interaction simple: show the QR, let them choose the next action, then check what came in after the conversation."}
+                    ? "Your Dotly is already landing. A real scan or profile open already happened, so keep requests and inbox close while the context is still warm."
+                    : "Your Dotly is already landing. A real scan or profile open already happened, and the next move is clean follow-through before the moment cools."
+                  : "Keep the introduction effortless: show the Dotly, let them choose their path in, and follow through while the relationship is still taking shape."}
               </p>
             </div>
 
@@ -727,27 +729,27 @@ export function QrGeneratorPanel({
               {[
                 {
                   step: "01",
-                  title: "Show QR",
+                  title: "Lead with Dotly",
                   description:
-                    "Use one large, clean share surface instead of explaining your profile.",
+                    "Use one polished share surface instead of giving out your number or explaining your profile.",
                 },
                 {
                   step: "02",
                   title: hasShareCompleted
-                    ? "Signal received"
+                    ? "Momentum started"
                     : "Let them choose",
                   description: hasShareCompleted
-                    ? "Dotly has already seen a real open or scan from this share flow."
-                    : "Dotly can route them into request access, instant connect, or contact actions.",
+                    ? "Dotly has already seen a real open or scan from this introduction flow."
+                    : "Dotly can route them into curated access, instant connect, or the right next step.",
                 },
                 {
                   step: "03",
                   title: hasRequestReceived
                     ? "Reply while it is warm"
-                    : "Check follow-through",
+                    : "Protect the follow-through",
                   description: hasRequestReceived
-                    ? "A first incoming request already landed. Keep the response loop tight."
-                    : "Review the first reply in requests or inbox so the introduction becomes useful.",
+                    ? "A first incoming request already landed. Keep the response loop personal and fast."
+                    : "Check requests or inbox so the introduction turns into a trusted relationship, not a missed moment.",
                 },
               ].map((item) => (
                 <div
@@ -770,12 +772,12 @@ export function QrGeneratorPanel({
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <Link className="sm:flex-1" href={routes.app.requests}>
                 <SecondaryButton className="w-full" size="sm">
-                  Open requests
+                  Review requests
                 </SecondaryButton>
               </Link>
               <Link className="sm:flex-1" href={routes.app.inbox}>
                 <SecondaryButton className="w-full" size="sm">
-                  Open inbox
+                  Review inbox
                 </SecondaryButton>
               </Link>
             </div>
@@ -785,14 +787,15 @@ export function QrGeneratorPanel({
             <div className="rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
               <div className="space-y-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                  Invite flow
+                  Network invitation
                 </p>
                 <h2 className="text-base font-semibold tracking-tight text-foreground">
-                  Invite someone to create their own Dotly
+                  Invite someone into the Dotly network
                 </h2>
                 <p className="text-sm leading-6 text-muted">
                   Share your signup link after the introduction so the next
-                  person can claim a Dotly with your referral attached.
+                  person can claim a Dotly of their own with your referral
+                  attached.
                 </p>
               </div>
 

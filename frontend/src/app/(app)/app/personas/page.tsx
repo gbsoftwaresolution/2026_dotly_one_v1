@@ -19,7 +19,7 @@ export default async function PersonasPage() {
       <section className="space-y-5 sm:space-y-6">
         <PageHeader
           title="Personas"
-          description="Manage the Dotly identities you use for premium first exchanges."
+          description="Shape the Dotly identities you use to lead first exchanges with clarity, trust, and curated access."
           action={
             <Link href={routes.app.createPersona}>
               <SecondaryButton className="w-full sm:w-auto">
@@ -31,11 +31,11 @@ export default async function PersonasPage() {
         <div className="flex flex-col gap-4">
           <div className="mb-5 space-y-1 sm:mb-6">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-              Identity collection
+              Dotly collection
             </p>
             <p className="text-sm leading-6 text-muted">
-              Each persona gives you a distinct contact identity for different
-              contexts, teams, and conversations.
+              Each persona gives you a distinct premium contact identity for
+              different rooms, relationships, and kinds of follow-through.
             </p>
           </div>
           <PersonaList personas={personas} />
@@ -53,7 +53,7 @@ export default async function PersonasPage() {
       <section className="space-y-5 sm:space-y-6">
         <PageHeader
           title="Personas"
-          description="Manage the Dotly identities you use for premium first exchanges."
+          description="Shape the Dotly identities you use to lead first exchanges with clarity, trust, and curated access."
         />
         <div className="rounded-[2rem] bg-white/40 px-5 py-6 backdrop-blur-[40px] saturate-[200%] shadow-sm ring-1 ring-rose-500/20 dark:bg-zinc-900/40 sm:p-8 relative overflow-hidden">
           <div className="absolute -inset-1/2 bg-gradient-to-br from-rose-500/10 via-red-500/10 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />

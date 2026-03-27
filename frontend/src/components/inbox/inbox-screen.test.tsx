@@ -365,14 +365,12 @@ describe("InboxScreen", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(
-          /persona coverage is managed by identity owners and admin operators/i,
-        ),
+        screen.getByText(/identity owners and admins shape the access model/i),
       ).toBeInTheDocument();
     });
 
     expect(
-      screen.getByRole("link", { name: /review team scope/i }),
+      screen.getByRole("link", { name: /review access scope/i }),
     ).toHaveAttribute("href", "/app/inbox/assignments");
   });
 

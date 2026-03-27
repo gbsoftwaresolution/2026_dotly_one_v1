@@ -294,7 +294,9 @@ describe("QrGeneratorPanel", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText(/sender persona/i).length).toBeGreaterThan(0);
     expect(
-      screen.getByText(/scan to instantly connect or share this profile/i),
+      screen.getByText(
+        /let someone step into your contact identity instead of asking for your number/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: /@sender-ops/i }),
@@ -380,9 +382,9 @@ describe("QrGeneratorPanel", () => {
       }),
     );
 
-    expect(screen.getByText(/invite flow/i)).toBeInTheDocument();
+    expect(screen.getByText(/network invitation/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/invite someone to create their own dotly/i),
+      screen.getByText(/invite someone into the dotly network/i),
     ).toBeInTheDocument();
     expect(screen.getByText("SHARECODE1")).toBeInTheDocument();
     expect(
@@ -422,13 +424,13 @@ describe("QrGeneratorPanel", () => {
       }),
     );
 
-    expect(screen.getByText(/share flow/i)).toBeInTheDocument();
-    expect(screen.getByText(/use this in the room/i)).toBeInTheDocument();
-    expect(screen.getByText(/show qr/i)).toBeInTheDocument();
+    expect(screen.getByText(/first exchange flow/i)).toBeInTheDocument();
+    expect(screen.getByText(/guide the first exchange/i)).toBeInTheDocument();
+    expect(screen.getByText(/lead with dotly/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /open requests/i }),
+      screen.getByRole("link", { name: /review requests/i }),
     ).toHaveAttribute("href", routes.app.requests);
-    expect(screen.getByRole("link", { name: /open inbox/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /review inbox/i })).toHaveAttribute(
       "href",
       routes.app.inbox,
     );
@@ -475,11 +477,13 @@ describe("QrGeneratorPanel", () => {
       }),
     );
 
-    expect(screen.getByText(/share signal/i)).toBeInTheDocument();
-    expect(screen.getByText(/your qr is already working/i)).toBeInTheDocument();
-    expect(screen.getByText(/signal received/i)).toBeInTheDocument();
+    expect(screen.getByText(/momentum signal/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/follow-through: check requests and inbox/i),
+      screen.getByText(/your dotly is already landing/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/momentum started/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/the next move is clean follow-through/i),
     ).toBeInTheDocument();
   });
 });

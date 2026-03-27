@@ -258,10 +258,10 @@ export function ContactsScreen() {
         <div className="space-y-4">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-              Step 1
+              Relationship view
             </p>
             <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-              Search and sort
+              Keep your network close
             </h2>
           </div>
 
@@ -270,7 +270,7 @@ export function ContactsScreen() {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search connections..."
+              placeholder="Search trusted contacts..."
               className={cn(
                 "w-full rounded-2xl bg-foreground/[0.03] px-4 py-3.5 font-sans text-sm text-foreground placeholder:text-muted/50 shadow-inner ring-1 ring-inset ring-black/5 transition-all focus:bg-foreground/[0.05] focus:outline-none focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]",
               )}
@@ -280,7 +280,7 @@ export function ContactsScreen() {
           <div className="min-h-5 px-1">
             {isRefreshing ? (
               <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                Updating connections...
+                Refreshing your network...
               </p>
             ) : null}
           </div>
@@ -295,7 +295,7 @@ export function ContactsScreen() {
         </div>
       ) : loadError ? (
         <EmptyState
-          title="Connections unavailable"
+          title="Relationships unavailable"
           description={loadError}
           action={
             <button
@@ -324,10 +324,14 @@ export function ContactsScreen() {
         />
       ) : displayedContacts.length === 0 ? (
         <EmptyState
-          title={search.trim() ? "No results" : "No connections yet"}
+          title={
+            search.trim()
+              ? "No one matches this search"
+              : "No trusted relationships yet"
+          }
           description={
             search.trim()
-              ? `No connections match "${search}".`
+              ? `No trusted contacts match "${search}".`
               : dotlyPositioning.app.noContacts
           }
         />
@@ -339,8 +343,8 @@ export function ContactsScreen() {
         <div className="space-y-6">
           {sectionedContacts.needsAttention.length > 0 ? (
             <ContactSection
-              title="Needs attention"
-              description="Overdue follow-ups, due-soon reminders, and quieter relationships worth picking back up."
+              title="Warm follow-through"
+              description="People who deserve a reply, a thoughtful nudge, or a renewed conversation before the relationship cools down."
             >
               {sectionedContacts.needsAttention.map((contact) =>
                 renderContactCard(contact),
@@ -349,18 +353,18 @@ export function ContactsScreen() {
           ) : (
             <div className="rounded-[1.75rem] bg-foreground/[0.02] px-5 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl">
               <p className="font-sans text-sm font-semibold text-foreground">
-                You&apos;re all caught up
+                Your follow-through is in good shape
               </p>
               <p className="mt-1 text-sm leading-6 text-muted">
-                No one needs a nudge right now.
+                No one needs a nudge right now. The network can breathe.
               </p>
             </div>
           )}
 
           {sectionedContacts.plannedFollowUps.length > 0 ? (
             <ContactSection
-              title="Coming up"
-              description="People you already planned to reach back out to."
+              title="Planned touchpoints"
+              description="People you already decided to keep warm with thoughtful follow-through."
             >
               {sectionedContacts.plannedFollowUps.map((contact) =>
                 renderContactCard(contact),
@@ -370,8 +374,8 @@ export function ContactsScreen() {
 
           {sectionedContacts.recentConnections.length > 0 ? (
             <ContactSection
-              title="Recent connections"
-              description="People you've been in touch with lately."
+              title="Fresh momentum"
+              description="People you have spoken with recently and may want to carry forward while the connection is still active."
             >
               {sectionedContacts.recentConnections.map((contact) =>
                 renderContactCard(contact),
@@ -380,7 +384,7 @@ export function ContactsScreen() {
           ) : null}
 
           {sectionedContacts.allContacts.length > 0 ? (
-            <ContactSection title="All contacts">
+            <ContactSection title="Trusted network">
               {sectionedContacts.allContacts.map((contact) =>
                 renderContactCard(contact),
               )}

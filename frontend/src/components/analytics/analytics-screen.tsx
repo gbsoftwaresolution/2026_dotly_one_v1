@@ -237,10 +237,13 @@ export function AnalyticsScreen() {
     <div className="space-y-6 sm:space-y-8">
       <section className="flex flex-col gap-4">
         <div className="space-y-1">
-          
           <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-            Global hub
+            Trust network pulse
           </h2>
+          <p className="text-sm leading-6 text-muted">
+            Read the quality of your introductions, response momentum, and trust
+            signals at a glance.
+          </p>
         </div>
 
         {summaryLoading ? (
@@ -255,20 +258,20 @@ export function AnalyticsScreen() {
                 value={summary.totalProfileViews}
               />
               <StatCard label="QR Scans" value={summary.totalQrScans} />
-              <StatCard label="Requests" value={summary.totalRequests} />
-              <StatCard label="Approved" value={summary.totalApproved} />
+              <StatCard label="Introductions" value={summary.totalRequests} />
+              <StatCard label="Welcomed" value={summary.totalApproved} />
               <StatCard
-                label="Total Connections"
+                label="Trusted Contacts"
                 value={summary.totalContacts}
                 highlight={summary.totalContacts > 0}
               />
               <StatCard
-                label="Verification Emails"
+                label="Trust Emails"
                 value={summary.totalVerificationEmailsIssued}
                 highlight={summary.totalVerificationEmailsIssued > 0}
               />
               <StatCard
-                label="Verified Accounts"
+                label="Verified People"
                 value={summary.totalVerificationCompleted}
                 highlight={summary.totalVerificationCompleted > 0}
               />
@@ -277,7 +280,7 @@ export function AnalyticsScreen() {
                 value={summary.totalVerificationResends}
               />
               <StatCard
-                label="Trust Blocks"
+                label="Trust Protections"
                 value={summary.totalVerificationBlocks}
                 highlight={summary.totalVerificationBlocks > 0}
               />
@@ -289,8 +292,8 @@ export function AnalyticsScreen() {
             </div>
           ) : (
             <EmptyState
-              title="No Data Signals"
-              description="Share your QR code to start generating insights."
+              title="No relationship signals yet"
+              description="Share your Dotly in a real conversation to start building insight across scans, requests, and trusted contacts."
             />
           )
         ) : null}
@@ -298,10 +301,13 @@ export function AnalyticsScreen() {
 
       <section className="flex flex-col gap-4">
         <div className="space-y-1">
-          
           <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
             Persona insights
           </h2>
+          <p className="text-sm leading-6 text-muted">
+            See which personas are opening doors, earning trust, and keeping
+            momentum after the first exchange.
+          </p>
         </div>
 
         {personasLoading ? (
@@ -334,7 +340,7 @@ export function AnalyticsScreen() {
         ) : personaRows.length === 0 ? (
           <EmptyState
             title="No personas yet"
-            description="Create a persona to start tracking analytics."
+            description="Create a persona to start measuring how your Dotly identities perform in the real world."
           />
         ) : (
           <div className="flex flex-col overflow-hidden rounded-[1.25rem] bg-foreground/[0.02] backdrop-blur-[40px] saturate-[200%] ring-[0.5px] ring-black/5 dark:bg-white/[0.03] dark:ring-white/10 shadow-sm divide-y divide-black/5 dark:divide-white/5">

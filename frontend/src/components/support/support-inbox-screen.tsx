@@ -86,10 +86,10 @@ export function SupportInboxScreen() {
       <div className="rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
         <div className="mb-4 space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-            Step 1
+            Concierge view
           </p>
           <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-            Queue filters
+            Keep support close to the relationship
           </h2>
         </div>
 
@@ -114,13 +114,13 @@ export function SupportInboxScreen() {
 
       {requests.length === 0 ? (
         <EmptyState
-          title="No support requests"
+          title="No support conversations"
           description={
             filter === "resolved"
-              ? "No resolved requests match this view yet."
+              ? "No resolved conversations match this view yet."
               : filter === "open"
-                ? "No open requests are waiting in the inbox right now."
-                : "New support submissions will appear here once they are received."
+                ? "No active support conversations need attention right now."
+                : "New support conversations will appear here when someone reaches out."
           }
         />
       ) : (

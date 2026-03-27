@@ -109,7 +109,9 @@ function sortConversations(
   conversations: IdentityConversationContext[],
 ): IdentityConversationContext[] {
   return [...conversations].sort((left, right) => {
-    return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+    return (
+      new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
+    );
   });
 }
 
@@ -210,14 +212,14 @@ function getGroupHeading(group: PersonaGroup) {
 
 function getGroupDescription(group: PersonaGroup) {
   if (!group.persona) {
-    return "Threads that stay on the identity-wide route instead of a specific persona destination.";
+    return "Conversations that stay with the main Dotly identity when the first exchange does not need a dedicated persona.";
   }
 
   if (group.persona.routingKey) {
-    return `${group.persona.fullName || "Team route"} routed through #${group.persona.routingKey}.`;
+    return `${group.persona.fullName || "This persona"} is receiving introductions through #${group.persona.routingKey}.`;
   }
 
-  return `${group.persona.fullName || "Persona route"} stays visible here when backend scope allows it.`;
+  return `${group.persona.fullName || "This persona"} stays visible here wherever your curated access settings allow it.`;
 }
 
 function getConversationRouteLabel(conversation: IdentityConversationContext) {
@@ -227,30 +229,26 @@ function getConversationRouteLabel(conversation: IdentityConversationContext) {
 function getConversationSupportCopy(conversation: IdentityConversationContext) {
   switch (conversation.conversationStatus) {
     case ConversationStatus.Archived:
-      return "Moved out of the active queue but still available for context and audit.";
+      return "Moved out of the live lane, with the context preserved for clean follow-through.";
     case ConversationStatus.Blocked:
-      return "Restricted by backend protection or trust policy.";
+      return "Held back by a trust or protection rule before the conversation can move forward.";
     case ConversationStatus.Locked:
-      return "Visible for context, with operational access still locked down.";
+      return "Visible for context while access is still being intentionally held back.";
     default:
-      return "Visible in the active queue for the current scoped inbox view.";
+      return "Ready for a timely reply while the first exchange is still warm.";
   }
 }
 
 export function InboxScreen() {
-  const {
-    activeIdentity,
-    isLoading: isIdentityLoading,
-  } = useIdentityContext();
+  const { activeIdentity, isLoading: isIdentityLoading } = useIdentityContext();
   const searchParams = useSearchParams();
   const snapshot = useShareFastSnapshot();
   const [personas, setPersonas] = useState<PersonaSummary[]>([]);
   const [conversations, setConversations] = useState<
     IdentityConversationContext[]
   >([]);
-  const [teamAccess, setTeamAccess] = useState<IdentityTeamAccessPayload | null>(
-    null,
-  );
+  const [teamAccess, setTeamAccess] =
+    useState<IdentityTeamAccessPayload | null>(null);
   const [teamAccessState, setTeamAccessState] =
     useState<TeamAccessState>("idle");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -321,7 +319,11 @@ export function InboxScreen() {
     setStatusFilter(parseStatusFilter(searchParams.get("status")));
 
     const requestedPersona = searchParams.get("persona");
-    setPersonaFilter(requestedPersona && requestedPersona.length > 0 ? requestedPersona : "all");
+    setPersonaFilter(
+      requestedPersona && requestedPersona.length > 0
+        ? requestedPersona
+        : "all",
+    );
   }, [activeIdentity?.id, searchParams]);
 
   useEffect(() => {
@@ -480,7 +482,11 @@ export function InboxScreen() {
 
   const visibleGroups = useMemo(
     () =>
-      groupConversations(visibleConversations, identityPersonas, activePersona?.id),
+      groupConversations(
+        visibleConversations,
+        identityPersonas,
+        activePersona?.id,
+      ),
     [visibleConversations, identityPersonas, activePersona?.id],
   );
 
@@ -495,7 +501,9 @@ export function InboxScreen() {
   );
 
   const visibleRoutedCount = useMemo(
-    () => visibleConversations.filter((conversation) => conversation.personaId).length,
+    () =>
+      visibleConversations.filter((conversation) => conversation.personaId)
+        .length,
     [visibleConversations],
   );
 
@@ -507,8 +515,9 @@ export function InboxScreen() {
       : [];
 
     return {
-      restrictedSeats: entries.filter((entry) => entry.accessMode === "restricted")
-        .length,
+      restrictedSeats: entries.filter(
+        (entry) => entry.accessMode === "restricted",
+      ).length,
       fullSeats: entries.filter((entry) => entry.accessMode === "full").length,
     };
   }, [teamAccess]);
@@ -518,18 +527,20 @@ export function InboxScreen() {
       return "All persona groups";
     }
 
-    const matchingGroup = personaGroups.find((group) => group.key === personaFilter);
+    const matchingGroup = personaGroups.find(
+      (group) => group.key === personaFilter,
+    );
 
     return matchingGroup ? personaFilterLabel(matchingGroup) : "Selected group";
   }, [personaFilter, personaGroups]);
 
   const emptyFilterDescription =
     statusFilter === "all" && personaFilter === "all"
-      ? "Threads routed to this identity will appear here once a conversation is opened or moved back into the queue."
+      ? "Conversations for this Dotly will appear here as soon as a first exchange opens or a live thread returns to view."
       : `No threads match ${personaFilterTitle.toLowerCase()} with the current ${
           statusFilter === "all"
-            ? "status view"
-            : `${formatStatusLabel(statusFilter).toLowerCase()} status filter`
+            ? "conversation lens"
+            : `${formatStatusLabel(statusFilter).toLowerCase()} filter`
         }.`;
 
   async function handleConversationStatusChange(
@@ -582,7 +593,7 @@ export function InboxScreen() {
     <div className="space-y-5">
       <PageHeader
         title="Inbox"
-        description="Review the active identity inbox with routed persona context, scoped team coverage, and cleaner queue views for operational triage."
+        description="Stay close to every first exchange, with persona context, curated access, and deliberate follow-through in one place."
         action={<IdentitySwitcher />}
         large
       />
@@ -595,7 +606,7 @@ export function InboxScreen() {
             </div>
             <div className="space-y-2">
               <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
-                Active routing lens
+                First exchange lens
               </p>
               <h2 className="text-[26px] font-bold tracking-tighter text-foreground">
                 {activePersona
@@ -606,8 +617,8 @@ export function InboxScreen() {
               </h2>
               <p className="max-w-[48ch] text-[15px] font-medium leading-relaxed text-muted">
                 {activePersona
-                  ? "The highlighted persona stays first, while the rest of the identity inbox remains grouped underneath so team coverage is easier to scan."
-                  : "No persona is selected for this identity yet, so the inbox falls back to identity-wide coverage and default routing."}
+                  ? "Lead with the active Dotly first, while the rest of the trust network stays close behind for elegant follow-through."
+                  : "No persona is leading yet, so Dotly keeps the conversation view at the identity level until a route is chosen."}
               </p>
             </div>
           </div>
@@ -622,7 +633,7 @@ export function InboxScreen() {
               </p>
               <p className="mt-1 text-sm text-muted">
                 {conversations.length === visibleConversations.length
-                  ? "Across the current scoped inbox"
+                  ? "Across this curated conversation view"
                   : `${conversations.length} total before filters`}
               </p>
             </div>
@@ -634,7 +645,9 @@ export function InboxScreen() {
               <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
                 {visibleActiveCount}
               </p>
-              <p className="mt-1 text-sm text-muted">Open conversation flow</p>
+              <p className="mt-1 text-sm text-muted">
+                Ready for timely follow-through
+              </p>
             </div>
 
             <div className="rounded-[1.15rem] border border-black/5 bg-white/70 px-4 py-3 shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:border-white/10 dark:bg-black/20">
@@ -644,7 +657,9 @@ export function InboxScreen() {
               <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
                 {visibleArchivedCount}
               </p>
-              <p className="mt-1 text-sm text-muted">History kept off the main lane</p>
+              <p className="mt-1 text-sm text-muted">
+                Saved context beyond the live moment
+              </p>
             </div>
 
             <div className="rounded-[1.15rem] border border-black/5 bg-white/70 px-4 py-3 shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:border-white/10 dark:bg-black/20">
@@ -655,7 +670,8 @@ export function InboxScreen() {
                 {visibleGroups.length}
               </p>
               <p className="mt-1 text-sm text-muted">
-                {visibleRoutedCount} routed · {visibleDirectCount} direct
+                {visibleRoutedCount} persona-led · {visibleDirectCount}{" "}
+                identity-led
               </p>
             </div>
           </div>
@@ -665,10 +681,10 @@ export function InboxScreen() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
-                Persona coverage
+                Curated access
               </p>
               <h2 className="mt-3 text-[22px] font-bold tracking-tighter text-foreground">
-                Organize by route
+                Keep every route intentional
               </h2>
             </div>
             <Layers3 className="h-5 w-5 text-muted" strokeWidth={2} />
@@ -716,10 +732,11 @@ export function InboxScreen() {
 
               <div className="min-w-0 space-y-2">
                 <p className="text-sm font-semibold text-foreground">
-                  Assignment scope
+                  Visibility guardrails
                 </p>
                 <p className="text-sm leading-6 text-muted">
-                  Only threads allowed by the current backend persona and participant assignment scope are shown here.
+                  Dotly only shows the conversations this identity and its trust
+                  settings are meant to carry.
                 </p>
 
                 {teamAccessState === "ready" ? (
@@ -739,15 +756,17 @@ export function InboxScreen() {
                   </div>
                 ) : teamAccessState === "locked" ? (
                   <p className="text-sm leading-6 text-muted">
-                    Persona coverage is managed by identity owners and admin operators, but the inbox still reflects the enforced scope.
+                    Identity owners and admins shape the access model, while
+                    this inbox still reflects the enforced view.
                   </p>
                 ) : teamAccessState === "error" ? (
                   <p className="text-sm leading-6 text-muted">
-                    Assignment metadata is unavailable right now, but the visible queue still reflects the backend scope.
+                    Team access details are unavailable right now, but the
+                    visible conversations still respect the live trust scope.
                   </p>
                 ) : teamAccessState === "loading" ? (
                   <p className="text-sm leading-6 text-muted">
-                    Checking team coverage and route assignments...
+                    Checking who can carry each conversation forward...
                   </p>
                 ) : null}
               </div>
@@ -760,14 +779,18 @@ export function InboxScreen() {
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">
                   {teamAccessState === "ready"
-                    ? "Manage team coverage"
-                    : "Review team scope"}
+                    ? "Shape team coverage"
+                    : "Review access scope"}
                 </p>
                 <p className="mt-1 text-sm text-muted">
-                  Owner and admin controls for persona-specific inbox coverage and operator routing visibility.
+                  Owner and admin controls for persona visibility, curated
+                  coverage, and who carries the relationship next.
                 </p>
               </div>
-              <ArrowUpRight className="h-4 w-4 shrink-0 text-muted" strokeWidth={2} />
+              <ArrowUpRight
+                className="h-4 w-4 shrink-0 text-muted"
+                strokeWidth={2}
+              />
             </Link>
           </div>
         </div>
@@ -777,10 +800,10 @@ export function InboxScreen() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-              Queue views
+              Relationship momentum
             </p>
             <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-              Keep the queue operational
+              Keep the warm conversations moving
             </h2>
           </div>
 
@@ -814,7 +837,7 @@ export function InboxScreen() {
       {!isIdentityLoading && !activeIdentity ? (
         <EmptyState
           title="Choose an identity"
-          description="Select an identity to load routed conversations, persona coverage, and team scope for this inbox."
+          description="Select the Dotly identity you want to represent so the right conversations, routes, and access context come into view."
           action={<IdentitySwitcher />}
         />
       ) : isLoading ? (
@@ -824,7 +847,8 @@ export function InboxScreen() {
               Loading queue
             </p>
             <p className="text-sm text-muted">
-              Pulling routed threads, current statuses, and team coverage for this inbox.
+              Pulling live conversations, current momentum, and access context
+              for this Dotly.
             </p>
           </div>
           {[...Array(4)].map((_, index) => (
@@ -834,7 +858,7 @@ export function InboxScreen() {
       ) : error ? (
         <EmptyState
           title="Inbox temporarily unavailable"
-          description={`${error} Try the load again to refresh routed threads and team scope.`}
+          description={`${error} Try again to bring your active conversations and access context back into view.`}
           action={
             <SecondaryButton
               type="button"
@@ -847,12 +871,12 @@ export function InboxScreen() {
         />
       ) : conversations.length === 0 ? (
         <EmptyState
-          title="No threads in this inbox yet"
-          description="New routed threads will appear here once a conversation is opened for this identity or persona route."
+          title="No conversations here yet"
+          description="New introductions will appear here as soon as someone opens a conversation with this Dotly or one of its personas."
         />
       ) : visibleGroups.length === 0 ? (
         <EmptyState
-          title="No threads match this queue view"
+          title="No conversations match this view"
           description={emptyFilterDescription}
           action={
             <SecondaryButton
@@ -909,42 +933,53 @@ export function InboxScreen() {
                   {
                     key: "active-lane",
                     title: "Active lane",
-                    description: "Threads still in the working queue for this route.",
+                    description:
+                      "Conversations still carrying live momentum for this route.",
                     items: group.items.filter(
                       (conversation) =>
-                        conversation.conversationStatus !== ConversationStatus.Archived,
+                        conversation.conversationStatus !==
+                        ConversationStatus.Archived,
                     ),
                   },
                   {
                     key: "archived-lane",
                     title: "Archived history",
-                    description: "Threads moved out of the active lane but still retained for context.",
+                    description:
+                      "Conversations moved out of the live lane while keeping the relationship context intact.",
                     items: group.items.filter(
                       (conversation) =>
-                        conversation.conversationStatus === ConversationStatus.Archived,
+                        conversation.conversationStatus ===
+                        ConversationStatus.Archived,
                     ),
                   },
                 ]
                   .filter((section) => section.items.length > 0)
                   .map((section) => (
                     <div key={section.key} className="space-y-2">
-                      {statusFilter === "all" && group.items.length !== section.items.length ? (
+                      {statusFilter === "all" &&
+                      group.items.length !== section.items.length ? (
                         <div className="flex flex-wrap items-center gap-2 px-1">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
                             {section.title}
                           </p>
-                          <p className="text-sm text-muted">{section.description}</p>
+                          <p className="text-sm text-muted">
+                            {section.description}
+                          </p>
                         </div>
                       ) : null}
 
                       <div className="overflow-hidden rounded-[1.5rem] bg-foreground/[0.02] shadow-sm ring-[0.5px] ring-black/5 backdrop-blur-[40px] saturate-[200%] divide-y divide-black/5 dark:bg-white/[0.03] dark:ring-white/10 dark:divide-white/5">
                         {section.items.map((conversation) => {
                           const isUpdating =
-                            statusChangeByConversationId[conversation.conversationId] === true;
+                            statusChangeByConversationId[
+                              conversation.conversationId
+                            ] === true;
                           const nextStatus =
-                            conversation.conversationStatus === ConversationStatus.Archived
+                            conversation.conversationStatus ===
+                            ConversationStatus.Archived
                               ? ConversationStatus.Active
-                              : conversation.conversationStatus === ConversationStatus.Active
+                              : conversation.conversationStatus ===
+                                  ConversationStatus.Active
                                 ? ConversationStatus.Archived
                                 : null;
                           const detailHref = `${routes.app.conversationDetail(
@@ -954,7 +989,9 @@ export function InboxScreen() {
                               personaFilter !== "all"
                                 ? personaFilter
                                 : group.key,
-                            ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+                            ...(statusFilter !== "all"
+                              ? { status: statusFilter }
+                              : {}),
                           }).toString()}`;
 
                           return (
@@ -962,22 +999,41 @@ export function InboxScreen() {
                               key={conversation.conversationId}
                               className="flex flex-col gap-3 p-4 transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.03] sm:flex-row sm:items-center sm:justify-between"
                             >
-                              <Link href={detailHref} className="min-w-0 flex-1">
+                              <Link
+                                href={detailHref}
+                                className="min-w-0 flex-1"
+                              >
                                 <div className="flex flex-wrap items-center gap-2">
                                   <p className="truncate text-[15px] font-semibold text-foreground">
                                     {formatConversationTitle(conversation)}
                                   </p>
                                   <StatusBadge
-                                    label={formatStatusLabel(conversation.conversationStatus)}
-                                    tone={statusTone(conversation.conversationStatus)}
-                                    dot={conversation.conversationStatus === ConversationStatus.Active}
+                                    label={formatStatusLabel(
+                                      conversation.conversationStatus,
+                                    )}
+                                    tone={statusTone(
+                                      conversation.conversationStatus,
+                                    )}
+                                    dot={
+                                      conversation.conversationStatus ===
+                                      ConversationStatus.Active
+                                    }
                                   />
                                   <StatusBadge
-                                    label={getConversationRouteLabel(conversation)}
-                                    tone={conversation.personaId ? "cyan" : "neutral"}
+                                    label={getConversationRouteLabel(
+                                      conversation,
+                                    )}
+                                    tone={
+                                      conversation.personaId
+                                        ? "cyan"
+                                        : "neutral"
+                                    }
                                   />
                                   <span className="rounded-full border border-black/5 bg-black/[0.03] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted dark:border-white/10 dark:bg-white/[0.04]">
-                                    {conversation.conversationType.replaceAll("_", " ")}
+                                    {conversation.conversationType.replaceAll(
+                                      "_",
+                                      " ",
+                                    )}
                                   </span>
                                 </div>
                                 <p className="mt-1 text-sm font-medium text-muted">
@@ -990,8 +1046,14 @@ export function InboxScreen() {
 
                               <div className="flex items-center justify-between gap-2 sm:justify-end">
                                 <div className="flex items-center gap-2 text-muted">
-                                  <MessagesSquare className="h-4 w-4" strokeWidth={2} />
-                                  <ArrowUpRight className="h-4 w-4" strokeWidth={2} />
+                                  <MessagesSquare
+                                    className="h-4 w-4"
+                                    strokeWidth={2}
+                                  />
+                                  <ArrowUpRight
+                                    className="h-4 w-4"
+                                    strokeWidth={2}
+                                  />
                                 </div>
                                 {nextStatus ? (
                                   <SecondaryButton
@@ -1005,7 +1067,8 @@ export function InboxScreen() {
                                       )
                                     }
                                   >
-                                    {nextStatus === ConversationStatus.Archived ? (
+                                    {nextStatus ===
+                                    ConversationStatus.Archived ? (
                                       <span className="inline-flex items-center gap-2">
                                         <Archive className="h-4 w-4" />
                                         Archive
