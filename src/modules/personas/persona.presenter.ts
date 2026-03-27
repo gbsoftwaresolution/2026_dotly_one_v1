@@ -15,6 +15,7 @@ import {
 
 export const privatePersonaSelect = {
   id: true,
+  identityId: true,
   type: true,
   username: true,
   publicUrl: true,
@@ -35,12 +36,17 @@ export const privatePersonaSelect = {
   publicPhone: true,
   publicWhatsappNumber: true,
   publicEmail: true,
+  routingKey: true,
+  routingDisplayName: true,
+  isDefaultRouting: true,
+  routingRulesJson: true,
   createdAt: true,
   updatedAt: true,
 } as const;
 
 export const publicPersonaSelect = {
   id: true,
+  identityId: true,
   userId: true,
   username: true,
   publicUrl: true,
@@ -60,6 +66,10 @@ export const publicPersonaSelect = {
   publicPhone: true,
   publicWhatsappNumber: true,
   publicEmail: true,
+  routingKey: true,
+  routingDisplayName: true,
+  isDefaultRouting: true,
+  routingRulesJson: true,
 } as const;
 
 export type PrivatePersonaRecord = Prisma.PersonaGetPayload<{
@@ -124,6 +134,7 @@ export function toPrivatePersonaView(
 
   return {
     id: persona.id,
+    identityId: persona.identityId,
     type: apiPersonaTypeMap[persona.type],
     username: persona.username,
     publicUrl: persona.publicUrl,
@@ -143,6 +154,10 @@ export function toPrivatePersonaView(
     publicPhone: persona.publicPhone,
     publicWhatsappNumber: persona.publicWhatsappNumber,
     publicEmail: persona.publicEmail,
+    routingKey: persona.routingKey,
+    routingDisplayName: persona.routingDisplayName,
+    isDefaultRouting: persona.isDefaultRouting,
+    routingRulesJson: persona.routingRulesJson,
     createdAt: persona.createdAt,
     updatedAt: persona.updatedAt,
   };

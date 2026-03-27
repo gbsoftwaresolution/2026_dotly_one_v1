@@ -37,6 +37,7 @@ export type PersonaSumAggregateOutputType = {
 export type PersonaMinAggregateOutputType = {
   id: string | null
   userId: string | null
+  identityId: string | null
   agencyProfileId: string | null
   type: $Enums.PersonaType | null
   isPrimary: boolean | null
@@ -56,6 +57,9 @@ export type PersonaMinAggregateOutputType = {
   businessVerified: boolean | null
   trustScore: number | null
   sharingMode: $Enums.PersonaSharingMode | null
+  routingKey: string | null
+  routingDisplayName: string | null
+  isDefaultRouting: boolean | null
   publicPhone: string | null
   publicWhatsappNumber: string | null
   publicEmail: string | null
@@ -69,6 +73,7 @@ export type PersonaMinAggregateOutputType = {
 export type PersonaMaxAggregateOutputType = {
   id: string | null
   userId: string | null
+  identityId: string | null
   agencyProfileId: string | null
   type: $Enums.PersonaType | null
   isPrimary: boolean | null
@@ -88,6 +93,9 @@ export type PersonaMaxAggregateOutputType = {
   businessVerified: boolean | null
   trustScore: number | null
   sharingMode: $Enums.PersonaSharingMode | null
+  routingKey: string | null
+  routingDisplayName: string | null
+  isDefaultRouting: boolean | null
   publicPhone: string | null
   publicWhatsappNumber: string | null
   publicEmail: string | null
@@ -101,6 +109,7 @@ export type PersonaMaxAggregateOutputType = {
 export type PersonaCountAggregateOutputType = {
   id: number
   userId: number
+  identityId: number
   agencyProfileId: number
   type: number
   isPrimary: number
@@ -121,6 +130,10 @@ export type PersonaCountAggregateOutputType = {
   trustScore: number
   sharingMode: number
   smartCardConfig: number
+  routingKey: number
+  routingDisplayName: number
+  isDefaultRouting: number
+  routingRulesJson: number
   publicPhone: number
   publicWhatsappNumber: number
   publicEmail: number
@@ -145,6 +158,7 @@ export type PersonaSumAggregateInputType = {
 export type PersonaMinAggregateInputType = {
   id?: true
   userId?: true
+  identityId?: true
   agencyProfileId?: true
   type?: true
   isPrimary?: true
@@ -164,6 +178,9 @@ export type PersonaMinAggregateInputType = {
   businessVerified?: true
   trustScore?: true
   sharingMode?: true
+  routingKey?: true
+  routingDisplayName?: true
+  isDefaultRouting?: true
   publicPhone?: true
   publicWhatsappNumber?: true
   publicEmail?: true
@@ -177,6 +194,7 @@ export type PersonaMinAggregateInputType = {
 export type PersonaMaxAggregateInputType = {
   id?: true
   userId?: true
+  identityId?: true
   agencyProfileId?: true
   type?: true
   isPrimary?: true
@@ -196,6 +214,9 @@ export type PersonaMaxAggregateInputType = {
   businessVerified?: true
   trustScore?: true
   sharingMode?: true
+  routingKey?: true
+  routingDisplayName?: true
+  isDefaultRouting?: true
   publicPhone?: true
   publicWhatsappNumber?: true
   publicEmail?: true
@@ -209,6 +230,7 @@ export type PersonaMaxAggregateInputType = {
 export type PersonaCountAggregateInputType = {
   id?: true
   userId?: true
+  identityId?: true
   agencyProfileId?: true
   type?: true
   isPrimary?: true
@@ -229,6 +251,10 @@ export type PersonaCountAggregateInputType = {
   trustScore?: true
   sharingMode?: true
   smartCardConfig?: true
+  routingKey?: true
+  routingDisplayName?: true
+  isDefaultRouting?: true
+  routingRulesJson?: true
   publicPhone?: true
   publicWhatsappNumber?: true
   publicEmail?: true
@@ -330,6 +356,7 @@ export type PersonaGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 export type PersonaGroupByOutputType = {
   id: string
   userId: string
+  identityId: string | null
   agencyProfileId: string | null
   type: $Enums.PersonaType
   isPrimary: boolean
@@ -350,6 +377,10 @@ export type PersonaGroupByOutputType = {
   trustScore: number | null
   sharingMode: $Enums.PersonaSharingMode
   smartCardConfig: runtime.JsonValue | null
+  routingKey: string | null
+  routingDisplayName: string | null
+  isDefaultRouting: boolean
+  routingRulesJson: runtime.JsonValue | null
   publicPhone: string | null
   publicWhatsappNumber: string | null
   publicEmail: string | null
@@ -387,6 +418,7 @@ export type PersonaWhereInput = {
   NOT?: Prisma.PersonaWhereInput | Prisma.PersonaWhereInput[]
   id?: Prisma.UuidFilter<"Persona"> | string
   userId?: Prisma.UuidFilter<"Persona"> | string
+  identityId?: Prisma.UuidNullableFilter<"Persona"> | string | null
   agencyProfileId?: Prisma.UuidNullableFilter<"Persona"> | string | null
   type?: Prisma.EnumPersonaTypeFilter<"Persona"> | $Enums.PersonaType
   isPrimary?: Prisma.BoolFilter<"Persona"> | boolean
@@ -407,6 +439,10 @@ export type PersonaWhereInput = {
   trustScore?: Prisma.IntNullableFilter<"Persona"> | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFilter<"Persona"> | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.JsonNullableFilter<"Persona">
+  routingKey?: Prisma.StringNullableFilter<"Persona"> | string | null
+  routingDisplayName?: Prisma.StringNullableFilter<"Persona"> | string | null
+  isDefaultRouting?: Prisma.BoolFilter<"Persona"> | boolean
+  routingRulesJson?: Prisma.JsonNullableFilter<"Persona">
   publicPhone?: Prisma.StringNullableFilter<"Persona"> | string | null
   publicWhatsappNumber?: Prisma.StringNullableFilter<"Persona"> | string | null
   publicEmail?: Prisma.StringNullableFilter<"Persona"> | string | null
@@ -417,10 +453,12 @@ export type PersonaWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
   agencyProfile?: Prisma.XOR<Prisma.AgencyProfileNullableScalarRelationFilter, Prisma.AgencyProfileWhereInput> | null
+  identity?: Prisma.XOR<Prisma.IdentityNullableScalarRelationFilter, Prisma.IdentityWhereInput> | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   qrAccessTokens?: Prisma.QRAccessTokenListRelationFilter
   analyticsEvents?: Prisma.AnalyticsEventListRelationFilter
   analytics?: Prisma.XOR<Prisma.PersonaAnalyticsNullableScalarRelationFilter, Prisma.PersonaAnalyticsWhereInput> | null
+  identityConversations?: Prisma.IdentityConversationListRelationFilter
   eventParticipations?: Prisma.EventParticipantListRelationFilter
   outgoingContactRequests?: Prisma.ContactRequestListRelationFilter
   incomingContactRequests?: Prisma.ContactRequestListRelationFilter
@@ -431,6 +469,7 @@ export type PersonaWhereInput = {
 export type PersonaOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  identityId?: Prisma.SortOrderInput | Prisma.SortOrder
   agencyProfileId?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   isPrimary?: Prisma.SortOrder
@@ -451,6 +490,10 @@ export type PersonaOrderByWithRelationInput = {
   trustScore?: Prisma.SortOrderInput | Prisma.SortOrder
   sharingMode?: Prisma.SortOrder
   smartCardConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  routingKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  routingDisplayName?: Prisma.SortOrderInput | Prisma.SortOrder
+  isDefaultRouting?: Prisma.SortOrder
+  routingRulesJson?: Prisma.SortOrderInput | Prisma.SortOrder
   publicPhone?: Prisma.SortOrderInput | Prisma.SortOrder
   publicWhatsappNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   publicEmail?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -461,10 +504,12 @@ export type PersonaOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   agencyProfile?: Prisma.AgencyProfileOrderByWithRelationInput
+  identity?: Prisma.IdentityOrderByWithRelationInput
   user?: Prisma.UserOrderByWithRelationInput
   qrAccessTokens?: Prisma.QRAccessTokenOrderByRelationAggregateInput
   analyticsEvents?: Prisma.AnalyticsEventOrderByRelationAggregateInput
   analytics?: Prisma.PersonaAnalyticsOrderByWithRelationInput
+  identityConversations?: Prisma.IdentityConversationOrderByRelationAggregateInput
   eventParticipations?: Prisma.EventParticipantOrderByRelationAggregateInput
   outgoingContactRequests?: Prisma.ContactRequestOrderByRelationAggregateInput
   incomingContactRequests?: Prisma.ContactRequestOrderByRelationAggregateInput
@@ -477,10 +522,12 @@ export type PersonaWhereUniqueInput = Prisma.AtLeast<{
   username?: string
   publicUrl?: string
   id_userId?: Prisma.PersonaIdUserIdCompoundUniqueInput
+  identityId_routingKey?: Prisma.PersonaIdentityIdRoutingKeyCompoundUniqueInput
   AND?: Prisma.PersonaWhereInput | Prisma.PersonaWhereInput[]
   OR?: Prisma.PersonaWhereInput[]
   NOT?: Prisma.PersonaWhereInput | Prisma.PersonaWhereInput[]
   userId?: Prisma.UuidFilter<"Persona"> | string
+  identityId?: Prisma.UuidNullableFilter<"Persona"> | string | null
   agencyProfileId?: Prisma.UuidNullableFilter<"Persona"> | string | null
   type?: Prisma.EnumPersonaTypeFilter<"Persona"> | $Enums.PersonaType
   isPrimary?: Prisma.BoolFilter<"Persona"> | boolean
@@ -499,6 +546,10 @@ export type PersonaWhereUniqueInput = Prisma.AtLeast<{
   trustScore?: Prisma.IntNullableFilter<"Persona"> | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFilter<"Persona"> | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.JsonNullableFilter<"Persona">
+  routingKey?: Prisma.StringNullableFilter<"Persona"> | string | null
+  routingDisplayName?: Prisma.StringNullableFilter<"Persona"> | string | null
+  isDefaultRouting?: Prisma.BoolFilter<"Persona"> | boolean
+  routingRulesJson?: Prisma.JsonNullableFilter<"Persona">
   publicPhone?: Prisma.StringNullableFilter<"Persona"> | string | null
   publicWhatsappNumber?: Prisma.StringNullableFilter<"Persona"> | string | null
   publicEmail?: Prisma.StringNullableFilter<"Persona"> | string | null
@@ -509,20 +560,23 @@ export type PersonaWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Persona"> | Date | string
   agencyProfile?: Prisma.XOR<Prisma.AgencyProfileNullableScalarRelationFilter, Prisma.AgencyProfileWhereInput> | null
+  identity?: Prisma.XOR<Prisma.IdentityNullableScalarRelationFilter, Prisma.IdentityWhereInput> | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   qrAccessTokens?: Prisma.QRAccessTokenListRelationFilter
   analyticsEvents?: Prisma.AnalyticsEventListRelationFilter
   analytics?: Prisma.XOR<Prisma.PersonaAnalyticsNullableScalarRelationFilter, Prisma.PersonaAnalyticsWhereInput> | null
+  identityConversations?: Prisma.IdentityConversationListRelationFilter
   eventParticipations?: Prisma.EventParticipantListRelationFilter
   outgoingContactRequests?: Prisma.ContactRequestListRelationFilter
   incomingContactRequests?: Prisma.ContactRequestListRelationFilter
   ownedRelationships?: Prisma.ContactRelationshipListRelationFilter
   targetRelationships?: Prisma.ContactRelationshipListRelationFilter
-}, "id" | "username" | "publicUrl" | "id_userId">
+}, "id" | "username" | "publicUrl" | "id_userId" | "identityId_routingKey">
 
 export type PersonaOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  identityId?: Prisma.SortOrderInput | Prisma.SortOrder
   agencyProfileId?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   isPrimary?: Prisma.SortOrder
@@ -543,6 +597,10 @@ export type PersonaOrderByWithAggregationInput = {
   trustScore?: Prisma.SortOrderInput | Prisma.SortOrder
   sharingMode?: Prisma.SortOrder
   smartCardConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  routingKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  routingDisplayName?: Prisma.SortOrderInput | Prisma.SortOrder
+  isDefaultRouting?: Prisma.SortOrder
+  routingRulesJson?: Prisma.SortOrderInput | Prisma.SortOrder
   publicPhone?: Prisma.SortOrderInput | Prisma.SortOrder
   publicWhatsappNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   publicEmail?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -565,6 +623,7 @@ export type PersonaScalarWhereWithAggregatesInput = {
   NOT?: Prisma.PersonaScalarWhereWithAggregatesInput | Prisma.PersonaScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"Persona"> | string
   userId?: Prisma.UuidWithAggregatesFilter<"Persona"> | string
+  identityId?: Prisma.UuidNullableWithAggregatesFilter<"Persona"> | string | null
   agencyProfileId?: Prisma.UuidNullableWithAggregatesFilter<"Persona"> | string | null
   type?: Prisma.EnumPersonaTypeWithAggregatesFilter<"Persona"> | $Enums.PersonaType
   isPrimary?: Prisma.BoolWithAggregatesFilter<"Persona"> | boolean
@@ -585,6 +644,10 @@ export type PersonaScalarWhereWithAggregatesInput = {
   trustScore?: Prisma.IntNullableWithAggregatesFilter<"Persona"> | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeWithAggregatesFilter<"Persona"> | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.JsonNullableWithAggregatesFilter<"Persona">
+  routingKey?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
+  routingDisplayName?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
+  isDefaultRouting?: Prisma.BoolWithAggregatesFilter<"Persona"> | boolean
+  routingRulesJson?: Prisma.JsonNullableWithAggregatesFilter<"Persona">
   publicPhone?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
   publicWhatsappNumber?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
   publicEmail?: Prisma.StringNullableWithAggregatesFilter<"Persona"> | string | null
@@ -617,6 +680,10 @@ export type PersonaCreateInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -627,10 +694,12 @@ export type PersonaCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -641,6 +710,7 @@ export type PersonaCreateInput = {
 export type PersonaUncheckedCreateInput = {
   id?: string
   userId: string
+  identityId?: string | null
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -661,6 +731,10 @@ export type PersonaUncheckedCreateInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -673,6 +747,7 @@ export type PersonaUncheckedCreateInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -701,6 +776,10 @@ export type PersonaUpdateInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -711,10 +790,12 @@ export type PersonaUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -725,6 +806,7 @@ export type PersonaUpdateInput = {
 export type PersonaUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -745,6 +827,10 @@ export type PersonaUncheckedUpdateInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -757,6 +843,7 @@ export type PersonaUncheckedUpdateInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -767,6 +854,7 @@ export type PersonaUncheckedUpdateInput = {
 export type PersonaCreateManyInput = {
   id?: string
   userId: string
+  identityId?: string | null
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -787,6 +875,10 @@ export type PersonaCreateManyInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -819,6 +911,10 @@ export type PersonaUpdateManyMutationInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -833,6 +929,7 @@ export type PersonaUpdateManyMutationInput = {
 export type PersonaUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -853,6 +950,10 @@ export type PersonaUncheckedUpdateManyInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -879,9 +980,15 @@ export type PersonaIdUserIdCompoundUniqueInput = {
   userId: string
 }
 
+export type PersonaIdentityIdRoutingKeyCompoundUniqueInput = {
+  identityId: string
+  routingKey: string
+}
+
 export type PersonaCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  identityId?: Prisma.SortOrder
   agencyProfileId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   isPrimary?: Prisma.SortOrder
@@ -902,6 +1009,10 @@ export type PersonaCountOrderByAggregateInput = {
   trustScore?: Prisma.SortOrder
   sharingMode?: Prisma.SortOrder
   smartCardConfig?: Prisma.SortOrder
+  routingKey?: Prisma.SortOrder
+  routingDisplayName?: Prisma.SortOrder
+  isDefaultRouting?: Prisma.SortOrder
+  routingRulesJson?: Prisma.SortOrder
   publicPhone?: Prisma.SortOrder
   publicWhatsappNumber?: Prisma.SortOrder
   publicEmail?: Prisma.SortOrder
@@ -920,6 +1031,7 @@ export type PersonaAvgOrderByAggregateInput = {
 export type PersonaMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  identityId?: Prisma.SortOrder
   agencyProfileId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   isPrimary?: Prisma.SortOrder
@@ -939,6 +1051,9 @@ export type PersonaMaxOrderByAggregateInput = {
   businessVerified?: Prisma.SortOrder
   trustScore?: Prisma.SortOrder
   sharingMode?: Prisma.SortOrder
+  routingKey?: Prisma.SortOrder
+  routingDisplayName?: Prisma.SortOrder
+  isDefaultRouting?: Prisma.SortOrder
   publicPhone?: Prisma.SortOrder
   publicWhatsappNumber?: Prisma.SortOrder
   publicEmail?: Prisma.SortOrder
@@ -952,6 +1067,7 @@ export type PersonaMaxOrderByAggregateInput = {
 export type PersonaMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  identityId?: Prisma.SortOrder
   agencyProfileId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   isPrimary?: Prisma.SortOrder
@@ -971,6 +1087,9 @@ export type PersonaMinOrderByAggregateInput = {
   businessVerified?: Prisma.SortOrder
   trustScore?: Prisma.SortOrder
   sharingMode?: Prisma.SortOrder
+  routingKey?: Prisma.SortOrder
+  routingDisplayName?: Prisma.SortOrder
+  isDefaultRouting?: Prisma.SortOrder
   publicPhone?: Prisma.SortOrder
   publicWhatsappNumber?: Prisma.SortOrder
   publicEmail?: Prisma.SortOrder
@@ -1217,6 +1336,64 @@ export type PersonaUpdateOneRequiredWithoutAnalyticsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.PersonaUpdateToOneWithWhereWithoutAnalyticsInput, Prisma.PersonaUpdateWithoutAnalyticsInput>, Prisma.PersonaUncheckedUpdateWithoutAnalyticsInput>
 }
 
+export type PersonaCreateNestedManyWithoutIdentityInput = {
+  create?: Prisma.XOR<Prisma.PersonaCreateWithoutIdentityInput, Prisma.PersonaUncheckedCreateWithoutIdentityInput> | Prisma.PersonaCreateWithoutIdentityInput[] | Prisma.PersonaUncheckedCreateWithoutIdentityInput[]
+  connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutIdentityInput | Prisma.PersonaCreateOrConnectWithoutIdentityInput[]
+  createMany?: Prisma.PersonaCreateManyIdentityInputEnvelope
+  connect?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[]
+}
+
+export type PersonaUncheckedCreateNestedManyWithoutIdentityInput = {
+  create?: Prisma.XOR<Prisma.PersonaCreateWithoutIdentityInput, Prisma.PersonaUncheckedCreateWithoutIdentityInput> | Prisma.PersonaCreateWithoutIdentityInput[] | Prisma.PersonaUncheckedCreateWithoutIdentityInput[]
+  connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutIdentityInput | Prisma.PersonaCreateOrConnectWithoutIdentityInput[]
+  createMany?: Prisma.PersonaCreateManyIdentityInputEnvelope
+  connect?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[]
+}
+
+export type PersonaUpdateManyWithoutIdentityNestedInput = {
+  create?: Prisma.XOR<Prisma.PersonaCreateWithoutIdentityInput, Prisma.PersonaUncheckedCreateWithoutIdentityInput> | Prisma.PersonaCreateWithoutIdentityInput[] | Prisma.PersonaUncheckedCreateWithoutIdentityInput[]
+  connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutIdentityInput | Prisma.PersonaCreateOrConnectWithoutIdentityInput[]
+  upsert?: Prisma.PersonaUpsertWithWhereUniqueWithoutIdentityInput | Prisma.PersonaUpsertWithWhereUniqueWithoutIdentityInput[]
+  createMany?: Prisma.PersonaCreateManyIdentityInputEnvelope
+  set?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[]
+  disconnect?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[]
+  delete?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[]
+  connect?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[]
+  update?: Prisma.PersonaUpdateWithWhereUniqueWithoutIdentityInput | Prisma.PersonaUpdateWithWhereUniqueWithoutIdentityInput[]
+  updateMany?: Prisma.PersonaUpdateManyWithWhereWithoutIdentityInput | Prisma.PersonaUpdateManyWithWhereWithoutIdentityInput[]
+  deleteMany?: Prisma.PersonaScalarWhereInput | Prisma.PersonaScalarWhereInput[]
+}
+
+export type PersonaUncheckedUpdateManyWithoutIdentityNestedInput = {
+  create?: Prisma.XOR<Prisma.PersonaCreateWithoutIdentityInput, Prisma.PersonaUncheckedCreateWithoutIdentityInput> | Prisma.PersonaCreateWithoutIdentityInput[] | Prisma.PersonaUncheckedCreateWithoutIdentityInput[]
+  connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutIdentityInput | Prisma.PersonaCreateOrConnectWithoutIdentityInput[]
+  upsert?: Prisma.PersonaUpsertWithWhereUniqueWithoutIdentityInput | Prisma.PersonaUpsertWithWhereUniqueWithoutIdentityInput[]
+  createMany?: Prisma.PersonaCreateManyIdentityInputEnvelope
+  set?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[]
+  disconnect?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[]
+  delete?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[]
+  connect?: Prisma.PersonaWhereUniqueInput | Prisma.PersonaWhereUniqueInput[]
+  update?: Prisma.PersonaUpdateWithWhereUniqueWithoutIdentityInput | Prisma.PersonaUpdateWithWhereUniqueWithoutIdentityInput[]
+  updateMany?: Prisma.PersonaUpdateManyWithWhereWithoutIdentityInput | Prisma.PersonaUpdateManyWithWhereWithoutIdentityInput[]
+  deleteMany?: Prisma.PersonaScalarWhereInput | Prisma.PersonaScalarWhereInput[]
+}
+
+export type PersonaCreateNestedOneWithoutIdentityConversationsInput = {
+  create?: Prisma.XOR<Prisma.PersonaCreateWithoutIdentityConversationsInput, Prisma.PersonaUncheckedCreateWithoutIdentityConversationsInput>
+  connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutIdentityConversationsInput
+  connect?: Prisma.PersonaWhereUniqueInput
+}
+
+export type PersonaUpdateOneWithoutIdentityConversationsNestedInput = {
+  create?: Prisma.XOR<Prisma.PersonaCreateWithoutIdentityConversationsInput, Prisma.PersonaUncheckedCreateWithoutIdentityConversationsInput>
+  connectOrCreate?: Prisma.PersonaCreateOrConnectWithoutIdentityConversationsInput
+  upsert?: Prisma.PersonaUpsertWithoutIdentityConversationsInput
+  disconnect?: Prisma.PersonaWhereInput | boolean
+  delete?: Prisma.PersonaWhereInput | boolean
+  connect?: Prisma.PersonaWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PersonaUpdateToOneWithWhereWithoutIdentityConversationsInput, Prisma.PersonaUpdateWithoutIdentityConversationsInput>, Prisma.PersonaUncheckedUpdateWithoutIdentityConversationsInput>
+}
+
 export type PersonaCreateWithoutUserInput = {
   id?: string
   type: $Enums.PersonaType
@@ -1238,6 +1415,10 @@ export type PersonaCreateWithoutUserInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -1248,9 +1429,11 @@ export type PersonaCreateWithoutUserInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -1260,6 +1443,7 @@ export type PersonaCreateWithoutUserInput = {
 
 export type PersonaUncheckedCreateWithoutUserInput = {
   id?: string
+  identityId?: string | null
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -1280,6 +1464,10 @@ export type PersonaUncheckedCreateWithoutUserInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -1292,6 +1480,7 @@ export type PersonaUncheckedCreateWithoutUserInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -1331,6 +1520,7 @@ export type PersonaScalarWhereInput = {
   NOT?: Prisma.PersonaScalarWhereInput | Prisma.PersonaScalarWhereInput[]
   id?: Prisma.UuidFilter<"Persona"> | string
   userId?: Prisma.UuidFilter<"Persona"> | string
+  identityId?: Prisma.UuidNullableFilter<"Persona"> | string | null
   agencyProfileId?: Prisma.UuidNullableFilter<"Persona"> | string | null
   type?: Prisma.EnumPersonaTypeFilter<"Persona"> | $Enums.PersonaType
   isPrimary?: Prisma.BoolFilter<"Persona"> | boolean
@@ -1351,6 +1541,10 @@ export type PersonaScalarWhereInput = {
   trustScore?: Prisma.IntNullableFilter<"Persona"> | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFilter<"Persona"> | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.JsonNullableFilter<"Persona">
+  routingKey?: Prisma.StringNullableFilter<"Persona"> | string | null
+  routingDisplayName?: Prisma.StringNullableFilter<"Persona"> | string | null
+  isDefaultRouting?: Prisma.BoolFilter<"Persona"> | boolean
+  routingRulesJson?: Prisma.JsonNullableFilter<"Persona">
   publicPhone?: Prisma.StringNullableFilter<"Persona"> | string | null
   publicWhatsappNumber?: Prisma.StringNullableFilter<"Persona"> | string | null
   publicEmail?: Prisma.StringNullableFilter<"Persona"> | string | null
@@ -1383,6 +1577,10 @@ export type PersonaCreateWithoutAgencyProfileInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -1392,10 +1590,12 @@ export type PersonaCreateWithoutAgencyProfileInput = {
   socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Date | string
   updatedAt?: Date | string
+  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -1406,6 +1606,7 @@ export type PersonaCreateWithoutAgencyProfileInput = {
 export type PersonaUncheckedCreateWithoutAgencyProfileInput = {
   id?: string
   userId: string
+  identityId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
   username: string
@@ -1425,6 +1626,10 @@ export type PersonaUncheckedCreateWithoutAgencyProfileInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -1437,6 +1642,7 @@ export type PersonaUncheckedCreateWithoutAgencyProfileInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -1491,6 +1697,10 @@ export type PersonaCreateWithoutQrAccessTokensInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -1501,9 +1711,11 @@ export type PersonaCreateWithoutQrAccessTokensInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -1514,6 +1726,7 @@ export type PersonaCreateWithoutQrAccessTokensInput = {
 export type PersonaUncheckedCreateWithoutQrAccessTokensInput = {
   id?: string
   userId: string
+  identityId?: string | null
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -1534,6 +1747,10 @@ export type PersonaUncheckedCreateWithoutQrAccessTokensInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -1545,6 +1762,7 @@ export type PersonaUncheckedCreateWithoutQrAccessTokensInput = {
   updatedAt?: Date | string
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -1589,6 +1807,10 @@ export type PersonaUpdateWithoutQrAccessTokensInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1599,9 +1821,11 @@ export type PersonaUpdateWithoutQrAccessTokensInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -1612,6 +1836,7 @@ export type PersonaUpdateWithoutQrAccessTokensInput = {
 export type PersonaUncheckedUpdateWithoutQrAccessTokensInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1632,6 +1857,10 @@ export type PersonaUncheckedUpdateWithoutQrAccessTokensInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1643,6 +1872,7 @@ export type PersonaUncheckedUpdateWithoutQrAccessTokensInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -1671,6 +1901,10 @@ export type PersonaCreateWithoutEventParticipationsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -1681,10 +1915,12 @@ export type PersonaCreateWithoutEventParticipationsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerPersonaInput
@@ -1694,6 +1930,7 @@ export type PersonaCreateWithoutEventParticipationsInput = {
 export type PersonaUncheckedCreateWithoutEventParticipationsInput = {
   id?: string
   userId: string
+  identityId?: string | null
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -1714,6 +1951,10 @@ export type PersonaUncheckedCreateWithoutEventParticipationsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -1726,6 +1967,7 @@ export type PersonaUncheckedCreateWithoutEventParticipationsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerPersonaInput
@@ -1769,6 +2011,10 @@ export type PersonaUpdateWithoutEventParticipationsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1779,10 +2025,12 @@ export type PersonaUpdateWithoutEventParticipationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerPersonaNestedInput
@@ -1792,6 +2040,7 @@ export type PersonaUpdateWithoutEventParticipationsInput = {
 export type PersonaUncheckedUpdateWithoutEventParticipationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1812,6 +2061,10 @@ export type PersonaUncheckedUpdateWithoutEventParticipationsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1824,6 +2077,7 @@ export type PersonaUncheckedUpdateWithoutEventParticipationsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerPersonaNestedInput
@@ -1851,6 +2105,10 @@ export type PersonaCreateWithoutOutgoingContactRequestsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -1861,10 +2119,12 @@ export type PersonaCreateWithoutOutgoingContactRequestsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerPersonaInput
@@ -1874,6 +2134,7 @@ export type PersonaCreateWithoutOutgoingContactRequestsInput = {
 export type PersonaUncheckedCreateWithoutOutgoingContactRequestsInput = {
   id?: string
   userId: string
+  identityId?: string | null
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -1894,6 +2155,10 @@ export type PersonaUncheckedCreateWithoutOutgoingContactRequestsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -1906,6 +2171,7 @@ export type PersonaUncheckedCreateWithoutOutgoingContactRequestsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerPersonaInput
@@ -1938,6 +2204,10 @@ export type PersonaCreateWithoutIncomingContactRequestsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -1948,10 +2218,12 @@ export type PersonaCreateWithoutIncomingContactRequestsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerPersonaInput
@@ -1961,6 +2233,7 @@ export type PersonaCreateWithoutIncomingContactRequestsInput = {
 export type PersonaUncheckedCreateWithoutIncomingContactRequestsInput = {
   id?: string
   userId: string
+  identityId?: string | null
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -1981,6 +2254,10 @@ export type PersonaUncheckedCreateWithoutIncomingContactRequestsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -1993,6 +2270,7 @@ export type PersonaUncheckedCreateWithoutIncomingContactRequestsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerPersonaInput
@@ -2036,6 +2314,10 @@ export type PersonaUpdateWithoutOutgoingContactRequestsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2046,10 +2328,12 @@ export type PersonaUpdateWithoutOutgoingContactRequestsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerPersonaNestedInput
@@ -2059,6 +2343,7 @@ export type PersonaUpdateWithoutOutgoingContactRequestsInput = {
 export type PersonaUncheckedUpdateWithoutOutgoingContactRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2079,6 +2364,10 @@ export type PersonaUncheckedUpdateWithoutOutgoingContactRequestsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2091,6 +2380,7 @@ export type PersonaUncheckedUpdateWithoutOutgoingContactRequestsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerPersonaNestedInput
@@ -2129,6 +2419,10 @@ export type PersonaUpdateWithoutIncomingContactRequestsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2139,10 +2433,12 @@ export type PersonaUpdateWithoutIncomingContactRequestsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerPersonaNestedInput
@@ -2152,6 +2448,7 @@ export type PersonaUpdateWithoutIncomingContactRequestsInput = {
 export type PersonaUncheckedUpdateWithoutIncomingContactRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2172,6 +2469,10 @@ export type PersonaUncheckedUpdateWithoutIncomingContactRequestsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2184,6 +2485,7 @@ export type PersonaUncheckedUpdateWithoutIncomingContactRequestsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerPersonaNestedInput
@@ -2211,6 +2513,10 @@ export type PersonaCreateWithoutOwnedRelationshipsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -2221,10 +2527,12 @@ export type PersonaCreateWithoutOwnedRelationshipsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -2234,6 +2542,7 @@ export type PersonaCreateWithoutOwnedRelationshipsInput = {
 export type PersonaUncheckedCreateWithoutOwnedRelationshipsInput = {
   id?: string
   userId: string
+  identityId?: string | null
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -2254,6 +2563,10 @@ export type PersonaUncheckedCreateWithoutOwnedRelationshipsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -2266,6 +2579,7 @@ export type PersonaUncheckedCreateWithoutOwnedRelationshipsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -2298,6 +2612,10 @@ export type PersonaCreateWithoutTargetRelationshipsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -2308,10 +2626,12 @@ export type PersonaCreateWithoutTargetRelationshipsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -2321,6 +2641,7 @@ export type PersonaCreateWithoutTargetRelationshipsInput = {
 export type PersonaUncheckedCreateWithoutTargetRelationshipsInput = {
   id?: string
   userId: string
+  identityId?: string | null
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -2341,6 +2662,10 @@ export type PersonaUncheckedCreateWithoutTargetRelationshipsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -2353,6 +2678,7 @@ export type PersonaUncheckedCreateWithoutTargetRelationshipsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -2396,6 +2722,10 @@ export type PersonaUpdateWithoutOwnedRelationshipsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2406,10 +2736,12 @@ export type PersonaUpdateWithoutOwnedRelationshipsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -2419,6 +2751,7 @@ export type PersonaUpdateWithoutOwnedRelationshipsInput = {
 export type PersonaUncheckedUpdateWithoutOwnedRelationshipsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2439,6 +2772,10 @@ export type PersonaUncheckedUpdateWithoutOwnedRelationshipsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2451,6 +2788,7 @@ export type PersonaUncheckedUpdateWithoutOwnedRelationshipsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -2489,6 +2827,10 @@ export type PersonaUpdateWithoutTargetRelationshipsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2499,10 +2841,12 @@ export type PersonaUpdateWithoutTargetRelationshipsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -2512,6 +2856,7 @@ export type PersonaUpdateWithoutTargetRelationshipsInput = {
 export type PersonaUncheckedUpdateWithoutTargetRelationshipsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2532,6 +2877,10 @@ export type PersonaUncheckedUpdateWithoutTargetRelationshipsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2544,6 +2893,7 @@ export type PersonaUncheckedUpdateWithoutTargetRelationshipsInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -2571,6 +2921,10 @@ export type PersonaCreateWithoutAnalyticsEventsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -2581,9 +2935,11 @@ export type PersonaCreateWithoutAnalyticsEventsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -2594,6 +2950,7 @@ export type PersonaCreateWithoutAnalyticsEventsInput = {
 export type PersonaUncheckedCreateWithoutAnalyticsEventsInput = {
   id?: string
   userId: string
+  identityId?: string | null
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -2614,6 +2971,10 @@ export type PersonaUncheckedCreateWithoutAnalyticsEventsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -2625,6 +2986,7 @@ export type PersonaUncheckedCreateWithoutAnalyticsEventsInput = {
   updatedAt?: Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
   analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -2669,6 +3031,10 @@ export type PersonaUpdateWithoutAnalyticsEventsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2679,9 +3045,11 @@ export type PersonaUpdateWithoutAnalyticsEventsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -2692,6 +3060,7 @@ export type PersonaUpdateWithoutAnalyticsEventsInput = {
 export type PersonaUncheckedUpdateWithoutAnalyticsEventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2712,6 +3081,10 @@ export type PersonaUncheckedUpdateWithoutAnalyticsEventsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2723,6 +3096,7 @@ export type PersonaUncheckedUpdateWithoutAnalyticsEventsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -2751,6 +3125,10 @@ export type PersonaCreateWithoutAnalyticsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -2761,9 +3139,11 @@ export type PersonaCreateWithoutAnalyticsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
   user: Prisma.UserCreateNestedOneWithoutPersonasInput
   qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
@@ -2774,6 +3154,7 @@ export type PersonaCreateWithoutAnalyticsInput = {
 export type PersonaUncheckedCreateWithoutAnalyticsInput = {
   id?: string
   userId: string
+  identityId?: string | null
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -2794,6 +3175,10 @@ export type PersonaUncheckedCreateWithoutAnalyticsInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -2805,6 +3190,7 @@ export type PersonaUncheckedCreateWithoutAnalyticsInput = {
   updatedAt?: Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
   eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
@@ -2849,6 +3235,10 @@ export type PersonaUpdateWithoutAnalyticsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2859,9 +3249,11 @@ export type PersonaUpdateWithoutAnalyticsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -2872,6 +3264,7 @@ export type PersonaUpdateWithoutAnalyticsInput = {
 export type PersonaUncheckedUpdateWithoutAnalyticsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2892,6 +3285,10 @@ export type PersonaUncheckedUpdateWithoutAnalyticsInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2903,6 +3300,7 @@ export type PersonaUncheckedUpdateWithoutAnalyticsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -2910,8 +3308,56 @@ export type PersonaUncheckedUpdateWithoutAnalyticsInput = {
   targetRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutTargetPersonaNestedInput
 }
 
-export type PersonaCreateManyUserInput = {
+export type PersonaCreateWithoutIdentityInput = {
   id?: string
+  type: $Enums.PersonaType
+  isPrimary?: boolean
+  username: string
+  publicUrl: string
+  fullName: string
+  jobTitle: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
+  profilePhotoUrl?: string | null
+  accessMode: $Enums.PersonaAccessMode
+  verifiedOnly?: boolean
+  emailVerified?: boolean
+  phoneVerified?: boolean
+  businessVerified?: boolean
+  trustScore?: number | null
+  sharingMode?: $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: string | null
+  publicWhatsappNumber?: string | null
+  publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  user: Prisma.UserCreateNestedOneWithoutPersonasInput
+  qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
+  analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
+  analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationCreateNestedManyWithoutPersonaInput
+  eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
+  outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
+  incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
+  ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerPersonaInput
+  targetRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutTargetPersonaInput
+}
+
+export type PersonaUncheckedCreateWithoutIdentityInput = {
+  id?: string
+  userId: string
   agencyProfileId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
@@ -2932,6 +3378,287 @@ export type PersonaCreateManyUserInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: string | null
+  publicWhatsappNumber?: string | null
+  publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
+  analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  identityConversations?: Prisma.IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput
+  eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerPersonaInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutTargetPersonaInput
+}
+
+export type PersonaCreateOrConnectWithoutIdentityInput = {
+  where: Prisma.PersonaWhereUniqueInput
+  create: Prisma.XOR<Prisma.PersonaCreateWithoutIdentityInput, Prisma.PersonaUncheckedCreateWithoutIdentityInput>
+}
+
+export type PersonaCreateManyIdentityInputEnvelope = {
+  data: Prisma.PersonaCreateManyIdentityInput | Prisma.PersonaCreateManyIdentityInput[]
+  skipDuplicates?: boolean
+}
+
+export type PersonaUpsertWithWhereUniqueWithoutIdentityInput = {
+  where: Prisma.PersonaWhereUniqueInput
+  update: Prisma.XOR<Prisma.PersonaUpdateWithoutIdentityInput, Prisma.PersonaUncheckedUpdateWithoutIdentityInput>
+  create: Prisma.XOR<Prisma.PersonaCreateWithoutIdentityInput, Prisma.PersonaUncheckedCreateWithoutIdentityInput>
+}
+
+export type PersonaUpdateWithWhereUniqueWithoutIdentityInput = {
+  where: Prisma.PersonaWhereUniqueInput
+  data: Prisma.XOR<Prisma.PersonaUpdateWithoutIdentityInput, Prisma.PersonaUncheckedUpdateWithoutIdentityInput>
+}
+
+export type PersonaUpdateManyWithWhereWithoutIdentityInput = {
+  where: Prisma.PersonaScalarWhereInput
+  data: Prisma.XOR<Prisma.PersonaUpdateManyMutationInput, Prisma.PersonaUncheckedUpdateManyWithoutIdentityInput>
+}
+
+export type PersonaCreateWithoutIdentityConversationsInput = {
+  id?: string
+  type: $Enums.PersonaType
+  isPrimary?: boolean
+  username: string
+  publicUrl: string
+  fullName: string
+  jobTitle: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
+  profilePhotoUrl?: string | null
+  accessMode: $Enums.PersonaAccessMode
+  verifiedOnly?: boolean
+  emailVerified?: boolean
+  phoneVerified?: boolean
+  businessVerified?: boolean
+  trustScore?: number | null
+  sharingMode?: $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: string | null
+  publicWhatsappNumber?: string | null
+  publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  agencyProfile?: Prisma.AgencyProfileCreateNestedOneWithoutPersonasInput
+  identity?: Prisma.IdentityCreateNestedOneWithoutPersonasInput
+  user: Prisma.UserCreateNestedOneWithoutPersonasInput
+  qrAccessTokens?: Prisma.QRAccessTokenCreateNestedManyWithoutPersonaInput
+  analyticsEvents?: Prisma.AnalyticsEventCreateNestedManyWithoutPersonaInput
+  analytics?: Prisma.PersonaAnalyticsCreateNestedOneWithoutPersonaInput
+  eventParticipations?: Prisma.EventParticipantCreateNestedManyWithoutPersonaInput
+  outgoingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutFromPersonaInput
+  incomingContactRequests?: Prisma.ContactRequestCreateNestedManyWithoutToPersonaInput
+  ownedRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutOwnerPersonaInput
+  targetRelationships?: Prisma.ContactRelationshipCreateNestedManyWithoutTargetPersonaInput
+}
+
+export type PersonaUncheckedCreateWithoutIdentityConversationsInput = {
+  id?: string
+  userId: string
+  identityId?: string | null
+  agencyProfileId?: string | null
+  type: $Enums.PersonaType
+  isPrimary?: boolean
+  username: string
+  publicUrl: string
+  fullName: string
+  jobTitle: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
+  profilePhotoUrl?: string | null
+  accessMode: $Enums.PersonaAccessMode
+  verifiedOnly?: boolean
+  emailVerified?: boolean
+  phoneVerified?: boolean
+  businessVerified?: boolean
+  trustScore?: number | null
+  sharingMode?: $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: string | null
+  publicWhatsappNumber?: string | null
+  publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  qrAccessTokens?: Prisma.QRAccessTokenUncheckedCreateNestedManyWithoutPersonaInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedCreateNestedManyWithoutPersonaInput
+  analytics?: Prisma.PersonaAnalyticsUncheckedCreateNestedOneWithoutPersonaInput
+  eventParticipations?: Prisma.EventParticipantUncheckedCreateNestedManyWithoutPersonaInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutFromPersonaInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedCreateNestedManyWithoutToPersonaInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutOwnerPersonaInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedCreateNestedManyWithoutTargetPersonaInput
+}
+
+export type PersonaCreateOrConnectWithoutIdentityConversationsInput = {
+  where: Prisma.PersonaWhereUniqueInput
+  create: Prisma.XOR<Prisma.PersonaCreateWithoutIdentityConversationsInput, Prisma.PersonaUncheckedCreateWithoutIdentityConversationsInput>
+}
+
+export type PersonaUpsertWithoutIdentityConversationsInput = {
+  update: Prisma.XOR<Prisma.PersonaUpdateWithoutIdentityConversationsInput, Prisma.PersonaUncheckedUpdateWithoutIdentityConversationsInput>
+  create: Prisma.XOR<Prisma.PersonaCreateWithoutIdentityConversationsInput, Prisma.PersonaUncheckedCreateWithoutIdentityConversationsInput>
+  where?: Prisma.PersonaWhereInput
+}
+
+export type PersonaUpdateToOneWithWhereWithoutIdentityConversationsInput = {
+  where?: Prisma.PersonaWhereInput
+  data: Prisma.XOR<Prisma.PersonaUpdateWithoutIdentityConversationsInput, Prisma.PersonaUncheckedUpdateWithoutIdentityConversationsInput>
+}
+
+export type PersonaUpdateWithoutIdentityConversationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
+  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
+  verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  businessVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
+  qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
+  analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerPersonaNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUpdateManyWithoutTargetPersonaNestedInput
+}
+
+export type PersonaUncheckedUpdateWithoutIdentityConversationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
+  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
+  verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  businessVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
+  analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerPersonaNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutTargetPersonaNestedInput
+}
+
+export type PersonaCreateManyUserInput = {
+  id?: string
+  identityId?: string | null
+  agencyProfileId?: string | null
+  type: $Enums.PersonaType
+  isPrimary?: boolean
+  username: string
+  publicUrl: string
+  fullName: string
+  jobTitle: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
+  profilePhotoUrl?: string | null
+  accessMode: $Enums.PersonaAccessMode
+  verifiedOnly?: boolean
+  emailVerified?: boolean
+  phoneVerified?: boolean
+  businessVerified?: boolean
+  trustScore?: number | null
+  sharingMode?: $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -2964,6 +3691,10 @@ export type PersonaUpdateWithoutUserInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2974,9 +3705,11 @@ export type PersonaUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -2986,6 +3719,7 @@ export type PersonaUpdateWithoutUserInput = {
 
 export type PersonaUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3006,6 +3740,10 @@ export type PersonaUncheckedUpdateWithoutUserInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3018,6 +3756,7 @@ export type PersonaUncheckedUpdateWithoutUserInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -3027,6 +3766,7 @@ export type PersonaUncheckedUpdateWithoutUserInput = {
 
 export type PersonaUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3047,6 +3787,10 @@ export type PersonaUncheckedUpdateManyWithoutUserInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3061,6 +3805,7 @@ export type PersonaUncheckedUpdateManyWithoutUserInput = {
 export type PersonaCreateManyAgencyProfileInput = {
   id?: string
   userId: string
+  identityId?: string | null
   type: $Enums.PersonaType
   isPrimary?: boolean
   username: string
@@ -3080,6 +3825,10 @@ export type PersonaCreateManyAgencyProfileInput = {
   trustScore?: number | null
   sharingMode?: $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: string | null
   publicWhatsappNumber?: string | null
   publicEmail?: string | null
@@ -3112,6 +3861,10 @@ export type PersonaUpdateWithoutAgencyProfileInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3121,10 +3874,12 @@ export type PersonaUpdateWithoutAgencyProfileInput = {
   socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  identity?: Prisma.IdentityUpdateOneWithoutPersonasNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
   qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
@@ -3135,6 +3890,7 @@ export type PersonaUpdateWithoutAgencyProfileInput = {
 export type PersonaUncheckedUpdateWithoutAgencyProfileInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
   username?: Prisma.StringFieldUpdateOperationsInput | string
@@ -3154,6 +3910,10 @@ export type PersonaUncheckedUpdateWithoutAgencyProfileInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3166,6 +3926,7 @@ export type PersonaUncheckedUpdateWithoutAgencyProfileInput = {
   qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
   analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
   analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
   eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
   outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
   incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
@@ -3176,6 +3937,7 @@ export type PersonaUncheckedUpdateWithoutAgencyProfileInput = {
 export type PersonaUncheckedUpdateManyWithoutAgencyProfileInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
   isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
   username?: Prisma.StringFieldUpdateOperationsInput | string
@@ -3195,6 +3957,180 @@ export type PersonaUncheckedUpdateManyWithoutAgencyProfileInput = {
   trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
   smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type PersonaCreateManyIdentityInput = {
+  id?: string
+  userId: string
+  agencyProfileId?: string | null
+  type: $Enums.PersonaType
+  isPrimary?: boolean
+  username: string
+  publicUrl: string
+  fullName: string
+  jobTitle: string
+  companyName?: string | null
+  tagline?: string | null
+  websiteUrl?: string | null
+  isVerified?: boolean
+  profilePhotoUrl?: string | null
+  accessMode: $Enums.PersonaAccessMode
+  verifiedOnly?: boolean
+  emailVerified?: boolean
+  phoneVerified?: boolean
+  businessVerified?: boolean
+  trustScore?: number | null
+  sharingMode?: $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: string | null
+  routingDisplayName?: string | null
+  isDefaultRouting?: boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: string | null
+  publicWhatsappNumber?: string | null
+  publicEmail?: string | null
+  locationAddress?: string | null
+  locationMapUrl?: string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type PersonaUpdateWithoutIdentityInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
+  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
+  verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  businessVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  agencyProfile?: Prisma.AgencyProfileUpdateOneWithoutPersonasNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutPersonasNestedInput
+  qrAccessTokens?: Prisma.QRAccessTokenUpdateManyWithoutPersonaNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUpdateManyWithoutPersonaNestedInput
+  analytics?: Prisma.PersonaAnalyticsUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUpdateManyWithoutPersonaNestedInput
+  eventParticipations?: Prisma.EventParticipantUpdateManyWithoutPersonaNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUpdateManyWithoutFromPersonaNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUpdateManyWithoutToPersonaNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUpdateManyWithoutOwnerPersonaNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUpdateManyWithoutTargetPersonaNestedInput
+}
+
+export type PersonaUncheckedUpdateWithoutIdentityInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
+  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
+  verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  businessVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  locationMapUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  socialLinks?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  socialLinksDisplayMode?: Prisma.EnumPersonaSocialLinksDisplayModeFieldUpdateOperationsInput | $Enums.PersonaSocialLinksDisplayMode
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  qrAccessTokens?: Prisma.QRAccessTokenUncheckedUpdateManyWithoutPersonaNestedInput
+  analyticsEvents?: Prisma.AnalyticsEventUncheckedUpdateManyWithoutPersonaNestedInput
+  analytics?: Prisma.PersonaAnalyticsUncheckedUpdateOneWithoutPersonaNestedInput
+  identityConversations?: Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput
+  eventParticipations?: Prisma.EventParticipantUncheckedUpdateManyWithoutPersonaNestedInput
+  outgoingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutFromPersonaNestedInput
+  incomingContactRequests?: Prisma.ContactRequestUncheckedUpdateManyWithoutToPersonaNestedInput
+  ownedRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutOwnerPersonaNestedInput
+  targetRelationships?: Prisma.ContactRelationshipUncheckedUpdateManyWithoutTargetPersonaNestedInput
+}
+
+export type PersonaUncheckedUpdateManyWithoutIdentityInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  agencyProfileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumPersonaTypeFieldUpdateOperationsInput | $Enums.PersonaType
+  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  publicUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  jobTitle?: Prisma.StringFieldUpdateOperationsInput | string
+  companyName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  tagline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  profilePhotoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  accessMode?: Prisma.EnumPersonaAccessModeFieldUpdateOperationsInput | $Enums.PersonaAccessMode
+  verifiedOnly?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phoneVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  businessVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  trustScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sharingMode?: Prisma.EnumPersonaSharingModeFieldUpdateOperationsInput | $Enums.PersonaSharingMode
+  smartCardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  routingKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  routingDisplayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDefaultRouting?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  routingRulesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publicPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicWhatsappNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3214,6 +4150,7 @@ export type PersonaUncheckedUpdateManyWithoutAgencyProfileInput = {
 export type PersonaCountOutputType = {
   qrAccessTokens: number
   analyticsEvents: number
+  identityConversations: number
   eventParticipations: number
   outgoingContactRequests: number
   incomingContactRequests: number
@@ -3224,6 +4161,7 @@ export type PersonaCountOutputType = {
 export type PersonaCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   qrAccessTokens?: boolean | PersonaCountOutputTypeCountQrAccessTokensArgs
   analyticsEvents?: boolean | PersonaCountOutputTypeCountAnalyticsEventsArgs
+  identityConversations?: boolean | PersonaCountOutputTypeCountIdentityConversationsArgs
   eventParticipations?: boolean | PersonaCountOutputTypeCountEventParticipationsArgs
   outgoingContactRequests?: boolean | PersonaCountOutputTypeCountOutgoingContactRequestsArgs
   incomingContactRequests?: boolean | PersonaCountOutputTypeCountIncomingContactRequestsArgs
@@ -3253,6 +4191,13 @@ export type PersonaCountOutputTypeCountQrAccessTokensArgs<ExtArgs extends runtim
  */
 export type PersonaCountOutputTypeCountAnalyticsEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.AnalyticsEventWhereInput
+}
+
+/**
+ * PersonaCountOutputType without action
+ */
+export type PersonaCountOutputTypeCountIdentityConversationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IdentityConversationWhereInput
 }
 
 /**
@@ -3294,6 +4239,7 @@ export type PersonaCountOutputTypeCountTargetRelationshipsArgs<ExtArgs extends r
 export type PersonaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  identityId?: boolean
   agencyProfileId?: boolean
   type?: boolean
   isPrimary?: boolean
@@ -3314,6 +4260,10 @@ export type PersonaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   trustScore?: boolean
   sharingMode?: boolean
   smartCardConfig?: boolean
+  routingKey?: boolean
+  routingDisplayName?: boolean
+  isDefaultRouting?: boolean
+  routingRulesJson?: boolean
   publicPhone?: boolean
   publicWhatsappNumber?: boolean
   publicEmail?: boolean
@@ -3324,10 +4274,12 @@ export type PersonaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   createdAt?: boolean
   updatedAt?: boolean
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
+  identity?: boolean | Prisma.Persona$identityArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   qrAccessTokens?: boolean | Prisma.Persona$qrAccessTokensArgs<ExtArgs>
   analyticsEvents?: boolean | Prisma.Persona$analyticsEventsArgs<ExtArgs>
   analytics?: boolean | Prisma.Persona$analyticsArgs<ExtArgs>
+  identityConversations?: boolean | Prisma.Persona$identityConversationsArgs<ExtArgs>
   eventParticipations?: boolean | Prisma.Persona$eventParticipationsArgs<ExtArgs>
   outgoingContactRequests?: boolean | Prisma.Persona$outgoingContactRequestsArgs<ExtArgs>
   incomingContactRequests?: boolean | Prisma.Persona$incomingContactRequestsArgs<ExtArgs>
@@ -3339,6 +4291,7 @@ export type PersonaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
 export type PersonaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  identityId?: boolean
   agencyProfileId?: boolean
   type?: boolean
   isPrimary?: boolean
@@ -3359,6 +4312,10 @@ export type PersonaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   trustScore?: boolean
   sharingMode?: boolean
   smartCardConfig?: boolean
+  routingKey?: boolean
+  routingDisplayName?: boolean
+  isDefaultRouting?: boolean
+  routingRulesJson?: boolean
   publicPhone?: boolean
   publicWhatsappNumber?: boolean
   publicEmail?: boolean
@@ -3369,12 +4326,14 @@ export type PersonaSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   createdAt?: boolean
   updatedAt?: boolean
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
+  identity?: boolean | Prisma.Persona$identityArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["persona"]>
 
 export type PersonaSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  identityId?: boolean
   agencyProfileId?: boolean
   type?: boolean
   isPrimary?: boolean
@@ -3395,6 +4354,10 @@ export type PersonaSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   trustScore?: boolean
   sharingMode?: boolean
   smartCardConfig?: boolean
+  routingKey?: boolean
+  routingDisplayName?: boolean
+  isDefaultRouting?: boolean
+  routingRulesJson?: boolean
   publicPhone?: boolean
   publicWhatsappNumber?: boolean
   publicEmail?: boolean
@@ -3405,12 +4368,14 @@ export type PersonaSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   createdAt?: boolean
   updatedAt?: boolean
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
+  identity?: boolean | Prisma.Persona$identityArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["persona"]>
 
 export type PersonaSelectScalar = {
   id?: boolean
   userId?: boolean
+  identityId?: boolean
   agencyProfileId?: boolean
   type?: boolean
   isPrimary?: boolean
@@ -3431,6 +4396,10 @@ export type PersonaSelectScalar = {
   trustScore?: boolean
   sharingMode?: boolean
   smartCardConfig?: boolean
+  routingKey?: boolean
+  routingDisplayName?: boolean
+  isDefaultRouting?: boolean
+  routingRulesJson?: boolean
   publicPhone?: boolean
   publicWhatsappNumber?: boolean
   publicEmail?: boolean
@@ -3442,13 +4411,15 @@ export type PersonaSelectScalar = {
   updatedAt?: boolean
 }
 
-export type PersonaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "agencyProfileId" | "type" | "isPrimary" | "username" | "publicUrl" | "fullName" | "jobTitle" | "companyName" | "tagline" | "websiteUrl" | "isVerified" | "profilePhotoUrl" | "accessMode" | "verifiedOnly" | "emailVerified" | "phoneVerified" | "businessVerified" | "trustScore" | "sharingMode" | "smartCardConfig" | "publicPhone" | "publicWhatsappNumber" | "publicEmail" | "locationAddress" | "locationMapUrl" | "socialLinks" | "socialLinksDisplayMode" | "createdAt" | "updatedAt", ExtArgs["result"]["persona"]>
+export type PersonaOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "identityId" | "agencyProfileId" | "type" | "isPrimary" | "username" | "publicUrl" | "fullName" | "jobTitle" | "companyName" | "tagline" | "websiteUrl" | "isVerified" | "profilePhotoUrl" | "accessMode" | "verifiedOnly" | "emailVerified" | "phoneVerified" | "businessVerified" | "trustScore" | "sharingMode" | "smartCardConfig" | "routingKey" | "routingDisplayName" | "isDefaultRouting" | "routingRulesJson" | "publicPhone" | "publicWhatsappNumber" | "publicEmail" | "locationAddress" | "locationMapUrl" | "socialLinks" | "socialLinksDisplayMode" | "createdAt" | "updatedAt", ExtArgs["result"]["persona"]>
 export type PersonaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
+  identity?: boolean | Prisma.Persona$identityArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   qrAccessTokens?: boolean | Prisma.Persona$qrAccessTokensArgs<ExtArgs>
   analyticsEvents?: boolean | Prisma.Persona$analyticsEventsArgs<ExtArgs>
   analytics?: boolean | Prisma.Persona$analyticsArgs<ExtArgs>
+  identityConversations?: boolean | Prisma.Persona$identityConversationsArgs<ExtArgs>
   eventParticipations?: boolean | Prisma.Persona$eventParticipationsArgs<ExtArgs>
   outgoingContactRequests?: boolean | Prisma.Persona$outgoingContactRequestsArgs<ExtArgs>
   incomingContactRequests?: boolean | Prisma.Persona$incomingContactRequestsArgs<ExtArgs>
@@ -3458,10 +4429,12 @@ export type PersonaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
 }
 export type PersonaIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
+  identity?: boolean | Prisma.Persona$identityArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type PersonaIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   agencyProfile?: boolean | Prisma.Persona$agencyProfileArgs<ExtArgs>
+  identity?: boolean | Prisma.Persona$identityArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
@@ -3469,10 +4442,12 @@ export type $PersonaPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   name: "Persona"
   objects: {
     agencyProfile: Prisma.$AgencyProfilePayload<ExtArgs> | null
+    identity: Prisma.$IdentityPayload<ExtArgs> | null
     user: Prisma.$UserPayload<ExtArgs>
     qrAccessTokens: Prisma.$QRAccessTokenPayload<ExtArgs>[]
     analyticsEvents: Prisma.$AnalyticsEventPayload<ExtArgs>[]
     analytics: Prisma.$PersonaAnalyticsPayload<ExtArgs> | null
+    identityConversations: Prisma.$IdentityConversationPayload<ExtArgs>[]
     eventParticipations: Prisma.$EventParticipantPayload<ExtArgs>[]
     outgoingContactRequests: Prisma.$ContactRequestPayload<ExtArgs>[]
     incomingContactRequests: Prisma.$ContactRequestPayload<ExtArgs>[]
@@ -3482,6 +4457,7 @@ export type $PersonaPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     userId: string
+    identityId: string | null
     agencyProfileId: string | null
     type: $Enums.PersonaType
     isPrimary: boolean
@@ -3502,6 +4478,10 @@ export type $PersonaPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     trustScore: number | null
     sharingMode: $Enums.PersonaSharingMode
     smartCardConfig: runtime.JsonValue | null
+    routingKey: string | null
+    routingDisplayName: string | null
+    isDefaultRouting: boolean
+    routingRulesJson: runtime.JsonValue | null
     publicPhone: string | null
     publicWhatsappNumber: string | null
     publicEmail: string | null
@@ -3906,10 +4886,12 @@ readonly fields: PersonaFieldRefs;
 export interface Prisma__PersonaClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   agencyProfile<T extends Prisma.Persona$agencyProfileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$agencyProfileArgs<ExtArgs>>): Prisma.Prisma__AgencyProfileClient<runtime.Types.Result.GetResult<Prisma.$AgencyProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  identity<T extends Prisma.Persona$identityArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$identityArgs<ExtArgs>>): Prisma.Prisma__IdentityClient<runtime.Types.Result.GetResult<Prisma.$IdentityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   qrAccessTokens<T extends Prisma.Persona$qrAccessTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$qrAccessTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QRAccessTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   analyticsEvents<T extends Prisma.Persona$analyticsEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$analyticsEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AnalyticsEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   analytics<T extends Prisma.Persona$analyticsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$analyticsArgs<ExtArgs>>): Prisma.Prisma__PersonaAnalyticsClient<runtime.Types.Result.GetResult<Prisma.$PersonaAnalyticsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  identityConversations<T extends Prisma.Persona$identityConversationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$identityConversationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdentityConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   eventParticipations<T extends Prisma.Persona$eventParticipationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$eventParticipationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   outgoingContactRequests<T extends Prisma.Persona$outgoingContactRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$outgoingContactRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContactRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   incomingContactRequests<T extends Prisma.Persona$incomingContactRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Persona$incomingContactRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContactRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -3946,6 +4928,7 @@ export interface Prisma__PersonaClient<T, Null = never, ExtArgs extends runtime.
 export interface PersonaFieldRefs {
   readonly id: Prisma.FieldRef<"Persona", 'String'>
   readonly userId: Prisma.FieldRef<"Persona", 'String'>
+  readonly identityId: Prisma.FieldRef<"Persona", 'String'>
   readonly agencyProfileId: Prisma.FieldRef<"Persona", 'String'>
   readonly type: Prisma.FieldRef<"Persona", 'PersonaType'>
   readonly isPrimary: Prisma.FieldRef<"Persona", 'Boolean'>
@@ -3966,6 +4949,10 @@ export interface PersonaFieldRefs {
   readonly trustScore: Prisma.FieldRef<"Persona", 'Int'>
   readonly sharingMode: Prisma.FieldRef<"Persona", 'PersonaSharingMode'>
   readonly smartCardConfig: Prisma.FieldRef<"Persona", 'Json'>
+  readonly routingKey: Prisma.FieldRef<"Persona", 'String'>
+  readonly routingDisplayName: Prisma.FieldRef<"Persona", 'String'>
+  readonly isDefaultRouting: Prisma.FieldRef<"Persona", 'Boolean'>
+  readonly routingRulesJson: Prisma.FieldRef<"Persona", 'Json'>
   readonly publicPhone: Prisma.FieldRef<"Persona", 'String'>
   readonly publicWhatsappNumber: Prisma.FieldRef<"Persona", 'String'>
   readonly publicEmail: Prisma.FieldRef<"Persona", 'String'>
@@ -4395,6 +5382,25 @@ export type Persona$agencyProfileArgs<ExtArgs extends runtime.Types.Extensions.I
 }
 
 /**
+ * Persona.identity
+ */
+export type Persona$identityArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Identity
+   */
+  select?: Prisma.IdentitySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Identity
+   */
+  omit?: Prisma.IdentityOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IdentityInclude<ExtArgs> | null
+  where?: Prisma.IdentityWhereInput
+}
+
+/**
  * Persona.qrAccessTokens
  */
 export type Persona$qrAccessTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4459,6 +5465,30 @@ export type Persona$analyticsArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   include?: Prisma.PersonaAnalyticsInclude<ExtArgs> | null
   where?: Prisma.PersonaAnalyticsWhereInput
+}
+
+/**
+ * Persona.identityConversations
+ */
+export type Persona$identityConversationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IdentityConversation
+   */
+  select?: Prisma.IdentityConversationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the IdentityConversation
+   */
+  omit?: Prisma.IdentityConversationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IdentityConversationInclude<ExtArgs> | null
+  where?: Prisma.IdentityConversationWhereInput
+  orderBy?: Prisma.IdentityConversationOrderByWithRelationInput | Prisma.IdentityConversationOrderByWithRelationInput[]
+  cursor?: Prisma.IdentityConversationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.IdentityConversationScalarFieldEnum | Prisma.IdentityConversationScalarFieldEnum[]
 }
 
 /**

@@ -405,6 +405,8 @@ export const ModelName = {
   AnalyticsEvent: 'AnalyticsEvent',
   PersonaAnalytics: 'PersonaAnalytics',
   Identity: 'Identity',
+  IdentityMember: 'IdentityMember',
+  IdentityOperator: 'IdentityOperator',
   IdentityConnection: 'IdentityConnection',
   ConnectionPermissionOverride: 'ConnectionPermissionOverride',
   ConnectionPermissionSnapshot: 'ConnectionPermissionSnapshot',
@@ -426,7 +428,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "agencyProfile" | "emailVerificationToken" | "passwordResetToken" | "mobileOtpChallenge" | "authSession" | "persona" | "qRAccessToken" | "event" | "eventParticipant" | "contactRequest" | "contactRelationship" | "interaction" | "followUp" | "contactMemory" | "block" | "notification" | "supportRequest" | "analyticsEvent" | "personaAnalytics" | "identity" | "identityConnection" | "connectionPermissionOverride" | "connectionPermissionSnapshot" | "contentAccessRule" | "identityConversation" | "connectionPolicyTemplate"
+    modelProps: "user" | "agencyProfile" | "emailVerificationToken" | "passwordResetToken" | "mobileOtpChallenge" | "authSession" | "persona" | "qRAccessToken" | "event" | "eventParticipant" | "contactRequest" | "contactRelationship" | "interaction" | "followUp" | "contactMemory" | "block" | "notification" | "supportRequest" | "analyticsEvent" | "personaAnalytics" | "identity" | "identityMember" | "identityOperator" | "identityConnection" | "connectionPermissionOverride" | "connectionPermissionSnapshot" | "contentAccessRule" | "identityConversation" | "connectionPolicyTemplate"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1984,6 +1986,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    IdentityMember: {
+      payload: Prisma.$IdentityMemberPayload<ExtArgs>
+      fields: Prisma.IdentityMemberFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IdentityMemberFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IdentityMemberFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPayload>
+        }
+        findFirst: {
+          args: Prisma.IdentityMemberFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IdentityMemberFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPayload>
+        }
+        findMany: {
+          args: Prisma.IdentityMemberFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPayload>[]
+        }
+        create: {
+          args: Prisma.IdentityMemberCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPayload>
+        }
+        createMany: {
+          args: Prisma.IdentityMemberCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IdentityMemberCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPayload>[]
+        }
+        delete: {
+          args: Prisma.IdentityMemberDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPayload>
+        }
+        update: {
+          args: Prisma.IdentityMemberUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPayload>
+        }
+        deleteMany: {
+          args: Prisma.IdentityMemberDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IdentityMemberUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IdentityMemberUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPayload>[]
+        }
+        upsert: {
+          args: Prisma.IdentityMemberUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityMemberPayload>
+        }
+        aggregate: {
+          args: Prisma.IdentityMemberAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIdentityMember>
+        }
+        groupBy: {
+          args: Prisma.IdentityMemberGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityMemberGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IdentityMemberCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityMemberCountAggregateOutputType> | number
+        }
+      }
+    }
+    IdentityOperator: {
+      payload: Prisma.$IdentityOperatorPayload<ExtArgs>
+      fields: Prisma.IdentityOperatorFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IdentityOperatorFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IdentityOperatorFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPayload>
+        }
+        findFirst: {
+          args: Prisma.IdentityOperatorFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IdentityOperatorFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPayload>
+        }
+        findMany: {
+          args: Prisma.IdentityOperatorFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPayload>[]
+        }
+        create: {
+          args: Prisma.IdentityOperatorCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPayload>
+        }
+        createMany: {
+          args: Prisma.IdentityOperatorCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IdentityOperatorCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPayload>[]
+        }
+        delete: {
+          args: Prisma.IdentityOperatorDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPayload>
+        }
+        update: {
+          args: Prisma.IdentityOperatorUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPayload>
+        }
+        deleteMany: {
+          args: Prisma.IdentityOperatorDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IdentityOperatorUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IdentityOperatorUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPayload>[]
+        }
+        upsert: {
+          args: Prisma.IdentityOperatorUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdentityOperatorPayload>
+        }
+        aggregate: {
+          args: Prisma.IdentityOperatorAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIdentityOperator>
+        }
+        groupBy: {
+          args: Prisma.IdentityOperatorGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityOperatorGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IdentityOperatorCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdentityOperatorCountAggregateOutputType> | number
+        }
+      }
+    }
     IdentityConnection: {
       payload: Prisma.$IdentityConnectionPayload<ExtArgs>
       fields: Prisma.IdentityConnectionFieldRefs
@@ -2565,6 +2715,7 @@ export type AuthSessionScalarFieldEnum = (typeof AuthSessionScalarFieldEnum)[key
 export const PersonaScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  identityId: 'identityId',
   agencyProfileId: 'agencyProfileId',
   type: 'type',
   isPrimary: 'isPrimary',
@@ -2585,6 +2736,10 @@ export const PersonaScalarFieldEnum = {
   trustScore: 'trustScore',
   sharingMode: 'sharingMode',
   smartCardConfig: 'smartCardConfig',
+  routingKey: 'routingKey',
+  routingDisplayName: 'routingDisplayName',
+  isDefaultRouting: 'isDefaultRouting',
+  routingRulesJson: 'routingRulesJson',
   publicPhone: 'publicPhone',
   publicWhatsappNumber: 'publicWhatsappNumber',
   publicEmail: 'publicEmail',
@@ -2820,6 +2975,35 @@ export const IdentityScalarFieldEnum = {
 export type IdentityScalarFieldEnum = (typeof IdentityScalarFieldEnum)[keyof typeof IdentityScalarFieldEnum]
 
 
+export const IdentityMemberScalarFieldEnum = {
+  id: 'id',
+  identityId: 'identityId',
+  personId: 'personId',
+  role: 'role',
+  status: 'status',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityMemberScalarFieldEnum = (typeof IdentityMemberScalarFieldEnum)[keyof typeof IdentityMemberScalarFieldEnum]
+
+
+export const IdentityOperatorScalarFieldEnum = {
+  id: 'id',
+  identityId: 'identityId',
+  personId: 'personId',
+  role: 'role',
+  status: 'status',
+  permissionsJson: 'permissionsJson',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityOperatorScalarFieldEnum = (typeof IdentityOperatorScalarFieldEnum)[keyof typeof IdentityOperatorScalarFieldEnum]
+
+
 export const IdentityConnectionScalarFieldEnum = {
   id: 'id',
   sourceIdentityId: 'sourceIdentityId',
@@ -2892,6 +3076,7 @@ export const IdentityConversationScalarFieldEnum = {
   sourceIdentityId: 'sourceIdentityId',
   targetIdentityId: 'targetIdentityId',
   connectionId: 'connectionId',
+  personaId: 'personaId',
   conversationType: 'conversationType',
   status: 'status',
   title: 'title',
@@ -3351,6 +3536,62 @@ export type ListEnumIdentityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<
 
 
 /**
+ * Reference to a field of type 'IdentityMemberRole'
+ */
+export type EnumIdentityMemberRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdentityMemberRole'>
+    
+
+
+/**
+ * Reference to a field of type 'IdentityMemberRole[]'
+ */
+export type ListEnumIdentityMemberRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdentityMemberRole[]'>
+    
+
+
+/**
+ * Reference to a field of type 'IdentityMemberStatus'
+ */
+export type EnumIdentityMemberStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdentityMemberStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'IdentityMemberStatus[]'
+ */
+export type ListEnumIdentityMemberStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdentityMemberStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'IdentityOperatorRole'
+ */
+export type EnumIdentityOperatorRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdentityOperatorRole'>
+    
+
+
+/**
+ * Reference to a field of type 'IdentityOperatorRole[]'
+ */
+export type ListEnumIdentityOperatorRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdentityOperatorRole[]'>
+    
+
+
+/**
+ * Reference to a field of type 'IdentityOperatorStatus'
+ */
+export type EnumIdentityOperatorStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdentityOperatorStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'IdentityOperatorStatus[]'
+ */
+export type ListEnumIdentityOperatorStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdentityOperatorStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'ConnectionType'
  */
 export type EnumConnectionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ConnectionType'>
@@ -3549,6 +3790,8 @@ export type GlobalOmitConfig = {
   analyticsEvent?: Prisma.AnalyticsEventOmit
   personaAnalytics?: Prisma.PersonaAnalyticsOmit
   identity?: Prisma.IdentityOmit
+  identityMember?: Prisma.IdentityMemberOmit
+  identityOperator?: Prisma.IdentityOperatorOmit
   identityConnection?: Prisma.IdentityConnectionOmit
   connectionPermissionOverride?: Prisma.ConnectionPermissionOverrideOmit
   connectionPermissionSnapshot?: Prisma.ConnectionPermissionSnapshotOmit

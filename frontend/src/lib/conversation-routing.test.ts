@@ -37,6 +37,7 @@ describe("getOrCreateConversationForConnection", () => {
       connectionId: "connection-1",
       conversationType: "DIRECT",
       createdByIdentityId: "source-1",
+      personaId: undefined,
     });
   });
 
@@ -60,6 +61,7 @@ describe("getOrCreateConversationForConnection", () => {
       connectionId: "connection-2",
       conversationType: "PROTECTED_DIRECT",
       createdByIdentityId: "source-1",
+      personaId: undefined,
     });
   });
 });

@@ -4,6 +4,7 @@ import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Contact } from "@/types/contact";
+import { routes } from "@/lib/constants/routes";
 
 import { ContactCard } from "./contact-card";
 
@@ -71,7 +72,7 @@ describe("ContactCard", () => {
 
     expect(screen.getByRole("link")).toHaveAttribute(
       "href",
-      "/app-old/contacts/relationship-id",
+      routes.app.contactDetail("relationship-id"),
     );
     expect(screen.getByText("Connected via QR")).toBeInTheDocument();
     expect(screen.getByText("1d")).toBeInTheDocument();

@@ -65,6 +65,7 @@ export interface PersonaSharingCapabilities {
 
 export interface PersonaSummary {
   id: string;
+  identityId?: string | null;
   type: PersonaType;
   isPrimary?: boolean;
   username: string;
@@ -85,6 +86,10 @@ export interface PersonaSummary {
   publicPhone: string | null;
   publicWhatsappNumber: string | null;
   publicEmail: string | null;
+  routingKey?: string | null;
+  routingDisplayName?: string | null;
+  isDefaultRouting?: boolean;
+  routingRulesJson?: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -120,6 +125,7 @@ export interface MyFastSharePayload {
 }
 
 export interface CreatePersonaInput {
+  identityId?: string;
   type: PersonaType;
   username: string;
   fullName: string;
@@ -130,6 +136,10 @@ export interface CreatePersonaInput {
   accessMode: PersonaAccessMode;
   verifiedOnly?: boolean;
   isVerified?: boolean;
+  routingKey?: string;
+  routingDisplayName?: string;
+  isDefaultRouting?: boolean;
+  routingRulesJson?: Record<string, unknown> | null;
 }
 
 export type PersonaUsernameAvailabilityCode =
@@ -154,6 +164,7 @@ export interface PersonaUsernameAvailability {
 }
 
 export interface UpdatePersonaInput {
+  identityId?: string;
   fullName?: string;
   jobTitle?: string;
   companyName?: string;
@@ -162,6 +173,10 @@ export interface UpdatePersonaInput {
   accessMode?: PersonaAccessMode;
   verifiedOnly?: boolean;
   isVerified?: boolean;
+  routingKey?: string;
+  routingDisplayName?: string;
+  isDefaultRouting?: boolean;
+  routingRulesJson?: Record<string, unknown> | null;
 }
 
 export interface UpdatePersonaSharingInput {

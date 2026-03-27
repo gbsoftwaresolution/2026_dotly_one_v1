@@ -61,6 +61,7 @@ export class IdentityConversationsController {
   ) {
     return this.identitiesService.listConversationsForIdentity({
       identityId: params.identityId,
+      personaId: query.personaId,
       status: query.status,
     });
   }

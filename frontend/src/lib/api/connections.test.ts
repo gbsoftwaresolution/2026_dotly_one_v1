@@ -50,6 +50,7 @@ describe("connectionsApi", () => {
       vi.mocked(apiRequest).mockResolvedValueOnce({
         conversationId: "conversation-1",
         connectionId: "conn-1",
+        personaId: null,
         sourceIdentityId: "source-1",
         targetIdentityId: "target-1",
         conversationType: "PROTECTED_DIRECT",
@@ -72,6 +73,7 @@ describe("connectionsApi", () => {
       expect(result).toEqual({
         conversationId: "conversation-1",
         connectionId: "conn-1",
+        personaId: null,
         sourceIdentityId: "source-1",
         targetIdentityId: "target-1",
         conversationType: "PROTECTED_DIRECT",
@@ -93,6 +95,7 @@ describe("connectionsApi", () => {
         {
           conversationId: "conversation-1",
           connectionId: "conn-1",
+          personaId: null,
           sourceIdentityId: "source-1",
           targetIdentityId: "target-1",
           conversationType: "PROTECTED_DIRECT",
@@ -117,6 +120,20 @@ describe("connectionsApi", () => {
       );
       expect(result).toHaveLength(1);
       expect(result[0]?.conversationId).toBe("conversation-1");
+    });
+
+    it("supports persona-scoped conversation listings", async () => {
+      vi.mocked(apiRequest).mockResolvedValueOnce([]);
+
+      await connectionsApi.listConversationsForIdentity(
+        "identity-1",
+        undefined,
+        "persona-1",
+      );
+
+      expect(apiRequest).toHaveBeenCalledWith(
+        "/identities/identity-1/conversations?personaId=persona-1",
+      );
     });
   });
 

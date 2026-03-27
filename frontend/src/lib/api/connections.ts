@@ -48,6 +48,7 @@ function normalizeConversationContext(data: any): IdentityConversationContext {
   return {
     conversationId: data.conversationId,
     connectionId: data.connectionId,
+    personaId: data.personaId ?? null,
     sourceIdentityId: data.sourceIdentityId,
     targetIdentityId: data.targetIdentityId,
     conversationType: data.conversationType as ConversationType,
@@ -104,8 +105,19 @@ export const connectionsApi = {
   listConversationsForIdentity: async (
     identityId: string,
     status?: ConversationStatus,
+    personaId?: string,
   ): Promise<IdentityConversationContext[]> => {
-    const suffix = status ? `?status=${status}` : "";
+    const params = new URLSearchParams();
+
+    if (status) {
+      params.set("status", status);
+    }
+
+    if (personaId) {
+      params.set("personaId", personaId);
+    }
+
+    const suffix = params.size > 0 ? `?${params.toString()}` : "";
     const data = await apiRequest<any[]>(
       `/identities/${identityId}/conversations${suffix}`,
     );
@@ -118,6 +130,7 @@ export const connectionsApi = {
     connectionId: string;
     conversationType: ConversationType;
     createdByIdentityId: string;
+    personaId?: string;
   }): Promise<IdentityConversationContext> => {
     const data = await apiRequest<any>("/identity-conversations", {
       method: "POST",
@@ -132,6 +145,7 @@ export const connectionsApi = {
     connectionId: string;
     conversationType: ConversationType;
     createdByIdentityId: string;
+    personaId?: string;
   }): Promise<IdentityConversationContext> => {
     const data = await apiRequest<any>(
       "/identity-conversations/get-or-create",

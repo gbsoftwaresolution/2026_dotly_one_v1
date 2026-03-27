@@ -7,6 +7,10 @@ export class ListConversationsForIdentityDto {
   identityId!: string;
 
   @IsOptional()
+  @IsUUID()
+  personaId?: string;
+
+  @IsOptional()
   @IsEnum(ConversationStatus)
   status?: ConversationStatus;
 }

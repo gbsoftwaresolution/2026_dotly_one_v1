@@ -123,6 +123,16 @@ export type PersonaAnalytics = Prisma.PersonaAnalyticsModel
  */
 export type Identity = Prisma.IdentityModel
 /**
+ * Model IdentityMember
+ * 
+ */
+export type IdentityMember = Prisma.IdentityMemberModel
+/**
+ * Model IdentityOperator
+ * 
+ */
+export type IdentityOperator = Prisma.IdentityOperatorModel
+/**
  * Model IdentityConnection
  * 
  */

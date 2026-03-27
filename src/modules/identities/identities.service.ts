@@ -212,6 +212,7 @@ const identityConversationSelect = {
   sourceIdentityId: true,
   targetIdentityId: true,
   connectionId: true,
+  personaId: true,
   conversationType: true,
   status: true,
   title: true,
@@ -623,6 +624,11 @@ export class IdentitiesService {
       targetIdentityType,
     );
 
+    const personaId = await this.resolveConversationPersonaId(
+      createConversationDto.personaId,
+      createConversationDto.targetIdentityId,
+    );
+
     try {
       const conversation = await this.prismaService.identityConversation.create(
         {
@@ -630,6 +636,7 @@ export class IdentitiesService {
             sourceIdentityId: createConversationDto.sourceIdentityId,
             targetIdentityId: createConversationDto.targetIdentityId,
             connectionId: createConversationDto.connectionId,
+            personaId,
             conversationType: createConversationDto.conversationType,
             status: createConversationDto.status ?? ConversationStatus.Active,
             title: createConversationDto.title ?? null,
@@ -659,6 +666,11 @@ export class IdentitiesService {
   async listConversationsForIdentity(
     listConversationsForIdentityDto: ListConversationsForIdentityDto,
   ): Promise<IdentityConversationContext[]> {
+    const personaId = await this.resolveConversationListPersonaId(
+      listConversationsForIdentityDto.identityId,
+      listConversationsForIdentityDto.personaId,
+    );
+
     const conversations =
       await this.prismaService.identityConversation.findMany({
         where: {
@@ -673,6 +685,11 @@ export class IdentitiesService {
           ...(listConversationsForIdentityDto.status
             ? {
                 status: listConversationsForIdentityDto.status,
+              }
+            : {}),
+          ...(personaId !== undefined
+            ? {
+                personaId,
               }
             : {}),
         },
@@ -702,15 +719,20 @@ export class IdentitiesService {
   async getOrCreateDirectConversation(
     getOrCreateDirectConversationDto: GetOrCreateDirectConversationDto,
   ): Promise<IdentityConversationContext> {
+    const personaId = await this.resolveConversationPersonaId(
+      getOrCreateDirectConversationDto.personaId,
+      getOrCreateDirectConversationDto.targetIdentityId,
+    );
+
     const existingConversation =
-      await this.prismaService.identityConversation.findUnique({
+      await this.prismaService.identityConversation.findFirst({
         where: {
-          sourceIdentityId_targetIdentityId_connectionId: {
-            sourceIdentityId: getOrCreateDirectConversationDto.sourceIdentityId,
-            targetIdentityId: getOrCreateDirectConversationDto.targetIdentityId,
-            connectionId: getOrCreateDirectConversationDto.connectionId,
-          },
+          sourceIdentityId: getOrCreateDirectConversationDto.sourceIdentityId,
+          targetIdentityId: getOrCreateDirectConversationDto.targetIdentityId,
+          connectionId: getOrCreateDirectConversationDto.connectionId,
+          personaId,
         },
+        orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
         select: identityConversationSelect,
       });
 
@@ -722,6 +744,7 @@ export class IdentitiesService {
       sourceIdentityId: getOrCreateDirectConversationDto.sourceIdentityId,
       targetIdentityId: getOrCreateDirectConversationDto.targetIdentityId,
       connectionId: getOrCreateDirectConversationDto.connectionId,
+      personaId: personaId ?? undefined,
       conversationType: getOrCreateDirectConversationDto.conversationType,
       createdByIdentityId: getOrCreateDirectConversationDto.createdByIdentityId,
       status: ConversationStatus.Active,
@@ -2336,6 +2359,68 @@ export class IdentitiesService {
     return identity;
   }
 
+  private async resolveConversationPersonaId(
+    personaId: string | undefined,
+    targetIdentityId: string,
+  ): Promise<string | null> {
+    if (personaId === undefined) {
+      return null;
+    }
+
+    const persona = await this.prismaService.persona.findUnique({
+      where: {
+        id: personaId,
+      },
+      select: {
+        id: true,
+        identityId: true,
+      },
+    });
+
+    if (!persona) {
+      throw new NotFoundException("Persona not found");
+    }
+
+    if (!persona.identityId || persona.identityId !== targetIdentityId) {
+      throw new BadRequestException(
+        "Conversation persona must belong to the target identity",
+      );
+    }
+
+    return persona.id;
+  }
+
+  private async resolveConversationListPersonaId(
+    identityId: string,
+    personaId: string | undefined,
+  ): Promise<string | null | undefined> {
+    if (personaId === undefined) {
+      return undefined;
+    }
+
+    const persona = await this.prismaService.persona.findUnique({
+      where: {
+        id: personaId,
+      },
+      select: {
+        id: true,
+        identityId: true,
+      },
+    });
+
+    if (!persona) {
+      throw new NotFoundException("Persona not found");
+    }
+
+    if (!persona.identityId || persona.identityId !== identityId) {
+      throw new BadRequestException(
+        "Conversation persona filter must belong to the requested identity",
+      );
+    }
+
+    return persona.id;
+  }
+
   private assertConversationMatchesConnection(
     conversation: Pick<
       CreateConversationDto,
@@ -2848,6 +2933,7 @@ function toIdentityConversationContext(
   return {
     conversationId: conversation.id,
     connectionId: conversation.connectionId,
+    personaId: conversation.personaId,
     sourceIdentityId: conversation.sourceIdentityId,
     targetIdentityId: conversation.targetIdentityId,
     conversationType: normalizeConversationType(conversation.conversationType),

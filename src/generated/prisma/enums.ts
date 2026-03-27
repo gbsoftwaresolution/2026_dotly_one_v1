@@ -285,3 +285,40 @@ export const PermissionEffect = {
 } as const
 
 export type PermissionEffect = (typeof PermissionEffect)[keyof typeof PermissionEffect]
+
+
+export const IdentityMemberRole = {
+  MEMBER: 'MEMBER',
+  MANAGER: 'MANAGER',
+  OWNER: 'OWNER'
+} as const
+
+export type IdentityMemberRole = (typeof IdentityMemberRole)[keyof typeof IdentityMemberRole]
+
+
+export const IdentityMemberStatus = {
+  ACTIVE: 'ACTIVE',
+  INVITED: 'INVITED',
+  SUSPENDED: 'SUSPENDED',
+  REMOVED: 'REMOVED'
+} as const
+
+export type IdentityMemberStatus = (typeof IdentityMemberStatus)[keyof typeof IdentityMemberStatus]
+
+
+export const IdentityOperatorRole = {
+  OPERATOR: 'OPERATOR',
+  ADMIN: 'ADMIN',
+  SUPER_ADMIN: 'SUPER_ADMIN'
+} as const
+
+export type IdentityOperatorRole = (typeof IdentityOperatorRole)[keyof typeof IdentityOperatorRole]
+
+
+export const IdentityOperatorStatus = {
+  ACTIVE: 'ACTIVE',
+  INVITED: 'INVITED',
+  REVOKED: 'REVOKED'
+} as const
+
+export type IdentityOperatorStatus = (typeof IdentityOperatorStatus)[keyof typeof IdentityOperatorStatus]

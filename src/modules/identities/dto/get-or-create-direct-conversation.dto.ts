@@ -1,4 +1,4 @@
-import { IsEnum, IsUUID } from "class-validator";
+import { IsEnum, IsOptional, IsUUID } from "class-validator";
 
 import { ConversationType } from "../identity.types";
 
@@ -11,6 +11,10 @@ export class GetOrCreateDirectConversationDto {
 
   @IsUUID()
   connectionId!: string;
+
+  @IsUUID()
+  @IsOptional()
+  personaId?: string;
 
   @IsUUID()
   createdByIdentityId!: string;

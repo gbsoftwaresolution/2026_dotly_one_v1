@@ -1,6 +1,7 @@
 import React from "react";
 
 import { describe, expect, it, vi } from "vitest";
+import { routes } from "@/lib/constants/routes";
 
 const mocks = vi.hoisted(() => ({
   requireServerSession: vi.fn(),
@@ -27,7 +28,9 @@ describe("AnalyticsPage", () => {
 
     const element = await AnalyticsPage();
 
-    expect(mocks.requireServerSession).toHaveBeenCalledWith("/app-old/analytics");
+    expect(mocks.requireServerSession).toHaveBeenCalledWith(
+      routes.app.analytics,
+    );
     expect(element).toBeTruthy();
   });
 });

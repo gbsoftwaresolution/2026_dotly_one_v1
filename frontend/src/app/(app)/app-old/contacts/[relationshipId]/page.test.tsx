@@ -7,6 +7,7 @@ import type {
   ContactDetail,
   RelationshipActivityTimelineEvent,
 } from "@/types/contact";
+import { routes } from "@/lib/constants/routes";
 
 const mocks = vi.hoisted(() => ({
   apiRequest: vi.fn(),
@@ -240,7 +241,7 @@ describe("ContactDetailPage", () => {
     render(element);
 
     expect(mocks.requireServerSession).toHaveBeenCalledWith(
-      "/app-old/contacts/relationship-id",
+      routes.app.contactDetail("relationship-id"),
     );
     expect(
       screen.getByRole("heading", { name: /^connection$/i }),

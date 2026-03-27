@@ -39,6 +39,7 @@ export async function getOrCreateConversationForConnection(input: {
   createdByIdentityId: string;
   connectionType: ConnectionType;
   relationshipType: RelationshipType;
+  personaId?: string;
 }): Promise<IdentityConversationContext> {
   return getOrCreateConversation({
     sourceIdentityId: input.sourceIdentityId,
@@ -49,5 +50,6 @@ export async function getOrCreateConversationForConnection(input: {
       relationshipType: input.relationshipType,
     }),
     createdByIdentityId: input.createdByIdentityId,
+    personaId: input.personaId,
   });
 }

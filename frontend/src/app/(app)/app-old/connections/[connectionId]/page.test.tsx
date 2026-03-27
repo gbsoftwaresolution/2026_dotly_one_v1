@@ -11,6 +11,7 @@ import {
   RelationshipType,
   TrustState,
 } from "@/types/connection";
+import { routes } from "@/lib/constants/routes";
 import { IdentityType } from "@/types/identity";
 
 const mocks = vi.hoisted(() => ({
@@ -159,9 +160,10 @@ describe("ConnectionDetailsPage", () => {
       createdByIdentityId: "identity-1",
       connectionType: ConnectionType.Trusted,
       relationshipType: RelationshipType.Friend,
+      personaId: undefined,
     });
     expect(mocks.push).toHaveBeenCalledWith(
-      "/app-old/conversations/conversation-1",
+      routes.app.conversationDetail("conversation-1"),
     );
   });
 });

@@ -20,6 +20,10 @@ export class CreateConversationDto {
   @IsUUID()
   connectionId!: string;
 
+  @IsOptional()
+  @IsUUID()
+  personaId?: string;
+
   @IsEnum(ConversationType)
   conversationType!: ConversationType;
 

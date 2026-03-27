@@ -141,6 +141,10 @@ export class SetPermissionOverrideRequestDto {
 
 export class ListConversationsForIdentityQueryDto {
   @IsOptional()
+  @IsUUID()
+  personaId?: string;
+
+  @IsOptional()
   @IsEnum(ConversationStatus)
   status?: ConversationStatus;
 }

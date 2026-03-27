@@ -2,6 +2,7 @@ import { ArrowUpRight, Plus, QrCode, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 import { IdentitySwitcher } from "@/components/identities/identity-switcher";
+import { PersonaInboxPreview } from "@/components/dashboard/persona-inbox-preview";
 import { ThemeSwitcher } from "@/components/app-shell/theme-switcher";
 import { requireServerSession } from "@/lib/auth/protected-route";
 import { userApi } from "@/lib/api/user-api";
@@ -102,6 +103,8 @@ export default async function AppHomePage() {
                 <IdentitySwitcher />
               </div>
             </div>
+
+            <PersonaInboxPreview />
 
             <div className="rounded-[1.75rem] border border-black/5 bg-foreground p-5 text-background shadow-[0_18px_40px_rgba(0,0,0,0.12)] dark:border-white/10 sm:p-6">
               <div className="flex items-start justify-between gap-4">

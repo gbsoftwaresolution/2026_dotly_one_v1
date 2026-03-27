@@ -59,6 +59,7 @@ function createConversationRecord(
     sourceIdentityId: "identity-source",
     targetIdentityId: "identity-target",
     connectionId: "connection-1",
+    personaId: null,
     conversationType: "DIRECT",
     status: "ACTIVE",
     title: null,
@@ -90,6 +91,13 @@ function createBaseService(overrides?: Partial<Record<string, unknown>>) {
         updatedAt: new Date("2026-03-26T12:00:00.000Z"),
       }),
     },
+    persona: {
+      findUnique: async ({ where }: any) => ({
+        id: where.id,
+        identityId:
+          where.id === "persona-target" ? "identity-target" : "identity-source",
+      }),
+    },
     connectionPolicyTemplate: {
       findFirst: async ({ where }: any) =>
         createTemplateRecord(
@@ -107,12 +115,13 @@ function createBaseService(overrides?: Partial<Record<string, unknown>>) {
         ...data,
       }),
       findUnique: async ({ where }: any) => {
-        if (where.id || where.sourceIdentityId_targetIdentityId_connectionId) {
+        if (where.id) {
           return null;
         }
 
         return null;
       },
+      findFirst: async () => null,
       findMany: async () => [createConversationRecord()],
       update: async ({ data }: any) => ({
         ...createConversationRecord(),
@@ -191,7 +200,7 @@ describe("conversation context binding", () => {
     let createCalls = 0;
     const service = createBaseService({
       identityConversation: {
-        findUnique: async () => createConversationRecord(),
+        findFirst: async () => createConversationRecord(),
         create: async () => {
           createCalls += 1;
           return createConversationRecord();
@@ -209,6 +218,91 @@ describe("conversation context binding", () => {
 
     assert.equal(result.conversationId, "conversation-1");
     assert.equal(createCalls, 0);
+  });
+
+  it("rejects conversation persona when it does not belong to target identity", async () => {
+    const service = createBaseService({
+      persona: {
+        findUnique: async () => ({
+          id: "persona-source",
+          identityId: "identity-source",
+        }),
+      },
+    });
+
+    await assert.rejects(
+      service.createConversation({
+        sourceIdentityId: "identity-source",
+        targetIdentityId: "identity-target",
+        connectionId: "connection-1",
+        personaId: "persona-source",
+        conversationType: ConversationType.Direct,
+        createdByIdentityId: "identity-source",
+      }),
+      /Conversation persona must belong to the target identity/,
+    );
+  });
+
+  it("getOrCreateDirectConversation is deterministic per persona thread", async () => {
+    let receivedWhere: Record<string, unknown> | null = null;
+    const service = createBaseService({
+      identityConversation: {
+        findFirst: async ({ where }: any) => {
+          receivedWhere = where;
+          return createConversationRecord({ personaId: "persona-target" });
+        },
+        create: async () =>
+          createConversationRecord({ personaId: "persona-target" }),
+      },
+    });
+
+    const result = await service.getOrCreateDirectConversation({
+      sourceIdentityId: "identity-source",
+      targetIdentityId: "identity-target",
+      connectionId: "connection-1",
+      personaId: "persona-target",
+      createdByIdentityId: "identity-source",
+      conversationType: ConversationType.Direct,
+    });
+
+    assert.equal(result.personaId, "persona-target");
+    assert.deepEqual(receivedWhere, {
+      sourceIdentityId: "identity-source",
+      targetIdentityId: "identity-target",
+      connectionId: "connection-1",
+      personaId: "persona-target",
+    });
+  });
+
+  it("listConversationsForIdentity filters by persona inbox", async () => {
+    let receivedWhere: Record<string, unknown> | null = null;
+    const service = createBaseService({
+      identityConversation: {
+        findMany: async ({ where }: any) => {
+          receivedWhere = where;
+          return [createConversationRecord({ personaId: "persona-target" })];
+        },
+      },
+    });
+
+    const result = await service.listConversationsForIdentity({
+      identityId: "identity-target",
+      personaId: "persona-target",
+    });
+
+    assert.equal(result.length, 1);
+    assert.equal(result[0]?.personaId, "persona-target");
+    assert.deepEqual(receivedWhere, {
+      OR: [
+        {
+          sourceIdentityId: "identity-target",
+        },
+        {
+          targetIdentityId: "identity-target",
+        },
+      ],
+      personaId: "persona-target",
+    });
   });
 
   it("protected conversation requires protected-capable permissions", async () => {

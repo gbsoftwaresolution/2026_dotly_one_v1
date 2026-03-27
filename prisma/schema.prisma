@@ -345,6 +345,7 @@ model AuthSession {
 model Persona {
   id                       String                @id @default(uuid()) @db.Uuid
   userId                   String                @db.Uuid
+  identityId               String?               @db.Uuid
   agencyProfileId          String?               @db.Uuid
   type                     PersonaType
   isPrimary                Boolean               @default(false)
@@ -365,6 +366,10 @@ model Persona {
   trustScore               Int?
   sharingMode              PersonaSharingMode    @default(CONTROLLED)
   smartCardConfig          Json?
+  routingKey               String?               @db.VarChar(64)
+  routingDisplayName       String?               @db.VarChar(160)
+  isDefaultRouting         Boolean               @default(false)
+  routingRulesJson         Json?
   publicPhone              String?               @db.VarChar(32)
   publicWhatsappNumber     String?               @db.VarChar(32)
   publicEmail              String?               @db.VarChar(254)
@@ -373,10 +378,12 @@ model Persona {
   socialLinks              Json?
   socialLinksDisplayMode   PersonaSocialLinksDisplayMode @default(BUTTONS)
   agencyProfile            AgencyProfile?        @relation(fields: [agencyProfileId], references: [id], onDelete: SetNull)
+  identity                 Identity?             @relation(fields: [identityId], references: [id], onDelete: SetNull)
   user                     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   qrAccessTokens           QRAccessToken[]
   analyticsEvents          AnalyticsEvent[]
   analytics                PersonaAnalytics?
+  identityConversations    IdentityConversation[]
   eventParticipations      EventParticipant[]
   outgoingContactRequests  ContactRequest[]      @relation("ContactRequestFromPersona")
   incomingContactRequests  ContactRequest[]      @relation("ContactRequestToPersona")
@@ -386,10 +393,12 @@ model Persona {
   updatedAt                DateTime              @updatedAt
 
   @@index([agencyProfileId])
+  @@index([identityId])
   @@index([userId])
   @@index([userId, isPrimary, createdAt])
   @@index([userId, updatedAt, createdAt])
   @@unique([id, userId])
+  @@unique([identityId, routingKey])
 }
 
 model QRAccessToken {
@@ -661,9 +670,72 @@ model Identity {
   createdPermissionOverrides        ConnectionPermissionOverride[] @relation("ConnectionPermissionOverrideCreatedBy")
   targetedContentAccessRules        ContentAccessRule[]            @relation("ContentAccessRuleTarget")
   createdContentAccessRules         ContentAccessRule[]            @relation("ContentAccessRuleCreatedBy")
+  personas                          Persona[]
+  members                           IdentityMember[]
+  operators                         IdentityOperator[]
 
   @@index([identityType])
   @@index([personId])
+}
+
+enum IdentityMemberRole {
+  MEMBER
+  MANAGER
+  OWNER
+}
+
+enum IdentityMemberStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+  REMOVED
+}
+
+model IdentityMember {
+  id          String               @id @default(uuid()) @db.Uuid
+  identityId  String               @db.Uuid
+  personId    String               @db.Uuid
+  role        IdentityMemberRole
+  status      IdentityMemberStatus @default(INVITED)
+  metadataJson Json?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  identity    Identity             @relation(fields: [identityId], references: [id], onDelete: Cascade)
+
+  @@unique([identityId, personId])
+  @@index([identityId])
+  @@index([personId])
+  @@index([status])
+}
+
+enum IdentityOperatorRole {
+  OPERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum IdentityOperatorStatus {
+  ACTIVE
+  INVITED
+  REVOKED
+}
+
+model IdentityOperator {
+  id            String                 @id @default(uuid()) @db.Uuid
+  identityId    String                 @db.Uuid
+  personId      String                 @db.Uuid
+  role          IdentityOperatorRole
+  status        IdentityOperatorStatus @default(INVITED)
+  permissionsJson Json?
+  metadataJson   Json?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  identity      Identity               @relation(fields: [identityId], references: [id], onDelete: Cascade)
+
+  @@unique([identityId, personId])
+  @@index([identityId])
+  @@index([personId])
+  @@index([status])
 }
 
 model IdentityConnection {
@@ -758,6 +830,7 @@ model IdentityConversation {
   sourceIdentityId    String             @db.Uuid
   targetIdentityId    String             @db.Uuid
   connectionId        String             @db.Uuid
+  personaId           String?            @db.Uuid
   conversationType    String             @db.VarChar(32)
   status              String             @db.VarChar(32)
   title               String?            @db.VarChar(160)
@@ -771,11 +844,14 @@ model IdentityConversation {
   targetIdentity      Identity           @relation("IdentityConversationTarget", fields: [targetIdentityId], references: [id], onDelete: Cascade)
   connection          IdentityConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
   createdByIdentity   Identity           @relation("IdentityConversationCreatedBy", fields: [createdByIdentityId], references: [id], onDelete: Cascade)
+  persona             Persona?           @relation(fields: [personaId], references: [id], onDelete: SetNull)
 
-  @@unique([sourceIdentityId, targetIdentityId, connectionId])
+  @@index([sourceIdentityId, targetIdentityId, connectionId])
+  @@unique([sourceIdentityId, targetIdentityId, connectionId, personaId])
   @@index([sourceIdentityId])
   @@index([targetIdentityId])
   @@index([connectionId])
+  @@index([personaId])
   @@index([status])
   @@index([conversationType])
   @@index([sourceIdentityId, status])

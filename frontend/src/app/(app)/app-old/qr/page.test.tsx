@@ -1,6 +1,7 @@
 import React from "react";
 
 import { describe, expect, it, vi } from "vitest";
+import { routes } from "@/lib/constants/routes";
 
 const mocks = vi.hoisted(() => ({
   requireServerSession: vi.fn(),
@@ -74,7 +75,7 @@ describe("QrPage", () => {
 
     const element = await QrPage();
 
-    expect(mocks.requireServerSession).toHaveBeenCalledWith("/app-old/qr");
+    expect(mocks.requireServerSession).toHaveBeenCalledWith(routes.app.qr);
     expect(mocks.meAnalytics).toHaveBeenCalledWith("token");
     expect(element).toBeTruthy();
     expect(JSON.stringify(element)).toContain("user@dotly.one");

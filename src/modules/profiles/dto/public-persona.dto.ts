@@ -15,6 +15,7 @@ import { canonicalizePublicUrl } from "../../personas/public-url";
 
 interface PublicPersonaSource {
   id?: string;
+  identityId?: string | null;
   userId?: string;
   username: string;
   publicUrl: string;

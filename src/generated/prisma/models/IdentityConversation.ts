@@ -29,6 +29,7 @@ export type IdentityConversationMinAggregateOutputType = {
   sourceIdentityId: string | null
   targetIdentityId: string | null
   connectionId: string | null
+  personaId: string | null
   conversationType: string | null
   status: string | null
   title: string | null
@@ -44,6 +45,7 @@ export type IdentityConversationMaxAggregateOutputType = {
   sourceIdentityId: string | null
   targetIdentityId: string | null
   connectionId: string | null
+  personaId: string | null
   conversationType: string | null
   status: string | null
   title: string | null
@@ -59,6 +61,7 @@ export type IdentityConversationCountAggregateOutputType = {
   sourceIdentityId: number
   targetIdentityId: number
   connectionId: number
+  personaId: number
   conversationType: number
   status: number
   title: number
@@ -77,6 +80,7 @@ export type IdentityConversationMinAggregateInputType = {
   sourceIdentityId?: true
   targetIdentityId?: true
   connectionId?: true
+  personaId?: true
   conversationType?: true
   status?: true
   title?: true
@@ -92,6 +96,7 @@ export type IdentityConversationMaxAggregateInputType = {
   sourceIdentityId?: true
   targetIdentityId?: true
   connectionId?: true
+  personaId?: true
   conversationType?: true
   status?: true
   title?: true
@@ -107,6 +112,7 @@ export type IdentityConversationCountAggregateInputType = {
   sourceIdentityId?: true
   targetIdentityId?: true
   connectionId?: true
+  personaId?: true
   conversationType?: true
   status?: true
   title?: true
@@ -196,6 +202,7 @@ export type IdentityConversationGroupByOutputType = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionId: string
+  personaId: string | null
   conversationType: string
   status: string
   title: string | null
@@ -233,6 +240,7 @@ export type IdentityConversationWhereInput = {
   sourceIdentityId?: Prisma.UuidFilter<"IdentityConversation"> | string
   targetIdentityId?: Prisma.UuidFilter<"IdentityConversation"> | string
   connectionId?: Prisma.UuidFilter<"IdentityConversation"> | string
+  personaId?: Prisma.UuidNullableFilter<"IdentityConversation"> | string | null
   conversationType?: Prisma.StringFilter<"IdentityConversation"> | string
   status?: Prisma.StringFilter<"IdentityConversation"> | string
   title?: Prisma.StringNullableFilter<"IdentityConversation"> | string | null
@@ -246,6 +254,7 @@ export type IdentityConversationWhereInput = {
   targetIdentity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
   connection?: Prisma.XOR<Prisma.IdentityConnectionScalarRelationFilter, Prisma.IdentityConnectionWhereInput>
   createdByIdentity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
+  persona?: Prisma.XOR<Prisma.PersonaNullableScalarRelationFilter, Prisma.PersonaWhereInput> | null
 }
 
 export type IdentityConversationOrderByWithRelationInput = {
@@ -253,6 +262,7 @@ export type IdentityConversationOrderByWithRelationInput = {
   sourceIdentityId?: Prisma.SortOrder
   targetIdentityId?: Prisma.SortOrder
   connectionId?: Prisma.SortOrder
+  personaId?: Prisma.SortOrderInput | Prisma.SortOrder
   conversationType?: Prisma.SortOrder
   status?: Prisma.SortOrder
   title?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -266,17 +276,19 @@ export type IdentityConversationOrderByWithRelationInput = {
   targetIdentity?: Prisma.IdentityOrderByWithRelationInput
   connection?: Prisma.IdentityConnectionOrderByWithRelationInput
   createdByIdentity?: Prisma.IdentityOrderByWithRelationInput
+  persona?: Prisma.PersonaOrderByWithRelationInput
 }
 
 export type IdentityConversationWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  sourceIdentityId_targetIdentityId_connectionId?: Prisma.IdentityConversationSourceIdentityIdTargetIdentityIdConnectionIdCompoundUniqueInput
+  sourceIdentityId_targetIdentityId_connectionId_personaId?: Prisma.IdentityConversationSourceIdentityIdTargetIdentityIdConnectionIdPersonaIdCompoundUniqueInput
   AND?: Prisma.IdentityConversationWhereInput | Prisma.IdentityConversationWhereInput[]
   OR?: Prisma.IdentityConversationWhereInput[]
   NOT?: Prisma.IdentityConversationWhereInput | Prisma.IdentityConversationWhereInput[]
   sourceIdentityId?: Prisma.UuidFilter<"IdentityConversation"> | string
   targetIdentityId?: Prisma.UuidFilter<"IdentityConversation"> | string
   connectionId?: Prisma.UuidFilter<"IdentityConversation"> | string
+  personaId?: Prisma.UuidNullableFilter<"IdentityConversation"> | string | null
   conversationType?: Prisma.StringFilter<"IdentityConversation"> | string
   status?: Prisma.StringFilter<"IdentityConversation"> | string
   title?: Prisma.StringNullableFilter<"IdentityConversation"> | string | null
@@ -290,13 +302,15 @@ export type IdentityConversationWhereUniqueInput = Prisma.AtLeast<{
   targetIdentity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
   connection?: Prisma.XOR<Prisma.IdentityConnectionScalarRelationFilter, Prisma.IdentityConnectionWhereInput>
   createdByIdentity?: Prisma.XOR<Prisma.IdentityScalarRelationFilter, Prisma.IdentityWhereInput>
-}, "id" | "sourceIdentityId_targetIdentityId_connectionId">
+  persona?: Prisma.XOR<Prisma.PersonaNullableScalarRelationFilter, Prisma.PersonaWhereInput> | null
+}, "id" | "sourceIdentityId_targetIdentityId_connectionId_personaId">
 
 export type IdentityConversationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   sourceIdentityId?: Prisma.SortOrder
   targetIdentityId?: Prisma.SortOrder
   connectionId?: Prisma.SortOrder
+  personaId?: Prisma.SortOrderInput | Prisma.SortOrder
   conversationType?: Prisma.SortOrder
   status?: Prisma.SortOrder
   title?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -319,6 +333,7 @@ export type IdentityConversationScalarWhereWithAggregatesInput = {
   sourceIdentityId?: Prisma.UuidWithAggregatesFilter<"IdentityConversation"> | string
   targetIdentityId?: Prisma.UuidWithAggregatesFilter<"IdentityConversation"> | string
   connectionId?: Prisma.UuidWithAggregatesFilter<"IdentityConversation"> | string
+  personaId?: Prisma.UuidNullableWithAggregatesFilter<"IdentityConversation"> | string | null
   conversationType?: Prisma.StringWithAggregatesFilter<"IdentityConversation"> | string
   status?: Prisma.StringWithAggregatesFilter<"IdentityConversation"> | string
   title?: Prisma.StringNullableWithAggregatesFilter<"IdentityConversation"> | string | null
@@ -344,6 +359,7 @@ export type IdentityConversationCreateInput = {
   targetIdentity: Prisma.IdentityCreateNestedOneWithoutIncomingConversationsInput
   connection: Prisma.IdentityConnectionCreateNestedOneWithoutConversationsInput
   createdByIdentity: Prisma.IdentityCreateNestedOneWithoutCreatedConversationsInput
+  persona?: Prisma.PersonaCreateNestedOneWithoutIdentityConversationsInput
 }
 
 export type IdentityConversationUncheckedCreateInput = {
@@ -351,6 +367,7 @@ export type IdentityConversationUncheckedCreateInput = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionId: string
+  personaId?: string | null
   conversationType: string
   status: string
   title?: string | null
@@ -376,6 +393,7 @@ export type IdentityConversationUpdateInput = {
   targetIdentity?: Prisma.IdentityUpdateOneRequiredWithoutIncomingConversationsNestedInput
   connection?: Prisma.IdentityConnectionUpdateOneRequiredWithoutConversationsNestedInput
   createdByIdentity?: Prisma.IdentityUpdateOneRequiredWithoutCreatedConversationsNestedInput
+  persona?: Prisma.PersonaUpdateOneWithoutIdentityConversationsNestedInput
 }
 
 export type IdentityConversationUncheckedUpdateInput = {
@@ -383,6 +401,7 @@ export type IdentityConversationUncheckedUpdateInput = {
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionId?: Prisma.StringFieldUpdateOperationsInput | string
+  personaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   conversationType?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -399,6 +418,7 @@ export type IdentityConversationCreateManyInput = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionId: string
+  personaId?: string | null
   conversationType: string
   status: string
   title?: string | null
@@ -427,6 +447,7 @@ export type IdentityConversationUncheckedUpdateManyInput = {
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionId?: Prisma.StringFieldUpdateOperationsInput | string
+  personaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   conversationType?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -448,10 +469,11 @@ export type IdentityConversationOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type IdentityConversationSourceIdentityIdTargetIdentityIdConnectionIdCompoundUniqueInput = {
+export type IdentityConversationSourceIdentityIdTargetIdentityIdConnectionIdPersonaIdCompoundUniqueInput = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionId: string
+  personaId: string
 }
 
 export type IdentityConversationCountOrderByAggregateInput = {
@@ -459,6 +481,7 @@ export type IdentityConversationCountOrderByAggregateInput = {
   sourceIdentityId?: Prisma.SortOrder
   targetIdentityId?: Prisma.SortOrder
   connectionId?: Prisma.SortOrder
+  personaId?: Prisma.SortOrder
   conversationType?: Prisma.SortOrder
   status?: Prisma.SortOrder
   title?: Prisma.SortOrder
@@ -475,6 +498,7 @@ export type IdentityConversationMaxOrderByAggregateInput = {
   sourceIdentityId?: Prisma.SortOrder
   targetIdentityId?: Prisma.SortOrder
   connectionId?: Prisma.SortOrder
+  personaId?: Prisma.SortOrder
   conversationType?: Prisma.SortOrder
   status?: Prisma.SortOrder
   title?: Prisma.SortOrder
@@ -490,6 +514,7 @@ export type IdentityConversationMinOrderByAggregateInput = {
   sourceIdentityId?: Prisma.SortOrder
   targetIdentityId?: Prisma.SortOrder
   connectionId?: Prisma.SortOrder
+  personaId?: Prisma.SortOrder
   conversationType?: Prisma.SortOrder
   status?: Prisma.SortOrder
   title?: Prisma.SortOrder
@@ -498,6 +523,48 @@ export type IdentityConversationMinOrderByAggregateInput = {
   createdByIdentityId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type IdentityConversationCreateNestedManyWithoutPersonaInput = {
+  create?: Prisma.XOR<Prisma.IdentityConversationCreateWithoutPersonaInput, Prisma.IdentityConversationUncheckedCreateWithoutPersonaInput> | Prisma.IdentityConversationCreateWithoutPersonaInput[] | Prisma.IdentityConversationUncheckedCreateWithoutPersonaInput[]
+  connectOrCreate?: Prisma.IdentityConversationCreateOrConnectWithoutPersonaInput | Prisma.IdentityConversationCreateOrConnectWithoutPersonaInput[]
+  createMany?: Prisma.IdentityConversationCreateManyPersonaInputEnvelope
+  connect?: Prisma.IdentityConversationWhereUniqueInput | Prisma.IdentityConversationWhereUniqueInput[]
+}
+
+export type IdentityConversationUncheckedCreateNestedManyWithoutPersonaInput = {
+  create?: Prisma.XOR<Prisma.IdentityConversationCreateWithoutPersonaInput, Prisma.IdentityConversationUncheckedCreateWithoutPersonaInput> | Prisma.IdentityConversationCreateWithoutPersonaInput[] | Prisma.IdentityConversationUncheckedCreateWithoutPersonaInput[]
+  connectOrCreate?: Prisma.IdentityConversationCreateOrConnectWithoutPersonaInput | Prisma.IdentityConversationCreateOrConnectWithoutPersonaInput[]
+  createMany?: Prisma.IdentityConversationCreateManyPersonaInputEnvelope
+  connect?: Prisma.IdentityConversationWhereUniqueInput | Prisma.IdentityConversationWhereUniqueInput[]
+}
+
+export type IdentityConversationUpdateManyWithoutPersonaNestedInput = {
+  create?: Prisma.XOR<Prisma.IdentityConversationCreateWithoutPersonaInput, Prisma.IdentityConversationUncheckedCreateWithoutPersonaInput> | Prisma.IdentityConversationCreateWithoutPersonaInput[] | Prisma.IdentityConversationUncheckedCreateWithoutPersonaInput[]
+  connectOrCreate?: Prisma.IdentityConversationCreateOrConnectWithoutPersonaInput | Prisma.IdentityConversationCreateOrConnectWithoutPersonaInput[]
+  upsert?: Prisma.IdentityConversationUpsertWithWhereUniqueWithoutPersonaInput | Prisma.IdentityConversationUpsertWithWhereUniqueWithoutPersonaInput[]
+  createMany?: Prisma.IdentityConversationCreateManyPersonaInputEnvelope
+  set?: Prisma.IdentityConversationWhereUniqueInput | Prisma.IdentityConversationWhereUniqueInput[]
+  disconnect?: Prisma.IdentityConversationWhereUniqueInput | Prisma.IdentityConversationWhereUniqueInput[]
+  delete?: Prisma.IdentityConversationWhereUniqueInput | Prisma.IdentityConversationWhereUniqueInput[]
+  connect?: Prisma.IdentityConversationWhereUniqueInput | Prisma.IdentityConversationWhereUniqueInput[]
+  update?: Prisma.IdentityConversationUpdateWithWhereUniqueWithoutPersonaInput | Prisma.IdentityConversationUpdateWithWhereUniqueWithoutPersonaInput[]
+  updateMany?: Prisma.IdentityConversationUpdateManyWithWhereWithoutPersonaInput | Prisma.IdentityConversationUpdateManyWithWhereWithoutPersonaInput[]
+  deleteMany?: Prisma.IdentityConversationScalarWhereInput | Prisma.IdentityConversationScalarWhereInput[]
+}
+
+export type IdentityConversationUncheckedUpdateManyWithoutPersonaNestedInput = {
+  create?: Prisma.XOR<Prisma.IdentityConversationCreateWithoutPersonaInput, Prisma.IdentityConversationUncheckedCreateWithoutPersonaInput> | Prisma.IdentityConversationCreateWithoutPersonaInput[] | Prisma.IdentityConversationUncheckedCreateWithoutPersonaInput[]
+  connectOrCreate?: Prisma.IdentityConversationCreateOrConnectWithoutPersonaInput | Prisma.IdentityConversationCreateOrConnectWithoutPersonaInput[]
+  upsert?: Prisma.IdentityConversationUpsertWithWhereUniqueWithoutPersonaInput | Prisma.IdentityConversationUpsertWithWhereUniqueWithoutPersonaInput[]
+  createMany?: Prisma.IdentityConversationCreateManyPersonaInputEnvelope
+  set?: Prisma.IdentityConversationWhereUniqueInput | Prisma.IdentityConversationWhereUniqueInput[]
+  disconnect?: Prisma.IdentityConversationWhereUniqueInput | Prisma.IdentityConversationWhereUniqueInput[]
+  delete?: Prisma.IdentityConversationWhereUniqueInput | Prisma.IdentityConversationWhereUniqueInput[]
+  connect?: Prisma.IdentityConversationWhereUniqueInput | Prisma.IdentityConversationWhereUniqueInput[]
+  update?: Prisma.IdentityConversationUpdateWithWhereUniqueWithoutPersonaInput | Prisma.IdentityConversationUpdateWithWhereUniqueWithoutPersonaInput[]
+  updateMany?: Prisma.IdentityConversationUpdateManyWithWhereWithoutPersonaInput | Prisma.IdentityConversationUpdateManyWithWhereWithoutPersonaInput[]
+  deleteMany?: Prisma.IdentityConversationScalarWhereInput | Prisma.IdentityConversationScalarWhereInput[]
 }
 
 export type IdentityConversationCreateNestedManyWithoutSourceIdentityInput = {
@@ -668,6 +735,84 @@ export type IdentityConversationUncheckedUpdateManyWithoutConnectionNestedInput 
   deleteMany?: Prisma.IdentityConversationScalarWhereInput | Prisma.IdentityConversationScalarWhereInput[]
 }
 
+export type IdentityConversationCreateWithoutPersonaInput = {
+  id?: string
+  conversationType: string
+  status: string
+  title?: string | null
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  lastResolvedAt?: Date | string | null
+  lastPermissionHash?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sourceIdentity: Prisma.IdentityCreateNestedOneWithoutOutgoingConversationsInput
+  targetIdentity: Prisma.IdentityCreateNestedOneWithoutIncomingConversationsInput
+  connection: Prisma.IdentityConnectionCreateNestedOneWithoutConversationsInput
+  createdByIdentity: Prisma.IdentityCreateNestedOneWithoutCreatedConversationsInput
+}
+
+export type IdentityConversationUncheckedCreateWithoutPersonaInput = {
+  id?: string
+  sourceIdentityId: string
+  targetIdentityId: string
+  connectionId: string
+  conversationType: string
+  status: string
+  title?: string | null
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  lastResolvedAt?: Date | string | null
+  lastPermissionHash?: string | null
+  createdByIdentityId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type IdentityConversationCreateOrConnectWithoutPersonaInput = {
+  where: Prisma.IdentityConversationWhereUniqueInput
+  create: Prisma.XOR<Prisma.IdentityConversationCreateWithoutPersonaInput, Prisma.IdentityConversationUncheckedCreateWithoutPersonaInput>
+}
+
+export type IdentityConversationCreateManyPersonaInputEnvelope = {
+  data: Prisma.IdentityConversationCreateManyPersonaInput | Prisma.IdentityConversationCreateManyPersonaInput[]
+  skipDuplicates?: boolean
+}
+
+export type IdentityConversationUpsertWithWhereUniqueWithoutPersonaInput = {
+  where: Prisma.IdentityConversationWhereUniqueInput
+  update: Prisma.XOR<Prisma.IdentityConversationUpdateWithoutPersonaInput, Prisma.IdentityConversationUncheckedUpdateWithoutPersonaInput>
+  create: Prisma.XOR<Prisma.IdentityConversationCreateWithoutPersonaInput, Prisma.IdentityConversationUncheckedCreateWithoutPersonaInput>
+}
+
+export type IdentityConversationUpdateWithWhereUniqueWithoutPersonaInput = {
+  where: Prisma.IdentityConversationWhereUniqueInput
+  data: Prisma.XOR<Prisma.IdentityConversationUpdateWithoutPersonaInput, Prisma.IdentityConversationUncheckedUpdateWithoutPersonaInput>
+}
+
+export type IdentityConversationUpdateManyWithWhereWithoutPersonaInput = {
+  where: Prisma.IdentityConversationScalarWhereInput
+  data: Prisma.XOR<Prisma.IdentityConversationUpdateManyMutationInput, Prisma.IdentityConversationUncheckedUpdateManyWithoutPersonaInput>
+}
+
+export type IdentityConversationScalarWhereInput = {
+  AND?: Prisma.IdentityConversationScalarWhereInput | Prisma.IdentityConversationScalarWhereInput[]
+  OR?: Prisma.IdentityConversationScalarWhereInput[]
+  NOT?: Prisma.IdentityConversationScalarWhereInput | Prisma.IdentityConversationScalarWhereInput[]
+  id?: Prisma.UuidFilter<"IdentityConversation"> | string
+  sourceIdentityId?: Prisma.UuidFilter<"IdentityConversation"> | string
+  targetIdentityId?: Prisma.UuidFilter<"IdentityConversation"> | string
+  connectionId?: Prisma.UuidFilter<"IdentityConversation"> | string
+  personaId?: Prisma.UuidNullableFilter<"IdentityConversation"> | string | null
+  conversationType?: Prisma.StringFilter<"IdentityConversation"> | string
+  status?: Prisma.StringFilter<"IdentityConversation"> | string
+  title?: Prisma.StringNullableFilter<"IdentityConversation"> | string | null
+  metadataJson?: Prisma.JsonNullableFilter<"IdentityConversation">
+  lastResolvedAt?: Prisma.DateTimeNullableFilter<"IdentityConversation"> | Date | string | null
+  lastPermissionHash?: Prisma.StringNullableFilter<"IdentityConversation"> | string | null
+  createdByIdentityId?: Prisma.UuidFilter<"IdentityConversation"> | string
+  createdAt?: Prisma.DateTimeFilter<"IdentityConversation"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"IdentityConversation"> | Date | string
+}
+
 export type IdentityConversationCreateWithoutSourceIdentityInput = {
   id?: string
   conversationType: string
@@ -681,12 +826,14 @@ export type IdentityConversationCreateWithoutSourceIdentityInput = {
   targetIdentity: Prisma.IdentityCreateNestedOneWithoutIncomingConversationsInput
   connection: Prisma.IdentityConnectionCreateNestedOneWithoutConversationsInput
   createdByIdentity: Prisma.IdentityCreateNestedOneWithoutCreatedConversationsInput
+  persona?: Prisma.PersonaCreateNestedOneWithoutIdentityConversationsInput
 }
 
 export type IdentityConversationUncheckedCreateWithoutSourceIdentityInput = {
   id?: string
   targetIdentityId: string
   connectionId: string
+  personaId?: string | null
   conversationType: string
   status: string
   title?: string | null
@@ -721,12 +868,14 @@ export type IdentityConversationCreateWithoutTargetIdentityInput = {
   sourceIdentity: Prisma.IdentityCreateNestedOneWithoutOutgoingConversationsInput
   connection: Prisma.IdentityConnectionCreateNestedOneWithoutConversationsInput
   createdByIdentity: Prisma.IdentityCreateNestedOneWithoutCreatedConversationsInput
+  persona?: Prisma.PersonaCreateNestedOneWithoutIdentityConversationsInput
 }
 
 export type IdentityConversationUncheckedCreateWithoutTargetIdentityInput = {
   id?: string
   sourceIdentityId: string
   connectionId: string
+  personaId?: string | null
   conversationType: string
   status: string
   title?: string | null
@@ -761,6 +910,7 @@ export type IdentityConversationCreateWithoutCreatedByIdentityInput = {
   sourceIdentity: Prisma.IdentityCreateNestedOneWithoutOutgoingConversationsInput
   targetIdentity: Prisma.IdentityCreateNestedOneWithoutIncomingConversationsInput
   connection: Prisma.IdentityConnectionCreateNestedOneWithoutConversationsInput
+  persona?: Prisma.PersonaCreateNestedOneWithoutIdentityConversationsInput
 }
 
 export type IdentityConversationUncheckedCreateWithoutCreatedByIdentityInput = {
@@ -768,6 +918,7 @@ export type IdentityConversationUncheckedCreateWithoutCreatedByIdentityInput = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionId: string
+  personaId?: string | null
   conversationType: string
   status: string
   title?: string | null
@@ -802,25 +953,6 @@ export type IdentityConversationUpdateWithWhereUniqueWithoutSourceIdentityInput 
 export type IdentityConversationUpdateManyWithWhereWithoutSourceIdentityInput = {
   where: Prisma.IdentityConversationScalarWhereInput
   data: Prisma.XOR<Prisma.IdentityConversationUpdateManyMutationInput, Prisma.IdentityConversationUncheckedUpdateManyWithoutSourceIdentityInput>
-}
-
-export type IdentityConversationScalarWhereInput = {
-  AND?: Prisma.IdentityConversationScalarWhereInput | Prisma.IdentityConversationScalarWhereInput[]
-  OR?: Prisma.IdentityConversationScalarWhereInput[]
-  NOT?: Prisma.IdentityConversationScalarWhereInput | Prisma.IdentityConversationScalarWhereInput[]
-  id?: Prisma.UuidFilter<"IdentityConversation"> | string
-  sourceIdentityId?: Prisma.UuidFilter<"IdentityConversation"> | string
-  targetIdentityId?: Prisma.UuidFilter<"IdentityConversation"> | string
-  connectionId?: Prisma.UuidFilter<"IdentityConversation"> | string
-  conversationType?: Prisma.StringFilter<"IdentityConversation"> | string
-  status?: Prisma.StringFilter<"IdentityConversation"> | string
-  title?: Prisma.StringNullableFilter<"IdentityConversation"> | string | null
-  metadataJson?: Prisma.JsonNullableFilter<"IdentityConversation">
-  lastResolvedAt?: Prisma.DateTimeNullableFilter<"IdentityConversation"> | Date | string | null
-  lastPermissionHash?: Prisma.StringNullableFilter<"IdentityConversation"> | string | null
-  createdByIdentityId?: Prisma.UuidFilter<"IdentityConversation"> | string
-  createdAt?: Prisma.DateTimeFilter<"IdentityConversation"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"IdentityConversation"> | Date | string
 }
 
 export type IdentityConversationUpsertWithWhereUniqueWithoutTargetIdentityInput = {
@@ -868,12 +1000,14 @@ export type IdentityConversationCreateWithoutConnectionInput = {
   sourceIdentity: Prisma.IdentityCreateNestedOneWithoutOutgoingConversationsInput
   targetIdentity: Prisma.IdentityCreateNestedOneWithoutIncomingConversationsInput
   createdByIdentity: Prisma.IdentityCreateNestedOneWithoutCreatedConversationsInput
+  persona?: Prisma.PersonaCreateNestedOneWithoutIdentityConversationsInput
 }
 
 export type IdentityConversationUncheckedCreateWithoutConnectionInput = {
   id?: string
   sourceIdentityId: string
   targetIdentityId: string
+  personaId?: string | null
   conversationType: string
   status: string
   title?: string | null
@@ -911,10 +1045,75 @@ export type IdentityConversationUpdateManyWithWhereWithoutConnectionInput = {
   data: Prisma.XOR<Prisma.IdentityConversationUpdateManyMutationInput, Prisma.IdentityConversationUncheckedUpdateManyWithoutConnectionInput>
 }
 
+export type IdentityConversationCreateManyPersonaInput = {
+  id?: string
+  sourceIdentityId: string
+  targetIdentityId: string
+  connectionId: string
+  conversationType: string
+  status: string
+  title?: string | null
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  lastResolvedAt?: Date | string | null
+  lastPermissionHash?: string | null
+  createdByIdentityId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type IdentityConversationUpdateWithoutPersonaInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  conversationType?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  lastResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastPermissionHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sourceIdentity?: Prisma.IdentityUpdateOneRequiredWithoutOutgoingConversationsNestedInput
+  targetIdentity?: Prisma.IdentityUpdateOneRequiredWithoutIncomingConversationsNestedInput
+  connection?: Prisma.IdentityConnectionUpdateOneRequiredWithoutConversationsNestedInput
+  createdByIdentity?: Prisma.IdentityUpdateOneRequiredWithoutCreatedConversationsNestedInput
+}
+
+export type IdentityConversationUncheckedUpdateWithoutPersonaInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
+  targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
+  connectionId?: Prisma.StringFieldUpdateOperationsInput | string
+  conversationType?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  lastResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastPermissionHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdByIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type IdentityConversationUncheckedUpdateManyWithoutPersonaInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
+  targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
+  connectionId?: Prisma.StringFieldUpdateOperationsInput | string
+  conversationType?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metadataJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  lastResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastPermissionHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdByIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type IdentityConversationCreateManySourceIdentityInput = {
   id?: string
   targetIdentityId: string
   connectionId: string
+  personaId?: string | null
   conversationType: string
   status: string
   title?: string | null
@@ -930,6 +1129,7 @@ export type IdentityConversationCreateManyTargetIdentityInput = {
   id?: string
   sourceIdentityId: string
   connectionId: string
+  personaId?: string | null
   conversationType: string
   status: string
   title?: string | null
@@ -946,6 +1146,7 @@ export type IdentityConversationCreateManyCreatedByIdentityInput = {
   sourceIdentityId: string
   targetIdentityId: string
   connectionId: string
+  personaId?: string | null
   conversationType: string
   status: string
   title?: string | null
@@ -969,12 +1170,14 @@ export type IdentityConversationUpdateWithoutSourceIdentityInput = {
   targetIdentity?: Prisma.IdentityUpdateOneRequiredWithoutIncomingConversationsNestedInput
   connection?: Prisma.IdentityConnectionUpdateOneRequiredWithoutConversationsNestedInput
   createdByIdentity?: Prisma.IdentityUpdateOneRequiredWithoutCreatedConversationsNestedInput
+  persona?: Prisma.PersonaUpdateOneWithoutIdentityConversationsNestedInput
 }
 
 export type IdentityConversationUncheckedUpdateWithoutSourceIdentityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionId?: Prisma.StringFieldUpdateOperationsInput | string
+  personaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   conversationType?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -990,6 +1193,7 @@ export type IdentityConversationUncheckedUpdateManyWithoutSourceIdentityInput = 
   id?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionId?: Prisma.StringFieldUpdateOperationsInput | string
+  personaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   conversationType?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1014,12 +1218,14 @@ export type IdentityConversationUpdateWithoutTargetIdentityInput = {
   sourceIdentity?: Prisma.IdentityUpdateOneRequiredWithoutOutgoingConversationsNestedInput
   connection?: Prisma.IdentityConnectionUpdateOneRequiredWithoutConversationsNestedInput
   createdByIdentity?: Prisma.IdentityUpdateOneRequiredWithoutCreatedConversationsNestedInput
+  persona?: Prisma.PersonaUpdateOneWithoutIdentityConversationsNestedInput
 }
 
 export type IdentityConversationUncheckedUpdateWithoutTargetIdentityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionId?: Prisma.StringFieldUpdateOperationsInput | string
+  personaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   conversationType?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1035,6 +1241,7 @@ export type IdentityConversationUncheckedUpdateManyWithoutTargetIdentityInput = 
   id?: Prisma.StringFieldUpdateOperationsInput | string
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionId?: Prisma.StringFieldUpdateOperationsInput | string
+  personaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   conversationType?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1059,6 +1266,7 @@ export type IdentityConversationUpdateWithoutCreatedByIdentityInput = {
   sourceIdentity?: Prisma.IdentityUpdateOneRequiredWithoutOutgoingConversationsNestedInput
   targetIdentity?: Prisma.IdentityUpdateOneRequiredWithoutIncomingConversationsNestedInput
   connection?: Prisma.IdentityConnectionUpdateOneRequiredWithoutConversationsNestedInput
+  persona?: Prisma.PersonaUpdateOneWithoutIdentityConversationsNestedInput
 }
 
 export type IdentityConversationUncheckedUpdateWithoutCreatedByIdentityInput = {
@@ -1066,6 +1274,7 @@ export type IdentityConversationUncheckedUpdateWithoutCreatedByIdentityInput = {
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionId?: Prisma.StringFieldUpdateOperationsInput | string
+  personaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   conversationType?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1081,6 +1290,7 @@ export type IdentityConversationUncheckedUpdateManyWithoutCreatedByIdentityInput
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   connectionId?: Prisma.StringFieldUpdateOperationsInput | string
+  personaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   conversationType?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1095,6 +1305,7 @@ export type IdentityConversationCreateManyConnectionInput = {
   id?: string
   sourceIdentityId: string
   targetIdentityId: string
+  personaId?: string | null
   conversationType: string
   status: string
   title?: string | null
@@ -1119,12 +1330,14 @@ export type IdentityConversationUpdateWithoutConnectionInput = {
   sourceIdentity?: Prisma.IdentityUpdateOneRequiredWithoutOutgoingConversationsNestedInput
   targetIdentity?: Prisma.IdentityUpdateOneRequiredWithoutIncomingConversationsNestedInput
   createdByIdentity?: Prisma.IdentityUpdateOneRequiredWithoutCreatedConversationsNestedInput
+  persona?: Prisma.PersonaUpdateOneWithoutIdentityConversationsNestedInput
 }
 
 export type IdentityConversationUncheckedUpdateWithoutConnectionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
+  personaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   conversationType?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1140,6 +1353,7 @@ export type IdentityConversationUncheckedUpdateManyWithoutConnectionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   sourceIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
   targetIdentityId?: Prisma.StringFieldUpdateOperationsInput | string
+  personaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   conversationType?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1158,6 +1372,7 @@ export type IdentityConversationSelect<ExtArgs extends runtime.Types.Extensions.
   sourceIdentityId?: boolean
   targetIdentityId?: boolean
   connectionId?: boolean
+  personaId?: boolean
   conversationType?: boolean
   status?: boolean
   title?: boolean
@@ -1171,6 +1386,7 @@ export type IdentityConversationSelect<ExtArgs extends runtime.Types.Extensions.
   targetIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   connection?: boolean | Prisma.IdentityConnectionDefaultArgs<ExtArgs>
   createdByIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
+  persona?: boolean | Prisma.IdentityConversation$personaArgs<ExtArgs>
 }, ExtArgs["result"]["identityConversation"]>
 
 export type IdentityConversationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1178,6 +1394,7 @@ export type IdentityConversationSelectCreateManyAndReturn<ExtArgs extends runtim
   sourceIdentityId?: boolean
   targetIdentityId?: boolean
   connectionId?: boolean
+  personaId?: boolean
   conversationType?: boolean
   status?: boolean
   title?: boolean
@@ -1191,6 +1408,7 @@ export type IdentityConversationSelectCreateManyAndReturn<ExtArgs extends runtim
   targetIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   connection?: boolean | Prisma.IdentityConnectionDefaultArgs<ExtArgs>
   createdByIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
+  persona?: boolean | Prisma.IdentityConversation$personaArgs<ExtArgs>
 }, ExtArgs["result"]["identityConversation"]>
 
 export type IdentityConversationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1198,6 +1416,7 @@ export type IdentityConversationSelectUpdateManyAndReturn<ExtArgs extends runtim
   sourceIdentityId?: boolean
   targetIdentityId?: boolean
   connectionId?: boolean
+  personaId?: boolean
   conversationType?: boolean
   status?: boolean
   title?: boolean
@@ -1211,6 +1430,7 @@ export type IdentityConversationSelectUpdateManyAndReturn<ExtArgs extends runtim
   targetIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   connection?: boolean | Prisma.IdentityConnectionDefaultArgs<ExtArgs>
   createdByIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
+  persona?: boolean | Prisma.IdentityConversation$personaArgs<ExtArgs>
 }, ExtArgs["result"]["identityConversation"]>
 
 export type IdentityConversationSelectScalar = {
@@ -1218,6 +1438,7 @@ export type IdentityConversationSelectScalar = {
   sourceIdentityId?: boolean
   targetIdentityId?: boolean
   connectionId?: boolean
+  personaId?: boolean
   conversationType?: boolean
   status?: boolean
   title?: boolean
@@ -1229,24 +1450,27 @@ export type IdentityConversationSelectScalar = {
   updatedAt?: boolean
 }
 
-export type IdentityConversationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sourceIdentityId" | "targetIdentityId" | "connectionId" | "conversationType" | "status" | "title" | "metadataJson" | "lastResolvedAt" | "lastPermissionHash" | "createdByIdentityId" | "createdAt" | "updatedAt", ExtArgs["result"]["identityConversation"]>
+export type IdentityConversationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sourceIdentityId" | "targetIdentityId" | "connectionId" | "personaId" | "conversationType" | "status" | "title" | "metadataJson" | "lastResolvedAt" | "lastPermissionHash" | "createdByIdentityId" | "createdAt" | "updatedAt", ExtArgs["result"]["identityConversation"]>
 export type IdentityConversationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sourceIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   targetIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   connection?: boolean | Prisma.IdentityConnectionDefaultArgs<ExtArgs>
   createdByIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
+  persona?: boolean | Prisma.IdentityConversation$personaArgs<ExtArgs>
 }
 export type IdentityConversationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sourceIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   targetIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   connection?: boolean | Prisma.IdentityConnectionDefaultArgs<ExtArgs>
   createdByIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
+  persona?: boolean | Prisma.IdentityConversation$personaArgs<ExtArgs>
 }
 export type IdentityConversationIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sourceIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   targetIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
   connection?: boolean | Prisma.IdentityConnectionDefaultArgs<ExtArgs>
   createdByIdentity?: boolean | Prisma.IdentityDefaultArgs<ExtArgs>
+  persona?: boolean | Prisma.IdentityConversation$personaArgs<ExtArgs>
 }
 
 export type $IdentityConversationPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1256,12 +1480,14 @@ export type $IdentityConversationPayload<ExtArgs extends runtime.Types.Extension
     targetIdentity: Prisma.$IdentityPayload<ExtArgs>
     connection: Prisma.$IdentityConnectionPayload<ExtArgs>
     createdByIdentity: Prisma.$IdentityPayload<ExtArgs>
+    persona: Prisma.$PersonaPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     sourceIdentityId: string
     targetIdentityId: string
     connectionId: string
+    personaId: string | null
     conversationType: string
     status: string
     title: string | null
@@ -1669,6 +1895,7 @@ export interface Prisma__IdentityConversationClient<T, Null = never, ExtArgs ext
   targetIdentity<T extends Prisma.IdentityDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IdentityDefaultArgs<ExtArgs>>): Prisma.Prisma__IdentityClient<runtime.Types.Result.GetResult<Prisma.$IdentityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   connection<T extends Prisma.IdentityConnectionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IdentityConnectionDefaultArgs<ExtArgs>>): Prisma.Prisma__IdentityConnectionClient<runtime.Types.Result.GetResult<Prisma.$IdentityConnectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   createdByIdentity<T extends Prisma.IdentityDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IdentityDefaultArgs<ExtArgs>>): Prisma.Prisma__IdentityClient<runtime.Types.Result.GetResult<Prisma.$IdentityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  persona<T extends Prisma.IdentityConversation$personaArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IdentityConversation$personaArgs<ExtArgs>>): Prisma.Prisma__PersonaClient<runtime.Types.Result.GetResult<Prisma.$PersonaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1702,6 +1929,7 @@ export interface IdentityConversationFieldRefs {
   readonly sourceIdentityId: Prisma.FieldRef<"IdentityConversation", 'String'>
   readonly targetIdentityId: Prisma.FieldRef<"IdentityConversation", 'String'>
   readonly connectionId: Prisma.FieldRef<"IdentityConversation", 'String'>
+  readonly personaId: Prisma.FieldRef<"IdentityConversation", 'String'>
   readonly conversationType: Prisma.FieldRef<"IdentityConversation", 'String'>
   readonly status: Prisma.FieldRef<"IdentityConversation", 'String'>
   readonly title: Prisma.FieldRef<"IdentityConversation", 'String'>
@@ -2109,6 +2337,25 @@ export type IdentityConversationDeleteManyArgs<ExtArgs extends runtime.Types.Ext
    * Limit how many IdentityConversations to delete.
    */
   limit?: number
+}
+
+/**
+ * IdentityConversation.persona
+ */
+export type IdentityConversation$personaArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Persona
+   */
+  select?: Prisma.PersonaSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Persona
+   */
+  omit?: Prisma.PersonaOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PersonaInclude<ExtArgs> | null
+  where?: Prisma.PersonaWhereInput
 }
 
 /**

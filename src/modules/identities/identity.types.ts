@@ -535,6 +535,7 @@ export enum ConversationStatus {
 export interface IdentityConversationContext {
   conversationId: string;
   connectionId: string;
+  personaId: string | null;
   sourceIdentityId: string;
   targetIdentityId: string;
   conversationType: ConversationType;

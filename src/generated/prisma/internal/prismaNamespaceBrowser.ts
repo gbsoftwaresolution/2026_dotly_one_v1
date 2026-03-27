@@ -72,6 +72,8 @@ export const ModelName = {
   AnalyticsEvent: 'AnalyticsEvent',
   PersonaAnalytics: 'PersonaAnalytics',
   Identity: 'Identity',
+  IdentityMember: 'IdentityMember',
+  IdentityOperator: 'IdentityOperator',
   IdentityConnection: 'IdentityConnection',
   ConnectionPermissionOverride: 'ConnectionPermissionOverride',
   ConnectionPermissionSnapshot: 'ConnectionPermissionSnapshot',
@@ -194,6 +196,7 @@ export type AuthSessionScalarFieldEnum = (typeof AuthSessionScalarFieldEnum)[key
 export const PersonaScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  identityId: 'identityId',
   agencyProfileId: 'agencyProfileId',
   type: 'type',
   isPrimary: 'isPrimary',
@@ -214,6 +217,10 @@ export const PersonaScalarFieldEnum = {
   trustScore: 'trustScore',
   sharingMode: 'sharingMode',
   smartCardConfig: 'smartCardConfig',
+  routingKey: 'routingKey',
+  routingDisplayName: 'routingDisplayName',
+  isDefaultRouting: 'isDefaultRouting',
+  routingRulesJson: 'routingRulesJson',
   publicPhone: 'publicPhone',
   publicWhatsappNumber: 'publicWhatsappNumber',
   publicEmail: 'publicEmail',
@@ -449,6 +456,35 @@ export const IdentityScalarFieldEnum = {
 export type IdentityScalarFieldEnum = (typeof IdentityScalarFieldEnum)[keyof typeof IdentityScalarFieldEnum]
 
 
+export const IdentityMemberScalarFieldEnum = {
+  id: 'id',
+  identityId: 'identityId',
+  personId: 'personId',
+  role: 'role',
+  status: 'status',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityMemberScalarFieldEnum = (typeof IdentityMemberScalarFieldEnum)[keyof typeof IdentityMemberScalarFieldEnum]
+
+
+export const IdentityOperatorScalarFieldEnum = {
+  id: 'id',
+  identityId: 'identityId',
+  personId: 'personId',
+  role: 'role',
+  status: 'status',
+  permissionsJson: 'permissionsJson',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdentityOperatorScalarFieldEnum = (typeof IdentityOperatorScalarFieldEnum)[keyof typeof IdentityOperatorScalarFieldEnum]
+
+
 export const IdentityConnectionScalarFieldEnum = {
   id: 'id',
   sourceIdentityId: 'sourceIdentityId',
@@ -521,6 +557,7 @@ export const IdentityConversationScalarFieldEnum = {
   sourceIdentityId: 'sourceIdentityId',
   targetIdentityId: 'targetIdentityId',
   connectionId: 'connectionId',
+  personaId: 'personaId',
   conversationType: 'conversationType',
   status: 'status',
   title: 'title',

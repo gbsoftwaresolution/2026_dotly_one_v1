@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ToastViewport } from "@/components/shared/toast-viewport";
+import { routes } from "@/lib/constants/routes";
 
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
@@ -366,7 +367,7 @@ describe("FollowUpsScreen", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /set follow-up/i }),
-    ).toHaveAttribute("href", "/app-old/contacts/relationship-1");
+    ).toHaveAttribute("href", routes.app.contactDetail("relationship-1"));
     expect(screen.getAllByRole("button", { name: /^done$/i })).toHaveLength(2);
   });
 });

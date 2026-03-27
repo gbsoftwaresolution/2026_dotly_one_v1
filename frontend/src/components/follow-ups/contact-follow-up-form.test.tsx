@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ToastViewport } from "@/components/shared/toast-viewport";
 import type { ContactFollowUpSummary } from "@/types/contact";
+import { routes } from "@/lib/constants/routes";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
@@ -198,7 +199,7 @@ describe("ContactFollowUpForm", () => {
     expect(screen.getByText(/2 reminders in view/i)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /open follow-ups/i }),
-    ).toHaveAttribute("href", "/app-old/follow-ups");
+    ).toHaveAttribute("href", routes.app.followUps);
     expect(mocks.create).not.toHaveBeenCalled();
   });
 

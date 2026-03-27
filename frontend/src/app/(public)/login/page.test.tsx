@@ -2,6 +2,7 @@ import React from "react";
 
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { routes } from "@/lib/constants/routes";
 
 const mocks = vi.hoisted(() => ({
   authForm: vi.fn(),
@@ -47,7 +48,9 @@ describe("LoginPage", () => {
     render(page);
 
     expect(
-      screen.getByText(/check your inbox, including spam, for your confirmation email/i),
+      screen.getByText(
+        /check your inbox, including spam, for your confirmation email/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /resend verification/i }),
@@ -55,7 +58,7 @@ describe("LoginPage", () => {
     expect(mocks.authForm).toHaveBeenCalledWith(
       expect.objectContaining({
         mode: "login",
-        redirectTo: "/app-old",
+        redirectTo: routes.app.home,
         initialEmail: "new@dotly.one",
       }),
     );
@@ -71,7 +74,9 @@ describe("LoginPage", () => {
     render(page);
 
     expect(
-      screen.getByText(/password reset complete\. log in with your new password\./i),
+      screen.getByText(
+        /password reset complete\. log in with your new password\./i,
+      ),
     ).toBeInTheDocument();
     expect(mocks.resetSessionOnLoad).toHaveBeenCalledWith(false);
   });

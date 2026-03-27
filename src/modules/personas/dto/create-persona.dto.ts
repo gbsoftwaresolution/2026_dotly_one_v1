@@ -3,12 +3,14 @@ import {
   IsBoolean,
   IsEnum,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   IsUrl,
   Matches,
   MaxLength,
   MinLength,
+  IsUUID,
   ValidateIf,
 } from "class-validator";
 
@@ -32,6 +34,10 @@ function trimNullableString(value: unknown): unknown {
 }
 
 export class CreatePersonaDto {
+  @IsOptional()
+  @IsUUID()
+  identityId?: string;
+
   @IsEnum(PersonaType)
   type!: PersonaType;
 
@@ -108,4 +114,22 @@ export class CreatePersonaDto {
   @IsOptional()
   @IsBoolean()
   isVerified?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  routingKey?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
+  routingDisplayName?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isDefaultRouting?: boolean;
+
+  @IsOptional()
+  @IsObject()
+  routingRulesJson?: Record<string, unknown> | null;
 }

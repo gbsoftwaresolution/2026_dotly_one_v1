@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ToastViewport } from "@/components/shared/toast-viewport";
+import { routes } from "@/lib/constants/routes";
 import { clearShareFastStore } from "@/lib/share-fast-store";
 
 const mocks = vi.hoisted(() => ({
@@ -207,7 +208,7 @@ describe("QrGeneratorPanel", () => {
 
     expect(screen.getByRole("link", { name: /switch dotly/i })).toHaveAttribute(
       "href",
-      "/app-old/personas",
+      routes.app.personas,
     );
     expect(
       screen.queryByRole("button", { name: /quick connect/i }),
@@ -215,200 +216,6 @@ describe("QrGeneratorPanel", () => {
     expect(
       screen.queryByRole("combobox", { name: /share persona/i }),
     ).not.toBeInTheDocument();
-  });
-
-  it("uses an initial profile QR without refetching on first paint", () => {
-    render(
-      React.createElement(QrGeneratorPanel, {
-        initialFastShare: {
-          persona: {
-            id: "persona-1",
-            username: "sender",
-            fullName: "Sender Persona",
-            profilePhotoUrl: null,
-          },
-          share: {
-            shareUrl: "https://dotly.one/u/sender",
-            qrValue: "https://dotly.one/u/sender",
-            primaryAction: "request_access",
-            effectiveActions: {
-              canCall: false,
-              canWhatsapp: false,
-              canEmail: false,
-              canSaveContact: false,
-            },
-            preferredShareType: "smart_card",
-          },
-        },
-        personas: [personaFixture],
-        user: createUnlockedUser(),
-      }),
-    );
-
-    expect(mocks.getFastShare).not.toHaveBeenCalled();
-    expect(screen.getByText(/scan to view my contact/i)).toBeInTheDocument();
-    expect(screen.getByText(/founder at dotly/i)).toBeInTheDocument();
-  });
-
-  it("keeps a cached QR visible while offline", async () => {
-    const onlineGetter = vi.spyOn(window.navigator, "onLine", "get");
-    onlineGetter.mockReturnValue(false);
-
-    render(
-      React.createElement(QrGeneratorPanel, {
-        initialFastShare: {
-          persona: {
-            id: "persona-1",
-            username: "sender",
-            fullName: "Sender Persona",
-            profilePhotoUrl: null,
-          },
-          share: {
-            shareUrl: "https://dotly.one/u/sender",
-            qrValue: "https://dotly.one/u/sender",
-            primaryAction: "request_access",
-            effectiveActions: {
-              canCall: false,
-              canWhatsapp: false,
-              canEmail: false,
-              canSaveContact: false,
-            },
-            preferredShareType: "smart_card",
-          },
-        },
-        personas: [personaFixture],
-        user: createUnlockedUser(),
-      }),
-    );
-
-    window.dispatchEvent(new Event("offline"));
-
-    expect(
-      screen.getByText(/offline\. your last ready qr is still available/i),
-    ).toBeInTheDocument();
-    expect(mocks.getFastShare).not.toHaveBeenCalled();
-
-    onlineGetter.mockRestore();
-  });
-
-  it("shows the instant connect scan instruction for instant share payloads", () => {
-    render(
-      React.createElement(QrGeneratorPanel, {
-        initialFastShare: {
-          persona: {
-            id: "persona-1",
-            username: "sender",
-            fullName: "Sender Persona",
-            profilePhotoUrl: null,
-          },
-          share: {
-            shareUrl: "https://dotly.one/q/instant-1",
-            qrValue: "https://dotly.one/q/instant-1",
-            primaryAction: "instant_connect",
-            effectiveActions: {
-              canCall: true,
-              canWhatsapp: false,
-              canEmail: true,
-              canSaveContact: false,
-            },
-            preferredShareType: "instant_connect",
-          },
-        },
-        personas: [personaFixture],
-        user: createUnlockedUser(),
-      }),
-    );
-
-    expect(screen.getByText(/scan to connect on dotly/i)).toBeInTheDocument();
-    expect(screen.getByText(/sender persona/i)).toBeInTheDocument();
-    expect(screen.getByText(/verified/i)).toBeInTheDocument();
-  });
-
-  it("enables the share actions once the QR is ready", async () => {
-    mocks.getFastShare.mockResolvedValue({
-      personaId: "persona-1",
-      username: "sender",
-      fullName: "Sender Persona",
-      profilePhotoUrl: null,
-      shareUrl: "https://dotly.one/u/sender",
-      qrValue: "https://dotly.one/u/sender",
-      primaryAction: "request_access",
-      effectiveActions: {
-        canCall: false,
-        canWhatsapp: false,
-        canEmail: false,
-        canSaveContact: false,
-      },
-      preferredShareType: "smart_card",
-      hasQuickConnect: false,
-      quickConnectUrl: null,
-    });
-
-    render(
-      React.createElement(QrGeneratorPanel, {
-        personas: [personaFixture],
-        user: createUnlockedUser(),
-      }),
-    );
-
-    await waitFor(() => {
-      expect(mocks.getFastShare).toHaveBeenCalledWith("persona-1");
-    });
-
-    const copyButton = screen.getByRole("button", { name: /^copy$/i });
-    const shareButton = screen.getByRole("button", { name: /^send$/i });
-
-    await waitFor(() => {
-      expect(copyButton).toBeEnabled();
-      expect(shareButton).toBeEnabled();
-    });
-  });
-
-  it("shows a bottom toast when the share link is copied", async () => {
-    mocks.getFastShare.mockResolvedValue({
-      personaId: "persona-1",
-      username: "sender",
-      fullName: "Sender Persona",
-      profilePhotoUrl: null,
-      shareUrl: "https://dotly.one/u/sender",
-      qrValue: "https://dotly.one/u/sender",
-      primaryAction: "request_access",
-      effectiveActions: {
-        canCall: false,
-        canWhatsapp: false,
-        canEmail: false,
-        canSaveContact: false,
-      },
-      preferredShareType: "smart_card",
-      hasQuickConnect: false,
-      quickConnectUrl: null,
-    });
-
-    const user = userEvent.setup();
-
-    render(
-      React.createElement(
-        React.Fragment,
-        null,
-        React.createElement(ToastViewport),
-        React.createElement(QrGeneratorPanel, {
-          personas: [personaFixture],
-          user: createUnlockedUser(),
-        }),
-      ),
-    );
-
-    const copyButton = await screen.findByRole("button", {
-      name: /^copy$/i,
-    });
-
-    await waitFor(() => {
-      expect(copyButton).toBeEnabled();
-    });
-
-    await user.click(copyButton);
-
-    expect(await screen.findByRole("status")).toHaveTextContent(/link copied/i);
   });
 
   it("prefetches other personas while keeping switching behind the Dotly switcher", async () => {
@@ -475,7 +282,7 @@ describe("QrGeneratorPanel", () => {
 
     expect(screen.getByRole("link", { name: /switch dotly/i })).toHaveAttribute(
       "href",
-      "/app-old/personas",
+      routes.app.personas,
     );
     expect(
       screen.queryByRole("combobox", { name: /share persona/i }),

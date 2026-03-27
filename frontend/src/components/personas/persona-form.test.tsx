@@ -3,6 +3,7 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { routes } from "@/lib/constants/routes";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
@@ -115,7 +116,7 @@ describe("PersonaForm", () => {
     expect(screen.getByText(/requests only/i)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /edit sharing settings/i }),
-    ).toHaveAttribute("href", "/app-old/personas/settings/persona-1");
+    ).toHaveAttribute("href", routes.app.personaSettings("persona-1"));
     expect(mocks.replace).not.toHaveBeenCalledWith("/app-old/personas");
   });
 

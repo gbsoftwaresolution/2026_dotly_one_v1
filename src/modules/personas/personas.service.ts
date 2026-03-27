@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
+  IdentityType as PrismaIdentityType,
   Prisma,
   PersonaAccessMode as PrismaPersonaAccessMode,
   PersonaType as PrismaPersonaType,
@@ -16,6 +17,7 @@ import {
 import { randomBytes } from "crypto";
 
 import { PersonaSmartCardPrimaryAction } from "../../common/enums/persona-smart-card-primary-action.enum";
+import { PersonaType } from "../../common/enums/persona-type.enum";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 
 import { CreatePersonaDto } from "./dto/create-persona.dto";
@@ -240,9 +242,22 @@ export class PersonasService {
           : 0;
 
       const trustState = buildStoredPersonaTrustState(user);
-      const persona = await this.prismaService.persona.create({
+      const resolvedIdentityId = await this.resolvePersonaIdentityId(
+        userId,
+        createPersonaDto,
+      );
+      const persona = await (
+        this.prismaService.persona.create as unknown as (
+          args: Record<string, unknown>,
+        ) => Promise<PrivatePersonaRecord>
+      )({
         data: {
           userId,
+          identity: {
+            connect: {
+              id: resolvedIdentityId,
+            },
+          },
           type: toPrismaPersonaType(createPersonaDto.type),
           isPrimary: existingPersonaCount === 0,
           username: createPersonaDto.username,
@@ -256,6 +271,14 @@ export class PersonasService {
           profilePhotoUrl: createPersonaDto.profilePhotoUrl ?? null,
           accessMode: toPrismaAccessMode(createPersonaDto.accessMode),
           verifiedOnly: createPersonaDto.verifiedOnly ?? false,
+          routingKey: createPersonaDto.routingKey ?? null,
+          routingDisplayName: createPersonaDto.routingDisplayName ?? null,
+          isDefaultRouting: createPersonaDto.isDefaultRouting ?? false,
+          routingRulesJson:
+            createPersonaDto.routingRulesJson === null
+              ? Prisma.JsonNull
+              : ((createPersonaDto.routingRulesJson as Prisma.InputJsonValue) ??
+                null),
           ...trustState,
         },
         select: privatePersonaSelect,
@@ -510,13 +533,22 @@ export class PersonasService {
   }
 
   async findOwnedPersonaIdentity(userId: string, personaId: string) {
-    const persona = await this.prismaService.persona.findFirst({
+    const persona = await (
+      this.prismaService.persona.findFirst as unknown as (
+        args: Record<string, unknown>,
+      ) => Promise<{
+        id: string;
+        identityId?: string | null;
+        fullName: string;
+      } | null>
+    )({
       where: {
         id: personaId,
         userId,
       },
       select: {
         id: true,
+        identityId: true,
         fullName: true,
       },
     });
@@ -527,6 +559,8 @@ export class PersonasService {
 
     return {
       id: persona.id,
+      identityId:
+        (persona as { identityId?: string | null }).identityId ?? null,
       fullName: persona.fullName,
     };
   }
@@ -563,6 +597,22 @@ export class PersonasService {
       data.type = toPrismaPersonaType(updatePersonaDto.type);
     }
 
+    if (updatePersonaDto.identityId !== undefined) {
+      (data as Prisma.PersonaUpdateInput & { identity?: unknown }).identity =
+        updatePersonaDto.identityId
+          ? {
+              connect: {
+                id: await this.ensureIdentityOwnership(
+                  userId,
+                  updatePersonaDto.identityId,
+                ),
+              },
+            }
+          : {
+              disconnect: true,
+            };
+    }
+
     if (updatePersonaDto.fullName !== undefined) {
       data.fullName = updatePersonaDto.fullName;
     }
@@ -597,6 +647,25 @@ export class PersonasService {
 
     if (updatePersonaDto.verifiedOnly !== undefined) {
       data.verifiedOnly = updatePersonaDto.verifiedOnly;
+    }
+
+    if (updatePersonaDto.routingKey !== undefined) {
+      data.routingKey = updatePersonaDto.routingKey ?? null;
+    }
+
+    if (updatePersonaDto.routingDisplayName !== undefined) {
+      data.routingDisplayName = updatePersonaDto.routingDisplayName ?? null;
+    }
+
+    if (updatePersonaDto.isDefaultRouting !== undefined) {
+      data.isDefaultRouting = updatePersonaDto.isDefaultRouting;
+    }
+
+    if (updatePersonaDto.routingRulesJson !== undefined) {
+      data.routingRulesJson =
+        updatePersonaDto.routingRulesJson === null
+          ? Prisma.JsonNull
+          : (updatePersonaDto.routingRulesJson as Prisma.InputJsonValue);
     }
 
     const nextPersona = this.buildUpdatedPersonaSnapshot(
@@ -1012,6 +1081,88 @@ export class PersonasService {
     }
 
     return persona;
+  }
+
+  private async resolvePersonaIdentityId(
+    userId: string,
+    createPersonaDto: CreatePersonaDto,
+  ): Promise<string> {
+    if (
+      typeof this.prismaService.identity?.findFirst !== "function" ||
+      typeof this.prismaService.identity?.create !== "function"
+    ) {
+      return (
+        createPersonaDto.identityId ??
+        `identity:${userId}:${createPersonaDto.type}`
+      );
+    }
+
+    if (createPersonaDto.identityId) {
+      return this.ensureIdentityOwnership(userId, createPersonaDto.identityId);
+    }
+
+    const personaIdentityType = toPrismaIdentityTypeFromPersonaType(
+      createPersonaDto.type,
+    );
+    const existingIdentity = await this.prismaService.identity.findFirst({
+      where: {
+        personId: userId,
+        identityType: personaIdentityType,
+      },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      select: {
+        id: true,
+      },
+    });
+
+    if (existingIdentity) {
+      return existingIdentity.id;
+    }
+
+    const createdIdentity = await this.prismaService.identity.create({
+      data: {
+        personId: userId,
+        identityType: personaIdentityType,
+        displayName: createPersonaDto.fullName,
+        handle: null,
+        verificationLevel: "unverified",
+        status: "active",
+        metadataJson: {
+          autoCreatedFromPersonaType: createPersonaDto.type,
+          source: "persona_create",
+        } as Prisma.InputJsonValue,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return createdIdentity.id;
+  }
+
+  private async ensureIdentityOwnership(
+    userId: string,
+    identityId: string,
+  ): Promise<string> {
+    if (typeof this.prismaService.identity?.findFirst !== "function") {
+      return identityId;
+    }
+
+    const identity = await this.prismaService.identity.findFirst({
+      where: {
+        id: identityId,
+        personId: userId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!identity) {
+      throw new BadRequestException("Identity not found for this user");
+    }
+
+    return identity.id;
   }
 
   private async assertOwner(userId: string, personaId: string): Promise<void> {
@@ -1848,4 +1999,19 @@ export class PersonasService {
             ),
     };
   }
+}
+
+function toPrismaIdentityTypeFromPersonaType(
+  personaType: PersonaType,
+): PrismaIdentityType {
+  switch (personaType) {
+    case PersonaType.Personal:
+      return PrismaIdentityType.PERSONAL;
+    case PersonaType.Professional:
+      return PrismaIdentityType.PROFESSIONAL;
+    case PersonaType.Business:
+      return PrismaIdentityType.BUSINESS;
+  }
+
+  throw new Error("Unsupported persona type");
 }
