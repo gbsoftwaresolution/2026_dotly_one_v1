@@ -53,22 +53,22 @@ export function ProtectedActionState({
 
         {/* Overlay block capture */}
         <div
-          className="absolute inset-0 z-10 flex items-center justify-center bg-white/40 backdrop-blur-[1px] rounded-xl border border-slate-200 cursor-pointer"
+          className="absolute inset-0 z-10 flex items-center justify-center bg-white/40 backdrop-blur-[1px] rounded-[24px] border border-slate-200 cursor-pointer"
           onClick={() => setShowReason(!showReason)}
           role="button"
           aria-label={`Action restricted: ${label}`}
           {...props}
         >
           {isBlocked ? (
-            <Lock className="h-6 w-6 text-slate-700 bg-white rounded-full p-1 shadow-sm" />
+            <Lock className="h-6 w-6 text-slate-700 rounded-full p-1 rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1" />
           ) : (
-            <AlertCircle className="h-6 w-6 text-amber-600 bg-white rounded-full p-1 shadow-sm" />
+            <AlertCircle className="h-6 w-6 text-amber-600 rounded-full p-1 rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1" />
           )}
         </div>
       </div>
 
       {showReason && (
-        <div className="absolute top-full left-0 z-20 mt-2 w-64 rounded-xl bg-slate-900 p-4 shadow-xl ring-1 ring-white/10 animate-in fade-in slide-in-from-top-2">
+        <div className="absolute top-full left-0 z-20 mt-2 w-64 rounded-[24px] bg-slate-900 p-4 shadow-xl ring-1 ring-white/10 animate-in fade-in slide-in-from-top-2">
           <div className="flex items-start gap-3">
             <Info className="h-5 w-5 shrink-0 text-slate-400 mt-0.5" />
             <div>

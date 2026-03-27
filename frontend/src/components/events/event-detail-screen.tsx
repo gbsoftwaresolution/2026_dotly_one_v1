@@ -63,7 +63,7 @@ function formatDateRange(startsAt: string, endsAt: string): string {
 // ---------------------------------------------------------------------------
 function StealthShield() {
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-foreground/[0.03] shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+    <div className="relative overflow-hidden rounded-[32px] bg-white/50 backdrop-blur-md shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1">
       {/* Blurred ghost rows to hint at content underneath */}
       <div
         className="pointer-events-none select-none space-y-3 p-4 blur-sm"
@@ -274,10 +274,10 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
   return (
     <div className="flex flex-col gap-5">
       {/* ── Event info card ─────────────────────────────────────────────── */}
-      <div className="rounded-3xl bg-white/82 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.05] dark:bg-zinc-950/82 dark:ring-white/[0.06]">
+      <div className="rounded-[32px] bg-white/60 backdrop-blur-3xl p-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-1 dark:bg-zinc-900/60 dark:ring-white/10">
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-3">
-            <h2 className="text-lg font-semibold text-foreground">
+            <h2 className="text-xl font-bold tracking-tight text-foreground">
               {event.name}
             </h2>
             <StatusBadge label={badge.label} tone={badge.tone} />
@@ -307,7 +307,7 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
 
       {/* ── Discovery Signal card (joined only) ─────────────────────────── */}
       {hasJoined ? (
-        <div className="rounded-3xl bg-white/82 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.05] dark:bg-zinc-950/82 dark:ring-white/[0.06]">
+        <div className="rounded-[32px] bg-white/60 backdrop-blur-3xl p-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-1 dark:bg-zinc-900/60 dark:ring-white/10">
           <DiscoveryToggle
             enabled={isDiscoverable}
             onToggle={handleDiscoveryToggle}
@@ -384,7 +384,7 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
 
       {/* ── Upcoming — discovery window not open yet ─────────────────────── */}
       {hasJoined && event.status === "upcoming" ? (
-        <div className="rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+        <div className="rounded-[32px] bg-white/50 backdrop-blur-md p-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1">
           <p className="text-center font-mono text-xs text-muted">
             Participant discovery opens once the gathering is live.
           </p>
@@ -393,7 +393,7 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
 
       {/* ── Ended ────────────────────────────────────────────────────────── */}
       {hasJoined && event.status === "ended" ? (
-        <div className="rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+        <div className="rounded-[32px] bg-white/50 backdrop-blur-md p-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1">
           <p className="text-center font-mono text-xs text-muted">
             This gathering has ended. Discovery is now closed.
           </p>

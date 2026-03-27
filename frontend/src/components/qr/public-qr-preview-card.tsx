@@ -35,7 +35,7 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
     : getShareInstruction(qr.type);
 
   return (
-    <div className="overflow-hidden rounded-3xl bg-white/95 shadow-[0_18px_50px_rgba(15,23,42,0.08)] ring-1 ring-black/[0.05] dark:bg-zinc-950/92 dark:ring-white/[0.06]">
+    <div className="overflow-hidden rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10">
       <div
         className="relative px-6 py-7"
         style={{
@@ -71,7 +71,7 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
       </div>
 
       <div className="space-y-5 px-6 py-6">
-        <div className="space-y-1 rounded-3xl bg-foreground/[0.03] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+        <div className="space-y-1 rounded-[24px] bg-white/50 backdrop-blur-md p-4 ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10">
           <p className="label-xs text-muted">
             {isQuickConnect ? "Ready to connect" : "Premium first impression"}
           </p>
@@ -92,7 +92,7 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
           </p>
         </div>
 
-        <dl className="grid gap-4 rounded-3xl bg-foreground/[0.03] p-4 text-sm shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+        <dl className="grid gap-4 rounded-[24px] bg-white/50 backdrop-blur-md p-4 text-sm ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10">
           <div className="space-y-1">
             <dt className="label-xs text-muted">Public handle</dt>
             <dd className="text-foreground">{publicHandle}</dd>

@@ -397,7 +397,7 @@ export default async function ContactDetailPage({
           <p className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest text-foreground/80">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-foreground/60 opacity-75 dark:bg-white/70"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-foreground/75 dark:bg-white"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-foreground/75 dark: rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1"></span>
             </span>
             Live connection window
           </p>
@@ -409,7 +409,7 @@ export default async function ContactDetailPage({
         </div>
       )}
       {isExpired && (
-        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/50 flex items-center justify-between">
+        <div className="rounded-2xl border border-zinc-200 rounded-[20px] bg-white/50 backdrop-blur-md dark:bg-zinc-800/50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/50 flex items-center justify-between">
           <p className="font-mono text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">
             Connection window closed
           </p>
@@ -428,7 +428,7 @@ export default async function ContactDetailPage({
               className="h-20 w-20 rounded-3xl object-cover shadow-sm sm:h-24 sm:w-24"
             />
           ) : (
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-slate-900 text-2xl font-semibold text-white shadow-sm dark:bg-white dark:text-zinc-950 sm:h-24 sm:w-24 sm:text-3xl">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-slate-900 text-2xl font-semibold tracking-tight text-white dark: dark:text-zinc-950 sm:h-24 sm:w-24 sm:text-3xl rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1">
               {targetPersona.fullName.charAt(0).toUpperCase()}
             </div>
           )}

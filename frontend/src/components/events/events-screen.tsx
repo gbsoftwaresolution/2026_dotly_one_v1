@@ -28,7 +28,7 @@ import { EventCard } from "./event-card";
 // Shared input class
 // ---------------------------------------------------------------------------
 const inputCls =
-  "min-h-[52px] w-full rounded-2xl bg-foreground/[0.03] px-4 text-[15px] font-medium text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06] dark:focus:ring-white/10";
+  "min-h-[52px] w-full rounded-2xl bg-white/50 backdrop-blur-md px-4 text-[15px] font-medium text-foreground shadow-sm ring-1 ring-inset ring-black/5 outline-none transition-all duration-500 placeholder:text-muted/50 focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/80 hover:-translate-y-1";
 
 const EVENTS_CACHE_KEY = "dotly.events-screen";
 
@@ -126,7 +126,7 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
       {!isOpen ? (
         <button
           onClick={() => setIsOpen(true)}
-          className="flex w-full items-center justify-between rounded-3xl bg-foreground/[0.03] px-5 py-5 text-sm font-semibold text-muted shadow-inner ring-1 ring-inset ring-black/5 transition-all hover:bg-foreground/[0.05] hover:text-foreground dark:bg-white/[0.045] dark:ring-white/5 dark:hover:bg-white/[0.06] active:scale-[0.98]"
+          className="flex w-full items-center justify-between rounded-[32px] bg-white/60 backdrop-blur-3xl px-6 py-6 text-sm font-bold text-foreground shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-1 hover:bg-white/80 dark:bg-zinc-900/60 dark:ring-white/10 dark:hover:bg-zinc-800/80 active:scale-[0.98]"
         >
           <span>Enter a private gathering</span>
           <span className="font-mono text-xs tracking-widest">
@@ -134,7 +134,7 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
           </span>
         </button>
       ) : (
-        <div className="rounded-3xl bg-foreground/[0.02] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5">
+        <div className="rounded-[32px] bg-white/60 backdrop-blur-3xl p-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <label htmlFor="event-code" className="label-xs text-muted">

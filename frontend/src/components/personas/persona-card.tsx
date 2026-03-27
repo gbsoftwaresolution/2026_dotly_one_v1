@@ -42,12 +42,12 @@ export function PersonaCard({ persona }: PersonaCardProps) {
   return (
     <article
       className={cn(
-        "group relative flex flex-col justify-between overflow-hidden rounded-[32px] p-7 transition-all duration-400 ease-out hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_20px_40px_rgb(0,0,0,0.4)]",
-        "bg-white/80 dark:bg-[#1A1A1A]/80 backdrop-blur-3xl saturate-[150%]",
-        "shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)]",
+        "group relative flex flex-col justify-between overflow-hidden rounded-[32px] p-7 transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.2)] dark:hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.6)]",
+        "bg-white/60 dark:bg-zinc-900/60 backdrop-blur-3xl",
+        "shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)]",
         persona.isPrimary
           ? "ring-1 ring-inset ring-blue-500/50 dark:ring-blue-400/50 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-500/5"
-          : "ring-1 ring-inset ring-black/[0.04] dark:ring-white/[0.05]",
+          : "ring-1 ring-inset ring-black/5 dark:ring-white/10",
       )}
     >
       <div className="relative z-10 flex flex-col h-full">

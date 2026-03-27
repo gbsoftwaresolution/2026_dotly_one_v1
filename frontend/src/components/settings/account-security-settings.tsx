@@ -196,13 +196,13 @@ function SectionCard({
   return (
     <section
       className={cn(
-        "rounded-[28px] bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5",
+        "rounded-[32px] bg-white/60 backdrop-blur-3xl p-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1",
         className,
       )}
     >
-      <div className="space-y-1.5 pb-4">
-        <p className="label-xs text-muted">{eyebrow}</p>
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">
+      <div className="space-y-1.5 pb-5">
+        <p className="label-xs text-muted tracking-tight">{eyebrow}</p>
+        <h2 className="text-xl font-bold tracking-tight text-foreground">
           {title}
         </h2>
       </div>
@@ -330,7 +330,7 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
       className="md:col-span-2"
     >
       <div className="space-y-5">
-        <div className="rounded-[24px] bg-foreground/[0.04] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
+        <div className="rounded-[24px] bg-white/50 backdrop-blur-md p-5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
@@ -788,7 +788,7 @@ function ChangePasswordCard() {
             type="password"
             value={currentPassword}
             onChange={(event) => setCurrentPassword(event.target.value)}
-            className="min-h-[52px] w-full rounded-[16px] bg-foreground/[0.03] px-4 text-sm text-foreground outline-none transition shadow-inner ring-1 ring-inset ring-black/5 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]"
+            className="min-h-[52px] w-full rounded-2xl bg-white/50 backdrop-blur-md px-4 text-sm text-foreground outline-none transition-all duration-500 shadow-sm ring-1 ring-inset ring-black/5 focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/80 hover:-translate-y-1"
             autoComplete="current-password"
             maxLength={72}
             required
@@ -806,7 +806,7 @@ function ChangePasswordCard() {
             type="password"
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
-            className="min-h-[52px] w-full rounded-[16px] bg-foreground/[0.03] px-4 text-sm text-foreground outline-none transition shadow-inner ring-1 ring-inset ring-black/5 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]"
+            className="min-h-[52px] w-full rounded-2xl bg-white/50 backdrop-blur-md px-4 text-sm text-foreground outline-none transition-all duration-500 shadow-sm ring-1 ring-inset ring-black/5 focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/80 hover:-translate-y-1"
             autoComplete="new-password"
             minLength={10}
             maxLength={72}
@@ -1024,7 +1024,7 @@ function MobileOtpCard({ user }: { user: UserProfile }) {
             value={phoneNumber}
             onChange={(event) => setPhoneNumber(event.target.value)}
             placeholder="+14155550199"
-            className="min-h-[52px] w-full rounded-[16px] bg-foreground/[0.03] px-4 text-sm text-foreground outline-none transition shadow-inner ring-1 ring-inset ring-black/5 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]"
+            className="min-h-[52px] w-full rounded-2xl bg-white/50 backdrop-blur-md px-4 text-sm text-foreground outline-none transition-all duration-500 shadow-sm ring-1 ring-inset ring-black/5 focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/80 hover:-translate-y-1"
             required
           />
           <p className="text-xs leading-5 text-muted">
@@ -1071,7 +1071,7 @@ function MobileOtpCard({ user }: { user: UserProfile }) {
               value={code}
               onChange={(event) => setCode(event.target.value)}
               placeholder="123456"
-              className="min-h-[52px] w-full rounded-[16px] bg-foreground/[0.03] px-4 text-sm tracking-[0.3em] text-foreground outline-none transition shadow-inner ring-1 ring-inset ring-black/5 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]"
+              className="min-h-[52px] w-full rounded-2xl bg-white/50 backdrop-blur-md px-4 text-sm tracking-[0.3em] text-foreground outline-none transition-all duration-500 shadow-sm ring-1 ring-inset ring-black/5 focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/80 hover:-translate-y-1"
               required
             />
             {otpState ? (

@@ -104,7 +104,7 @@ export function ConnectionDetailsPageRoute({
           </p>
           <button
             onClick={() => void loadData()}
-            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+            className="inline-flex items-center gap-2 rounded-[24px] bg-rose-600 px-5 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
           >
             <RefreshCw className="h-4 w-4" />
             Try again
@@ -162,7 +162,7 @@ export function ConnectionDetailsPageRoute({
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
             Connection overview
           </p>
-          <h1 className="mt-2 text-4xl font-bold text-slate-950">
+          <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-950">
             {targetIdentity?.displayName ?? "Unknown contact"}
           </h1>
           <div className="mt-2 flex items-center gap-4">
@@ -187,9 +187,9 @@ export function ConnectionDetailsPageRoute({
         </div>
       </div>
 
-      <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <section className="rounded-3xl -slate-200 rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1">
         <div className="border-b border-slate-200 px-6 py-5">
-          <h2 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
+          <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight tracking-tight text-slate-900">
             <ShieldCheck className="h-6 w-6 text-sky-700" />
             Status and privacy
           </h2>
@@ -200,7 +200,7 @@ export function ConnectionDetailsPageRoute({
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
               Status
             </p>
-            <p className="mt-2 text-xl font-semibold text-slate-900">
+            <p className="mt-2 text-xl font-semibold tracking-tight tracking-tight text-slate-900">
               {getConnectionStatusLabel(connection.status)}
             </p>
           </div>
@@ -218,7 +218,7 @@ export function ConnectionDetailsPageRoute({
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
               Connection type
             </p>
-            <p className="mt-2 text-xl font-semibold text-slate-900">
+            <p className="mt-2 text-xl font-semibold tracking-tight tracking-tight text-slate-900">
               {getConnectionTypeLabel(connection.connectionType)}
             </p>
           </div>
@@ -226,7 +226,7 @@ export function ConnectionDetailsPageRoute({
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
               Relationship
             </p>
-            <p className="mt-2 text-xl font-semibold text-slate-900">
+            <p className="mt-2 text-xl font-semibold tracking-tight tracking-tight text-slate-900">
               {getRelationshipTypeLabel(connection.relationshipType)}
             </p>
           </div>

@@ -24,7 +24,7 @@ export function ConnectionSummaryCard({
 
   return (
     <Link
-      className="block rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md"
+      className="block rounded-3xl -slate-200 p-5 transition hover:-translate-y-0.5 hover:-sky-300 hover:-md rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1"
       href={routes.app.connectionDetail(connection.id)}
     >
       <div className="flex items-start gap-4">
@@ -33,7 +33,7 @@ export function ConnectionSummaryCard({
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xl font-semibold text-slate-900">
+          <p className="truncate text-xl font-semibold tracking-tight tracking-tight text-slate-900">
             {targetName}
           </p>
           <p className="mt-1 truncate text-base text-slate-600">

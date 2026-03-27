@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { FolderOpen } from "lucide-react";
 
 export function EmptyState({
   title,
@@ -10,22 +11,13 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex animate-fade-in flex-col items-center justify-center space-y-5 rounded-card border border-dashed border-black/[0.08] bg-white/70 px-6 py-14 text-center dark:border-white/[0.06] dark:bg-white/[0.02]">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full border border-black/[0.08] bg-black/[0.03] dark:border-white/[0.06] dark:bg-white/[0.04]">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+    <div className="flex animate-fade-in flex-col items-center justify-center space-y-5 rounded-[24px] bg-white/60 backdrop-blur-3xl dark:bg-zinc-900/60 ring-1 ring-black/5 dark:ring-white/10 shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)] px-6 py-14 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/[0.03] dark:bg-white/[0.04] ring-1 ring-black/5 dark:ring-white/10 shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)]">
+        <FolderOpen
           className="h-6 w-6 text-muted"
+          strokeWidth={1.5}
           aria-hidden
-        >
-          <circle cx="12" cy="12" r="10" />
-          <path d="M8 12h8M12 8v8" />
-        </svg>
+        />
       </div>
 
       <div className="max-w-[260px] space-y-2">

@@ -83,19 +83,23 @@ export function CustomSelect({
         disabled={disabled}
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          "flex w-full items-center justify-between text-left",
+          "flex w-full items-center justify-between text-left rounded-[16px]",
+          "bg-white/60 backdrop-blur-3xl dark:bg-zinc-900/60 ring-1 ring-black/5 dark:ring-white/10",
+          "shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)]",
+          "transition-all duration-500 hover:-translate-y-0.5 px-4 py-3",
           disabled && "cursor-not-allowed opacity-60",
           className,
         )}
       >
-        <span className="block truncate">
+        <span className="block truncate font-medium">
           {selectedOption?.label ?? "Select..."}
         </span>
         <ChevronDown
           className={cn(
-            "h-4 w-4 shrink-0 text-muted transition-transform",
+            "h-4 w-4 shrink-0 text-muted transition-transform duration-500",
             isOpen && "rotate-180",
           )}
+          strokeWidth={2}
         />
       </button>
 
@@ -124,7 +128,7 @@ export function CustomSelect({
                   duration: 0.24,
                   ease: [0.16, 1, 0.3, 1] as const,
                 }}
-                className="fixed inset-x-0 bottom-0 z-50 rounded-t-[2rem] bg-white/88 px-4 pb-[max(env(safe-area-inset-bottom),1rem)] pt-3 shadow-[0_-20px_60px_rgba(0,0,0,0.18)] backdrop-blur-2xl ring-1 ring-black/5 dark:bg-zinc-950/88 dark:ring-white/10"
+                className="fixed inset-x-0 bottom-0 z-50 rounded-t-[32px] bg-white/60 backdrop-blur-3xl px-4 pb-[max(env(safe-area-inset-bottom),1rem)] pt-3 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10"
               >
                 <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-black/10 dark:bg-white/15" />
                 <div className="mb-3 flex items-start justify-between gap-3 px-1">
@@ -133,13 +137,13 @@ export function CustomSelect({
                       Select option
                     </p>
                     <p className="mt-1 text-sm text-muted">
-                      Choose the value that fits this persona best.
+                      Choose an option from the list.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="rounded-full bg-foreground/[0.04] px-3 py-1.5 text-xs font-semibold text-foreground shadow-inner ring-1 ring-black/5 dark:bg-white/[0.08] dark:ring-white/10"
+                    className="rounded-full bg-white/60 backdrop-blur-3xl dark:bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-foreground ring-1 ring-black/5 dark:ring-white/10 shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)] transition-all duration-500 hover:-translate-y-0.5"
                   >
                     Done
                   </button>
@@ -151,17 +155,17 @@ export function CustomSelect({
                       type="button"
                       onClick={() => handleSelect(option.value)}
                       className={cn(
-                        "relative flex min-h-[56px] w-full items-center justify-between rounded-[1.4rem] px-4 py-3 text-left text-[16px] font-medium transition-all active:scale-[0.985]",
+                        "relative flex min-h-[56px] w-full items-center justify-between rounded-[20px] px-4 py-3 text-left text-[16px] font-medium transition-all duration-500 active:scale-[0.985] hover:-translate-y-0.5",
                         option.value === value
-                          ? "bg-foreground/6 text-foreground shadow-inner ring-1 ring-black/5 dark:bg-white/[0.1] dark:ring-white/10"
-                          : "bg-foreground/[0.03] text-foreground/85 ring-1 ring-black/5 dark:bg-white/[0.04] dark:ring-white/10",
+                          ? "bg-foreground/5 text-foreground ring-1 ring-black/5 dark:bg-white/10 dark:ring-white/10 shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)]"
+                          : "bg-transparent text-foreground/85 hover:bg-foreground/5 dark:hover:bg-white/5",
                       )}
                     >
                       <span className="block truncate pr-3">
                         {option.label}
                       </span>
                       {option.value === value ? (
-                        <Check className="h-4 w-4 shrink-0 text-foreground" />
+                        <Check className="h-4 w-4 shrink-0 text-foreground" strokeWidth={2} />
                       ) : null}
                     </button>
                   ))}
@@ -174,7 +178,7 @@ export function CustomSelect({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -4, scale: 0.98 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] as const }}
-              className="absolute z-50 mt-2 max-h-60 w-full overflow-auto rounded-2xl bg-white/80 p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-2xl ring-1 ring-black/5 dark:bg-zinc-900/80 dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] dark:ring-white/10"
+              className="absolute z-50 mt-2 max-h-60 w-full overflow-auto rounded-[24px] bg-white/60 backdrop-blur-3xl p-2 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10"
             >
               {options.map((option) => (
                 <button
@@ -182,15 +186,15 @@ export function CustomSelect({
                   type="button"
                   onClick={() => handleSelect(option.value)}
                   className={cn(
-                    "relative flex w-full items-center justify-between rounded-[0.85rem] px-3 py-2.5 text-left text-[14px] font-medium transition-colors active:scale-[0.98]",
+                    "relative flex w-full items-center justify-between rounded-[16px] px-3 py-2.5 text-left text-[14px] font-medium transition-all duration-500 active:scale-[0.98] hover:-translate-y-0.5",
                     option.value === value
-                      ? "bg-foreground/5 text-foreground dark:bg-white/10"
-                      : "text-foreground/80 hover:bg-foreground/[0.04] hover:text-foreground dark:hover:bg-white/5",
+                      ? "bg-foreground/5 text-foreground dark:bg-white/10 ring-1 ring-black/5 dark:ring-white/10 shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)]"
+                      : "text-foreground/80 hover:bg-foreground/5 hover:text-foreground dark:hover:bg-white/5",
                   )}
                 >
                   <span className="block truncate">{option.label}</span>
                   {option.value === value ? (
-                    <Check className="h-4 w-4 shrink-0 text-foreground" />
+                    <Check className="h-4 w-4 shrink-0 text-foreground" strokeWidth={2} />
                   ) : null}
                 </button>
               ))}

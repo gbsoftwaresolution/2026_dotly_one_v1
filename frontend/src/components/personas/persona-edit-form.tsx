@@ -88,9 +88,9 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
   }
 
   const inputCls =
-    "min-h-[52px] w-full rounded-2xl bg-foreground/[0.03] px-4 text-[15px] font-medium text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06] dark:focus:ring-white/10";
+    "min-h-[52px] w-full rounded-2xl bg-white/50 backdrop-blur-md px-4 py-3.5 text-[15px] font-medium text-foreground shadow-sm ring-1 ring-inset ring-black/5 outline-none transition-all duration-500 placeholder:text-muted/50 focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/80 hover:-translate-y-1";
   const sectionCls =
-    "space-y-4 rounded-[1.5rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-[1.75rem] sm:p-5";
+    "space-y-4 flex flex-col p-6 overflow-hidden rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1 gap-2";
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
@@ -239,7 +239,7 @@ export function PersonaEditForm({ persona }: PersonaEditFormProps) {
             id="edit-tagline"
             maxLength={120}
             rows={3}
-            className="w-full resize-none rounded-2xl bg-foreground/[0.03] px-4 py-3.5 text-[15px] font-medium text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06] dark:focus:ring-white/10"
+            className="w-full resize-none rounded-2xl bg-white/50 backdrop-blur-md px-4 py-3.5 text-[15px] font-medium text-foreground shadow-sm ring-1 ring-inset ring-black/5 outline-none transition-all duration-500 placeholder:text-muted/50 focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/80 hover:-translate-y-1"
             value={formState.tagline ?? ""}
             onChange={(event) => updateField("tagline", event.target.value)}
           />

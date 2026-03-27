@@ -46,10 +46,10 @@ export function EventCard({ event }: EventCardProps) {
 
   return (
     <Link href={routes.app.eventDetail(event.id)} className="block">
-      <div className="p-5 transition-colors hover:bg-black/[0.02] active:bg-black/5 dark:hover:bg-white/[0.02] dark:active:bg-white/5">
+      <div className="rounded-[32px] bg-white/60 backdrop-blur-3xl p-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-1 hover:bg-white/80 dark:bg-zinc-900/60 dark:ring-white/10 dark:hover:bg-zinc-800/80">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 space-y-1">
-            <p className="truncate text-base font-semibold text-foreground">
+            <p className="truncate text-xl tracking-tight font-bold text-foreground">
               {event.name}
             </p>
             <p className="font-mono text-xs text-muted">

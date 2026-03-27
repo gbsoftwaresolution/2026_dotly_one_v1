@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -241,12 +242,12 @@ export function RequestAccessPanel({
 
   if (isSmartCardMisconfigured) {
     return (
-      <Card className="space-y-4 border-amber-300/50 bg-amber-50/80 dark:border-status-warning/25 dark:bg-status-warning/10">
+      <Card className="rounded-[32px] space-y-4 border-amber-300/50 bg-white/60 backdrop-blur-3xl dark:border-status-warning/25 dark:bg-zinc-900/60 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:ring-white/10">
         <div className="space-y-2">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-amber-700 dark:text-status-warning">
             Profile unavailable
           </p>
-          <h2 className="font-sans text-lg font-semibold text-foreground">
+          <h2 className="font-sans text-lg font-semibold tracking-tight text-foreground">
             This profile isn&apos;t ready right now
           </h2>
           <p className="text-sm leading-6 text-muted">Try again later.</p>
@@ -257,12 +258,12 @@ export function RequestAccessPanel({
 
   if (!isAuthenticated) {
     return (
-      <Card className="space-y-4">
+      <Card className="rounded-[32px] space-y-4 bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10">
         <div className="space-y-2">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
             Curated access
           </p>
-          <h2 className="font-sans text-lg font-semibold text-foreground">
+          <h2 className="font-sans text-lg font-semibold tracking-tight text-foreground">
             Log in to connect with me
           </h2>
           <p className="text-sm leading-6 text-muted">
@@ -282,12 +283,12 @@ export function RequestAccessPanel({
 
   if (isOwnProfile) {
     return (
-      <Card className="space-y-4">
+      <Card className="rounded-[32px] space-y-4 bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10">
         <div className="space-y-2">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
             Your profile
           </p>
-          <h2 className="font-sans text-lg font-semibold text-foreground">
+          <h2 className="font-sans text-lg font-semibold tracking-tight text-foreground">
             This is your Dotly
           </h2>
           <p className="text-sm leading-6 text-muted">
@@ -303,12 +304,12 @@ export function RequestAccessPanel({
 
   if (!supportsRequestAccess) {
     return (
-      <Card className="space-y-4 bg-foreground/[0.03] shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+      <Card className="rounded-[32px] space-y-4 bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-inset ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10">
         <div className="space-y-2">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
             Profile access
           </p>
-          <h2 className="font-sans text-lg font-semibold text-foreground">
+          <h2 className="font-sans text-lg font-semibold tracking-tight text-foreground">
             {smartCardPrimaryActionHeading}
           </h2>
           <p className="text-sm leading-6 text-muted">
@@ -357,7 +358,7 @@ export function RequestAccessPanel({
   }
 
   return (
-    <Card className="space-y-5">
+    <Card className="rounded-[32px] space-y-5 bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10">
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
           Curated access
@@ -395,7 +396,7 @@ export function RequestAccessPanel({
                   Connect from
                 </label>
                 {selectedPersona ? (
-                  <div className="rounded-2xl bg-foreground/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+                  <div className="rounded-[24px] bg-white/50 backdrop-blur-md px-4 py-3 ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10">
                     <p className="text-sm font-semibold text-foreground">
                       {selectedPersona.fullName}
                     </p>
@@ -406,7 +407,7 @@ export function RequestAccessPanel({
                 ) : null}
                 <CustomSelect
                   id="fromPersonaId"
-                  className="min-h-[48px] w-full rounded-2xl bg-foreground/[0.03] px-4 font-sans text-sm text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]"
+                  className="min-h-[48px] w-full rounded-[24px] bg-white/50 backdrop-blur-md px-4 font-sans text-sm text-foreground ring-1 ring-inset ring-black/5 outline-none transition-all focus:bg-white/60 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/70"
                   value={selectedPersonaId}
                   onChange={(value) => setSelectedPersonaId(value)}
                   disabled={isSubmitting || Boolean(successMessage)}
@@ -429,7 +430,7 @@ export function RequestAccessPanel({
                 id="reason"
                 maxLength={280}
                 rows={3}
-                className="w-full resize-none rounded-2xl bg-foreground/[0.03] px-4 py-3 font-sans text-sm text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]"
+                className="w-full resize-none rounded-[24px] bg-white/50 backdrop-blur-md px-4 py-3 font-sans text-sm text-foreground ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-white/60 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/70"
                 placeholder="Add context they will recognize later (optional)"
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
@@ -463,7 +464,7 @@ export function RequestAccessPanel({
               isSuccess
               disabled
             >
-              Request sent ✓
+              Request sent <Check className="ml-1 inline h-4 w-4" />
             </PrimaryButton>
           ) : (
             <PrimaryButton

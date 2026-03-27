@@ -219,7 +219,7 @@ export function ProtectedConversationScreen({
           </p>
           <button
             onClick={() => void load()}
-            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+            className="inline-flex items-center gap-2 rounded-[24px] bg-rose-600 px-5 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
           >
             <RefreshCw className="h-4 w-4" />
             Try again
@@ -509,7 +509,7 @@ export function ProtectedConversationScreen({
               </h2>
             </div>
 
-            <div className="mt-4 rounded-[1.5rem] border border-black/5 bg-white/70 p-4 shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:border-white/10 dark:bg-black/20">
+            <div className="mt-4 rounded-[1.5rem] border border-black/5 bg-white/70 p-4 shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:border-white/10 dark:bg-black/20 rounded-[20px] transition-all duration-300 hover:bg-white/40 dark:hover:bg-zinc-800/40">
               <div className="rounded-[1.25rem] border border-dashed border-black/10 bg-black/[0.025] px-4 py-4 dark:border-white/10 dark:bg-white/[0.03]">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-black/[0.04] ring-1 ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
@@ -697,7 +697,7 @@ export function ProtectedConversationScreen({
 
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-[2rem]">
+            <h1 className="text-2xl font-bold tracking-tight tracking-tight tracking-tight text-foreground sm:text-[2rem]">
               Conversation with{" "}
               {connection.targetIdentity?.displayName || "Unknown"}
             </h1>
@@ -776,7 +776,7 @@ export function ProtectedConversationScreen({
                     "Restricted because protected mode is on.",
                   )}
                 >
-                  <button className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50">
+                  <button className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1">
                     <Forward className="h-3 w-3" />
                     Forward
                   </button>
@@ -790,7 +790,7 @@ export function ProtectedConversationScreen({
                     "Unavailable until protected mode changes.",
                   )}
                 >
-                  <button className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50">
+                  <button className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-50 rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1">
                     <FileText className="h-3 w-3" />
                     Save copy
                   </button>
@@ -801,7 +801,7 @@ export function ProtectedConversationScreen({
         </div>
 
         <div className="mt-8 flex gap-3 border-t border-slate-100 pt-6">
-          <button className="flex-1 rounded-xl bg-slate-100 px-4 py-3 text-left text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <button className="flex-1 rounded-[24px] bg-slate-100 px-4 py-3 text-left text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             Message composer unavailable in this preview
           </button>
 
@@ -813,12 +813,12 @@ export function ProtectedConversationScreen({
               "Unavailable until protected mode changes.",
             )}
           >
-            <button className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200">
+            <button className="flex h-12 w-12 items-center justify-center rounded-[24px] bg-slate-100 text-slate-600 hover:bg-slate-200">
               <Video className="h-5 w-5" />
             </button>
           </ProtectedActionState>
 
-          <button className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">
+          <button className="flex h-12 w-12 items-center justify-center rounded-[24px] bg-indigo-600 text-white hover:bg-indigo-700">
             <Send className="h-5 w-5" />
           </button>
         </div>

@@ -80,13 +80,13 @@ export function SideMenu({ isOpen, onClose }: SideMenuProps) {
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className={cn(
               "fixed inset-y-0 left-0 z-[120] w-[85vw] max-w-[340px] sm:hidden flex flex-col",
-              "bg-white/80 dark:bg-[#0A0A0A]/80 backdrop-blur-[40px] saturate-[200%]",
-              "border-r shadow-[0.5px_0_0_rgba(0,0,0,0.15)] border-transparent dark:shadow-[0.5px_0_0_rgba(255,255,255,0.15)]",
+              "bg-white/60 dark:bg-zinc-950/60 backdrop-blur-3xl saturate-[200%] transition-all duration-300",
+              "border-r shadow-[0.5px_0_0_rgba(0,0,0,0.15)] border-black/5 dark:border-white/10 dark:shadow-[0.5px_0_0_rgba(255,255,255,0.15)]",
               "safe-pt safe-pb",
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 min-h-[44px] border-b border-black/[0.08] dark:border-white/[0.08]">
+            <div className="flex items-center justify-between px-5 py-4 min-h-[44px] border-b border-black/5 dark:border-white/10 transition-all duration-300">
               <div className="flex items-center gap-3">
                 <div className="h-[32px] w-[32px] rounded-full bg-gradient-to-b from-black/80 to-black dark:from-white/90 dark:to-white/70 flex items-center justify-center shadow-sm">
                   <span className="text-white dark:text-black font-bold text-[15px] tracking-tight leading-none pt-[1px]">
@@ -120,10 +120,10 @@ export function SideMenu({ isOpen, onClose }: SideMenuProps) {
                     href={item.href}
                     onClick={onClose}
                     className={cn(
-                      "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 active:scale-[0.98]",
+                      "flex items-center gap-4 px-4 py-3.5 rounded-[16px] transition-all duration-300 active:scale-[0.98]",
                       isActive
-                        ? "bg-black/[0.06] dark:bg-white/[0.1] text-foreground"
-                        : "hover:bg-black/[0.03] dark:hover:bg-white/[0.04] text-muted-foreground/90 hover:text-foreground",
+                        ? "bg-black/5 dark:bg-white/10 text-foreground"
+                        : "hover:bg-black/5 dark:hover:bg-white/5 text-muted-foreground/90 hover:text-foreground",
                     )}
                   >
                     <Icon

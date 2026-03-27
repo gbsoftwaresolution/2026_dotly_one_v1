@@ -49,7 +49,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
     : [];
 
   return (
-    <Card className="overflow-hidden p-0 shadow-shell">
+    <Card className="rounded-[32px] overflow-hidden bg-white/60 backdrop-blur-3xl p-0 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10">
       <div
         className="relative overflow-hidden px-6 py-7"
         style={{
@@ -135,7 +135,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
         </div>
 
         {profile.sharingMode === "smart_card" ? (
-          <div className="space-y-3 rounded-3xl bg-foreground/[0.03] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+          <div className="space-y-3 rounded-[24px] bg-white/50 backdrop-blur-md p-4 ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10">
             <div className="space-y-1">
               <p className="label-xs text-muted">Connect with me</p>
               <p className="text-sm leading-6 text-foreground/80">
@@ -163,14 +163,14 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
             ) : null}
           </div>
         ) : (
-          <div className="space-y-3 rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+          <div className="space-y-3 rounded-[24px] bg-white/50 backdrop-blur-md p-5 ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10">
             <div className="space-y-1">
               <p className="label-xs text-muted">Curated access</p>
               <p className="text-sm leading-6 text-muted">
                 {dotlyPositioning.publicProfile.controlledHelper}
               </p>
             </div>
-            <div className="grid gap-3 rounded-[1.4rem] bg-white/80 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 sm:grid-cols-[1fr_auto] sm:items-center dark:bg-zinc-950/80 dark:ring-white/[0.06]">
+            <div className="grid gap-3 rounded-[20px] bg-white/50 backdrop-blur-md p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 sm:grid-cols-[1fr_auto] sm:items-center dark:bg-zinc-800/50 dark:ring-white/[0.06]">
               <div className="space-y-1">
                 <p className="text-sm font-semibold text-foreground">
                   A better first step than sharing a number

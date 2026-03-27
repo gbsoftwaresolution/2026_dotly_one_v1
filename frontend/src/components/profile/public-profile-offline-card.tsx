@@ -11,7 +11,7 @@ export function PublicProfileOfflineCard({
   const tagline = profile.tagline?.trim() || "Reconnect to load live actions.";
 
   return (
-    <div className="w-full rounded-[2rem] border border-amber-300/40 bg-amber-50/80 p-6 text-center shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-amber-400/20 dark:bg-amber-500/10">
+    <div className="w-full rounded-[32px] border border-amber-300/40 bg-white/60 backdrop-blur-3xl p-6 text-center shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 dark:border-amber-400/20">
       <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-amber-700 dark:text-amber-300">
         Offline preview
       </p>

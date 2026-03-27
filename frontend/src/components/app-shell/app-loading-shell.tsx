@@ -3,7 +3,7 @@ import { SkeletonCard } from "@/components/shared/skeleton-card";
 export function AppLoadingShell() {
   return (
     <div className="mx-auto flex min-h-screen-dvh max-w-app flex-col bg-transparent">
-      <header className="sticky top-0 z-header border-b border-black/[0.06] bg-white/75 backdrop-blur-2xl dark:border-white/[0.06] dark:bg-bgOnyx/75">
+      <header className="sticky top-0 z-header border-b border-black/5 bg-white/60 backdrop-blur-3xl dark:border-white/10 dark:bg-zinc-950/60 transition-all duration-300">
         <div className="safe-pt" />
         <div className="flex h-14 items-center justify-between px-4 sm:px-5">
           <div className="min-w-0 flex-1 space-y-2">
@@ -44,7 +44,7 @@ export function AppLoadingShell() {
         </div>
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-nav border-t border-black/[0.06] bg-white/80 backdrop-blur-2xl dark:border-white/[0.06] dark:bg-bgOnyx/80">
+      <div className="fixed inset-x-0 bottom-0 z-nav border-t border-black/5 bg-white/60 backdrop-blur-3xl dark:border-white/10 dark:bg-zinc-950/60 transition-all duration-300">
         <div className="safe-pl safe-pr mx-auto max-w-app px-2 py-1.5">
           <div className="flex gap-1 overflow-x-auto">
             {Array.from({ length: 5 }).map((_, index) => (

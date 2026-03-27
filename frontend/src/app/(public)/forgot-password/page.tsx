@@ -54,16 +54,14 @@ export default function ForgotPasswordPage() {
   return (
     <>
       {/* Ambient Background Glow matching Home Page */}
-      <div className="fixed inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden">
-        <div className="absolute top-[-10%] h-[1000px] w-[1000px] rounded-full bg-accent/5 blur-[150px] mix-blend-normal opacity-40" />
-      </div>
+      <div className="fixed inset-0 z-[-1] pointer-events-none bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl" />
 
       <AuthPageShell
         title="Reset your password"
         description="Enter your email address and Dotly will send a one-time reset link if the account exists."
       >
         <form
-          className="space-y-6 rounded-[2.5rem] p-8 md:p-12 relative z-10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl"
+          className="space-y-6 rounded-[32px] bg-white/60 backdrop-blur-3xl p-8 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 relative z-10"
           onSubmit={handleSubmit}
         >
           <div className="space-y-2">
@@ -79,7 +77,7 @@ export default function ForgotPasswordPage() {
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="min-h-[56px] w-full rounded-[16px] bg-foreground/[0.03] px-4 pt-1 text-[16px] font-medium text-foreground outline-none transition-all duration-300 shadow-inner ring-1 ring-black/5 placeholder:text-muted/50 focus:bg-foreground/[0.045] focus:ring-2 focus:ring-foreground/15 focus:shadow-md dark:bg-white/[0.045] dark:ring-white/10 dark:focus:bg-white/[0.07]"
+              className="min-h-[56px] w-full rounded-2xl bg-white/50 dark:bg-zinc-800/50 backdrop-blur-md px-4 py-3 text-[16px] font-medium text-foreground outline-none transition-all duration-300 ring-1 ring-black/5 dark:ring-white/10 placeholder:text-muted/50 focus:ring-2 focus:ring-black/10 dark:focus:ring-white/20"
               placeholder="name@example.com"
               required
             />

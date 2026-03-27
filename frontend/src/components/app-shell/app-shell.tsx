@@ -53,8 +53,8 @@ export function AppShell({ children, session }: AppShellProps) {
               <header
                 className={[
                   "sticky top-0 z-header",
-                  "dark:bg-bgOnyx/75 bg-white/75 backdrop-blur-2xl",
-                  "border-b dark:border-white/[0.06] border-black/[0.06]",
+                  "bg-white/60 dark:bg-zinc-950/60 backdrop-blur-3xl",
+                  "border-b border-black/5 dark:border-white/10 transition-all duration-300",
                 ].join(" ")}
               >
                 <div className="safe-pt" />

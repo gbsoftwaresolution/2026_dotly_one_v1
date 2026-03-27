@@ -143,9 +143,9 @@ export function PermissionControlsWidget({
   };
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <section className="rounded-3xl -slate-200 overflow-hidden rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1">
       <div className="border-b border-slate-200 px-6 py-6 bg-slate-50">
-        <h2 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
+        <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight tracking-tight text-slate-900">
           <ShieldAlert className="h-6 w-6 text-indigo-600" />
           Access and Permissions
         </h2>
@@ -155,7 +155,7 @@ export function PermissionControlsWidget({
         </p>
 
         {/* High Contrast Summary Banner */}
-        <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm space-y-3">
+        <div className="rounded-2xl -slate-200 p-5 space-y-3 rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1">
           <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500 mb-4">
             Permission Summary
           </h3>
@@ -182,7 +182,7 @@ export function PermissionControlsWidget({
             <button
               onClick={handleRetrySync}
               disabled={isRefreshing}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-rose-100 px-3 py-1.5 text-sm font-semibold text-rose-700 hover:bg-rose-200 transition-colors disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-[20px] bg-rose-100 px-3 py-1.5 text-sm font-semibold text-rose-700 hover:bg-rose-200 transition-colors disabled:opacity-50"
             >
               <RefreshCw
                 className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
