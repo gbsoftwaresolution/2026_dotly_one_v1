@@ -36,6 +36,14 @@ export const configuration = () => ({
     issuer: process.env.JWT_ISSUER ?? "dotly-backend",
     audience: process.env.JWT_AUDIENCE ?? "dotly-clients",
   },
+  webauthn: {
+    rpId: process.env.WEBAUTHN_RP_ID ?? "localhost",
+    rpName: process.env.WEBAUTHN_RP_NAME ?? "Dotly",
+    origins: (process.env.WEBAUTHN_ORIGINS ?? "http://localhost:3001")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+  },
   redis: {
     url: process.env.REDIS_URL ?? "redis://localhost:6379",
     enabled: process.env.REDIS_ENABLED !== "false",

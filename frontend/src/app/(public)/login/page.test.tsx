@@ -5,19 +5,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { routes } from "@/lib/constants/routes";
 
 const mocks = vi.hoisted(() => ({
-  authForm: vi.fn(),
+  loginAuthPanel: vi.fn(),
   resetSessionOnLoad: vi.fn(),
 }));
 
-vi.mock("@/components/forms/auth-form", () => ({
-  AuthForm: (props: {
-    mode: "login" | "signup";
-    redirectTo?: string;
-    initialEmail?: string;
-  }) => {
-    mocks.authForm(props);
+vi.mock("@/components/auth/login-auth-panel", () => ({
+  LoginAuthPanel: (props: { redirectTo?: string; initialEmail?: string }) => {
+    mocks.loginAuthPanel(props);
 
-    return React.createElement("div", { "data-testid": "auth-form" });
+    return React.createElement("div", { "data-testid": "login-auth-panel" });
   },
 }));
 
@@ -33,7 +29,7 @@ import LoginPage from "./page";
 
 describe("LoginPage", () => {
   beforeEach(() => {
-    mocks.authForm.mockReset();
+    mocks.loginAuthPanel.mockReset();
     mocks.resetSessionOnLoad.mockReset();
   });
 
@@ -55,9 +51,8 @@ describe("LoginPage", () => {
     expect(
       screen.getByRole("link", { name: /resend verification/i }),
     ).toHaveAttribute("href", "/verify-email?email=new%40dotly.one");
-    expect(mocks.authForm).toHaveBeenCalledWith(
+    expect(mocks.loginAuthPanel).toHaveBeenCalledWith(
       expect.objectContaining({
-        mode: "login",
         redirectTo: routes.app.home,
         initialEmail: "new@dotly.one",
       }),
@@ -79,5 +74,20 @@ describe("LoginPage", () => {
       ),
     ).toBeInTheDocument();
     expect(mocks.resetSessionOnLoad).toHaveBeenCalledWith(false);
+  });
+
+  it("surfaces passkey-first messaging in the hero panel", async () => {
+    const page = await LoginPage({
+      searchParams: Promise.resolve({}),
+    });
+
+    render(page);
+
+    expect(screen.getByText(/passkey-first sign in/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /start with a passkey\. password sign-in stays right underneath/i,
+      ),
+    ).toBeInTheDocument();
   });
 });

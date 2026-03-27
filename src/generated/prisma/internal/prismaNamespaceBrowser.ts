@@ -56,6 +56,8 @@ export const ModelName = {
   EmailVerificationToken: 'EmailVerificationToken',
   PasswordResetToken: 'PasswordResetToken',
   MobileOtpChallenge: 'MobileOtpChallenge',
+  PasskeyChallenge: 'PasskeyChallenge',
+  PasskeyCredential: 'PasskeyCredential',
   AuthSession: 'AuthSession',
   Persona: 'Persona',
   QRAccessToken: 'QRAccessToken',
@@ -177,6 +179,38 @@ export const MobileOtpChallengeScalarFieldEnum = {
 } as const
 
 export type MobileOtpChallengeScalarFieldEnum = (typeof MobileOtpChallengeScalarFieldEnum)[keyof typeof MobileOtpChallengeScalarFieldEnum]
+
+
+export const PasskeyChallengeScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  purpose: 'purpose',
+  challengeHash: 'challengeHash',
+  expiresAt: 'expiresAt',
+  consumedAt: 'consumedAt',
+  supersededAt: 'supersededAt',
+  createdAt: 'createdAt'
+} as const
+
+export type PasskeyChallengeScalarFieldEnum = (typeof PasskeyChallengeScalarFieldEnum)[keyof typeof PasskeyChallengeScalarFieldEnum]
+
+
+export const PasskeyCredentialScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  credentialId: 'credentialId',
+  publicKey: 'publicKey',
+  counter: 'counter',
+  deviceType: 'deviceType',
+  backedUp: 'backedUp',
+  transports: 'transports',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  lastUsedAt: 'lastUsedAt'
+} as const
+
+export type PasskeyCredentialScalarFieldEnum = (typeof PasskeyCredentialScalarFieldEnum)[keyof typeof PasskeyCredentialScalarFieldEnum]
 
 
 export const AuthSessionScalarFieldEnum = {

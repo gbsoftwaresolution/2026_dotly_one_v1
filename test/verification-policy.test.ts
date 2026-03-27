@@ -19,9 +19,14 @@ describe("VerificationPolicyService", () => {
             isVerified: false,
           }),
         },
+        passkeyCredential: {
+          count: async () => 0,
+        },
       } as any,
       {
-        trackVerificationBlockedAction: async (payload: Record<string, unknown>) => {
+        trackVerificationBlockedAction: async (
+          payload: Record<string, unknown>,
+        ) => {
           tracked.push(payload);
           return true;
         },
@@ -40,7 +45,7 @@ describe("VerificationPolicyService", () => {
         assert.ok(error instanceof ForbiddenException);
         assert.equal(
           error.message,
-          "Verify your email or complete mobile OTP before joining Dotly event networking.",
+          "Verify your email, complete mobile OTP, or add a passkey before joining Dotly event networking.",
         );
         return true;
       },
@@ -49,8 +54,16 @@ describe("VerificationPolicyService", () => {
     assert.deepEqual(tracked[0], {
       actorUserId: "user-1",
       requirement: "join_event",
-      allowedFactors: ["email_verified", "mobile_otp_verified"],
-      missingFactors: ["email_verified", "mobile_otp_verified"],
+      allowedFactors: [
+        "email_verified",
+        "mobile_otp_verified",
+        "passkey_verified",
+      ],
+      missingFactors: [
+        "email_verified",
+        "mobile_otp_verified",
+        "passkey_verified",
+      ],
     });
     assert.deepEqual(audits[0], {
       action: "auth.verification_requirement.enforcement",
@@ -59,8 +72,16 @@ describe("VerificationPolicyService", () => {
       reason: "join_event",
       policySource: "verification_policy",
       metadata: {
-        allowedFactors: ["email_verified", "mobile_otp_verified"],
-        missingFactors: ["email_verified", "mobile_otp_verified"],
+        allowedFactors: [
+          "email_verified",
+          "mobile_otp_verified",
+          "passkey_verified",
+        ],
+        missingFactors: [
+          "email_verified",
+          "mobile_otp_verified",
+          "passkey_verified",
+        ],
       },
     });
     assert.equal(
@@ -80,6 +101,9 @@ describe("VerificationPolicyService", () => {
             isVerified: true,
           }),
         },
+        passkeyCredential: {
+          count: async () => 0,
+        },
       } as any,
       undefined as any,
       undefined as any,
@@ -94,8 +118,12 @@ describe("VerificationPolicyService", () => {
     assert.deepEqual(result.allowedFactors, [
       "email_verified",
       "mobile_otp_verified",
+      "passkey_verified",
     ]);
-    assert.deepEqual(result.missingFactors, ["mobile_otp_verified"]);
+    assert.deepEqual(result.missingFactors, [
+      "mobile_otp_verified",
+      "passkey_verified",
+    ]);
   });
 
   it("treats mobile OTP as a valid trust factor for current requirements", async () => {
@@ -108,6 +136,9 @@ describe("VerificationPolicyService", () => {
             phoneVerifiedAt: new Date("2026-03-23T10:00:00.000Z"),
           }),
         },
+        passkeyCredential: {
+          count: async () => 0,
+        },
       } as any,
       undefined as any,
       undefined as any,
@@ -119,7 +150,10 @@ describe("VerificationPolicyService", () => {
     );
 
     assert.equal(result.satisfied, true);
-    assert.deepEqual(result.missingFactors, ["email_verified"]);
+    assert.deepEqual(result.missingFactors, [
+      "email_verified",
+      "passkey_verified",
+    ]);
   });
 
   it("applies the same trust-factor rule to instant connect", async () => {
@@ -131,6 +165,9 @@ describe("VerificationPolicyService", () => {
             isVerified: false,
             phoneVerifiedAt: new Date("2026-03-23T10:00:00.000Z"),
           }),
+        },
+        passkeyCredential: {
+          count: async () => 0,
         },
       } as any,
       undefined as any,
@@ -145,12 +182,46 @@ describe("VerificationPolicyService", () => {
     assert.equal(result.satisfied, true);
     assert.equal(
       result.message,
-      "Verify your email or complete mobile OTP before using instant connect.",
+      "Verify your email, complete mobile OTP, or add a passkey before using instant connect.",
     );
     assert.deepEqual(result.allowedFactors, [
       "email_verified",
       "mobile_otp_verified",
+      "passkey_verified",
     ]);
-    assert.deepEqual(result.missingFactors, ["email_verified"]);
+    assert.deepEqual(result.missingFactors, [
+      "email_verified",
+      "passkey_verified",
+    ]);
+  });
+
+  it("treats passkeys as a valid trust factor for current requirements", async () => {
+    const service = new VerificationPolicyService(
+      {
+        user: {
+          findUnique: async () => ({
+            id: "user-1",
+            isVerified: false,
+            phoneVerifiedAt: null,
+          }),
+        },
+        passkeyCredential: {
+          count: async () => 1,
+        },
+      } as any,
+      undefined as any,
+      undefined as any,
+    );
+
+    const result = await service.getRequirementStatus(
+      "user-1",
+      "send_contact_request",
+    );
+
+    assert.equal(result.satisfied, true);
+    assert.deepEqual(result.missingFactors, [
+      "email_verified",
+      "mobile_otp_verified",
+    ]);
   });
 });

@@ -17,9 +17,9 @@ const features = [
   },
   {
     icon: Shield,
-    title: "Private by default.",
+    title: "Passkeys come right after.",
     description:
-      "Share access without giving away your personal number too soon.",
+      "Create your account now, then add a passkey in seconds for a quieter sign-in experience.",
   },
   {
     icon: Zap,
@@ -99,6 +99,16 @@ export default function SignupPage({
                   </div>
                 ))}
               </div>
+              <div className="mt-6 rounded-[1.6rem] border border-black/5 bg-black/[0.03] px-5 py-4 text-left dark:border-white/10 dark:bg-white/[0.04]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                  Premium next step
+                </p>
+                <p className="mt-2 text-sm leading-6 text-foreground/85">
+                  Account creation still starts with email and password. Right
+                  after that, Dotly will guide you into adding a passkey for the
+                  best ongoing sign-in experience.
+                </p>
+              </div>
             </motion.div>
 
             {/* Feature List - Hidden on small mobile, visible on tablet/desktop to keep the form accessible instantly */}
@@ -152,7 +162,7 @@ export default function SignupPage({
                 <p className="text-[16px] md:text-[17px] text-muted font-medium">
                   {referralCode
                     ? `Invite code ${referralCode} is already applied to your premium setup.`
-                    : "Create your account now. Your Dotly, share flow, and QR come next."}
+                    : "Create your account now. Then add a passkey to make every return to Dotly feel instant."}
                 </p>
               </div>
               <AuthForm

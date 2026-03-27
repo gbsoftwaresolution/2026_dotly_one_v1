@@ -17,6 +17,9 @@ describe("Trust alignment", () => {
             phoneVerifiedAt: null,
           }),
         },
+        passkeyCredential: {
+          count: async () => 0,
+        },
       } as any,
       undefined as any,
       undefined as any,
@@ -28,7 +31,7 @@ describe("Trust alignment", () => {
         assert.ok(error instanceof ForbiddenException);
         assert.equal(
           error.message,
-          "Verify your email or complete mobile OTP before sending connection requests.",
+          "Verify your email, complete mobile OTP, or add a passkey before sending connection requests.",
         );
         return true;
       },

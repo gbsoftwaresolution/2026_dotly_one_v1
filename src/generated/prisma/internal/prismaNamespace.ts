@@ -389,6 +389,8 @@ export const ModelName = {
   EmailVerificationToken: 'EmailVerificationToken',
   PasswordResetToken: 'PasswordResetToken',
   MobileOtpChallenge: 'MobileOtpChallenge',
+  PasskeyChallenge: 'PasskeyChallenge',
+  PasskeyCredential: 'PasskeyCredential',
   AuthSession: 'AuthSession',
   Persona: 'Persona',
   QRAccessToken: 'QRAccessToken',
@@ -430,7 +432,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "agencyProfile" | "emailVerificationToken" | "passwordResetToken" | "mobileOtpChallenge" | "authSession" | "persona" | "qRAccessToken" | "event" | "eventParticipant" | "contactRequest" | "contactRelationship" | "interaction" | "followUp" | "contactMemory" | "block" | "notification" | "supportRequest" | "analyticsEvent" | "personaAnalytics" | "identity" | "identityMember" | "identityMemberPersonaAssignment" | "identityOperator" | "identityOperatorPersonaAssignment" | "identityConnection" | "connectionPermissionOverride" | "connectionPermissionSnapshot" | "contentAccessRule" | "identityConversation" | "connectionPolicyTemplate"
+    modelProps: "user" | "agencyProfile" | "emailVerificationToken" | "passwordResetToken" | "mobileOtpChallenge" | "passkeyChallenge" | "passkeyCredential" | "authSession" | "persona" | "qRAccessToken" | "event" | "eventParticipant" | "contactRequest" | "contactRelationship" | "interaction" | "followUp" | "contactMemory" | "block" | "notification" | "supportRequest" | "analyticsEvent" | "personaAnalytics" | "identity" | "identityMember" | "identityMemberPersonaAssignment" | "identityOperator" | "identityOperatorPersonaAssignment" | "identityConnection" | "connectionPermissionOverride" | "connectionPermissionSnapshot" | "contentAccessRule" | "identityConversation" | "connectionPolicyTemplate"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -801,6 +803,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.MobileOtpChallengeCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.MobileOtpChallengeCountAggregateOutputType> | number
+        }
+      }
+    }
+    PasskeyChallenge: {
+      payload: Prisma.$PasskeyChallengePayload<ExtArgs>
+      fields: Prisma.PasskeyChallengeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PasskeyChallengeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyChallengePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PasskeyChallengeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyChallengePayload>
+        }
+        findFirst: {
+          args: Prisma.PasskeyChallengeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyChallengePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PasskeyChallengeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyChallengePayload>
+        }
+        findMany: {
+          args: Prisma.PasskeyChallengeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyChallengePayload>[]
+        }
+        create: {
+          args: Prisma.PasskeyChallengeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyChallengePayload>
+        }
+        createMany: {
+          args: Prisma.PasskeyChallengeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PasskeyChallengeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyChallengePayload>[]
+        }
+        delete: {
+          args: Prisma.PasskeyChallengeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyChallengePayload>
+        }
+        update: {
+          args: Prisma.PasskeyChallengeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyChallengePayload>
+        }
+        deleteMany: {
+          args: Prisma.PasskeyChallengeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PasskeyChallengeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PasskeyChallengeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyChallengePayload>[]
+        }
+        upsert: {
+          args: Prisma.PasskeyChallengeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyChallengePayload>
+        }
+        aggregate: {
+          args: Prisma.PasskeyChallengeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePasskeyChallenge>
+        }
+        groupBy: {
+          args: Prisma.PasskeyChallengeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PasskeyChallengeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PasskeyChallengeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PasskeyChallengeCountAggregateOutputType> | number
+        }
+      }
+    }
+    PasskeyCredential: {
+      payload: Prisma.$PasskeyCredentialPayload<ExtArgs>
+      fields: Prisma.PasskeyCredentialFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PasskeyCredentialFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyCredentialPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PasskeyCredentialFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyCredentialPayload>
+        }
+        findFirst: {
+          args: Prisma.PasskeyCredentialFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyCredentialPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PasskeyCredentialFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyCredentialPayload>
+        }
+        findMany: {
+          args: Prisma.PasskeyCredentialFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyCredentialPayload>[]
+        }
+        create: {
+          args: Prisma.PasskeyCredentialCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyCredentialPayload>
+        }
+        createMany: {
+          args: Prisma.PasskeyCredentialCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PasskeyCredentialCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyCredentialPayload>[]
+        }
+        delete: {
+          args: Prisma.PasskeyCredentialDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyCredentialPayload>
+        }
+        update: {
+          args: Prisma.PasskeyCredentialUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyCredentialPayload>
+        }
+        deleteMany: {
+          args: Prisma.PasskeyCredentialDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PasskeyCredentialUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PasskeyCredentialUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyCredentialPayload>[]
+        }
+        upsert: {
+          args: Prisma.PasskeyCredentialUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasskeyCredentialPayload>
+        }
+        aggregate: {
+          args: Prisma.PasskeyCredentialAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePasskeyCredential>
+        }
+        groupBy: {
+          args: Prisma.PasskeyCredentialGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PasskeyCredentialGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PasskeyCredentialCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PasskeyCredentialCountAggregateOutputType> | number
         }
       }
     }
@@ -2846,6 +2996,38 @@ export const MobileOtpChallengeScalarFieldEnum = {
 export type MobileOtpChallengeScalarFieldEnum = (typeof MobileOtpChallengeScalarFieldEnum)[keyof typeof MobileOtpChallengeScalarFieldEnum]
 
 
+export const PasskeyChallengeScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  purpose: 'purpose',
+  challengeHash: 'challengeHash',
+  expiresAt: 'expiresAt',
+  consumedAt: 'consumedAt',
+  supersededAt: 'supersededAt',
+  createdAt: 'createdAt'
+} as const
+
+export type PasskeyChallengeScalarFieldEnum = (typeof PasskeyChallengeScalarFieldEnum)[keyof typeof PasskeyChallengeScalarFieldEnum]
+
+
+export const PasskeyCredentialScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  credentialId: 'credentialId',
+  publicKey: 'publicKey',
+  counter: 'counter',
+  deviceType: 'deviceType',
+  backedUp: 'backedUp',
+  transports: 'transports',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  lastUsedAt: 'lastUsedAt'
+} as const
+
+export type PasskeyCredentialScalarFieldEnum = (typeof PasskeyCredentialScalarFieldEnum)[keyof typeof PasskeyCredentialScalarFieldEnum]
+
+
 export const AuthSessionScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -3429,6 +3611,34 @@ export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'PasskeyChallengePurpose'
+ */
+export type EnumPasskeyChallengePurposeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PasskeyChallengePurpose'>
+    
+
+
+/**
+ * Reference to a field of type 'PasskeyChallengePurpose[]'
+ */
+export type ListEnumPasskeyChallengePurposeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PasskeyChallengePurpose[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Bytes'
+ */
+export type BytesFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Bytes'>
+    
+
+
+/**
+ * Reference to a field of type 'Bytes[]'
+ */
+export type ListBytesFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Bytes[]'>
+    
+
+
+/**
  * Reference to a field of type 'PersonaType'
  */
 export type EnumPersonaTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonaType'>
@@ -3947,6 +4157,8 @@ export type GlobalOmitConfig = {
   emailVerificationToken?: Prisma.EmailVerificationTokenOmit
   passwordResetToken?: Prisma.PasswordResetTokenOmit
   mobileOtpChallenge?: Prisma.MobileOtpChallengeOmit
+  passkeyChallenge?: Prisma.PasskeyChallengeOmit
+  passkeyCredential?: Prisma.PasskeyCredentialOmit
   authSession?: Prisma.AuthSessionOmit
   persona?: Prisma.PersonaOmit
   qRAccessToken?: Prisma.QRAccessTokenOmit

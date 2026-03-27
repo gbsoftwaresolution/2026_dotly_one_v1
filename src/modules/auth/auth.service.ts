@@ -147,6 +147,30 @@ export class AuthService {
     return this.prismaService as any;
   }
 
+  async issueAuthenticatedSession(
+    user: { id: string; email: string },
+    context?: SessionContext,
+  ) {
+    const expiresAt = this.getSessionExpiryDate();
+    const session = await this.deviceSessionService.createSession(
+      user.id,
+      expiresAt,
+      context,
+    );
+
+    const accessToken = await this.jwtService.signAsync({
+      sub: user.id,
+      email: user.email,
+      sessionId: session.id,
+    });
+
+    return {
+      accessToken,
+      sessionId: session.id,
+      expiresAt,
+    };
+  }
+
   private generateReferralCode(): string {
     const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let code = "";
@@ -446,37 +470,22 @@ export class AuthService {
         throw authUnauthorized(AUTH_ERROR_MESSAGES.invalidCredentials);
       }
 
-      const expiresAt = this.getSessionExpiryDate();
-      const session = await this.deviceSessionService.createSession(
-        user.id,
-        expiresAt,
-        context,
-      );
-
-      const accessToken = await this.jwtService.signAsync({
-        sub: user.id,
-        email: user.email,
-        sessionId: session.id,
-      });
+      const sessionResult = await this.issueAuthenticatedSession(user, context);
 
       this.authMetricsService.recordLoginSuccess();
 
       this.logAuthAuditEvent("auth.login", "success", {
         actorUserId: user.id,
         requestId: context?.requestId,
-        sessionId: session.id,
+        sessionId: sessionResult.sessionId,
         metadata: {
-          expiresAt: expiresAt.toISOString(),
+          expiresAt: sessionResult.expiresAt.toISOString(),
           hasUserAgent: Boolean(context?.userAgent),
           hasIpAddress: Boolean(context?.ipAddress),
         },
       });
 
-      return {
-        accessToken,
-        sessionId: session.id,
-        expiresAt,
-      };
+      return sessionResult;
     } catch (error) {
       if (!(error instanceof HttpException)) {
         this.authMetricsService.recordLoginFailure("system_error");

@@ -40,7 +40,21 @@ describe("VerificationDiagnosticsService", () => {
         }),
       } as any,
       {
-        get: () => "staging",
+        get: (key: string) => {
+          if (key === "app.nodeEnv") {
+            return "staging";
+          }
+
+          if (key === "webauthn.rpId") {
+            return "app.dotly.one";
+          }
+
+          if (key === "webauthn.origins") {
+            return ["https://app.dotly.one"];
+          }
+
+          return undefined;
+        },
       } as any,
       {
         getAvailableTrustFactors: () => [
@@ -73,6 +87,7 @@ describe("VerificationDiagnosticsService", () => {
     assert.equal(diagnostics.mailConfigured, true);
     assert.equal(diagnostics.passwordResetConfigured, true);
     assert.equal(diagnostics.smsConfigured, false);
+    assert.equal(diagnostics.webauthnConfigured, true);
     assert.equal(diagnostics.emailVerificationTableExists, true);
     assert.equal(diagnostics.verificationDependenciesOperational, false);
     assert.deepEqual(diagnostics.missingRequiredMigrations, [

@@ -65,6 +65,16 @@ export type PasswordResetToken = Prisma.PasswordResetTokenModel
  */
 export type MobileOtpChallenge = Prisma.MobileOtpChallengeModel
 /**
+ * Model PasskeyChallenge
+ * 
+ */
+export type PasskeyChallenge = Prisma.PasskeyChallengeModel
+/**
+ * Model PasskeyCredential
+ * 
+ */
+export type PasskeyCredential = Prisma.PasskeyCredentialModel
+/**
  * Model AuthSession
  * 
  */

@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   replace: vi.fn(),
   refresh: vi.fn(),
+  prefetch: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -17,6 +18,7 @@ vi.mock("next/navigation", () => ({
     push: mocks.push,
     replace: mocks.replace,
     refresh: mocks.refresh,
+    prefetch: mocks.prefetch,
   }),
 }));
 
@@ -41,6 +43,7 @@ describe("AuthForm", () => {
     mocks.push.mockReset();
     mocks.replace.mockReset();
     mocks.refresh.mockReset();
+    mocks.prefetch.mockReset();
   });
 
   it("blocks signup when the passwords do not match", async () => {
@@ -162,5 +165,23 @@ describe("AuthForm", () => {
         screen.getByText(/that email is already registered/i),
       ).toBeInTheDocument();
     });
+  });
+
+  it("renders login fallback copy when configured as collapsible", () => {
+    render(
+      React.createElement(AuthForm, {
+        mode: "login",
+        title: "Password fallback",
+        description: "Use your email and password if needed.",
+        collapsible: true,
+        defaultExpanded: false,
+      }),
+    );
+
+    expect(screen.getByText(/password fallback/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/use your email and password if needed/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
   });
 });

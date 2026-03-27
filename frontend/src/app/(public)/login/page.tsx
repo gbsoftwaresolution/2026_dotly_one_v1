@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { QrCode, Shield, Zap } from "lucide-react";
 
+import { LoginAuthPanel } from "@/components/auth/login-auth-panel";
 import { ResetSessionOnLoad } from "@/components/auth/reset-session-on-load";
-import { AuthForm } from "@/components/forms/auth-form";
 import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
 
@@ -15,8 +15,9 @@ const features = [
   },
   {
     icon: Shield,
-    title: "Private by design.",
-    description: "Keep your personal number out of casual circulation.",
+    title: "Passkeys keep it calm.",
+    description:
+      "Unlock Dotly with the device you already trust, while password fallback stays available.",
   },
   {
     icon: Zap,
@@ -142,7 +143,8 @@ export default async function LoginPage({
                       Your Dotly is ready. Check your inbox, including spam, for
                       your confirmation email. You can still sign in now, but
                       verified-only sharing stays limited until you confirm it.
-                      Need another link?{" "}
+                      Add a passkey after signing in for the smoothest return
+                      next time. Need another link?{" "}
                       <Link
                         href={resendHref}
                         className="underline underline-offset-4 hover:opacity-80 transition-opacity"
@@ -171,14 +173,13 @@ export default async function LoginPage({
             <div className="rounded-[2.5rem] md:rounded-[3rem] p-8 sm:p-10 md:p-14 border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
               <div className="mb-8 md:mb-10 space-y-2 text-center md:text-left">
                 <h2 className="text-[28px] md:text-[32px] font-bold tracking-tighter text-foreground leading-[1.1]">
-                  Sign in to Dotly
+                  Passkey-first sign in
                 </h2>
                 <p className="text-[16px] md:text-[17px] text-muted font-medium">
-                  Return to your premium identity and private share flow.
+                  Start with a passkey. Password sign-in stays right underneath.
                 </p>
               </div>
-              <AuthForm
-                mode="login"
+              <LoginAuthPanel
                 redirectTo={redirectTo}
                 initialEmail={initialEmail}
               />

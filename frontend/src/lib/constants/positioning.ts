@@ -21,10 +21,10 @@ export const dotlyPositioning = {
   auth: {
     signupTitle: "Claim your Dotly",
     signupDescription:
-      "Set up one premium identity for calls, messages, requests, QR, and introductions.",
+      "Create your account, then unlock the premium path with passkeys for calmer, faster sign-in.",
     loginTitle: "Welcome back to Dotly",
     loginDescription:
-      "Sign in to share access, manage requests, and keep your private number private.",
+      "Sign in with a passkey first, keep password fallback close, and return to your private share flow instantly.",
   },
   publicProfile: {
     controlledHelper: "You control who can contact you.",

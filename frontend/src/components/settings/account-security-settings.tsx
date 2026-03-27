@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { VerificationStatusBadge } from "@/components/auth/verification-status-badge";
+import { PasskeyManagementCard } from "@/components/settings/passkey-management-card";
 import { TrustSignalCard } from "@/components/settings/trust-signal-card";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
@@ -316,6 +317,7 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
   const unlockedRequirementCount = user.security.requirements.filter(
     (requirement) => requirement.unlocked,
   ).length;
+  const passkeyCount = user.security.passkeys?.length ?? 0;
 
   return (
     <SectionCard
@@ -333,6 +335,11 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
                 {user.security.phoneVerificationStatus === "verified" ? (
                   <span className="inline-flex items-center rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
                     Mobile active
+                  </span>
+                ) : null}
+                {passkeyCount > 0 ? (
+                  <span className="inline-flex items-center rounded-full border border-sky-500/20 bg-sky-500/10 px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
+                    {passkeyCount} passkey{passkeyCount === 1 ? "" : "s"}
                   </span>
                 ) : null}
               </div>
@@ -367,7 +374,7 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
                 </p>
                 <p className="mt-1 text-xs leading-5 text-muted">
                   {user.security.phoneVerificationStatus === "verified"
-                    ? "Your mobile verification factor is active for trust and recovery readiness."
+                    ? "Your mobile verification factor is active for trust and recovery readiness alongside passkeys and email."
                     : user.security.phoneVerificationStatus === "pending"
                       ? "A mobile number is pending confirmation. Enter the latest code to activate it."
                       : "Add a phone number to activate the next verification factor for your account."}
@@ -395,6 +402,22 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
               user.security.maskedPhoneNumber ?? "No mobile number enrolled"
             }
             icon={<Smartphone className="h-4 w-4 text-foreground" />}
+          />
+          <TrustSignalCard
+            title="Passkey status"
+            status={passkeyCount > 0 ? "Active" : "Ready"}
+            tone={passkeyCount > 0 ? "success" : "info"}
+            description={
+              passkeyCount > 0
+                ? "Passkey sign-in is active and ready to lead your next Dotly login."
+                : "Add a passkey to make Dotly sign-in faster, calmer, and device-trusted."
+            }
+            detail={
+              passkeyCount > 0
+                ? `${passkeyCount} enrolled`
+                : "Password fallback still available"
+            }
+            icon={<Fingerprint className="h-4 w-4 text-foreground" />}
           />
           <TrustSignalCard
             title="Protected actions"
@@ -482,7 +505,7 @@ function VerificationManagementCard({
                 ? "This inbox is already active for account verification today."
                 : user.security.trustBadge === "verified"
                   ? "Another verified factor already unlocks trust on this account. Verify this inbox too if you want email as an added signal."
-                  : "Use the latest verification email from Dotly or complete mobile verification to unlock protected connection steps."}
+                  : "Use the latest verification email from Dotly, complete mobile verification, or add a passkey to unlock protected connection steps faster."}
             </p>
             <p className="font-mono text-xs text-muted">
               {user.security.maskedEmail}
@@ -563,7 +586,7 @@ function PasswordRecoveryCard({ user }: { user: UserProfile }) {
               </p>
               <p className="mt-1 text-sm leading-6 text-muted">
                 {user.security.passwordResetAvailable
-                  ? "Use the public recovery flow to request a secure reset link and finish the reset from your email."
+                  ? "Use the public recovery flow to request a secure reset link and finish the reset from your email whenever you need the password fallback."
                   : "Recovery is visible here, but reset email delivery is unavailable in this environment until mail is configured."}
               </p>
               <Link
@@ -669,7 +692,7 @@ function ReferralShareCard() {
               <p className="text-sm leading-6 text-muted">
                 Anyone who signs up with this code is linked back to your
                 account as the referrer. No rewards logic, just clean
-                attribution.
+                attribution before they move into passkey-ready onboarding.
               </p>
             </div>
           </div>
@@ -1268,18 +1291,19 @@ function TrustFactorsCard({ user }: { user: UserProfile }) {
         : factor,
     ),
     {
-      key: "linked_auth_methods",
-      label: "Linked sign-in methods",
-      status: "planned",
-      description:
-        "Reserved for future provider linking, passkeys, and higher-confidence account recovery.",
+      key: "passkeys",
+      label: "Passkeys",
+      status: user.security.passkeys?.length ? "active" : "planned",
+      description: user.security.passkeys?.length
+        ? "Passkey sign-in is enrolled and ready to lead your next return to Dotly."
+        : "Add a passkey for WebAuthn-backed sign-in and stronger device trust.",
     },
   ];
 
   const iconMap: Record<string, React.ReactNode> = {
     email_verified: <Mail className="h-4 w-4 text-foreground" />,
     mobile_otp_verified: <Smartphone className="h-4 w-4 text-foreground" />,
-    linked_auth_methods: <Waypoints className="h-4 w-4 text-foreground" />,
+    passkeys: <Fingerprint className="h-4 w-4 text-foreground" />,
   };
 
   return (
@@ -1317,8 +1341,18 @@ function TrustFactorsCard({ user }: { user: UserProfile }) {
 }
 
 function SecurityFoundationCard({ user }: { user: UserProfile }) {
+  const passkeyCount = user.security.passkeys?.length ?? 0;
   const controls = useMemo(
     () => [
+      {
+        title: "Passkey sign-in",
+        description:
+          passkeyCount > 0
+            ? "WebAuthn passkeys are enrolled and ready to lead the sign-in experience on supported devices."
+            : "Add a passkey to introduce biometric or device-backed sign-in without losing password fallback.",
+        icon: <Fingerprint className="h-4 w-4 text-foreground" />,
+        status: passkeyCount > 0 ? "Live" : "Ready",
+      },
       {
         title: "Password reset email",
         description: user.security.passwordResetAvailable
@@ -1343,7 +1377,11 @@ function SecurityFoundationCard({ user }: { user: UserProfile }) {
         status: "Live",
       },
     ],
-    [user.security.passwordResetAvailable, user.security.smsDeliveryAvailable],
+    [
+      passkeyCount,
+      user.security.passwordResetAvailable,
+      user.security.smsDeliveryAvailable,
+    ],
   );
 
   return (
@@ -1415,8 +1453,8 @@ export function AccountSecuritySettings({ user }: { user: UserProfile }) {
           Protect your Dotly identity
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
-          Manage active verification factors, recover credentials, add mobile
-          verification, and review every active device from one premium identity
+          Manage passkeys, active verification factors, recovery access, mobile
+          verification, and every active device from one premium identity
           protection surface.
         </p>
       </div>
@@ -1429,6 +1467,7 @@ export function AccountSecuritySettings({ user }: { user: UserProfile }) {
           isResending={isResending}
           onResend={handleResend}
         />
+        <PasskeyManagementCard initialPasskeys={user.security.passkeys} />
         <ReferralShareCard />
         <ChangePasswordCard />
         <PasswordRecoveryCard user={user} />

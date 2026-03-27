@@ -34,6 +34,11 @@ export const SECURITY_ARTIFACT_RETENTION_POLICY = {
     consumedMs: 3 * DAY_MS,
     supersededMs: 3 * DAY_MS,
   } satisfies TokenRetentionPolicy,
+  passkeyChallenges: {
+    expiredMs: 3 * DAY_MS,
+    consumedMs: 3 * DAY_MS,
+    supersededMs: 3 * DAY_MS,
+  } satisfies TokenRetentionPolicy,
   authSessions: {
     revokedMs: 30 * DAY_MS,
     expiredMs: 7 * DAY_MS,

@@ -55,7 +55,10 @@ function matchesTokenCleanup(record: TokenRecord, where: any) {
       return false;
     }
 
-    if (candidate.expiresAt && !matchesDateLte(record.expiresAt, candidate.expiresAt)) {
+    if (
+      candidate.expiresAt &&
+      !matchesDateLte(record.expiresAt, candidate.expiresAt)
+    ) {
       return false;
     }
 
@@ -205,6 +208,44 @@ function createCleanupHarness() {
         supersededAt: new Date("2026-03-19T12:00:00.000Z"),
       },
     ] satisfies TokenRecord[],
+    passkeyChallenges: [
+      {
+        id: "passkey-active",
+        expiresAt: new Date("2026-03-22T12:10:00.000Z"),
+        consumedAt: null,
+        supersededAt: null,
+      },
+      {
+        id: "passkey-expired-recent",
+        expiresAt: new Date("2026-03-20T12:00:00.000Z"),
+        consumedAt: null,
+        supersededAt: null,
+      },
+      {
+        id: "passkey-expired-old",
+        expiresAt: new Date("2026-03-19T11:59:59.000Z"),
+        consumedAt: null,
+        supersededAt: null,
+      },
+      {
+        id: "passkey-consumed-recent",
+        expiresAt: new Date("2026-03-21T12:00:00.000Z"),
+        consumedAt: new Date("2026-03-20T12:00:01.000Z"),
+        supersededAt: null,
+      },
+      {
+        id: "passkey-consumed-old",
+        expiresAt: new Date("2026-03-20T12:00:00.000Z"),
+        consumedAt: new Date("2026-03-19T12:00:00.000Z"),
+        supersededAt: null,
+      },
+      {
+        id: "passkey-superseded-old",
+        expiresAt: new Date("2026-03-20T12:00:00.000Z"),
+        consumedAt: null,
+        supersededAt: new Date("2026-03-19T12:00:00.000Z"),
+      },
+    ] satisfies TokenRecord[],
     sessions: [
       {
         id: "session-active",
@@ -272,9 +313,17 @@ function createCleanupHarness() {
           matchesTokenCleanup(record, where),
         ),
     },
+    passkeyChallenge: {
+      deleteMany: async ({ where }: any) =>
+        deleteMatching(state.passkeyChallenges, (record) =>
+          matchesTokenCleanup(record, where),
+        ),
+    },
     authSession: {
       deleteMany: async ({ where }: any) =>
-        deleteMatching(state.sessions, (record) => matchesSessionCleanup(record, where)),
+        deleteMatching(state.sessions, (record) =>
+          matchesSessionCleanup(record, where),
+        ),
     },
   };
 
@@ -307,9 +356,10 @@ describe("SecurityArtifactLifecycleService", () => {
       emailVerificationTokensDeleted: 3,
       passwordResetTokensDeleted: 3,
       mobileOtpChallengesDeleted: 3,
+      passkeyChallengesDeleted: 3,
       revokedSessionsDeleted: 2,
       expiredSessionsDeleted: 1,
-      totalDeleted: 12,
+      totalDeleted: 15,
     });
     assert.deepEqual(
       state.emailVerificationTokens.map((record) => record.id),
@@ -324,6 +374,10 @@ describe("SecurityArtifactLifecycleService", () => {
       ["otp-active", "otp-expired-recent", "otp-consumed-recent"],
     );
     assert.deepEqual(
+      state.passkeyChallenges.map((record) => record.id),
+      ["passkey-active", "passkey-expired-recent", "passkey-consumed-recent"],
+    );
+    assert.deepEqual(
       state.sessions.map((record) => record.id),
       ["session-active", "session-revoked-recent", "session-expired-recent"],
     );
@@ -334,9 +388,10 @@ describe("SecurityArtifactLifecycleService", () => {
       emailVerificationTokensDeleted: 3,
       passwordResetTokensDeleted: 3,
       mobileOtpChallengesDeleted: 3,
+      passkeyChallengesDeleted: 3,
       revokedSessionsDeleted: 2,
       expiredSessionsDeleted: 1,
-      totalDeleted: 12,
+      totalDeleted: 15,
     });
   });
 
@@ -359,6 +414,7 @@ describe("SecurityArtifactLifecycleService", () => {
       emailVerificationTokensDeleted: 0,
       passwordResetTokensDeleted: 0,
       mobileOtpChallengesDeleted: 0,
+      passkeyChallengesDeleted: 0,
       revokedSessionsDeleted: 0,
       expiredSessionsDeleted: 0,
       totalDeleted: 0,

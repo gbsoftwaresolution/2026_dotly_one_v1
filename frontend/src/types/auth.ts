@@ -1,4 +1,10 @@
 import type { UserProfile } from "./user";
+import type {
+  AuthenticationResponseJSON,
+  PublicKeyCredentialCreationOptionsJSON,
+  PublicKeyCredentialRequestOptionsJSON,
+  RegistrationResponseJSON,
+} from "@simplewebauthn/browser";
 
 export type MobileOtpEnrollmentPurpose = "ENROLLMENT";
 
@@ -92,6 +98,52 @@ export interface SignupResult {
 export interface LoginResult {
   success: boolean;
   sessionId?: string;
+}
+
+export interface BeginPasskeyAuthenticationInput {
+  email?: string;
+}
+
+export interface BeginPasskeyAuthenticationResult {
+  options: PublicKeyCredentialRequestOptionsJSON;
+  rpId?: string;
+}
+
+export interface VerifyPasskeyAuthenticationInput {
+  response: AuthenticationResponseJSON;
+}
+
+export interface VerifyPasskeyAuthenticationResult {
+  success: boolean;
+  sessionId?: string;
+}
+
+export interface BeginPasskeyRegistrationInput {
+  name?: string;
+}
+
+export interface BeginPasskeyRegistrationResult {
+  options: PublicKeyCredentialCreationOptionsJSON;
+  rpId?: string;
+  rpName?: string;
+}
+
+export interface VerifyPasskeyRegistrationInput {
+  response: RegistrationResponseJSON;
+  name?: string;
+}
+
+export interface VerifyPasskeyRegistrationResult {
+  verified: boolean;
+  passkey: import("./user").UserPasskey;
+}
+
+export interface RenamePasskeyInput {
+  name: string;
+}
+
+export interface DeletePasskeyResult {
+  deleted: boolean;
 }
 
 export interface VerifyEmailResult {

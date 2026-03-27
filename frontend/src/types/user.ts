@@ -1,5 +1,15 @@
 import type { MobileOtpEnrollmentPurpose } from "./auth";
 
+export interface UserPasskey {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt?: string;
+  lastUsedAt: string | null;
+  deviceType?: "singleDevice" | "multiDevice" | null;
+  backedUp?: boolean;
+}
+
 export type UserTrustRequirementKey =
   | "send_contact_request"
   | "create_profile_qr"
@@ -83,11 +93,13 @@ export interface UserSecurityProfile {
   maskedPhoneNumber: string | null;
   phoneVerificationStatus: "not_enrolled" | "pending" | "verified";
   mobileOtpEnrollment: UserMobileOtpEnrollment | null;
+  passkeyCount?: number;
   explanation: string;
   unlockedActions: string[];
   restrictedActions: string[];
   requirements: UserTrustRequirement[];
   trustFactors: UserTrustFactor[];
+  passkeys?: UserPasskey[];
 }
 
 export interface UserProfile {

@@ -142,6 +142,11 @@ enum MobileOtpPurpose {
   ENROLLMENT @map("enrollment")
 }
 
+enum PasskeyChallengePurpose {
+  REGISTRATION   @map("registration")
+  AUTHENTICATION @map("authentication")
+}
+
 enum IdentityType {
   PERSONAL     @map("personal")
   PROFESSIONAL @map("professional")
@@ -221,6 +226,8 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
   mobileOtpChallenges     MobileOtpChallenge[]
+  passkeyChallenges       PasskeyChallenge[]
+  passkeyCredentials      PasskeyCredential[]
   authSessions            AuthSession[]
   personas                Persona[]
   referrer                User?                 @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: SetNull)
@@ -320,6 +327,42 @@ model MobileOtpChallenge {
   @@index([userId, purpose, consumedAt, supersededAt, expiresAt])
   @@index([consumedAt])
   @@index([supersededAt])
+}
+
+model PasskeyChallenge {
+  id           String                  @id @default(uuid()) @db.Uuid
+  userId       String?                 @db.Uuid
+  purpose      PasskeyChallengePurpose
+  challengeHash String                 @db.VarChar(64)
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  supersededAt DateTime?
+  createdAt    DateTime                @default(now())
+  user         User?                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, consumedAt, supersededAt, expiresAt])
+  @@index([purpose, expiresAt])
+  @@index([consumedAt])
+  @@index([supersededAt])
+}
+
+model PasskeyCredential {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  name       String   @default("Passkey") @db.VarChar(120)
+  credentialId String @unique @db.VarChar(512)
+  publicKey  Bytes
+  counter    Int      @default(0)
+  deviceType String   @db.VarChar(32)
+  backedUp   Boolean  @default(false)
+  transports String[] @default([])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  lastUsedAt DateTime?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, lastUsedAt])
 }
 
 model AuthSession {
