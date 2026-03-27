@@ -5,6 +5,7 @@ import {
   NotFoundException,
   Optional,
 } from "@nestjs/common";
+import { Prisma } from "../../generated/prisma/client";
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import {
@@ -85,6 +86,29 @@ export function userHasActiveTrustFactor(user: TrustFactorSourceUser): boolean {
   return isTrustRequirementSatisfied(
     Object.keys(TRUST_FACTOR_CATALOG) as TrustFactor[],
     buildUserTrustFactors(user),
+  );
+}
+
+export function isPasskeyStorageUnavailableError(error: unknown): boolean {
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    (error.code === "P2021" || error.code === "P2022")
+  ) {
+    return true;
+  }
+
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const normalizedMessage = error.message.toLowerCase();
+
+  return (
+    normalizedMessage.includes("passkeycredential") &&
+    (normalizedMessage.includes("does not exist") ||
+      normalizedMessage.includes("doesn't exist") ||
+      normalizedMessage.includes("relation") ||
+      normalizedMessage.includes("column"))
   );
 }
 
@@ -234,11 +258,7 @@ export class VerificationPolicyService {
           phoneVerifiedAt: true,
         },
       }),
-      (this.prismaService as any).passkeyCredential.count({
-        where: {
-          userId,
-        },
-      }),
+      this.getPasskeyCount(userId),
     ]);
 
     if (!user) {
@@ -252,6 +272,22 @@ export class VerificationPolicyService {
         passkeyCount,
       }),
     };
+  }
+
+  private async getPasskeyCount(userId: string): Promise<number> {
+    try {
+      return await (this.prismaService as any).passkeyCredential.count({
+        where: {
+          userId,
+        },
+      });
+    } catch (error) {
+      if (isPasskeyStorageUnavailableError(error)) {
+        return 0;
+      }
+
+      throw error;
+    }
   }
 
   private evaluateRequirement(

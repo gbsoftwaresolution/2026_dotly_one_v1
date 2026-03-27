@@ -224,4 +224,38 @@ describe("VerificationPolicyService", () => {
       "mobile_otp_verified",
     ]);
   });
+
+  it("treats missing passkey storage as zero enrolled passkeys", async () => {
+    const service = new VerificationPolicyService(
+      {
+        user: {
+          findUnique: async () => ({
+            id: "user-1",
+            isVerified: true,
+            phoneVerifiedAt: null,
+          }),
+        },
+        passkeyCredential: {
+          count: async () => {
+            throw new Error(
+              "The table `public.PasskeyCredential` does not exist in the current database.",
+            );
+          },
+        },
+      } as any,
+      undefined as any,
+      undefined as any,
+    );
+
+    const result = await service.getRequirementStatus(
+      "user-1",
+      "send_contact_request",
+    );
+
+    assert.equal(result.satisfied, true);
+    assert.deepEqual(result.missingFactors, [
+      "mobile_otp_verified",
+      "passkey_verified",
+    ]);
+  });
 });

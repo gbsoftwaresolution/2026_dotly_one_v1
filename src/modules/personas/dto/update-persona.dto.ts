@@ -34,6 +34,10 @@ function trimNullableString(value: unknown): unknown {
 }
 
 export class UpdatePersonaDto {
+  @IsOptional()
+  @IsBoolean()
+  isPrimary?: boolean;
+
   @ValidateIf((_, value) => value !== undefined)
   @IsUUID()
   identityId?: string;

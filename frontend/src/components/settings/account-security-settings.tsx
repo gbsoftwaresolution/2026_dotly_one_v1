@@ -138,6 +138,10 @@ function getOtpFeedback(error: unknown): FeedbackState {
   };
 }
 
+function getUserPasskeyCount(user: UserProfile): number {
+  return user.security.passkeyCount ?? user.security.passkeys?.length ?? 0;
+}
+
 function TrustStateBadge({ isTrustQualified }: { isTrustQualified: boolean }) {
   return (
     <span
@@ -317,7 +321,7 @@ function TrustOverviewCard({ user }: { user: UserProfile }) {
   const unlockedRequirementCount = user.security.requirements.filter(
     (requirement) => requirement.unlocked,
   ).length;
-  const passkeyCount = user.security.passkeys?.length ?? 0;
+  const passkeyCount = getUserPasskeyCount(user);
 
   return (
     <SectionCard
@@ -1293,10 +1297,11 @@ function TrustFactorsCard({ user }: { user: UserProfile }) {
     {
       key: "passkeys",
       label: "Passkeys",
-      status: user.security.passkeys?.length ? "active" : "planned",
-      description: user.security.passkeys?.length
-        ? "Passkey sign-in is enrolled and ready to lead your next return to Dotly."
-        : "Add a passkey for WebAuthn-backed sign-in and stronger device trust.",
+      status: getUserPasskeyCount(user) > 0 ? "active" : "planned",
+      description:
+        getUserPasskeyCount(user) > 0
+          ? "Passkey sign-in is enrolled and ready to lead your next return to Dotly."
+          : "Add a passkey for WebAuthn-backed sign-in and stronger device trust.",
     },
   ];
 
@@ -1341,7 +1346,7 @@ function TrustFactorsCard({ user }: { user: UserProfile }) {
 }
 
 function SecurityFoundationCard({ user }: { user: UserProfile }) {
-  const passkeyCount = user.security.passkeys?.length ?? 0;
+  const passkeyCount = getUserPasskeyCount(user);
   const controls = useMemo(
     () => [
       {

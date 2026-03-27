@@ -17,6 +17,7 @@ import { VerifyMobileOtpDto } from "../auth/dto/verify-mobile-otp.dto";
 import { AuthActionContext } from "../auth/auth-abuse-protection.service";
 import {
   buildUserTrustFactors,
+  isPasskeyStorageUnavailableError,
   userHasActiveTrustFactor,
   TrustFactor,
   VerificationPolicyService,
@@ -120,11 +121,7 @@ export class UsersService {
           phoneVerifiedAt: true,
         },
       }),
-      this.prisma.passkeyCredential.count({
-        where: {
-          userId,
-        },
-      }),
+      this.getPasskeyCount(userId),
     ]);
 
     if (!user) {
@@ -259,6 +256,22 @@ export class UsersService {
         trustFactors,
       },
     };
+  }
+
+  private async getPasskeyCount(userId: string): Promise<number> {
+    try {
+      return await this.prisma.passkeyCredential.count({
+        where: {
+          userId,
+        },
+      });
+    } catch (error) {
+      if (isPasskeyStorageUnavailableError(error)) {
+        return 0;
+      }
+
+      throw error;
+    }
   }
 
   async getCurrentUserReferral(userId: string) {

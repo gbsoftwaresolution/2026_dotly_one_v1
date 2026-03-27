@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { PropsWithChildren } from "react";
 
 import { Menu, QrCode } from "lucide-react";
@@ -9,6 +10,7 @@ import { usePathname } from "next/navigation";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
 import { PostSignupPasskeyPrompt } from "@/components/auth/post-signup-passkey-prompt";
 import { BottomNav } from "@/components/navigation/bottom-nav";
+import { SideMenu } from "@/components/navigation/side-menu";
 import { NotificationBadge } from "@/components/notifications/notification-badge";
 import { ActivationNudgeProvider } from "@/context/ActivationNudgeContext";
 import { AuthSessionProvider } from "@/context/AuthSessionContext";
@@ -27,6 +29,7 @@ interface AppShellProps extends PropsWithChildren {
 }
 
 export function AppShell({ children, session }: AppShellProps) {
+  const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
   const pathname = usePathname();
   const sectionLabel = getAppSectionLabel(pathname);
   const sectionDescription = getAppSectionDescription(pathname);
@@ -60,6 +63,7 @@ export function AppShell({ children, session }: AppShellProps) {
                   <div className="flex w-1/3 items-center justify-start gap-2">
                     <button
                       type="button"
+                      onClick={() => setIsSideMenuOpen(true)}
                       className="-ml-1 p-1 text-foreground/80 transition-colors hover:text-foreground"
                     >
                       <Menu className="h-6 w-6" />
@@ -121,6 +125,10 @@ export function AppShell({ children, session }: AppShellProps) {
               </div>
             </main>
 
+            <SideMenu
+              isOpen={isSideMenuOpen}
+              onClose={() => setIsSideMenuOpen(false)}
+            />
             {!isShareRoute ? <BottomNav /> : null}
           </div>
         </IdentityProvider>

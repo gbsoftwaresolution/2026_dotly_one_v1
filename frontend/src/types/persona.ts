@@ -167,6 +167,7 @@ export interface PersonaUsernameAvailability {
 
 export interface UpdatePersonaInput {
   identityId?: string;
+  isPrimary?: boolean;
   fullName?: string;
   jobTitle?: string;
   companyName?: string;

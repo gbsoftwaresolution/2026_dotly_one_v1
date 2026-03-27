@@ -244,6 +244,20 @@ describe("AccountSecuritySettings", () => {
     expect(screen.getAllByText(/^verified$/i).length).toBeGreaterThan(0);
   });
 
+  it("uses passkeyCount when the current user payload omits passkey details", async () => {
+    render(
+      React.createElement(AccountSecuritySettings, {
+        user: createUser(true, {
+          passkeyCount: 2,
+          passkeys: undefined,
+        }),
+      }),
+    );
+
+    expect(screen.getByText(/2 passkeys/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 enrolled/i)).toBeInTheDocument();
+  });
+
   it("shows planned mobile otp messaging before enrollment starts", async () => {
     render(
       React.createElement(AccountSecuritySettings, { user: createUser(false) }),

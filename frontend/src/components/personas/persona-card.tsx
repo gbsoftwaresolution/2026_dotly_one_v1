@@ -1,28 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Check } from "lucide-react";
+import { Check, QrCode, Settings, ExternalLink, Globe } from "lucide-react";
 
 import { routes } from "@/lib/constants/routes";
-import {
-  getCanonicalPublicProfilePath,
-  getCanonicalPublicSlug,
-} from "@/lib/persona/public-profile-path";
-import {
-  formatPublicHandle,
-  getInternalRouteHeadline,
-  getInternalRouteLabel,
-  getInternalRouteSummary,
-} from "@/lib/persona/routing-ux";
+import { getCanonicalPublicProfilePath } from "@/lib/persona/public-profile-path";
 import { formatAccessMode } from "@/lib/persona/labels";
 import { cn } from "@/lib/utils/cn";
 import type { PersonaSummary } from "@/types/persona";
+import { SetDefaultPersonaButton } from "@/components/dashboard/set-default-persona-button";
 
 interface PersonaCardProps {
   persona: PersonaSummary;
 }
 
-/** Initials from fullName */
 function getInitials(name: string): string {
   return name
     .split(" ")
@@ -37,187 +28,139 @@ export function PersonaCard({ persona }: PersonaCardProps) {
   const tagline = persona.tagline?.trim() || null;
   const companyName = persona.companyName?.trim() || null;
   const websiteUrl = persona.websiteUrl?.trim() || null;
-  const publicSlug = getCanonicalPublicSlug(persona.publicUrl, persona.username);
   const publicProfilePath = getCanonicalPublicProfilePath(
     persona.publicUrl,
     persona.username,
   );
-  const publicHandle = formatPublicHandle(publicSlug);
-  const hasInternalRoutingContext = Boolean(
-    persona.routingDisplayName || persona.routingKey || persona.isDefaultRouting,
-  );
-  const routeHeadline = getInternalRouteHeadline(persona);
-  const routeSummary = getInternalRouteSummary(persona);
-  const routeLabel = getInternalRouteLabel(persona);
 
   return (
     <article
       className={cn(
-        "relative overflow-hidden rounded-[2rem] bg-white/40 p-5 sm:p-6 backdrop-blur-[40px] saturate-[200%] shadow-sm ring-1 ring-black/5 transition-all hover:bg-white/50 dark:bg-zinc-900/40 dark:ring-white/10 dark:hover:bg-zinc-800/50",
+        "group relative flex flex-col justify-between overflow-hidden rounded-[2.5rem] p-7 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] dark:hover:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)]",
+        "bg-gradient-to-b from-white/80 to-white/40 dark:from-white/[0.08] dark:to-transparent",
+        "backdrop-blur-[40px] saturate-[150%]",
+        "shadow-[0_24px_48px_-12px_rgba(0,0,0,0.08)] dark:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.3)]",
+        persona.isPrimary
+          ? "ring-[1.5px] ring-inset ring-foreground/10 dark:ring-white/20"
+          : "ring-1 ring-inset ring-black/[0.06] dark:ring-white/[0.08] hover:ring-black/[0.12] dark:hover:ring-white/[0.15]",
       )}
     >
-      {/* Optional subtle glow behind content for active or open personas */}
+      {/* Immersive Inner Glow (Apple-style specular highlight) */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none dark:from-white/10" />
+
       {isOpen && (
-        <div className="absolute -inset-1/2 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
+        <div className="absolute -inset-1/2 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl rounded-full opacity-0 pointer-events-none transition-opacity duration-700 group-hover:opacity-100" />
       )}
 
-      <div className="relative z-10 space-y-5 sm:space-y-6">
-        <div className="flex items-start gap-4">
-          <div
-            className={cn(
-              "flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-white/60 shadow-sm ring-1 ring-inset ring-black/5 dark:bg-zinc-800/60 dark:ring-white/10 backdrop-blur-md",
-            )}
-            aria-hidden
-          >
-            <span className="text-sm font-semibold tracking-tight text-foreground">
+      <div className="relative z-10 flex flex-col h-full">
+        {/* Top Section */}
+        <div className="flex justify-between items-start gap-4 mb-6">
+          <div className="flex h-[60px] w-[60px] flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-foreground/80 to-foreground shadow-lg ring-[4px] ring-white/50 dark:ring-black/50 backdrop-blur-md transition-transform duration-500 group-hover:scale-105">
+            <span className="text-[20px] font-bold tracking-tight text-background">
               {initials}
             </span>
           </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="min-w-0 truncate text-[17px] font-semibold leading-tight tracking-tight text-foreground">
-                {persona.fullName}
-              </h2>
-              {persona.isVerified ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700 ring-1 ring-emerald-500/20 dark:text-emerald-300 dark:ring-emerald-400/20">
-                  <Check className="h-3 w-3" strokeWidth={2.5} />
-                  Verified
-                </span>
-              ) : null}
-            </div>
-            <p className="mt-1 text-[11px] font-medium text-muted truncate">
-              Public handle {publicHandle}
-            </p>
-            <p className="mt-1 text-[11px] font-medium text-muted truncate">
-              dotly.id/{publicSlug}
-            </p>
+          <div className="flex flex-col items-end gap-2.5">
+            <SetDefaultPersonaButton
+              personaId={persona.id}
+              isPrimary={persona.isPrimary}
+            />
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.15em] ring-1 backdrop-blur-md shadow-sm",
+                isOpen
+                  ? "bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-400 dark:ring-emerald-400/20"
+                  : "bg-black/5 text-foreground/60 ring-black/10 dark:bg-white/10 dark:text-white/70 dark:ring-white/20",
+              )}
+            >
+              {formatAccessMode(persona.accessMode)}
+            </span>
           </div>
-
-          <span
-            className={cn(
-              "inline-flex flex-shrink-0 items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ring-1",
-              isOpen
-                ? "bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300 dark:ring-emerald-400/20"
-                : "bg-foreground/[0.04] text-muted ring-black/5 dark:bg-white/[0.06] dark:ring-white/10",
-            )}
-          >
-            {formatAccessMode(persona.accessMode)}
-          </span>
         </div>
 
-        {tagline ? (
-          <p className="line-clamp-2 text-sm leading-6 text-muted">{tagline}</p>
-        ) : null}
-
-        {persona.jobTitle || companyName || websiteUrl ? (
-          <dl className="grid gap-2 sm:grid-cols-2 sm:gap-3">
-            {persona.jobTitle ? (
-              <div className="rounded-2xl bg-white/50 px-4 py-3.5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-                  Role
-                </dt>
-                <dd className="mt-1 truncate text-sm font-semibold text-foreground">
-                  {persona.jobTitle}
-                </dd>
-              </div>
-            ) : null}
-            {companyName ? (
-              <div className="rounded-2xl bg-white/50 px-4 py-3.5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-                  Company
-                </dt>
-                <dd className="mt-1 truncate text-sm font-semibold text-foreground">
-                  {companyName}
-                </dd>
-              </div>
-            ) : null}
-            {websiteUrl ? (
-              <div className="rounded-2xl bg-white/50 px-4 py-3.5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md sm:col-span-2">
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-                  Website
-                </dt>
-                <dd className="mt-1">
-                  <a
-                    href={websiteUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex max-w-full items-center gap-1 truncate text-sm font-semibold text-foreground transition hover:opacity-70"
-                  >
-                    <span className="truncate">
-                      {websiteUrl.replace(/^https?:\/\//, "")}
-                    </span>
-                    <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0" />
-                  </a>
-                </dd>
-              </div>
-            ) : null}
-          </dl>
-        ) : null}
-
-        {hasInternalRoutingContext ? (
-          <div className="rounded-2xl bg-white/50 px-4 py-3.5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-              {routeSummary}
-            </p>
-            <p className="mt-1 text-sm font-semibold text-foreground">
-              {routeHeadline}
-            </p>
-            <p className="mt-1 text-xs font-medium text-muted">{routeLabel}</p>
-          </div>
-        ) : null}
-
-        <div className="flex flex-col gap-3">
-          <Link
-            href={routes.app.personaDetail(persona.id)}
-            className={cn(
-              "inline-flex h-[52px] w-full items-center justify-center rounded-2xl bg-white/50 text-[15px] font-medium text-foreground shadow-sm ring-1 ring-black/5 backdrop-blur-md transition-all hover:bg-white/80 active:scale-[0.98] dark:bg-zinc-800/50 dark:ring-white/10 dark:hover:bg-zinc-800/80",
+        {/* Identity Details */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-[28px] font-bold tracking-tight text-foreground leading-none">
+              @{persona.username}
+            </h3>
+            {persona.isVerified && (
+              <span className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full bg-blue-500 text-white shadow-sm">
+                <Check className="h-3.5 w-3.5" strokeWidth={3} />
+              </span>
             )}
-          >
-            Edit Persona
-          </Link>
+          </div>
 
-          {isOpen ? (
-            <Link
-              href={publicProfilePath}
-              className={cn(
-                "inline-flex h-[52px] w-full items-center justify-center rounded-2xl bg-foreground text-[15px] font-medium text-background shadow-xl transition-all hover:scale-[0.995] active:scale-[0.98]",
-              )}
-            >
-              View Public Profile
-            </Link>
-          ) : (
-            <div
-              className={cn(
-                "inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-white/30 text-[15px] font-medium text-muted ring-1 ring-black/5 backdrop-blur-md dark:bg-zinc-800/30 dark:ring-white/10",
-              )}
-            >
-              <svg
-                viewBox="0 0 16 16"
-                fill="none"
-                className="h-4 w-4"
-                aria-hidden
-              >
-                <path
-                  d="M2 8h12M8 2l6 6-6 6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Not publicly visible
-            </div>
+          <h4 className="text-[19px] font-semibold text-foreground/80 mt-2 tracking-tight">
+            {persona.fullName}
+          </h4>
+
+          {tagline && (
+            <p className="mt-3 text-[15px] text-foreground/60 leading-relaxed max-w-[90%] font-medium">
+              {tagline}
+            </p>
           )}
+
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-5 text-[14px] font-medium text-foreground/50">
+            {persona.jobTitle && (
+              <span className="text-foreground/70">{persona.jobTitle}</span>
+            )}
+            {persona.jobTitle && companyName && (
+              <span className="text-foreground/30">•</span>
+            )}
+            {companyName && (
+              <span className="text-foreground/70">{companyName}</span>
+            )}
+            {(persona.jobTitle || companyName) && websiteUrl && (
+              <span className="text-foreground/30">•</span>
+            )}
+            {websiteUrl && (
+              <a
+                href={websiteUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              >
+                <Globe className="h-3.5 w-3.5" />
+                {websiteUrl.replace(/^https?:\/\//, "")}
+              </a>
+            )}
+          </div>
         </div>
 
-        {!isOpen ? (
-          <p className="text-[11px] leading-relaxed text-muted">
-            Set access mode to{" "}
-            <strong className="font-semibold text-foreground/80">open</strong>{" "}
-            to publish {publicHandle} at dotly.id/{publicSlug}
-          </p>
-        ) : null}
+        <div className="mt-auto">
+          <hr className="border-black/[0.06] dark:border-white/[0.08] mb-6" />
+
+          {/* Action Row */}
+          <div className="flex items-center gap-3">
+            <Link
+              href={routes.app.personaDetail(persona.id)}
+              className="flex-1 flex h-[48px] items-center justify-center gap-2 rounded-full bg-black/[0.04] dark:bg-white/[0.06] px-6 text-[15px] font-semibold text-foreground transition-all duration-300 hover:bg-black/[0.08] dark:hover:bg-white/[0.1] active:scale-[0.98]"
+            >
+              <Settings className="h-[18px] w-[18px] opacity-70" />
+              Manage
+            </Link>
+
+            {isOpen && (
+              <Link
+                href={publicProfilePath}
+                className="flex-1 flex h-[48px] items-center justify-center gap-2 rounded-full bg-black/[0.04] dark:bg-white/[0.06] px-6 text-[15px] font-semibold text-foreground transition-all duration-300 hover:bg-black/[0.08] dark:hover:bg-white/[0.1] active:scale-[0.98]"
+              >
+                <ExternalLink className="h-[18px] w-[18px] opacity-70" />
+                Profile
+              </Link>
+            )}
+
+            <Link
+              href={routes.app.qr}
+              className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-transform duration-300 hover:scale-105 active:scale-95 shadow-[0_8px_16px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_16px_rgba(255,255,255,0.1)]"
+              title="Show QR"
+            >
+              <QrCode className="h-5 w-5" />
+            </Link>
+          </div>
+        </div>
       </div>
     </article>
   );

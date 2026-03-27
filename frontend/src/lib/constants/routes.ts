@@ -11,6 +11,9 @@ export const routes = {
     privacy: "/privacy",
     qrLanding: "/q",
   },
+  legacyApp: {
+    home: "/app-legacy",
+  },
   app: {
     home: "/app",
     inbox: "/app/inbox",
