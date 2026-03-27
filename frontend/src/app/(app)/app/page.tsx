@@ -45,14 +45,14 @@ export default async function AppHomePage() {
   const otherPersonas = personas.filter((p) => p.id !== primaryPersona?.id);
 
   return (
-    <section className="relative w-full overflow-hidden flex flex-col items-center">
+    <section className="relative w-full flex flex-col items-center">
       {/* Immersive Background */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] h-[50vh] w-[50vw] rounded-full bg-blue-500/10 blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] h-[50vh] w-[50vw] rounded-full bg-purple-500/10 blur-[120px]" />
       </div>
 
-      <div className="w-full max-w-4xl px-4 py-6 md:py-8 space-y-8">
+      <div className="w-full max-w-4xl space-y-6 md:space-y-8 pt-2 pb-10">
         {/* Top Floating Header */}
         <div className="flex items-center justify-end">
           <div className="flex items-center gap-4">

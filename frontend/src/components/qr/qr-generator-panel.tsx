@@ -479,7 +479,7 @@ export function QrGeneratorPanel({
 
   return (
     <div className="space-y-6 motion-safe:animate-[fade-in_420ms_ease-out]">
-      <div className="rounded-[2rem] bg-white/40 backdrop-blur-[40px] saturate-[200%] ring-1 ring-black/5 dark:bg-zinc-900/40 dark:ring-white/10 shadow-2xl p-5 sm:p-8 flex flex-col gap-8 relative overflow-hidden">
+      <div className="rounded-[2rem] bg-white/40 backdrop-blur-3xl p-6 sm:p-8 ring-1 ring-inset ring-black/5 dark:bg-black/40 dark:ring-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] flex flex-col gap-8 relative overflow-hidden transition-transform duration-500 hover:scale-[1.01]">
         {/* Subtle gradient glow behind the card content */}
         <div className="absolute -inset-1/2 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
 
@@ -504,7 +504,7 @@ export function QrGeneratorPanel({
               </label>
               <CustomSelect
                 id="qr-persona-select"
-                className="min-h-[54px] w-full rounded-2xl bg-white/50 px-4 text-[15px] font-medium text-foreground shadow-sm ring-1 ring-inset ring-black/5 outline-none transition-all focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/80 backdrop-blur-md"
+                className="min-h-[54px] w-full rounded-[20px] bg-white/60 px-4 text-[15px] font-medium text-foreground shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)] ring-1 ring-inset ring-black/5 outline-none transition-all focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/60 dark:ring-white/10 dark:focus:bg-zinc-800/80 backdrop-blur-xl"
                 value={selectedPersonaId ?? ""}
                 onChange={(value) => setSelectedPersonaId(value)}
                 options={personaOptions}
@@ -514,7 +514,7 @@ export function QrGeneratorPanel({
 
           <div className="flex items-start gap-3 relative z-10">
             {selectedPersona ? (
-              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-white/50 px-4 py-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 sm:px-5 backdrop-blur-md">
+              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-[1.5rem] bg-white/60 px-4 py-4 shadow-sm ring-1 ring-black/5 dark:bg-black/40 dark:ring-white/10 sm:px-5 backdrop-blur-xl">
                 {selectedPersona.profilePhotoUrl ? (
                   <ExternalImage
                     src={selectedPersona.profilePhotoUrl}
@@ -615,7 +615,7 @@ export function QrGeneratorPanel({
                   </SecondaryButton>
                 </div>
               ) : (
-                <div className="relative w-full rounded-3xl bg-white px-4 py-5 shadow-xl ring-1 ring-black/10 dark:bg-zinc-950 dark:ring-white/10 sm:px-5 sm:py-6">
+                <div className="relative w-full rounded-[1.5rem] bg-white px-4 py-5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10 sm:px-5 sm:py-6 transition-all duration-500 hover:scale-[1.02]">
                   {isLoadingQr ? (
                     generatedQr ? (
                       <div className="flex min-h-[26rem] items-center justify-center sm:min-h-[28rem]">
@@ -678,7 +678,7 @@ export function QrGeneratorPanel({
         <div className="h-px bg-black/5 dark:bg-white/5 -mx-5 sm:-mx-8 relative z-10" />
 
         <div className="space-y-4 relative z-10">
-          <div className="rounded-2xl bg-white/50 p-2 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md relative z-10">
+          <div className="rounded-[1.5rem] bg-white/60 p-2 shadow-sm ring-1 ring-black/5 dark:bg-black/40 dark:ring-white/10 backdrop-blur-xl relative z-10">
             <div className="grid grid-cols-2 gap-2">
               <SecondaryButton
                 type="button"
@@ -708,7 +708,7 @@ export function QrGeneratorPanel({
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
+          <div className="rounded-[1.5rem] bg-white/60 p-5 shadow-sm ring-1 ring-black/5 dark:bg-black/40 dark:ring-white/10 backdrop-blur-xl mt-4">
             <div className="space-y-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                 {hasShareCompleted ? "Momentum signal" : "First exchange flow"}
@@ -754,7 +754,7 @@ export function QrGeneratorPanel({
               ].map((item) => (
                 <div
                   key={item.step}
-                  className="rounded-2xl bg-black/[0.03] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.04] dark:ring-white/10"
+                  className="rounded-[20px] bg-black/[0.03] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.04] dark:ring-white/10"
                 >
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
                     {item.step}
@@ -784,7 +784,7 @@ export function QrGeneratorPanel({
           </div>
 
           {initialReferral ? (
-            <div className="rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
+            <div className="rounded-[1.5rem] bg-white/60 p-5 shadow-sm ring-1 ring-black/5 dark:bg-black/40 dark:ring-white/10 backdrop-blur-xl">
               <div className="space-y-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                   Network invitation
@@ -799,7 +799,7 @@ export function QrGeneratorPanel({
                 </p>
               </div>
 
-              <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-black/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.04] dark:ring-white/10">
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-[20px] bg-black/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.04] dark:ring-white/10">
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
                     Referral code
