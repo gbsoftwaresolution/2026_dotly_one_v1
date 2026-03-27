@@ -159,11 +159,11 @@ describe("ProtectedConversationScreen", () => {
     );
     expect(screen.getByText("Persona route")).toBeInTheDocument();
     expect(screen.getByText("Investor Desk")).toBeInTheDocument();
-    expect(screen.getByText(/routed via #investor/i)).toBeInTheDocument();
+    expect(screen.getByText(/internal route #investor/i)).toBeInTheDocument();
     expect(
       screen.getAllByText(/restricted by backend policy resolution/i),
-    ).toHaveLength(2);
-    expect(screen.getByText("Protected conversation")).toBeInTheDocument();
+    ).toHaveLength(3);
+    expect(screen.getByText("Protected")).toBeInTheDocument();
 
     await user.click(
       screen.getByLabelText("Action restricted: Export document"),

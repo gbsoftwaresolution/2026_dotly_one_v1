@@ -640,17 +640,20 @@ export class PersonasService {
       const nextIdentityId =
         updatePersonaDto.identityId === undefined
           ? existingPersona.identityId
-          : await this.ensureIdentityOwnership(userId, updatePersonaDto.identityId);
+          : await this.ensureIdentityOwnership(
+              userId,
+              updatePersonaDto.identityId,
+            );
 
       const routingSnapshot = this.buildRoutingSnapshot({
         identityId: nextIdentityId,
         routingKey:
           updatePersonaDto.routingKey !== undefined
-            ? updatePersonaDto.routingKey ?? null
+            ? (updatePersonaDto.routingKey ?? null)
             : existingPersona.routingKey,
         routingDisplayName:
           updatePersonaDto.routingDisplayName !== undefined
-            ? updatePersonaDto.routingDisplayName ?? null
+            ? (updatePersonaDto.routingDisplayName ?? null)
             : existingPersona.routingDisplayName,
         isDefaultRouting:
           updatePersonaDto.isDefaultRouting !== undefined
@@ -662,11 +665,17 @@ export class PersonasService {
             : existingPersona.routingRulesJson,
       });
 
-      await this.ensureRoutingKeyAvailable(
-        routingSnapshot.identityId,
-        routingSnapshot.routingKey,
-        personaId,
-      );
+      const shouldRevalidateRoutingKey =
+        updatePersonaDto.identityId !== undefined ||
+        updatePersonaDto.routingKey !== undefined;
+
+      if (shouldRevalidateRoutingKey) {
+        await this.ensureRoutingKeyAvailable(
+          routingSnapshot.identityId,
+          routingSnapshot.routingKey,
+          personaId,
+        );
+      }
 
       const data: Prisma.PersonaUpdateInput = {};
 
@@ -675,11 +684,12 @@ export class PersonasService {
       }
 
       if (updatePersonaDto.identityId !== undefined) {
-        (data as Prisma.PersonaUpdateInput & { identity?: unknown }).identity = {
-          connect: {
-            id: nextIdentityId,
-          },
-        };
+        (data as Prisma.PersonaUpdateInput & { identity?: unknown }).identity =
+          {
+            connect: {
+              id: nextIdentityId,
+            },
+          };
       }
 
       if (updatePersonaDto.fullName !== undefined) {
@@ -1190,7 +1200,9 @@ export class PersonasService {
     return persona;
   }
 
-  private buildRoutingSnapshot(input: PersonaRoutingSnapshot): PersonaRoutingSnapshot {
+  private buildRoutingSnapshot(
+    input: PersonaRoutingSnapshot,
+  ): PersonaRoutingSnapshot {
     return {
       identityId: input.identityId,
       routingKey: input.routingKey,

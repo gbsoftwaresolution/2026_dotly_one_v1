@@ -3,12 +3,21 @@ import React from "react";
 import { act, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ApiError } from "@/lib/api/client";
+
 const mocks = vi.hoisted(() => ({
   getConversationContext: vi.fn(),
   getConnection: vi.fn(),
   getResolvedPermissions: vi.fn(),
   explainResolvedPermissions: vi.fn(),
   getPersona: vi.fn(),
+  replace: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    replace: mocks.replace,
+  }),
 }));
 
 vi.mock("@/lib/api/connections", () => ({
@@ -33,6 +42,7 @@ describe("AppConversationDetailsPage", () => {
     mocks.getResolvedPermissions.mockReset();
     mocks.explainResolvedPermissions.mockReset();
     mocks.getPersona.mockReset();
+    mocks.replace.mockReset();
   });
 
   it("loads via conversation id and shows persona routing context inside the new app shell route", async () => {
@@ -128,7 +138,7 @@ describe("AppConversationDetailsPage", () => {
     });
 
     expect(
-      await screen.findByText("Chat with Mary Johnson"),
+      await screen.findByRole("heading", { name: "Chat with Mary Johnson" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /back to inbox/i })).toHaveAttribute(
       "href",
@@ -136,9 +146,49 @@ describe("AppConversationDetailsPage", () => {
     );
     expect(screen.getByText("Persona route")).toBeInTheDocument();
     expect(screen.getByText("Investor Desk")).toBeInTheDocument();
-    expect(screen.getByText(/routed via #investor/i)).toBeInTheDocument();
+    expect(screen.getByText(/internal route #investor/i)).toBeInTheDocument();
+    expect(screen.getByText(/backend enforced/i)).toBeInTheDocument();
     expect(mocks.getConversationContext).toHaveBeenCalledWith("conversation-1");
     expect(mocks.getPersona).toHaveBeenCalledWith("persona-1");
     expect(mocks.getConnection).toHaveBeenCalledWith("connection-1");
-    });
   });
+
+  it("shows scoped access copy when the backend rejects the conversation", async () => {
+    mocks.getConversationContext.mockRejectedValue(
+      new ApiError("Forbidden resource", 403),
+    );
+
+    await act(async () => {
+      render(
+        <ConversationDetailsPage
+          params={Promise.resolve({ conversationId: "conversation-1" })}
+        />,
+      );
+    });
+
+    expect(
+      await screen.findByText("Thread outside your scope"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/backend persona and participant access rules/i),
+    ).toBeInTheDocument();
+  });
+
+  it("redirects to login when the session is expired", async () => {
+    mocks.getConversationContext.mockRejectedValue(
+      new ApiError("Unauthorized", 401),
+    );
+
+    await act(async () => {
+      render(
+        <ConversationDetailsPage
+          params={Promise.resolve({ conversationId: "conversation-1" })}
+        />,
+      );
+    });
+
+    expect(mocks.replace).toHaveBeenCalledWith(
+      "/login?next=%2Fapp%2Fconversations%2Fconversation-1&reason=expired",
+    );
+  });
+});

@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   BadgeInfo,
   Clock3,
+  MessagesSquare,
   Send,
   Video,
   FileText,
@@ -17,15 +18,23 @@ import {
 import { ProtectedModeBanner } from "@/components/connections/protected/protected-mode-banner";
 import { ProtectedRestrictionsPanel } from "@/components/connections/protected/protected-restrictions-panel";
 import { ProtectedActionState } from "@/components/connections/protected/protected-action-state";
+import { PageHeader } from "@/components/shared/page-header";
+import { StatusBadge } from "@/components/shared/status-badge";
 import {
   explainResolvedPermissions,
   getConnection,
   getResolvedPermissions,
 } from "@/lib/api/connections";
 import { routes } from "@/lib/constants/routes";
+import {
+  getInternalRouteHeadline,
+  getInternalRouteLabel,
+  getInternalRouteSummary,
+} from "@/lib/persona/routing-ux";
 import { getProtectedRestrictions } from "@/lib/protected-mode";
 import type {
   IdentityConnection,
+  PermissionEffect,
   ResolvedPermissionsMap,
 } from "@/types/connection";
 import type { IdentityConversationContext } from "@/types/conversation";
@@ -37,6 +46,11 @@ interface ProtectedConversationScreenProps {
   conversation?: IdentityConversationContext | null;
   routingPersona?: PersonaSummary | null;
   navigationVariant?: "app" | "app-old";
+  prefetchedData?: {
+    connection: IdentityConnection;
+    permissions: ResolvedPermissionsMap | null;
+    permissionsExplanation: ResolvedPermissionsExplanation | null;
+  };
 }
 
 function formatConversationTimestamp(value: string | null | undefined) {
@@ -61,7 +75,11 @@ function formatEnumLabel(value: string | null | undefined) {
     return null;
   }
 
-  return value.replaceAll("_", " ");
+  return value
+    .toLowerCase()
+    .split("_")
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
 }
 
 function getMetadataString(
@@ -79,19 +97,32 @@ function getMetadataString(
   return null;
 }
 
+function formatHashPreview(value: string | null | undefined) {
+  if (!value) {
+    return "Not captured";
+  }
+
+  return value.length > 16 ? `${value.slice(0, 8)}...${value.slice(-6)}` : value;
+}
+
 export function ProtectedConversationScreen({
   connectionId,
   conversation,
   routingPersona,
   navigationVariant = "app",
+  prefetchedData,
 }: ProtectedConversationScreenProps) {
-  const [connection, setConnection] = useState<IdentityConnection | null>(null);
+  const [connection, setConnection] = useState<IdentityConnection | null>(
+    prefetchedData?.connection ?? null,
+  );
   const [permissions, setPermissions] = useState<ResolvedPermissionsMap | null>(
-    null,
+    prefetchedData?.permissions ?? null,
   );
   const [permissionsExplanation, setPermissionsExplanation] =
-    useState<ResolvedPermissionsExplanation | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+    useState<ResolvedPermissionsExplanation | null>(
+      prefetchedData?.permissionsExplanation ?? null,
+    );
+  const [isLoading, setIsLoading] = useState(!prefetchedData);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(
@@ -124,12 +155,21 @@ export function ProtectedConversationScreen({
   );
 
   useEffect(() => {
+    if (prefetchedData) {
+      setConnection(prefetchedData.connection);
+      setPermissions(prefetchedData.permissions);
+      setPermissionsExplanation(prefetchedData.permissionsExplanation);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
     let cancelled = false;
     void load(cancelled);
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, [load, prefetchedData]);
 
   if (isLoading) {
     return (
@@ -172,9 +212,12 @@ export function ProtectedConversationScreen({
   const conversationStatusLabel = formatEnumLabel(
     conversation?.conversationStatus,
   );
+  const connectionTypeLabel = formatEnumLabel(connection.connectionType);
+  const trustStateLabel = formatEnumLabel(connection.trustState);
   const routingLabel =
-    routingPersona?.routingDisplayName ??
-    routingPersona?.fullName ??
+    routingPersona
+      ? getInternalRouteHeadline(routingPersona)
+      : null ??
     (routingPersona?.username ? `@${routingPersona.username}` : null) ??
     getMetadataString(conversation?.metadataJson ?? null, [
       "personaRoutingDisplayName",
@@ -190,6 +233,18 @@ export function ProtectedConversationScreen({
       "routingKey",
       "routeKey",
     ]);
+  const routingSummary = routingPersona
+    ? getInternalRouteSummary(routingPersona)
+    : conversation?.personaId
+      ? "Scoped through the persona route attached to this thread."
+      : "This thread stays with the identity-wide inbox.";
+  const routingLabelText = routingPersona
+    ? getInternalRouteLabel(routingPersona)
+    : routingKey
+      ? `Internal route #${routingKey}`
+      : conversation?.personaId
+        ? "Persona route"
+        : "Identity inbox";
   const backLink =
     navigationVariant === "app"
       ? {
@@ -208,6 +263,324 @@ export function ProtectedConversationScreen({
 
     return match?.explanationText || fallback;
   };
+
+  const statusTone = (effect: PermissionEffect) => {
+    if (effect === "allow") {
+      return "success" as const;
+    }
+
+    if (effect === "deny") {
+      return "error" as const;
+    }
+
+    return "warning" as const;
+  };
+
+  if (navigationVariant === "app") {
+    return (
+      <div className="space-y-5">
+        <Link
+          className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 hover:text-sky-800"
+          href={backLink.href}
+        >
+          <ArrowLeft className="h-5 w-5" />
+          {backLink.label}
+        </Link>
+
+        <PageHeader
+          title={conversation?.title || `Chat with ${connection.targetIdentity?.displayName || "Unknown"}`}
+          description="Review routed context, current policy posture, and protected-mode actions for this conversation without leaving the new inbox shell."
+        />
+
+        <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] sm:p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-black/[0.04] ring-1 ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
+                <MessagesSquare className="h-5 w-5 text-foreground" strokeWidth={2} />
+              </div>
+
+              <div className="min-w-0 space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {conversationTypeLabel ? (
+                    <StatusBadge label={conversationTypeLabel} tone="neutral" />
+                  ) : null}
+                  {conversationStatusLabel ? (
+                    <StatusBadge
+                      label={conversationStatusLabel}
+                      tone={
+                        conversation?.conversationStatus === "ACTIVE"
+                          ? "success"
+                          : conversation?.conversationStatus === "ARCHIVED"
+                            ? "neutral"
+                            : "warning"
+                      }
+                      dot={conversation?.conversationStatus === "ACTIVE"}
+                    />
+                  ) : null}
+                  <StatusBadge
+                    label={restrictions.isProtected ? "Protected" : "Standard"}
+                    tone={restrictions.isProtected ? "cyan" : "neutral"}
+                  />
+                </div>
+
+                <div>
+                  <h2 className="text-[26px] font-bold tracking-tighter text-foreground">
+                    {connection.targetIdentity?.displayName || "Unknown contact"}
+                  </h2>
+                  <p className="mt-2 max-w-[54ch] text-[15px] font-medium leading-relaxed text-muted">
+                    Conversation access still comes from backend persona and participant scope enforcement, so members and operators only see this thread when their assignment allows it.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-[1.15rem] border border-black/5 bg-white/70 px-4 py-3 shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:border-white/10 dark:bg-black/20">
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
+                  Last updated
+                </p>
+                <p className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Clock3 className="h-4 w-4 text-muted" />
+                  {formatConversationTimestamp(conversation?.updatedAt)}
+                </p>
+              </div>
+
+              <div className="rounded-[1.15rem] border border-black/5 bg-white/70 px-4 py-3 shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:border-white/10 dark:bg-black/20">
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
+                  Connection type
+                </p>
+                <p className="mt-2 text-sm font-semibold text-foreground">
+                  {connectionTypeLabel || "Unknown"}
+                </p>
+                <p className="mt-1 text-sm text-muted">{trustStateLabel || "Trust state unavailable"}</p>
+              </div>
+
+              <div className="rounded-[1.15rem] border border-black/5 bg-white/70 px-4 py-3 shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:border-white/10 dark:bg-black/20">
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
+                  Conversation ID
+                </p>
+                <p className="mt-2 inline-flex items-center gap-2 break-all text-sm font-semibold text-foreground">
+                  <BadgeInfo className="h-4 w-4 text-muted" />
+                  {conversation?.conversationId}
+                </p>
+              </div>
+
+              <div className="rounded-[1.15rem] border border-black/5 bg-white/70 px-4 py-3 shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:border-white/10 dark:bg-black/20">
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
+                  Participant
+                </p>
+                <p className="mt-2 text-sm font-semibold text-foreground">
+                  {connection.targetIdentity?.handle
+                    ? `@${connection.targetIdentity.handle}`
+                    : connection.targetIdentity?.displayName || "Unknown"}
+                </p>
+                <p className="mt-1 text-sm text-muted">
+                  {formatEnumLabel(connection.targetIdentity?.identityType) || "Identity"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
+              <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
+                {conversation?.personaId ? "Persona route" : "Routing"}
+              </p>
+              <h2 className="mt-3 text-[22px] font-bold tracking-tighter text-foreground">
+                {conversation?.personaId ? routingLabel || "Persona-routed thread" : "Identity default thread"}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-muted">{routingSummary}</p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <StatusBadge label={routingLabelText} tone="cyan" />
+                {routingPersona?.username ? (
+                  <StatusBadge label={`@${routingPersona.username}`} tone="neutral" />
+                ) : null}
+              </div>
+            </div>
+
+            <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
+              <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
+                Access scope
+              </p>
+              <h2 className="mt-3 text-[22px] font-bold tracking-tighter text-foreground">
+                Backend enforced
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Owners keep full access. Scoped members and operators only see this thread when the backend confirms access to the routed persona or a valid participant on the conversation.
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <StatusBadge label="Assignment-safe UI" tone="neutral" />
+                <StatusBadge
+                  label={restrictions.isProtected ? "Protected actions active" : "Standard actions active"}
+                  tone={restrictions.isProtected ? "cyan" : "success"}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <ProtectedModeBanner
+          permissions={permissions}
+          explanation={permissionsExplanation}
+        />
+
+        <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className="rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                Thread canvas
+              </p>
+              <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+                Live conversation context without a fake transcript
+              </h2>
+            </div>
+
+            <div className="mt-4 rounded-[1.5rem] border border-black/5 bg-white/70 p-4 shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:border-white/10 dark:bg-black/20">
+              <div className="rounded-[1.25rem] border border-dashed border-black/10 bg-black/[0.025] px-4 py-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-black/[0.04] ring-1 ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
+                    <MessagesSquare className="h-4 w-4 text-foreground" strokeWidth={2} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      Conversation timeline
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-muted">
+                      Message events and the send composer are not exposed by the current frontend or backend contracts yet. This view stays truthful by showing the live route, scope, and permission state instead of synthetic chat content.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-[1rem] border border-black/5 bg-white/75 px-3 py-3 dark:border-white/10 dark:bg-black/20">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
+                      Created
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-foreground">
+                      {formatConversationTimestamp(conversation?.createdAt)}
+                    </p>
+                  </div>
+
+                  <div className="rounded-[1rem] border border-black/5 bg-white/75 px-3 py-3 dark:border-white/10 dark:bg-black/20">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
+                      Last policy resolve
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-foreground">
+                      {formatConversationTimestamp(conversation?.lastResolvedAt)}
+                    </p>
+                  </div>
+
+                  <div className="rounded-[1rem] border border-black/5 bg-white/75 px-3 py-3 dark:border-white/10 dark:bg-black/20">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
+                      Permission hash
+                    </p>
+                    <p className="mt-2 break-all text-sm font-semibold text-foreground">
+                      {formatHashPreview(conversation?.lastPermissionHash)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <ProtectedActionState
+                  label="Forward message"
+                  effect={restrictions.exports.effect}
+                  reasonText={getExplanationText(
+                    restrictions.exports.key,
+                    "Restricted because protected mode is on.",
+                  )}
+                >
+                  <button className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10 dark:hover:bg-white/[0.1]">
+                    <Forward className="h-4 w-4" />
+                    Forward message
+                  </button>
+                </ProtectedActionState>
+
+                <ProtectedActionState
+                  label="Export document"
+                  effect={restrictions.exports.effect}
+                  reasonText={getExplanationText(
+                    restrictions.exports.key,
+                    "Unavailable until protected mode changes.",
+                  )}
+                >
+                  <button className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10 dark:hover:bg-white/[0.1]">
+                    <FileText className="h-4 w-4" />
+                    Export document
+                  </button>
+                </ProtectedActionState>
+
+                <ProtectedActionState
+                  label="Video Call"
+                  effect={restrictions.calls.effect}
+                  reasonText={getExplanationText(
+                    restrictions.calls.key,
+                    "Unavailable until protected mode changes.",
+                  )}
+                >
+                  <button className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10 dark:hover:bg-white/[0.1]">
+                    <Video className="h-4 w-4" />
+                    Start video call
+                  </button>
+                </ProtectedActionState>
+
+                <ProtectedActionState
+                  label="AI summary"
+                  effect={restrictions.ai.effect}
+                  reasonText={getExplanationText(
+                    restrictions.ai.key,
+                    "Protected AI actions follow backend policy resolution.",
+                  )}
+                >
+                  <button className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10 dark:hover:bg-white/[0.1]">
+                    <BadgeInfo className="h-4 w-4" />
+                    Generate summary
+                  </button>
+                </ProtectedActionState>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
+              <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
+                Permission posture
+              </p>
+              <h2 className="mt-3 text-[22px] font-bold tracking-tighter text-foreground">
+                Action visibility by policy
+              </h2>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <StatusBadge
+                  label={`Sharing ${restrictions.sharing.label}`}
+                  tone={statusTone(restrictions.sharing.effect)}
+                />
+                <StatusBadge
+                  label={`Exports ${restrictions.exports.label}`}
+                  tone={statusTone(restrictions.exports.effect)}
+                />
+                <StatusBadge
+                  label={`Calls ${restrictions.calls.label}`}
+                  tone={statusTone(restrictions.calls.effect)}
+                />
+              </div>
+              <p className="mt-4 text-sm leading-6 text-muted">
+                {permissionsExplanation?.summaryText ||
+                  "Protected restrictions are derived from backend policy resolution."}
+              </p>
+            </div>
+
+            <ProtectedRestrictionsPanel
+              permissions={permissions}
+              explanation={permissionsExplanation}
+            />
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-5">

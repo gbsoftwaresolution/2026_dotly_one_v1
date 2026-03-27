@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 import { ProtectedConversationScreen } from "@/components/connections/protected/protected-conversation-screen";
-import { getConversationContext } from "@/lib/api/connections";
-import { personaApi } from "@/lib/api/persona-api";
-import type { IdentityConversationContext } from "@/types/conversation";
-import type { PersonaSummary } from "@/types/persona";
+import { EmptyState } from "@/components/shared/empty-state";
+import { SecondaryButton } from "@/components/shared/secondary-button";
+import { SkeletonCard } from "@/components/shared/skeleton-card";
+import { routes } from "@/lib/constants/routes";
+
+import { useConversationDetailData } from "./use-conversation-detail-data";
 
 interface ConversationDetailRouteProps {
   conversationId: string;
@@ -17,66 +22,72 @@ export function ConversationDetailRoute({
   conversationId,
   variant,
 }: ConversationDetailRouteProps) {
-  const [conversation, setConversation] =
-    useState<IdentityConversationContext | null>(null);
-  const [routingPersona, setRoutingPersona] = useState<PersonaSummary | null>(
-    null,
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const {
+    conversation,
+    routingPersona,
+    connection,
+    permissions,
+    permissionsExplanation,
+    isLoading,
+    error,
+    reload,
+  } = useConversationDetailData(conversationId);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function loadContext() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const nextConversation = await getConversationContext(conversationId);
-
-        if (cancelled) {
-          return;
-        }
-
-        setConversation(nextConversation);
-
-        if (nextConversation.personaId) {
-          const persona = await personaApi.get(nextConversation.personaId).catch(
-            () => null,
-          );
-
-          if (!cancelled) {
-            setRoutingPersona(persona);
-          }
-        } else if (!cancelled) {
-          setRoutingPersona(null);
-        }
-      } catch (loadError) {
-        if (!cancelled) {
-          setConversation(null);
-          setRoutingPersona(null);
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Failed to load conversation.",
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
+    if (variant !== "app" || error?.kind !== "unauthorized") {
+      return;
     }
 
-    void loadContext();
+    router.replace(
+      `/login?next=${encodeURIComponent(routes.app.conversationDetail(conversationId))}&reason=expired`,
+    );
+  }, [conversationId, error?.kind, router, variant]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [conversationId]);
+  const appErrorCopy =
+    error?.kind === "forbidden"
+      ? {
+          title: "Thread outside your scope",
+          description:
+            "This conversation is still protected by backend persona and participant access rules. Ask an owner or admin operator to expand your assignment if you should be able to open it.",
+        }
+      : error?.kind === "not-found"
+        ? {
+            title: "Conversation not found",
+            description:
+              "This thread may have been archived, removed, or moved outside the current inbox view.",
+          }
+        : {
+            title: "Could not load conversation",
+            description: error?.message ?? "Failed to load conversation.",
+          };
 
   if (isLoading) {
+    if (variant === "app") {
+      return (
+        <div className="space-y-5">
+          <Link
+            className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 hover:text-sky-800"
+            href={routes.app.inbox}
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back to inbox
+          </Link>
+
+          <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+            <div className="space-y-4 rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] sm:p-6">
+              <SkeletonCard rows={3} />
+              <SkeletonCard rows={4} />
+            </div>
+            <div className="space-y-4">
+              <SkeletonCard rows={3} />
+              <SkeletonCard rows={3} />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
         <div className="h-8 w-44 rounded-2xl bg-slate-200/80 animate-pulse dark:bg-white/10" />
@@ -86,14 +97,47 @@ export function ConversationDetailRoute({
     );
   }
 
-  if (error || !conversation?.connectionId) {
+  if (error || !conversation?.connectionId || !connection) {
+    if (variant === "app") {
+      if (error?.kind === "unauthorized") {
+        return (
+          <div className="space-y-4 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+            <div className="h-8 w-44 rounded-2xl bg-slate-200/80 animate-pulse dark:bg-white/10" />
+            <div className="h-40 w-full rounded-[1.75rem] bg-slate-200/80 animate-pulse dark:bg-white/10" />
+          </div>
+        );
+      }
+
+      return (
+        <div className="space-y-5">
+          <Link
+            className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 hover:text-sky-800"
+            href={routes.app.inbox}
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back to inbox
+          </Link>
+
+          <EmptyState
+            title={appErrorCopy.title}
+            description={appErrorCopy.description}
+            action={
+              <SecondaryButton type="button" size="sm" onClick={reload}>
+                Try again
+              </SecondaryButton>
+            }
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="rounded-[1.75rem] border border-rose-200 bg-rose-50 p-6 text-center shadow-sm dark:border-rose-500/20 dark:bg-rose-500/10 sm:p-8">
         <h1 className="text-xl font-bold text-rose-900 dark:text-rose-100">
           Failed to load conversation
         </h1>
         <p className="mt-2 text-sm font-medium text-rose-700 dark:text-rose-200">
-          {error || "Conversation not found."}
+          {error?.message || "Conversation not found."}
         </p>
       </div>
     );
@@ -105,6 +149,11 @@ export function ConversationDetailRoute({
       conversation={conversation}
       routingPersona={routingPersona}
       navigationVariant={variant}
+      prefetchedData={{
+        connection,
+        permissions,
+        permissionsExplanation,
+      }}
     />
   );
 }

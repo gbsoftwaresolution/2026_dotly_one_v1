@@ -8,6 +8,13 @@ const mocks = vi.hoisted(() => ({
   getConnection: vi.fn(),
   getResolvedPermissions: vi.fn(),
   explainResolvedPermissions: vi.fn(),
+  replace: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    replace: mocks.replace,
+  }),
 }));
 
 vi.mock("@/lib/api/connections", () => ({
@@ -25,6 +32,7 @@ describe("ConversationDetailsPage", () => {
     mocks.getConnection.mockReset();
     mocks.getResolvedPermissions.mockReset();
     mocks.explainResolvedPermissions.mockReset();
+    mocks.replace.mockReset();
   });
 
   it("loads via conversation id and hands off to the protected conversation screen", async () => {
