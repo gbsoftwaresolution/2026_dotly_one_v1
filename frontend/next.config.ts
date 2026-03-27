@@ -6,6 +6,7 @@ const outputFileTracingRoot = new URL("..", import.meta.url).pathname;
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  output: "standalone",
   outputFileTracingRoot,
   async headers() {
     return [

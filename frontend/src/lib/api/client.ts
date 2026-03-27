@@ -1,5 +1,8 @@
 import type { ApiRequestOptions, ApiResponse } from "@/types/api";
 
+import { resolveMockApiRequest } from "@/lib/e2e/mock-api";
+import { isE2eMockMode } from "@/lib/e2e/mock-mode";
+
 const DEFAULT_API_BASE_URL = "http://localhost:3000/v1";
 
 function isLocalOrPlaceholderHost(hostname: string): boolean {
@@ -95,12 +98,19 @@ function extractMessage(payload: unknown, fallback: string): string {
 export class ApiError extends Error {
   status: number;
   details?: unknown;
+  requestId?: string;
 
-  constructor(message: string, status: number, details?: unknown) {
+  constructor(
+    message: string,
+    status: number,
+    details?: unknown,
+    requestId?: string,
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.details = details;
+    this.requestId = requestId;
   }
 }
 
@@ -112,6 +122,22 @@ export async function apiRequest<T>(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<T> {
+  if (isE2eMockMode()) {
+    const mockResult = resolveMockApiRequest(path, options);
+
+    if (mockResult?.handled) {
+      if (mockResult.ok) {
+        return mockResult.data as T;
+      }
+
+      throw new ApiError(
+        mockResult.message,
+        mockResult.status,
+        mockResult.details,
+      );
+    }
+  }
+
   const headers = new Headers(options.headers);
   headers.set("Accept", "application/json");
 
@@ -145,10 +171,16 @@ export async function apiRequest<T>(
   }
 
   if (!response.ok) {
+    const requestIdHeader =
+      response.headers && typeof response.headers.get === "function"
+        ? (response.headers.get("x-request-id") ?? undefined)
+        : undefined;
+
     throw new ApiError(
       extractMessage(payload, `Request failed with status ${response.status}`),
       response.status,
       payload,
+      requestIdHeader,
     );
   }
 

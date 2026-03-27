@@ -30,11 +30,14 @@ export function AppShell({ children, session }: AppShellProps) {
   const sectionLabel = getAppSectionLabel(pathname);
   const sectionDescription = getAppSectionDescription(pathname);
   const isShareRoute = pathname === routes.app.qr;
+  const pageMetaId = "app-shell-page-meta";
 
   return (
     <AuthSessionProvider session={session}>
       <ActivationNudgeProvider
-        initialFirstResponseNudge={session.user?.activation?.firstResponseNudge ?? null}
+        initialFirstResponseNudge={
+          session.user?.activation?.firstResponseNudge ?? null
+        }
       >
         <IdentityProvider>
           <div className="mx-auto flex min-h-screen-dvh max-w-app flex-col bg-transparent">
@@ -69,7 +72,17 @@ export function AppShell({ children, session }: AppShellProps) {
                   </div>
 
                   <div className="flex w-1/3 items-center justify-center truncate font-semibold">
-                    {sectionLabel}
+                    <div className="min-w-0 text-center">
+                      <p className="truncate text-[15px] font-semibold leading-tight text-foreground">
+                        {sectionLabel}
+                      </p>
+                      <p
+                        id={pageMetaId}
+                        className="mt-0.5 hidden truncate text-[11px] font-medium leading-tight text-muted sm:block"
+                      >
+                        {sectionDescription}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="flex w-1/3 shrink-0 items-center justify-end gap-3">
@@ -86,6 +99,7 @@ export function AppShell({ children, session }: AppShellProps) {
             ) : null}
 
             <main
+              aria-describedby={!isShareRoute ? pageMetaId : undefined}
               className={cn(
                 "flex-1",
                 isShareRoute

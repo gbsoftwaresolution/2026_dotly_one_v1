@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 
 import { CacheService } from "../../infrastructure/cache/cache.service";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
+import { OperationalMetricsService } from "../../infrastructure/logging/operational-metrics.service";
 import {
   AuthMetricsService,
   noopAuthMetricsService,
@@ -15,6 +16,7 @@ export class MetricsService {
     private readonly cacheService: CacheService,
     private readonly configService: ConfigService,
     private readonly authMetricsService: AuthMetricsService = noopAuthMetricsService,
+    private readonly operationalMetricsService: OperationalMetricsService = new OperationalMetricsService(),
   ) {}
 
   async getPrometheusSnapshot(): Promise<string> {
@@ -35,7 +37,7 @@ export class MetricsService {
       `dotly_cache_up ${cache}`,
     ];
 
-    return `${lines.join("\n")}\n${this.authMetricsService.renderPrometheusMetrics()}`;
+    return `${lines.join("\n")}\n${this.operationalMetricsService.renderPrometheusMetrics()}${this.authMetricsService.renderPrometheusMetrics()}`;
   }
 
   private async getDatabaseMetricValue(): Promise<0 | 1> {

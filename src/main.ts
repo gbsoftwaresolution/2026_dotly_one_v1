@@ -16,9 +16,11 @@ import {
 import { CacheService } from "./infrastructure/cache/cache.service";
 import { PrismaService } from "./infrastructure/database/prisma.service";
 import { AppLoggerService } from "./infrastructure/logging/logging.service";
+import { OperationalMetricsService } from "./infrastructure/logging/operational-metrics.service";
 import { VerificationDiagnosticsService } from "./modules/auth/verification-diagnostics.service";
 
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:/-]{1,128}$/;
+let processObserversRegistered = false;
 
 function resolveRequestId(request: Request): string {
   const requestIdHeader = getHeaderValue(request, "x-request-id");
@@ -30,6 +32,65 @@ function resolveRequestId(request: Request): string {
   return randomUUID();
 }
 
+function serializeUnknownError(error: unknown): Record<string, unknown> {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+    };
+  }
+
+  if (typeof error === "string") {
+    return {
+      message: error,
+    };
+  }
+
+  return {
+    message: "Unknown error",
+  };
+}
+
+function registerProcessObservers(
+  logger: AppLoggerService,
+  operationalMetricsService: OperationalMetricsService,
+): void {
+  if (processObserversRegistered) {
+    return;
+  }
+
+  processObserversRegistered = true;
+
+  process.on("unhandledRejection", (reason) => {
+    operationalMetricsService.recordUnhandledException(
+      "process_unhandled_rejection",
+    );
+    logger.errorWithMeta(
+      "Unhandled promise rejection observed",
+      {
+        error: serializeUnknownError(reason),
+      },
+      reason instanceof Error ? reason.stack : undefined,
+      "Process",
+    );
+  });
+
+  process.on("uncaughtExceptionMonitor", (error, origin) => {
+    operationalMetricsService.recordUnhandledException(
+      "process_uncaught_exception",
+    );
+    logger.errorWithMeta(
+      "Uncaught exception observed",
+      {
+        origin,
+        error: serializeUnknownError(error),
+      },
+      error.stack,
+      "Process",
+    );
+  });
+}
+
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
@@ -38,10 +99,12 @@ async function bootstrap(): Promise<void> {
   const logger = app.get(AppLoggerService);
   const cacheService = app.get(CacheService);
   const prismaService = app.get(PrismaService);
+  const operationalMetricsService = app.get(OperationalMetricsService);
   const verificationDiagnosticsService = app.get(
     VerificationDiagnosticsService,
   );
   app.useLogger(logger);
+  registerProcessObservers(logger, operationalMetricsService);
   app.setGlobalPrefix("v1");
   const configService = app.get(ConfigService);
   const port = configService.get<number>("app.port", 3000);
@@ -71,6 +134,13 @@ async function bootstrap(): Promise<void> {
     response.on("finish", () => {
       const durationMs =
         Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+
+      operationalMetricsService.recordHttpRequest(
+        request.method,
+        response.statusCode,
+        durationMs,
+      );
+
       logger.logWithMeta(
         response.statusCode >= 500 ? "warn" : "log",
         "HTTP request completed",

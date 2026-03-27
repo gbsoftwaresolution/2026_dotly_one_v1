@@ -7,14 +7,21 @@ export function createRouteErrorResponse(
   fallbackMessage: string,
 ): NextResponse {
   if (error instanceof ApiError) {
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         message: error.message,
+        ...(error.requestId ? { requestId: error.requestId } : {}),
       },
       {
         status: error.status,
       },
     );
+
+    if (error.requestId) {
+      response.headers.set("x-upstream-request-id", error.requestId);
+    }
+
+    return response;
   }
 
   return NextResponse.json(

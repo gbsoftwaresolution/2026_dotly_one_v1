@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/context/ThemeContext";
+import { RuntimeErrorListener } from "@/components/observability/runtime-error-listener";
 import { ToastViewport } from "@/components/shared/toast-viewport";
 import { dotlyPositioning } from "@/lib/constants/positioning";
 import { pwaConfig } from "@/lib/constants/pwa";
@@ -123,6 +124,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider>
+          <RuntimeErrorListener />
           {children}
           <ToastViewport />
         </ThemeProvider>

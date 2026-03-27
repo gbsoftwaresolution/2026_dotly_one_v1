@@ -7,8 +7,8 @@ Dotly is a permissioned identity and contact platform built around personas, app
 - Backend: NestJS modular monolith with domain modules under `src/modules`, shared cross-cutting concerns under `src/common`, and infrastructure adapters under `src/infrastructure`
 - Data layer: Prisma + PostgreSQL for persistence, with advisory-lock-backed request throttling and Redis as an optional fail-soft cache/runtime dependency
 - Frontend: Next.js App Router + TypeScript + Tailwind CSS, same-origin route handlers, protected `/app` surfaces, and client-side tests around auth, analytics, QR, request, and route-guard flows
-- Observability: structured JSON logs, request ID propagation via `x-request-id`, global exception envelopes, liveness at `/v1/health`, and readiness at `/v1/health/ready`
-- Metrics: Prometheus-style gauges are exposed at `/v1/metrics` for service, database, cache, and auth security state integration
+- Observability: structured JSON logs, backend request ID propagation via `x-request-id`, frontend App Router error boundaries, client runtime failure capture through `/api/observability/client-errors`, global exception envelopes, liveness at `/v1/health`, and readiness at `/v1/health/ready`
+- Metrics: Prometheus-style gauges and counters are exposed at `/v1/metrics` for service, process uptime, HTTP traffic shape, unhandled exceptions, dependency health, and auth security state integration
 - Verification diagnostics: `/v1/health/verification` exposes non-PII verification runtime state for staging and support debugging
 - Domain modules: auth, personas, profiles, QR, contact requests, contacts, relationships, contact memory, events, notifications, analytics, blocks, trust-abuse, and users
 
@@ -120,6 +120,15 @@ CI workflows:
 
 - `.github/workflows/backend-ci.yml` covers backend install, Prisma generate, typecheck, tests, and build
 - `.github/workflows/frontend-ci.yml` covers frontend lint, typecheck, tests, and build
+- `.github/workflows/release-images.yml` builds production backend and frontend containers on every PR, then publishes GHCR images from `main`, `master`, and version tags without extra registry secrets
+
+## Production Images
+
+- Backend production image source: `Dockerfile`
+- Frontend production image source: `frontend/Dockerfile`
+- Build validation: pull requests run both image builds in GitHub Actions so release images stay buildable before merge
+- Publishing target: GitHub Container Registry at `ghcr.io/<owner>/dotly-backend` and `ghcr.io/<owner>/dotly-frontend`
+- Local build and runtime examples: `docs/run-dotly.md`
 
 ## Operational Notes
 
@@ -144,6 +153,9 @@ CI workflows:
 - Session-management endpoints require a tracked current session context, reject malformed revoke targets, and emit structured auth-security logs for device sign-out actions.
 - When `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, `MAIL_FROM_EMAIL`, or `FRONTEND_VERIFICATION_URL_BASE` are missing, signup still creates a pending account but verification email delivery is skipped safely
 - Browser clients can supply and read `x-request-id` for correlation across backend responses
+- Frontend route handlers now preserve backend `x-request-id` values as `x-upstream-request-id` and JSON `requestId` fields on proxied failures, so support can correlate browser-visible errors with backend logs
 - `GET /v1/metrics` is safe for infrastructure scraping and returns plain-text gauges for service/database/cache health plus active password reset tokens, active OTP challenges, and active/recently revoked sessions
+- `GET /v1/metrics` also includes backend process start/uptime, HTTP request totals and duration aggregates by status class, and unhandled exception counters for request- and process-level failures
+- Frontend runtime exceptions are captured by App Router error boundaries and lightweight browser instrumentation, then logged server-side through `POST /api/observability/client-errors` without adding an external vendor dependency
 - `GET /v1/health/verification` is safe for staging and support diagnostics and returns runtime verification readiness, mail and SMS configuration status, required migration status, and token volume counters without exposing raw secrets, user emails, or token values
 - Use `docs/staging-launch-checklist.md` before promoting staging to production

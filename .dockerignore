@@ -1,0 +1,14 @@
+.git
+.github
+.next
+.vscode
+coverage
+dist
+docs
+frontend
+node_modules
+test
+addons
+.env
+patch-app-shell.patch
+*.log

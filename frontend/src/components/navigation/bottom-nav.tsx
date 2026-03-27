@@ -42,11 +42,17 @@ function getQueueForItemHref(href: string): UserActivationNudgeQueue | null {
 }
 
 function getOpenedQueue(pathname: string): UserActivationNudgeQueue | null {
-  if (pathname === routes.app.requests || pathname.startsWith(`${routes.app.requests}/`)) {
+  if (
+    pathname === routes.app.requests ||
+    pathname.startsWith(`${routes.app.requests}/`)
+  ) {
     return "requests";
   }
 
-  if (pathname === routes.app.inbox || pathname.startsWith(`${routes.app.inbox}/`)) {
+  if (
+    pathname === routes.app.inbox ||
+    pathname.startsWith(`${routes.app.inbox}/`)
+  ) {
     return "inbox";
   }
 
@@ -98,16 +104,17 @@ export function BottomNav() {
                     "transition-all duration-300 ease-[0.16,1,0.3,1] active:scale-[0.92] tap-feedback",
                     "no-select",
                     isActive
-                      ? "bg-foreground/[0.06] text-foreground dark:bg-white/[0.08] dark:text-white"
+                      ? "bg-foreground/[0.08] text-foreground shadow-[0_10px_24px_rgba(15,23,42,0.08)] dark:bg-white/[0.1] dark:text-white"
                       : "text-muted hover:bg-black/[0.03] dark:hover:bg-white/[0.04] hover:text-foreground",
                   )}
                   aria-current={isActive ? "page" : undefined}
                   aria-label={item.label}
+                  data-active={isActive ? "true" : "false"}
                 >
                   {isActive ? (
                     <span
                       aria-hidden
-                      className="absolute top-1.5 left-1/2 h-[3px] w-[3px] -translate-x-1/2 rounded-full bg-foreground dark:bg-white"
+                      className="absolute top-1.5 left-1/2 h-1 w-8 -translate-x-1/2 rounded-full bg-foreground/80 dark:bg-white/90"
                     />
                   ) : null}
 
@@ -127,7 +134,9 @@ export function BottomNav() {
                           aria-hidden
                           className="absolute -right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-foreground shadow-[0_0_0_3px_rgba(255,255,255,0.92)] dark:shadow-[0_0_0_3px_rgba(10,10,10,0.92)]"
                         />
-                        <span className="sr-only">New activity in {item.label}</span>
+                        <span className="sr-only">
+                          New activity in {item.label}
+                        </span>
                       </>
                     ) : null}
                   </span>

@@ -8,10 +8,14 @@ import {
 import { Request, Response } from "express";
 
 import { AppLoggerService } from "../../infrastructure/logging/logging.service";
+import { OperationalMetricsService } from "../../infrastructure/logging/operational-metrics.service";
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  constructor(private readonly logger: AppLoggerService) {}
+  constructor(
+    private readonly logger: AppLoggerService,
+    private readonly operationalMetricsService?: OperationalMetricsService,
+  ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -27,6 +31,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const stack = exception instanceof Error ? exception.stack : undefined;
     const requestId = this.getHeaderValue(headers["x-request-id"]);
     const userAgent = this.getHeaderValue(headers["user-agent"]);
+
+    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      this.operationalMetricsService?.recordUnhandledException("request");
+    }
 
     if (typeof this.logger.errorWithMeta === "function") {
       this.logger.errorWithMeta(

@@ -187,8 +187,12 @@ export function QrGeneratorPanel({
     .join(" • ");
   const isVerified = user.security.trustBadge === "verified";
   const activationMilestones = user.activation?.milestones;
-  const hasShareCompleted = Boolean(activationMilestones?.firstShareCompletedAt);
-  const hasRequestReceived = Boolean(activationMilestones?.firstRequestReceivedAt);
+  const hasShareCompleted = Boolean(
+    activationMilestones?.firstShareCompletedAt,
+  );
+  const hasRequestReceived = Boolean(
+    activationMilestones?.firstRequestReceivedAt,
+  );
   const shareTitle = selectedPersona
     ? `${formatPublicHandle(sharePayload?.publicIdentifier ?? selectedPersona.username)} on Dotly`
     : "Dotly";
@@ -534,7 +538,8 @@ export function QrGeneratorPanel({
                   <div className="flex flex-wrap items-center gap-2">
                     <h1 className="truncate text-[1.1rem] font-semibold tracking-tight text-foreground">
                       {formatPublicHandle(
-                        sharePayload?.publicIdentifier ?? selectedPersona.username,
+                        sharePayload?.publicIdentifier ??
+                          selectedPersona.username,
                       )}
                     </h1>
                     {isVerified ? (
@@ -707,13 +712,13 @@ export function QrGeneratorPanel({
                 {hasShareCompleted ? "Share signal" : "Share flow"}
               </p>
               <h2 className="text-base font-semibold tracking-tight text-foreground">
-                {hasShareCompleted ? "Your QR is already working" : "Use this in the room"}
+                Use this in the room
               </h2>
               <p className="text-sm leading-6 text-muted">
                 {hasShareCompleted
                   ? hasRequestReceived
-                    ? "A real scan or profile open already happened. Keep requests and inbox close so you can respond while the context is still warm."
-                    : "A real scan or profile open already happened. The next job is follow-through: check requests and inbox before the thread cools down."
+                    ? "Your QR is already working. A real scan or profile open already happened. Keep requests and inbox close so you can respond while the context is still warm."
+                    : "Your QR is already working. A real scan or profile open already happened. The next job is follow-through: check requests and inbox before the thread cools down."
                   : "Keep the first interaction simple: show the QR, let them choose the next action, then check what came in after the conversation."}
               </p>
             </div>
@@ -723,18 +728,23 @@ export function QrGeneratorPanel({
                 {
                   step: "01",
                   title: "Show QR",
-                  description: "Use one large, clean share surface instead of explaining your profile.",
+                  description:
+                    "Use one large, clean share surface instead of explaining your profile.",
                 },
                 {
                   step: "02",
-                  title: hasShareCompleted ? "Signal received" : "Let them choose",
+                  title: hasShareCompleted
+                    ? "Signal received"
+                    : "Let them choose",
                   description: hasShareCompleted
                     ? "Dotly has already seen a real open or scan from this share flow."
                     : "Dotly can route them into request access, instant connect, or contact actions.",
                 },
                 {
                   step: "03",
-                  title: hasRequestReceived ? "Reply while it is warm" : "Check follow-through",
+                  title: hasRequestReceived
+                    ? "Reply while it is warm"
+                    : "Check follow-through",
                   description: hasRequestReceived
                     ? "A first incoming request already landed. Keep the response loop tight."
                     : "Review the first reply in requests or inbox so the introduction becomes useful.",
@@ -781,7 +791,8 @@ export function QrGeneratorPanel({
                   Invite someone to create their own Dotly
                 </h2>
                 <p className="text-sm leading-6 text-muted">
-                  Share your signup link after the introduction so the next person can claim a Dotly with your referral attached.
+                  Share your signup link after the introduction so the next
+                  person can claim a Dotly with your referral attached.
                 </p>
               </div>
 

@@ -1,6 +1,6 @@
 # Run Dotly
 
-This guide covers how to run Dotly locally in development mode and how to start both services in production mode.
+This guide covers how to run Dotly locally in development mode and how to start both services in production mode, including production container images.
 
 ## Prerequisites
 
@@ -238,6 +238,77 @@ From the frontend directory:
 
 ```bash
 NODE_ENV=production npm run start -- --port 3001
+```
+
+## Production Containers
+
+The repository now includes production-ready image definitions for both services:
+
+- Backend image: `Dockerfile`
+- Frontend image: `frontend/Dockerfile`
+
+### Build the backend image locally
+
+From the repo root:
+
+```bash
+docker build -t dotly-backend:local .
+```
+
+Run Prisma migrations against the target database before starting the backend container:
+
+```bash
+docker run --rm --env-file .env dotly-backend:local npm run prisma:migrate:deploy
+```
+
+Start the backend container:
+
+```bash
+docker run --rm -p 3000:3000 --env-file .env dotly-backend:local
+```
+
+Notes:
+
+- The backend image expects the same env contract as the Node production process.
+- `DATABASE_URL` must point at a reachable PostgreSQL instance from inside the container network.
+- `REDIS_ENABLED=false` is the simplest local override when Redis is intentionally absent.
+
+### Build the frontend image locally
+
+From the repo root:
+
+```bash
+docker build -f frontend/Dockerfile -t dotly-frontend:local --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/v1 ./frontend
+```
+
+Start the frontend container:
+
+```bash
+docker run --rm -p 3001:3001 dotly-frontend:local
+```
+
+Notes:
+
+- `NEXT_PUBLIC_API_BASE_URL` is baked into the frontend build, so rebuild the image when the public backend origin changes.
+- For production releases, set `NEXT_PUBLIC_API_BASE_URL` to the final HTTPS backend `/v1` origin.
+- The frontend container listens on `0.0.0.0:3001`.
+
+### GitHub Actions image publishing
+
+`/.github/workflows/release-images.yml` handles release image automation:
+
+- Pull requests build both production images without pushing, proving the release Dockerfiles stay valid on CI.
+- Pushes to `main` and `master` build and publish to GHCR using the repository-scoped `GITHUB_TOKEN`.
+- Version tags matching `v*` also publish images.
+- Backend images publish to `ghcr.io/<owner>/dotly-backend`.
+- Frontend images publish to `ghcr.io/<owner>/dotly-frontend`.
+- Tags come from the branch, tag, commit SHA, and `latest` on the default branch.
+
+Example pulls after publication:
+
+```bash
+docker pull ghcr.io/<owner>/dotly-backend:latest
+docker pull ghcr.io/<owner>/dotly-frontend:latest
 ```
 
 ## Recommended Verification

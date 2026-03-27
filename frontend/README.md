@@ -27,3 +27,10 @@ npm run dev
 - The frontend still reads backend data from `NEXT_PUBLIC_API_BASE_URL`
 - Auth session state is stored in an HttpOnly cookie, not local storage
 - Persona, request, QR, event, contact, notification, and analytics flows are wired to the backend
+
+## Production Container
+
+- Production image source: `frontend/Dockerfile`
+- Next.js runs with `output: "standalone"` so the runtime image contains only the built server, static assets, and traced dependencies
+- Set `NEXT_PUBLIC_API_BASE_URL` at build time to the final public backend `/v1` origin
+- Local container build and run examples live in `docs/run-dotly.md`

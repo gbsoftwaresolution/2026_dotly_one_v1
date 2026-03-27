@@ -50,6 +50,21 @@ describe("BottomNav", () => {
     expect(screen.getByText("New activity in Requests")).toBeInTheDocument();
   });
 
+  it("marks the active destination with stronger shell state", () => {
+    mocks.usePathname.mockReturnValue("/app/requests");
+
+    render(
+      <ActivationNudgeProvider initialFirstResponseNudge={null}>
+        <BottomNav />
+      </ActivationNudgeProvider>,
+    );
+
+    expect(screen.getByRole("link", { name: "Requests" })).toHaveAttribute(
+      "data-active",
+      "true",
+    );
+  });
+
   it("clears the nudge once the queue route is opened", async () => {
     mocks.usePathname.mockReturnValue("/app/requests");
 

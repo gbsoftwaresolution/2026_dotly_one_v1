@@ -1,12 +1,15 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
+import { OperationalMetricsService } from "../src/infrastructure/logging/operational-metrics.service";
 import { AuthMetricsService } from "../src/modules/auth/auth-metrics.service";
 import { MetricsService } from "../src/modules/health/metrics.service";
 
 describe("MetricsService", () => {
   it("renders prometheus-style health gauges", async () => {
     const authMetricsService = new AuthMetricsService();
+    const operationalMetricsService = new OperationalMetricsService();
+
     authMetricsService.recordLoginFailure("invalid_password");
     authMetricsService.recordDelivery(
       "sms",
@@ -14,6 +17,8 @@ describe("MetricsService", () => {
       "twilio",
       "provider_unavailable",
     );
+    operationalMetricsService.recordHttpRequest("GET", 503, 87.4321);
+    operationalMetricsService.recordUnhandledException("request");
 
     const service = new MetricsService(
       {
@@ -53,6 +58,7 @@ describe("MetricsService", () => {
         get: (_key: string, defaultValue: string) => defaultValue,
       } as any,
       authMetricsService,
+      operationalMetricsService,
     );
 
     const metrics = await service.getPrometheusSnapshot();
@@ -63,6 +69,20 @@ describe("MetricsService", () => {
     );
     assert.match(metrics, /dotly_database_up 1/);
     assert.match(metrics, /dotly_cache_up 1/);
+    assert.match(metrics, /dotly_process_start_time_seconds \d+/);
+    assert.match(metrics, /dotly_process_uptime_seconds \d+\.\d{3}/);
+    assert.match(
+      metrics,
+      /dotly_http_requests_total\{method="GET",status_class="5xx"\} 1/,
+    );
+    assert.match(
+      metrics,
+      /dotly_http_request_duration_ms_sum\{method="GET",status_class="5xx"\} 87\.432/,
+    );
+    assert.match(
+      metrics,
+      /dotly_unhandled_exceptions_total\{source="request"\} 1/,
+    );
     assert.match(
       metrics,
       /dotly_auth_login_total\{outcome="failure",reason="invalid_password"\} 1/,

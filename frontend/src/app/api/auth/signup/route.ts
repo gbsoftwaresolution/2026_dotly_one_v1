@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { ApiError, apiRequest } from "@/lib/api/client";
+import { createMockSignupResult } from "@/lib/e2e/mock-data";
+import { isE2eMockMode } from "@/lib/e2e/mock-mode";
 import { getFriendlyAuthErrorMessage } from "@/lib/auth/auth-error-messages";
 import { createRouteErrorResponse } from "@/lib/api/route-error";
 import type { AuthCredentials, SignupResult } from "@/types/auth";
@@ -8,6 +10,11 @@ import type { AuthCredentials, SignupResult } from "@/types/auth";
 export async function POST(request: Request) {
   try {
     const credentials = (await request.json()) as AuthCredentials;
+
+    if (isE2eMockMode()) {
+      return NextResponse.json(createMockSignupResult(), { status: 201 });
+    }
+
     const result = await apiRequest<SignupResult>("/auth/signup", {
       method: "POST",
       body: credentials,

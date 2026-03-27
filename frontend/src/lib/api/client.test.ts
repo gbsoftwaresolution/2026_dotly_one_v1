@@ -39,3 +39,32 @@ describe("getApiBaseUrl", () => {
     );
   });
 });
+
+describe("apiRequest", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("captures backend request ids on ApiError responses", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ message: "Backend unavailable" }), {
+        status: 503,
+        headers: {
+          "content-type": "application/json",
+          "x-request-id": "req_backend_123",
+        },
+      }),
+    );
+
+    const { apiRequest, ApiError } = await import("./client");
+
+    await expect(apiRequest("/health", { baseUrl: "" })).rejects.toMatchObject({
+      constructor: ApiError,
+      status: 503,
+      message: "Backend unavailable",
+      requestId: "req_backend_123",
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});

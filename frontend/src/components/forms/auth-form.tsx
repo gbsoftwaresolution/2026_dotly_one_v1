@@ -15,7 +15,10 @@ import {
   getFriendlyAuthError,
   type AuthMode,
 } from "@/lib/auth/auth-error-messages";
+import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/constants";
 import { dotlyPositioning } from "@/lib/constants/positioning";
+import { E2E_MOCK_ACCESS_TOKEN } from "@/lib/e2e/mock-data";
+import { isE2eMockMode } from "@/lib/e2e/mock-mode";
 import { routes } from "@/lib/constants/routes";
 import { prefetchMyFastShare } from "@/lib/share-fast-store";
 import { cn } from "@/lib/utils/cn";
@@ -127,6 +130,17 @@ export function AuthForm({
     setSuccessMessage(null);
   }
 
+  function completeLoginRedirect(nextPath: string) {
+    for (const route of APP_DATA_WARM_ROUTES) {
+      router.prefetch(route);
+    }
+
+    router.prefetch(nextPath);
+    void prefetchMyFastShare({ force: true }).catch(() => undefined);
+    void prefetchAppCoreData({ force: true }).catch(() => undefined);
+    router.replace(nextPath);
+  }
+
   function validateSignupFields(): boolean {
     const nextPasswordError =
       password.length < 6 ? "Use at least 6 characters." : null;
@@ -178,16 +192,16 @@ export function AuthForm({
         return;
       }
 
-      await authApi.login({ email: normalizedEmail, password });
+      const nextPath = sanitizeRedirectPath(redirectTo);
 
-      for (const route of APP_DATA_WARM_ROUTES) {
-        router.prefetch(route);
+      if (isE2eMockMode()) {
+        document.cookie = `${ACCESS_TOKEN_COOKIE}=${E2E_MOCK_ACCESS_TOKEN}; path=/; SameSite=Lax`;
+        completeLoginRedirect(nextPath);
+        return;
       }
 
-      router.prefetch(sanitizeRedirectPath(redirectTo));
-      void prefetchMyFastShare({ force: true }).catch(() => undefined);
-      void prefetchAppCoreData({ force: true }).catch(() => undefined);
-      router.replace(sanitizeRedirectPath(redirectTo));
+      await authApi.login({ email: normalizedEmail, password });
+      completeLoginRedirect(nextPath);
     } catch (submissionError) {
       setError(getFriendlyAuthError(mode, submissionError));
     } finally {

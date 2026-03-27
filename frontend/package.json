@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "node -e \"const fs=require('fs'); fs.rmSync('.next/types',{recursive:true,force:true}); fs.rmSync('tsconfig.tsbuildinfo',{force:true});\" && next build >/dev/null && tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -21,6 +23,7 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -28,6 +31,7 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^4.1.2",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.22.0",
     "eslint-config-next": "15.5.14",
