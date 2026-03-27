@@ -9,18 +9,19 @@ import { routes } from "@/lib/constants/routes";
 const features = [
   {
     icon: QrCode,
-    title: "Instant sharing.",
-    description: "Your QR is always one tap away.",
+    title: "Your premium share layer.",
+    description:
+      "Return to the identity you use for QR, calls, messages, and requests.",
   },
   {
     icon: Shield,
-    title: "Total control.",
-    description: "Manage who sees your contact info.",
+    title: "Private by design.",
+    description: "Keep your personal number out of casual circulation.",
   },
   {
     icon: Zap,
-    title: "Lasting connections.",
-    description: "Follow up with context automatically.",
+    title: "Made for better follow-up.",
+    description: "Pick up where meetings, events, and introductions left off.",
   },
 ];
 
@@ -68,7 +69,7 @@ export default async function LoginPage({
                 className="text-4xl sm:text-5xl lg:text-[5.5rem] font-bold tracking-tighter text-foreground leading-[1.05] mb-4 md:mb-6"
                 style={{ WebkitFontSmoothing: "antialiased" }}
               >
-                Welcome <br className="hidden md:block" /> back.
+                Welcome <br className="hidden md:block" /> back to Dotly.
               </h1>
               <p className="text-[17px] sm:text-[21px] text-muted font-medium leading-relaxed max-w-[32ch] md:max-w-[38ch] mx-auto lg:mx-0">
                 {dotlyPositioning.auth.loginDescription}
@@ -116,21 +117,21 @@ export default async function LoginPage({
               {shouldResetSession ? (
                 <div className="rounded-[16px] bg-status-warning/10 px-5 py-4 ring-1 ring-status-warning/20">
                   <p className="text-[14px] font-medium text-status-warning">
-                    Your session expired. Log in again to keep working in Dotly.
+                    Your session expired. Sign in again to return to your Dotly.
                   </p>
                 </div>
               ) : null}
               {verified ? (
                 <div className="rounded-[16px] bg-status-success/10 px-5 py-4 ring-1 ring-status-success/20">
                   <p className="text-[14px] font-medium text-status-success">
-                    Email confirmed. Log in to continue.
+                    Email confirmed. Sign in to continue.
                   </p>
                 </div>
               ) : null}
               {passwordResetComplete ? (
                 <div className="rounded-[16px] bg-status-success/10 px-5 py-4 ring-1 ring-status-success/20">
                   <p className="text-[14px] font-medium text-status-success">
-                    Password reset complete. Log in with your new password.
+                    Password reset complete. Sign in with your new password.
                   </p>
                 </div>
               ) : null}
@@ -138,8 +139,8 @@ export default async function LoginPage({
                 <div className="rounded-[16px] bg-status-success/10 px-5 py-4 ring-1 ring-status-success/20">
                   {verificationDelivered ? (
                     <p className="text-[14px] leading-relaxed font-medium text-status-success">
-                      Account created. Check your inbox, including spam, for
-                      your confirmation email. You can still log in now, but
+                      Your Dotly is ready. Check your inbox, including spam, for
+                      your confirmation email. You can still sign in now, but
                       verified-only sharing stays limited until you confirm it.
                       Need another link?{" "}
                       <Link
@@ -152,8 +153,8 @@ export default async function LoginPage({
                     </p>
                   ) : (
                     <p className="text-[14px] leading-relaxed font-medium text-status-warning">
-                      Account created. Email confirmation is still required, but
-                      delivery is not configured in this environment. Use{" "}
+                      Your Dotly is ready. Email confirmation is still required,
+                      but delivery is not configured in this environment. Use{" "}
                       <Link
                         href={resendHref}
                         className="underline underline-offset-4 hover:opacity-80 transition-opacity"
@@ -170,10 +171,10 @@ export default async function LoginPage({
             <div className="rounded-[2.5rem] md:rounded-[3rem] p-8 sm:p-10 md:p-14 border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
               <div className="mb-8 md:mb-10 space-y-2 text-center md:text-left">
                 <h2 className="text-[28px] md:text-[32px] font-bold tracking-tighter text-foreground leading-[1.1]">
-                  Sign in
+                  Sign in to Dotly
                 </h2>
                 <p className="text-[16px] md:text-[17px] text-muted font-medium">
-                  Enter your credentials to continue.
+                  Return to your premium identity and private share flow.
                 </p>
               </div>
               <AuthForm

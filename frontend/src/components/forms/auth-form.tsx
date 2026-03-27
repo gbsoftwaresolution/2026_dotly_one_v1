@@ -38,7 +38,7 @@ const LABEL_CLASSES =
   "absolute left-4 top-4 z-10 origin-[0] -translate-y-2 scale-[0.80] transform text-[13px] font-medium text-muted transition-all duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-placeholder-shown:text-muted/70 peer-focus:-translate-y-2 peer-focus:scale-[0.80] peer-focus:text-accent pointer-events-none";
 
 const SIGNUP_PASSWORD_HELPER =
-  "Recommended: use 12+ characters with a mix of letters, numbers, and symbols. Avoid reusing a password from another service.";
+  "Recommended: use 12+ characters with a mix of letters, numbers, and symbols. Protect your Dotly with a password you do not use anywhere else.";
 
 function sanitizeRedirectPath(path: string): string {
   if (!path.startsWith("/") || path.startsWith("//")) {
@@ -108,16 +108,16 @@ export function AuthForm({
     () =>
       mode === "login"
         ? {
-            submitLabel: "Log in",
-            alternateLabel: "Need an account?",
+            submitLabel: "Sign in to Dotly",
+            alternateLabel: "Need your Dotly?",
             alternateHref: routes.public.signup,
-            alternateAction: "Sign up",
+            alternateAction: "Claim it",
           }
         : {
             submitLabel: dotlyPositioning.cta.primary,
-            alternateLabel: "Already have an account?",
+            alternateLabel: "Already have your Dotly?",
             alternateHref: routes.public.login,
-            alternateAction: "Log in",
+            alternateAction: "Sign in",
           },
     [mode],
   );
@@ -183,8 +183,8 @@ export function AuthForm({
 
         setSuccessMessage(
           result.verificationEmailSent
-            ? "Confirmation email sent. Redirecting you to login..."
-            : "Account created. Verification is still required, but email delivery is not configured in this environment.",
+            ? "Confirmation email sent. Redirecting you to sign in..."
+            : "Your Dotly is ready. Verification is still required, but email delivery is not configured in this environment.",
         );
         router.push(
           `${routes.public.login}?email=${encodeURIComponent(normalizedEmail)}&created=1&delivery=${deliveryState}`,
@@ -245,7 +245,9 @@ export function AuthForm({
           maxLength={72}
           autoComplete={mode === "login" ? "current-password" : "new-password"}
           placeholder={
-            mode === "signup" ? "Use a strong password" : "Enter your password"
+            mode === "signup"
+              ? "Create a strong password"
+              : "Enter your password"
           }
           error={passwordError}
           footer={
@@ -305,7 +307,7 @@ export function AuthForm({
             placeholder="Re-enter your password"
             error={confirmPasswordError}
             footer={
-              <p>Match your password exactly before creating the account.</p>
+              <p>Match your password exactly before claiming your Dotly.</p>
             }
             onChange={(nextValue) => {
               resetFormFeedback();

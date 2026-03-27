@@ -113,7 +113,7 @@ describe("InstantShareExperience", () => {
 
     expect(screen.getByText(/^@sender$/i)).toBeInTheDocument();
     expect(screen.getByText(/sender persona/i)).toBeInTheDocument();
-    expect(screen.getByText(/scan to view my contact/i)).toBeInTheDocument();
+    expect(screen.getByText(/scan to open my dotly/i)).toBeInTheDocument();
     expect(screen.getByText(/you've connected with/i)).toBeInTheDocument();
     expect(screen.getByText(/\+5 this month/i)).toBeInTheDocument();
     expect(screen.getByText(/verified/i)).toBeInTheDocument();
@@ -133,7 +133,9 @@ describe("InstantShareExperience", () => {
 
     expect(screen.getByText(/^@sender$/i)).toBeInTheDocument();
     expect(screen.getByText(/sender persona/i)).toBeInTheDocument();
-    expect(screen.getByText(/scan to connect on dotly/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/scan to connect with me on dotly/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/verified/i)).toBeInTheDocument();
   });
 

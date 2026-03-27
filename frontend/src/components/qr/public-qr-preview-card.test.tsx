@@ -25,12 +25,16 @@ describe("PublicQrPreviewCard", () => {
       }),
     );
 
-    expect(screen.getByText(/^contact$/i)).toBeInTheDocument();
-    expect(screen.getByText(/contact preview/i)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /^@acme$/i })).toBeInTheDocument();
-    expect(screen.getByText(/scan to view my contact/i)).toBeInTheDocument();
+    expect(screen.getByText(/^my dotly$/i)).toBeInTheDocument();
+    expect(screen.getByText(/premium first impression/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/open this person's contact and choose the next step/i),
+      screen.getByRole("heading", { name: /^@acme$/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/scan to open my dotly/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /open my dotly instead of starting with a phone number/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -54,18 +58,20 @@ describe("PublicQrPreviewCard", () => {
     );
 
     expect(
-      screen.getByText(/^connect$/i, { selector: "span" }),
+      screen.getByText(/^connect with me$/i, { selector: "span" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /^@acme$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /^@acme$/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/^ready to connect$/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/scan to open their profile, then tap connect/i),
+      screen.getByText(/scan to open my dotly, then tap connect with me/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/you will see this profile first/i),
+      screen.getByText(/you will see my dotly first/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/^connect$/i, { selector: "dd" }),
+      screen.getByText(/^connect with me$/i, { selector: "dd" }),
     ).toBeInTheDocument();
   });
 
@@ -88,7 +94,11 @@ describe("PublicQrPreviewCard", () => {
       }),
     );
 
-    expect(screen.getByRole("heading", { name: /^@acme$/i })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: /^@acme-alias$/i })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /^@acme$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /^@acme-alias$/i }),
+    ).not.toBeInTheDocument();
   });
 });

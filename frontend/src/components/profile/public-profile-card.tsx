@@ -42,7 +42,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
             case "email":
               return "Email";
             case "vcard":
-              return "Save contact";
+              return "Save contact card";
           }
         },
       )
@@ -137,17 +137,17 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
         {profile.sharingMode === "smart_card" ? (
           <div className="space-y-3 rounded-3xl bg-foreground/[0.03] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
             <div className="space-y-1">
-              <p className="label-xs text-muted">Next</p>
+              <p className="label-xs text-muted">Connect with me</p>
               <p className="text-sm leading-6 text-foreground/80">
                 {profile.smartCard
-                  ? "Tap the main button to continue with this person."
+                  ? "Use the main button for the best next step, without starting with a phone number."
                   : "This profile is unavailable right now."}
               </p>
             </div>
 
             {profile.smartCard ? (
               <div className="space-y-2">
-                <p className="label-xs text-muted">Ways to connect</p>
+                <p className="label-xs text-muted">Curated ways to connect</p>
                 {enabledSmartCardActions.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {enabledSmartCardActions.map((label) => (
@@ -165,7 +165,7 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
         ) : (
           <div className="space-y-3 rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
             <div className="space-y-1">
-              <p className="label-xs text-muted">Request access</p>
+              <p className="label-xs text-muted">Curated access</p>
               <p className="text-sm leading-6 text-muted">
                 {dotlyPositioning.publicProfile.controlledHelper}
               </p>
@@ -173,15 +173,15 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
             <div className="grid gap-3 rounded-[1.4rem] bg-white/80 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 sm:grid-cols-[1fr_auto] sm:items-center dark:bg-zinc-950/80 dark:ring-white/[0.06]">
               <div className="space-y-1">
                 <p className="text-sm font-semibold text-foreground">
-                  Clear identity, calm gatekeeping
+                  A better first step than sharing a number
                 </p>
                 <p className="text-sm leading-6 text-muted">
-                  This profile keeps the first impression minimal, then lets the
-                  owner approve who gets closer access.
+                  Start with this Dotly, then the owner can share closer access
+                  privately with the right people.
                 </p>
               </div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                Share {publicHandle} when you want people to start here.
+                Share {publicHandle} for a premium first impression.
               </p>
             </div>
           </div>

@@ -31,7 +31,7 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
     .filter(Boolean)
     .join(" at ");
   const scanInstruction = isQuickConnect
-    ? "Scan to open their profile, then tap Connect."
+    ? "Scan to open my Dotly, then tap Connect with me."
     : getShareInstruction(qr.type);
 
   return (
@@ -46,7 +46,7 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-3">
             <StatusBadge
-              label={isQuickConnect ? "Connect" : "Contact"}
+              label={isQuickConnect ? "Connect with me" : "My Dotly"}
               tone="neutral"
             />
             <div className="space-y-1">
@@ -73,22 +73,22 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
       <div className="space-y-5 px-6 py-6">
         <div className="space-y-1 rounded-3xl bg-foreground/[0.03] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <p className="label-xs text-muted">
-            {isQuickConnect ? "Ready to connect" : "Contact preview"}
+            {isQuickConnect ? "Ready to connect" : "Premium first impression"}
           </p>
           <p className="text-sm font-semibold text-foreground">
             {scanInstruction}
           </p>
           <p className="text-sm leading-6 text-muted">
             {isQuickConnect
-              ? "You will see this profile first so you can confirm the person before connecting."
-              : "You are about to open this person's contact and choose the next step."}
+              ? "You will see my Dotly first so you can confirm who I am before connecting."
+              : "You are about to open my Dotly instead of starting with a phone number."}
           </p>
         </div>
 
         <div className="space-y-2">
           <p className="label-xs text-muted">About</p>
           <p className="text-base leading-7 text-foreground">
-            {qr.persona.tagline || "No public tagline available."}
+            {qr.persona.tagline || "A private, curated way to connect."}
           </p>
         </div>
 
@@ -100,7 +100,7 @@ export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
           {isQuickConnect ? (
             <div className="space-y-1">
               <dt className="label-xs text-muted">Primary action</dt>
-              <dd className="text-foreground">Connect</dd>
+              <dd className="text-foreground">Connect with me</dd>
             </div>
           ) : null}
         </dl>

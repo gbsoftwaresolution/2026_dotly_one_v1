@@ -19,7 +19,6 @@ import { showToast } from "@/components/shared/toast-viewport";
 import { publicApi, relationshipApi, requestApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
-import { dotlyPositioning } from "@/lib/constants/positioning";
 import { buildRequestKey } from "@/lib/network/request-key";
 import { useNetworkStatus } from "@/lib/network/use-network-status";
 import { getCanonicalPublicSlug } from "@/lib/persona/public-profile-path";
@@ -66,7 +65,9 @@ function avatarHue(seed: string): number {
   return ((seed.charCodeAt(0) || 72) * 137) % 360;
 }
 
-function getPersonaPublicHandle(persona: Pick<PersonaSummary, "publicUrl" | "username">) {
+function getPersonaPublicHandle(
+  persona: Pick<PersonaSummary, "publicUrl" | "username">,
+) {
   return formatPublicHandle(
     getCanonicalPublicSlug(persona.publicUrl, persona.username),
   );
@@ -141,13 +142,13 @@ function getPrimaryCtaLabel(
 ): string {
   switch (primaryAction) {
     case "login":
-      return "Log in to continue";
+      return "Log in to connect with me";
     case "request_access":
-      return "Request to connect";
+      return "Request to connect with me";
     case "instant_connect":
-      return "Connect";
+      return "Connect with me";
     case "contact_me":
-      return "Contact";
+      return "Connect with me";
   }
 }
 
@@ -157,11 +158,11 @@ function getCardActionSummary(
 ): string {
   switch (primaryAction) {
     case "request_access":
-      return `Request to connect with ${fullName}.`;
+      return `Request curated access to ${fullName}.`;
     case "instant_connect":
-      return "Connect and save this contact.";
+      return "Connect instantly without trading phone numbers.";
     case "contact_me":
-      return `Contact ${fullName} directly.`;
+      return `Choose the best way to connect with ${fullName}.`;
   }
 }
 
@@ -186,7 +187,7 @@ type InstantConnectUiState =
 function toFriendlyRequestMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) {
-      return "Log in to send a request from one of your personas.";
+      return "Log in to send a request from one of your Dotlys.";
     }
 
     if (error.status === 429) {
@@ -201,10 +202,10 @@ function toFriendlyRequestMessage(error: unknown): string {
         msg.toLowerCase().includes("you have blocked") ||
         msg.toLowerCase().includes("has blocked you")
       ) {
-        return "You cannot contact this user.";
+        return "You cannot connect with this profile.";
       }
 
-      return "This profile is not accepting requests right now.";
+      return "This profile is not accepting curated requests right now.";
     }
 
     if (error.status === 409) {
@@ -254,22 +255,12 @@ function getBlockedConnectMessage(error: ApiError): string {
 }
 
 function getVerificationRequiredMessage(): string {
-  return "Verify your email or phone to connect.";
-}
-
-function getRequestFallbackMessage(error: ApiError): string {
-  const message = error.message.toLowerCase();
-
-  if (message.includes("private") || message.includes("not accepting")) {
-    return "Connect isn't available here. Request access instead.";
-  }
-
-  return "Connect isn't available here. Request access instead.";
+  return "Verify your email or phone to connect with confidence.";
 }
 
 function getInstantConnectErrorMessage(error: ApiError): string {
   if (error.status === 401) {
-    return "Log in to connect.";
+    return "Log in to connect with me.";
   }
 
   if (error.status === 429) {
@@ -503,7 +494,7 @@ export function PublicSmartCard({
   if (directActionKeys.includes("vcard") && actionLinks?.vcard) {
     smartActions.push({
       key: "vcard",
-      label: "Save",
+      label: "Save card",
       href: actionLinks.vcard,
       icon: Download,
     });
@@ -540,7 +531,7 @@ export function PublicSmartCard({
       : getPrimaryCtaLabel(primaryCtaAction);
   const cardActionSummary =
     displayedPrimaryAction === "instant_connect"
-      ? `Tap Connect to save ${profile.fullName} as a contact.`
+      ? `Tap Connect with me to save ${profile.fullName} without sharing numbers first.`
       : getCardActionSummary(displayedPrimaryAction, profile.fullName);
   const trimmedTagline = profile.tagline?.trim() || null;
   const trimmedCompanyName = profile.companyName?.trim() || null;
@@ -549,7 +540,8 @@ export function PublicSmartCard({
   const publicHandle = formatPublicHandle(publicIdentifier);
   const publicIdentityLine = getPublicIdentityLine(profile);
   const contextSummary =
-    profile.tagline?.trim() || dotlyPositioning.shortExplainer;
+    profile.tagline?.trim() ||
+    "A premium way to connect before you share personal details.";
   const canSendRequest = hasUnlockedTrustRequirement(
     currentUser,
     "send_contact_request",
@@ -673,7 +665,7 @@ export function PublicSmartCard({
       setErrorState(
         (personasLoading ? "Loading your personas..." : personaLoadError) ??
           (isAuthenticated
-            ? "Dotly needs one of your personas before it can send this request."
+            ? "Dotly needs one of your Dotlys before it can send this request."
             : "Log in to request access."),
       );
       return;
@@ -736,7 +728,7 @@ export function PublicSmartCard({
   function handleContactAction() {
     if (smartActions.length === 0) {
       setErrorState(
-        "No direct contact actions are available on this card yet.",
+        "No direct connection options are available on this card yet.",
       );
       return;
     }
@@ -745,7 +737,7 @@ export function PublicSmartCard({
 
     if (!preferredAction) {
       setErrorState(
-        "No direct contact actions are available on this card yet.",
+        "No direct connection options are available on this card yet.",
       );
       return;
     }
@@ -778,7 +770,7 @@ export function PublicSmartCard({
       setErrorState(
         (personasLoading ? "Loading your personas..." : personaLoadError) ??
           (isAuthenticated
-            ? "Dotly needs one of your personas before connecting."
+            ? "Dotly needs one of your Dotlys before connecting."
             : "Log in to continue."),
       );
       return;
@@ -1085,7 +1077,7 @@ export function PublicSmartCard({
                 onClick={() => setShowCustomizeOptions((current) => !current)}
                 className="text-sm font-medium text-muted transition-colors hover:text-foreground"
               >
-                {showCustomizeOptions ? "Keep this profile" : "Choose profile"}
+                {showCustomizeOptions ? "Keep this Dotly" : "Choose Dotly"}
               </button>
             </div>
           ) : null}
@@ -1094,8 +1086,8 @@ export function PublicSmartCard({
             <div className="space-y-2 text-left">
               <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
                 {primaryCtaAction === "request_access"
-                  ? "Requesting from"
-                  : "Connecting from"}
+                  ? "Request from"
+                  : "Connect from"}
               </p>
               {selectedPersona ? (
                 <div className="rounded-[1.35rem] border border-black/8 bg-white/82 px-4 py-3.5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
@@ -1141,7 +1133,7 @@ export function PublicSmartCard({
             <VerificationPrompt
               email={currentUser.email}
               title="Verify before sending requests"
-              description={`Dotly sends requests only from verified accounts before introducing you to ${profile.fullName}.`}
+              description={`Dotly sends curated requests only from verified accounts before introducing you to ${profile.fullName}.`}
               compact
             />
           ) : null}
@@ -1154,7 +1146,9 @@ export function PublicSmartCard({
                   onClick={() => setShowDirectActions((current) => !current)}
                   className="text-sm font-medium text-muted transition-colors hover:text-foreground"
                 >
-                  {showDirectActions ? "Hide more actions" : "More actions"}
+                  {showDirectActions
+                    ? "Hide connection options"
+                    : "More ways to connect"}
                 </button>
               </div>
 
@@ -1254,7 +1248,7 @@ export function PublicSmartCard({
             ) : null}
             {directActionState.status === "loading" ? (
               <p aria-live="polite" className="text-sm leading-6 text-muted">
-                Starting contact download...
+                Saving contact card...
               </p>
             ) : null}
             {directActionState.status === "success" ? (

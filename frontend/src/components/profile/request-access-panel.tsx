@@ -50,7 +50,9 @@ function buildLoginHref(publicUrl: string, publicIdentifier: string): string {
   )}`;
 }
 
-function getPersonaPublicHandle(persona: Pick<PersonaSummary, "publicUrl" | "username">) {
+function getPersonaPublicHandle(
+  persona: Pick<PersonaSummary, "publicUrl" | "username">,
+) {
   return formatPublicHandle(
     getCanonicalPublicSlug(persona.publicUrl, persona.username),
   );
@@ -59,7 +61,7 @@ function getPersonaPublicHandle(persona: Pick<PersonaSummary, "publicUrl" | "use
 function toFriendlyMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) {
-      return "Log in to send a request from one of your personas.";
+      return "Log in to send a request from one of your Dotlys.";
     }
 
     if (error.status === 429) {
@@ -74,21 +76,21 @@ function toFriendlyMessage(error: unknown): string {
         msg.toLowerCase().includes("you have blocked") ||
         msg.toLowerCase().includes("has blocked you")
       ) {
-        return "You cannot contact this user.";
+        return "You cannot connect with this profile.";
       }
 
       if (
         msg.toLowerCase().includes("private") ||
         msg.toLowerCase().includes("not accepting")
       ) {
-        return "This profile is not accepting requests at this time.";
+        return "This profile is not accepting curated requests at this time.";
       }
 
       if (msg.toLowerCase().includes("cooldown")) {
         return "Cooldown Required. Try again later.";
       }
 
-      return "This profile is not accepting requests at this time.";
+      return "This profile is not accepting curated requests at this time.";
     }
 
     if (error.status === 409) {
@@ -155,7 +157,7 @@ export function RequestAccessPanel({
   const smartCardLoginDescription =
     smartCardPrimaryAction === null
       ? "This profile isn't available right now. Log in and try again later."
-      : "Log in to connect or request access.";
+      : "Log in to connect with me or request curated access.";
   const smartCardPrimaryActionHeading =
     smartCardPrimaryAction === null
       ? "This profile is currently unavailable"
@@ -163,7 +165,7 @@ export function RequestAccessPanel({
   const smartCardRequestDescription =
     smartCardPrimaryAction === null
       ? `This profile isn't available right now. Try again later.`
-      : `Send a simple connection request to ${publicHandle}.`;
+      : `Send a private connection request to ${publicHandle}.`;
   const isSmartCardMisconfigured =
     profile.sharingMode === "smart_card" && profile.smartCard === null;
   const supportsRequestAccess =
@@ -258,19 +260,21 @@ export function RequestAccessPanel({
       <Card className="space-y-4">
         <div className="space-y-2">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-            Request access
+            Curated access
           </p>
           <h2 className="font-sans text-lg font-semibold text-foreground">
-            Log in to continue
+            Log in to connect with me
           </h2>
           <p className="text-sm leading-6 text-muted">
             {profile.sharingMode === "smart_card"
               ? smartCardLoginDescription
-              : `Log in to request access to ${publicHandle}.`}
+              : `Log in to request curated access to ${publicHandle}.`}
           </p>
         </div>
         <Link href={loginHref} className="block">
-          <PrimaryButton className="w-full">Log in to continue</PrimaryButton>
+          <PrimaryButton className="w-full">
+            Log in to connect with me
+          </PrimaryButton>
         </Link>
       </Card>
     );
@@ -308,7 +312,7 @@ export function RequestAccessPanel({
             {smartCardPrimaryActionHeading}
           </h2>
           <p className="text-sm leading-6 text-muted">
-            Use the action above to continue.
+            Use the action above to continue with this Dotly.
           </p>
         </div>
       </Card>
@@ -333,7 +337,7 @@ export function RequestAccessPanel({
       <VerificationPrompt
         email={currentUser.email}
         title="Verify your account before sending a request"
-        description={`Verify your email or phone before requesting access to ${publicHandle}.`}
+        description={`Verify your email or phone before requesting curated access to ${publicHandle}.`}
       />
     );
   }
@@ -342,10 +346,10 @@ export function RequestAccessPanel({
     return (
       <EmptyState
         title="Create a profile to send requests"
-        description="Create a profile before you request access to someone else."
+        description="Create a Dotly before you request curated access to someone else."
         action={
           <Link href={routes.app.createPersona}>
-            <PrimaryButton className="w-full">Create profile</PrimaryButton>
+            <PrimaryButton className="w-full">Create Dotly</PrimaryButton>
           </Link>
         }
       />
@@ -356,15 +360,15 @@ export function RequestAccessPanel({
     <Card className="space-y-5">
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-          Connect
+          Curated access
         </p>
         <h2 className="font-sans text-lg font-semibold text-foreground">
-          Request to connect with {publicHandle}
+          Request to connect with me
         </h2>
         <p className="text-sm leading-6 text-muted">
           {profile.sharingMode === "smart_card"
             ? smartCardRequestDescription
-            : `Send a request to ${publicHandle} instantly with your default persona.`}
+            : `Send a private request to ${publicHandle} without handing out your number first.`}
         </p>
       </div>
 
@@ -388,7 +392,7 @@ export function RequestAccessPanel({
                   htmlFor="fromPersonaId"
                   className="block font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
                 >
-                  Send from
+                  Connect from
                 </label>
                 {selectedPersona ? (
                   <div className="rounded-2xl bg-foreground/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
@@ -419,14 +423,14 @@ export function RequestAccessPanel({
                 htmlFor="reason"
                 className="block font-mono text-[10px] font-semibold uppercase tracking-widest text-muted"
               >
-                Add a note
+                Add a private note
               </label>
               <textarea
                 id="reason"
                 maxLength={280}
                 rows={3}
                 className="w-full resize-none rounded-2xl bg-foreground/[0.03] px-4 py-3 font-sans text-sm text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition-all placeholder:text-muted/50 focus:bg-foreground/[0.05] focus:ring-black/10 dark:bg-white/[0.045] dark:ring-white/5 dark:focus:bg-white/[0.06]"
-                placeholder="Add a note they will recognize later (optional)"
+                placeholder="Add context they will recognize later (optional)"
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
                 disabled={isSubmitting || Boolean(successMessage)}
@@ -442,7 +446,7 @@ export function RequestAccessPanel({
         ) : null}
         {showSlowHint ? (
           <p className="text-sm leading-6 text-muted">
-            Still sending. Keep this screen open.
+            Still sending your request. Keep this screen open.
           </p>
         ) : null}
         {!isOnline ? (
@@ -467,7 +471,9 @@ export function RequestAccessPanel({
               className="h-[60px] w-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Sending..." : "Request to connect"}
+              {isSubmitting
+                ? "Sending request..."
+                : "Request to connect with me"}
             </PrimaryButton>
           )}
         </div>

@@ -11,25 +11,28 @@ import { routes } from "@/lib/constants/routes";
 const features = [
   {
     icon: QrCode,
-    title: "Your identity, scannable.",
-    description: "Get your personal QR instantly. No app required.",
+    title: "One identity, elegantly shared.",
+    description:
+      "Your Dotly gives you one premium QR for real-world introductions.",
   },
   {
     icon: Shield,
-    title: "Privacy by design.",
-    description: "Share only what you want, when you want.",
+    title: "Private by default.",
+    description:
+      "Share access without giving away your personal number too soon.",
   },
   {
     icon: Zap,
-    title: "Context that lasts.",
-    description: "Organize who you met, when, and why it mattered.",
+    title: "Built for high-signal follow-up.",
+    description:
+      "Better for meetings, events, introductions, and what happens after.",
   },
 ];
 
 const onboardingSteps = [
   "Create account",
-  "Set first persona",
-  "Open your QR",
+  "Set your Dotly",
+  "Share with confidence",
 ] as const;
 
 const fadeUp = {
@@ -80,7 +83,7 @@ export default function SignupPage({
                 className="text-4xl sm:text-5xl lg:text-[5.5rem] font-bold tracking-tighter text-foreground leading-[1.05] mb-4 md:mb-6"
                 style={{ WebkitFontSmoothing: "antialiased" }}
               >
-                Claim your <br className="hidden md:block" /> identity.
+                Claim your <br className="hidden md:block" /> premium identity.
               </h1>
               <p className="text-[17px] sm:text-[21px] text-muted font-medium leading-relaxed max-w-[32ch] md:max-w-[38ch] mx-auto lg:mx-0">
                 {dotlyPositioning.auth.signupDescription}
@@ -144,12 +147,12 @@ export default function SignupPage({
             <div className="rounded-[2.5rem] md:rounded-[3rem] p-8 sm:p-10 md:p-14 border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
               <div className="mb-8 md:mb-10 space-y-2 text-center md:text-left">
                 <h2 className="text-[28px] md:text-[32px] font-bold tracking-tighter text-foreground leading-[1.1]">
-                  Create your account
+                  Claim your Dotly
                 </h2>
                 <p className="text-[16px] md:text-[17px] text-muted font-medium">
                   {referralCode
-                    ? `Invite code ${referralCode} is already applied.`
-                    : "Create the account now. Persona setup and QR come next."}
+                    ? `Invite code ${referralCode} is already applied to your premium setup.`
+                    : "Create your account now. Your Dotly, share flow, and QR come next."}
                 </p>
               </div>
               <AuthForm

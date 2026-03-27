@@ -1,29 +1,30 @@
 export const dotlyPositioning = {
-  headline: "Don't share your number. Share your Dotly.",
+  headline: "Your number is for devices. Your Dotly is for you.",
   subheadline:
-    "Open one screen, show your QR, and let people connect the right way.",
-  shortExplainer:
-    "Share once. Connect instantly. Keep control of what happens next.",
-  category: "Share your Dotly",
+    "One premium identity for calls, messages, requests, QR, and introductions.",
+  shortExplainer: "Share access, not your private number.",
+  category: "Premium contact identity",
   supportingPoints: [
-    "Show your QR.",
-    "Connect in seconds.",
-    "Stay in control.",
+    "Calls, messages, and requests in one place.",
+    "One QR for real-world sharing.",
+    "Keep your private number private.",
   ],
   seo: {
-    title: "Dotly | Don't share your number. Share your Dotly.",
+    title: "Dotly | Your number is for devices. Your Dotly is for you.",
     description:
-      "Don't share your number. Share your Dotly. A smarter way to share your contact, with control built in.",
+      "Dotly is the premium alternative to exchanging phone numbers: one trusted identity for calls, messages, requests, QR, and introductions.",
   },
   cta: {
-    primary: "Get your Dotly",
-    secondary: "See the flow",
+    primary: "Claim your Dotly",
+    secondary: "See how it works",
   },
   auth: {
-    signupTitle: "Get your Dotly",
-    signupDescription: "Set up your Dotly and start sharing it in seconds.",
-    loginTitle: "Welcome back",
-    loginDescription: "Log in to share your Dotly and manage your contacts.",
+    signupTitle: "Claim your Dotly",
+    signupDescription:
+      "Set up one premium identity for calls, messages, requests, QR, and introductions.",
+    loginTitle: "Welcome back to Dotly",
+    loginDescription:
+      "Sign in to share access, manage requests, and keep your private number private.",
   },
   publicProfile: {
     controlledHelper: "You control who can contact you.",

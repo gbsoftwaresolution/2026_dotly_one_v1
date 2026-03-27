@@ -1,14 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Menu,
-  ArrowRight,
-  Check,
-  QrCode,
-  Shield,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, Check, QrCode, Shield, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
@@ -41,26 +34,29 @@ const fadeUp = {
 
 const steps = [
   {
-    label: "Open Dotly",
-    detail: "Your QR is ready right away.",
+    label: "Keep one identity",
+    detail:
+      "A single premium layer for calls, messages, requests, and introductions.",
     icon: QrCode,
   },
   {
-    label: "Share once",
-    detail: "People scan and take the next step fast.",
+    label: "Share access",
+    detail:
+      "Let people reach you the right way without handing over your private number.",
     icon: ArrowRight,
   },
   {
-    label: "Stay in control",
-    detail: "Dotly keeps your contact flow clean and private.",
+    label: "Follow up with signal",
+    detail:
+      "Built for meetings, events, intros, and the moments worth continuing.",
     icon: Shield,
   },
 ];
 
 const trustPoints = [
-  "One clear QR share screen",
-  "Instant connect when it makes sense",
-  "Context and follow-up after you meet",
+  "A premium alternative to exchanging phone numbers",
+  "One trusted QR and identity for high-signal sharing",
+  "Better for intros, meetings, events, and warm follow-up",
 ];
 
 export default function LandingPage() {
@@ -128,7 +124,7 @@ export default function LandingPage() {
                 size="lg"
                 className="w-full rounded-full font-semibold text-[17px] px-8 h-14 text-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:scale-[0.98] transition-all duration-300 ease-out !border-0 bg-black/[0.03] dark:bg-white/[0.03] backdrop-blur-md ring-1 ring-black/10 dark:ring-white/10"
               >
-                Log in
+                Sign in
               </SecondaryButton>
             </Link>
           </motion.div>
@@ -156,16 +152,16 @@ export default function LandingPage() {
 
             <div className="relative z-10 max-w-2xl">
               <p className="text-xs font-bold text-muted uppercase tracking-[0.2em] mb-5">
-                3-second explanation
+                Premium positioning
               </p>
               <h2 className="text-[2.5rem] md:text-5xl font-bold tracking-tighter text-foreground mb-6 leading-[1.05]">
-                Show your QR.
+                Keep your number private.
                 <br className="hidden md:block" />
-                Let Dotly handle the connection.
+                Let Dotly carry the introduction.
               </h2>
               <p className="text-[19px] md:text-xl text-muted font-medium leading-relaxed max-w-[34ch]">
-                Dotly is the fastest way to share your contact in real life
-                without giving away too much too soon.
+                Dotly gives you one calm, high-trust identity to share in
+                person, so the next step feels intentional from the start.
               </p>
             </div>
           </motion.div>
@@ -208,9 +204,9 @@ export default function LandingPage() {
                 Why it wins
               </p>
               <h2 className="text-[2rem] md:text-[2.5rem] font-bold tracking-tighter text-foreground mb-10 leading-[1.1]">
-                Clear to use.
+                Richer than a contact card.
                 <br />
-                Better after the first interaction.
+                More private than a phone number.
               </h2>
               <div className="space-y-6">
                 {trustPoints.map((point) => (
@@ -244,8 +240,8 @@ export default function LandingPage() {
                   {dotlyPositioning.shortExplainer}
                 </h3>
                 <p className="text-[19px] opacity-80 font-medium leading-relaxed max-w-[28ch]">
-                  Built for intros, meetings, events, and the moment after you
-                  meet someone.
+                  Designed for intros, meetings, events, requests, and the kind
+                  of follow-up that should feel polished.
                 </p>
               </div>
             </motion.div>

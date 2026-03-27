@@ -82,7 +82,7 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByRole("link", { name: /log in to continue/i }),
+      screen.getByRole("link", { name: /log in to connect with me/i }),
     ).toHaveAttribute("href", "/login?next=%2Fu%2Ftarget");
   });
 
@@ -131,7 +131,7 @@ describe("RequestAccessPanel", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /request to connect/i }),
+      screen.getByRole("button", { name: /request to connect with me/i }),
     );
 
     await waitFor(() => {
@@ -164,7 +164,7 @@ describe("RequestAccessPanel", () => {
       screen.getByText(/this profile isn't ready right now/i),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: /log in to continue/i }),
+      screen.queryByRole("link", { name: /log in to connect with me/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -215,7 +215,7 @@ describe("RequestAccessPanel", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /request to connect/i }),
+      screen.getByRole("button", { name: /request to connect with me/i }),
     );
 
     await waitFor(() => {
@@ -284,7 +284,7 @@ describe("RequestAccessPanel", () => {
 
     window.dispatchEvent(new Event("offline"));
     await user.click(
-      screen.getByRole("button", { name: /request to connect/i }),
+      screen.getByRole("button", { name: /request to connect with me/i }),
     );
 
     expect(mocks.sendRequest).not.toHaveBeenCalled();
@@ -342,7 +342,9 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/add a note/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/add a private note/i),
+    ).not.toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", {
@@ -350,8 +352,10 @@ describe("RequestAccessPanel", () => {
       }),
     );
 
-    expect(screen.getByRole("button", { name: /send from/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/add a note/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /connect from/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/add a private note/i)).toBeInTheDocument();
   });
 
   it("keeps request-to-connect available when smart card mode uses request_access", async () => {
@@ -413,11 +417,11 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /^request to connect with @target$/i }),
+      screen.getByRole("heading", { name: /^request to connect with me$/i }),
     ).toBeInTheDocument();
 
     await user.click(
-      screen.getByRole("button", { name: /request to connect/i }),
+      screen.getByRole("button", { name: /request to connect with me/i }),
     );
 
     await waitFor(() => {
@@ -454,7 +458,7 @@ describe("RequestAccessPanel", () => {
 
     expect(screen.getByText(/^connect is the next step$/i)).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /request to connect/i }),
+      screen.queryByRole("button", { name: /request to connect with me/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -512,10 +516,10 @@ describe("RequestAccessPanel", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /^request to connect with @target$/i }),
+      screen.getByRole("heading", { name: /^request to connect with me$/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /request to connect/i }),
+      screen.getByRole("button", { name: /request to connect with me/i }),
     ).toBeEnabled();
   });
 
@@ -536,7 +540,7 @@ describe("RequestAccessPanel", () => {
       screen.getByText(/this profile isn't ready right now/i),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /request to connect/i }),
+      screen.queryByRole("button", { name: /request to connect with me/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -574,7 +578,7 @@ describe("RequestAccessPanel", () => {
       screen.getByText(/verify your account before sending a request/i),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /request to connect/i }),
+      screen.queryByRole("button", { name: /request to connect with me/i }),
     ).not.toBeInTheDocument();
   });
 });

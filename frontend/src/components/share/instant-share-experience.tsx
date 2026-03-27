@@ -17,7 +17,11 @@ import { userApi } from "@/lib/api/user-api";
 import { routes } from "@/lib/constants/routes";
 import { useNetworkStatus } from "@/lib/network/use-network-status";
 import { formatPublicHandle } from "@/lib/persona/routing-ux";
-import { getShareInstruction } from "@/lib/persona/share-copy";
+import {
+  getShareDescription,
+  getShareHeadline,
+  getShareInstruction,
+} from "@/lib/persona/share-copy";
 import { getShareFastSnapshot, seedMyFastShare } from "@/lib/share-fast-store";
 import type { CurrentUserAnalytics } from "@/types/analytics";
 import type {
@@ -77,6 +81,7 @@ function FastQrShell({
   analytics?: import("@/types/analytics").CurrentUserAnalytics | null;
 }) {
   const hasCachedShare = sharePayload !== null;
+  const shareType = sharePayload?.preferredShareType;
 
   return (
     <div className="space-y-6 motion-safe:animate-[fade-in_420ms_ease-out]">
@@ -86,10 +91,10 @@ function FastQrShell({
 
         <div className="space-y-2 relative z-10 text-center">
           <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-            Ready to Connect
+            {getShareHeadline(shareType)}
           </h2>
           <p className="text-sm leading-relaxed text-muted max-w-[280px] mx-auto">
-            Scan to instantly access my profile and contact information.
+            {getShareDescription(shareType)}
           </p>
         </div>
 
@@ -175,12 +180,12 @@ function FastQrShell({
             ) : null}
             {!isOnline ? (
               <p className="mx-auto max-w-[30ch] text-sm leading-6 text-amber-700 dark:text-amber-300">
-                You are offline. Showing your last ready QR.
+                You are offline. Showing your last ready Dotly QR.
               </p>
             ) : null}
             {error && hasCachedShare ? (
               <p className="mx-auto max-w-[30ch] text-sm leading-6 text-amber-700 dark:text-amber-300">
-                Showing your last ready QR while Dotly reconnects.
+                Showing your last ready Dotly QR while Dotly reconnects.
               </p>
             ) : null}
           </div>
@@ -191,11 +196,11 @@ function FastQrShell({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                  Share controls could not refresh
+                  Share experience could not refresh
                 </p>
                 <p className="mt-1 text-sm leading-6 text-amber-700/90 dark:text-amber-200/90">
                   {hasCachedShare
-                    ? "Showing your last ready QR while the network catches up."
+                    ? "Showing your last ready Dotly QR while the network catches up."
                     : error}
                 </p>
               </div>
@@ -356,12 +361,12 @@ export function InstantShareExperience({
 
           <div className="space-y-2 relative z-10">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              Show your QR
+              Show your Dotly QR
             </h1>
             <p className="text-sm leading-relaxed text-muted max-w-[280px] mx-auto">
               {isOnline
-                ? "Open one screen and hand over a large, scannable QR in seconds."
-                : "You are offline and no cached QR is available yet."}
+                ? "Open one screen and let people connect without asking for your number."
+                : "You are offline and no cached Dotly QR is available yet."}
             </p>
           </div>
 
@@ -369,19 +374,19 @@ export function InstantShareExperience({
             <EmptyState
               title={
                 isOnline
-                  ? "Create a profile to start sharing"
-                  : "No offline QR available"
+                  ? "Create a Dotly to start sharing"
+                  : "No offline Dotly QR available"
               }
               description={
                 isOnline
-                  ? "Create your first profile so you can share a live QR for meetings, events, and introductions."
-                  : "Reconnect once to load your ready QR, then Dotly can keep it available if the network drops."
+                  ? "Create your first Dotly so you can make premium first impressions at meetings, events, and introductions."
+                  : "Reconnect once to load your ready Dotly QR, then Dotly can keep it available if the network drops."
               }
               action={
                 isOnline ? (
                   <Link href={routes.app.createPersona}>
                     <SecondaryButton className="h-[60px] w-full active:scale-95">
-                      Create profile
+                      Create Dotly
                     </SecondaryButton>
                   </Link>
                 ) : (
@@ -433,7 +438,7 @@ export function InstantShareExperience({
               Share unavailable
             </h1>
             <p className="text-sm leading-relaxed text-muted max-w-[280px] mx-auto">
-              Open one screen and hand over a large, scannable QR in seconds.
+              Open one screen and share a premium connection surface in seconds.
             </p>
           </div>
 
@@ -474,14 +479,14 @@ export function InstantShareExperience({
               QR not ready
             </h1>
             <p className="text-sm leading-relaxed text-muted max-w-[280px] mx-auto">
-              Dotly could not resolve your ready share yet.
+              Dotly could not resolve your ready connection surface yet.
             </p>
           </div>
 
           <div className="relative z-10">
             <EmptyState
               title="Share unavailable"
-              description="Your share card is not ready right now. Try again or review this persona's share settings."
+              description="Your share card is not ready right now. Try again or review this Dotly's share settings."
               action={
                 <SecondaryButton
                   type="button"

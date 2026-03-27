@@ -181,7 +181,7 @@ describe("PublicSmartCard", () => {
     );
 
     expect(
-      screen.getAllByRole("button", { name: /request to connect/i })[0],
+      screen.getAllByRole("button", { name: /request to connect with me/i })[0],
     ).toBeEnabled();
     expect(screen.getByLabelText(/^verified$/i)).toBeInTheDocument();
     expect(
@@ -195,7 +195,9 @@ describe("PublicSmartCard", () => {
       screen.queryByTestId("smart-card-actions-grid"),
     ).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /more actions/i }));
+    await user.click(
+      screen.getByRole("button", { name: /more ways to connect/i }),
+    );
 
     expect(screen.getByTestId("smart-card-actions-grid")).toHaveAttribute(
       "data-action-count",
@@ -275,7 +277,7 @@ describe("PublicSmartCard", () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/^dotly$/i)).not.toBeInTheDocument();
     expect(
-      screen.getByText(/request to connect with jane doe/i),
+      screen.getByText(/request curated access to jane doe/i),
     ).toBeInTheDocument();
   });
 
@@ -295,12 +297,12 @@ describe("PublicSmartCard", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /request to connect/i }),
+      screen.getByRole("button", { name: /request to connect with me/i }),
     );
 
     expect(scrollIntoView).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent(
-      /dotly needs one of your personas/i,
+      /dotly needs one of your dotlys/i,
     );
   });
 
@@ -336,12 +338,16 @@ describe("PublicSmartCard", () => {
       screen.getByText(/trusted identity, zero clutter/i),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /^contact$/i }));
+    await user.click(
+      screen.getByRole("button", { name: /^connect with me$/i }),
+    );
 
     expect(scrollIntoView).not.toHaveBeenCalled();
     expect(assignLocation).toHaveBeenCalledWith("tel:+15551234567");
 
-    await user.click(screen.getByRole("button", { name: /more actions/i }));
+    await user.click(
+      screen.getByRole("button", { name: /more ways to connect/i }),
+    );
 
     expect(screen.getByRole("link", { name: /call/i })).toHaveAttribute(
       "href",
@@ -391,7 +397,9 @@ describe("PublicSmartCard", () => {
       ),
     );
 
-    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+    await user.click(
+      screen.getByRole("button", { name: /^connect with me$/i }),
+    );
 
     await waitFor(() => {
       expect(
@@ -445,7 +453,9 @@ describe("PublicSmartCard", () => {
     );
 
     window.dispatchEvent(new Event("offline"));
-    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+    await user.click(
+      screen.getByRole("button", { name: /^connect with me$/i }),
+    );
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(screen.getByText(/^you are offline\.$/i)).toBeInTheDocument();
@@ -490,9 +500,11 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /choose profile/i }));
+    await user.click(screen.getByRole("button", { name: /choose dotly/i }));
     await user.selectOptions(screen.getByRole("combobox"), "persona-2");
-    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+    await user.click(
+      screen.getByRole("button", { name: /^connect with me$/i }),
+    );
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/public/jane/instant-connect",
@@ -543,7 +555,9 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+    await user.click(
+      screen.getByRole("button", { name: /^connect with me$/i }),
+    );
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -592,12 +606,16 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /choose profile/i }));
+    await user.click(screen.getByRole("button", { name: /choose dotly/i }));
 
     expect(screen.getAllByText(/^@acme$/i).length).toBeGreaterThan(0);
-    expect(screen.getByRole("option", { name: /jane work @acme-ops/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /jane work @acme-ops/i }),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/^@sender-alias$/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole("option", { name: /ops-alias/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: /ops-alias/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows an error instead of connecting when no persona is available", async () => {
@@ -626,11 +644,13 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+    await user.click(
+      screen.getByRole("button", { name: /^connect with me$/i }),
+    );
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent(
-      /dotly needs one of your personas before connecting/i,
+      /dotly needs one of your dotlys before connecting/i,
     );
   });
 
@@ -662,7 +682,7 @@ describe("PublicSmartCard", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /log in to continue/i }),
+      screen.getByRole("button", { name: /log in to connect with me/i }),
     );
 
     expect(fetchMock).not.toHaveBeenCalled();
@@ -705,7 +725,9 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+    await user.click(
+      screen.getByRole("button", { name: /^connect with me$/i }),
+    );
 
     await waitFor(() => {
       expect(
@@ -770,7 +792,9 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+    await user.click(
+      screen.getByRole("button", { name: /^connect with me$/i }),
+    );
 
     await waitFor(() => {
       expect(
@@ -824,12 +848,16 @@ describe("PublicSmartCard", () => {
       ),
     );
 
-    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+    await user.click(
+      screen.getByRole("button", { name: /^connect with me$/i }),
+    );
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(/has blocked you/i);
     });
-    expect(screen.getByRole("button", { name: /^connect$/i })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: /^connect with me$/i }),
+    ).toBeEnabled();
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
 
@@ -870,17 +898,17 @@ describe("PublicSmartCard", () => {
       ),
     );
 
-    await user.click(screen.getByRole("button", { name: /more actions/i }));
-    await user.click(screen.getByRole("button", { name: /^save$/i }));
+    await user.click(
+      screen.getByRole("button", { name: /more ways to connect/i }),
+    );
+    await user.click(screen.getByRole("button", { name: /^save card$/i }));
 
     expect(fetchMock).toHaveBeenCalledWith("/api/public/jane/vcard", {
       method: "GET",
     });
     expect(createObjectUrl).toHaveBeenCalledTimes(1);
     expect(revokeObjectUrl).toHaveBeenCalledTimes(1);
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      /saved to contacts/i,
-    );
+    expect((await screen.findAllByText(/saved to contacts/i)).length).toBe(3);
   });
 
   it("shows a lightweight error when the vcard download fails", async () => {
@@ -912,8 +940,10 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /more actions/i }));
-    await user.click(screen.getByRole("button", { name: /^save$/i }));
+    await user.click(
+      screen.getByRole("button", { name: /more ways to connect/i }),
+    );
+    await user.click(screen.getByRole("button", { name: /^save card$/i }));
 
     expect(screen.getByRole("alert")).toHaveTextContent(
       /unable to download contact/i,
@@ -957,9 +987,11 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /more actions/i }));
+    await user.click(
+      screen.getByRole("button", { name: /more ways to connect/i }),
+    );
     const saveContactButton = screen.getByRole("button", {
-      name: /^save$/i,
+      name: /^save card$/i,
     });
 
     await user.click(saveContactButton);
@@ -1001,10 +1033,10 @@ describe("PublicSmartCard", () => {
     );
 
     expect(
-      screen.queryByRole("button", { name: /^save$/i }),
+      screen.queryByRole("button", { name: /^save card$/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /request to connect/i }),
+      screen.getByRole("button", { name: /request to connect with me/i }),
     ).toBeEnabled();
   });
 
@@ -1032,7 +1064,7 @@ describe("PublicSmartCard", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: /request to connect/i }),
+      screen.getByRole("button", { name: /request to connect with me/i }),
     ).toBeInTheDocument();
   });
 
@@ -1059,7 +1091,7 @@ describe("PublicSmartCard", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: /request to connect/i }),
+      screen.getByRole("button", { name: /request to connect with me/i }),
     ).toBeEnabled();
   });
 
@@ -1085,7 +1117,9 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    expect(screen.getByRole("button", { name: /^contact$/i })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /^connect with me$/i }),
+    ).toBeDisabled();
     expect(screen.getByText(/try again later/i)).toBeInTheDocument();
     expect(
       screen.getByText(/trusted identity, zero clutter/i),
@@ -1117,7 +1151,9 @@ describe("PublicSmartCard", () => {
     expect(
       screen.queryByTestId("smart-card-actions-grid"),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /more actions/i })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: /more ways to connect/i }),
+    ).toBeEnabled();
   });
 
   it("reveals the save action only after explicit intent", async () => {
@@ -1144,13 +1180,15 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    await user.click(screen.getByRole("button", { name: /more actions/i }));
+    await user.click(
+      screen.getByRole("button", { name: /more ways to connect/i }),
+    );
 
     expect(screen.getByTestId("smart-card-actions-grid")).toHaveAttribute(
       "data-action-count",
       "1",
     );
-    expect(screen.getByRole("button", { name: /^save$/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /^save card$/i })).toBeEnabled();
   });
 
   it("shows the empty configuration state", () => {
@@ -1187,7 +1225,9 @@ describe("PublicSmartCard", () => {
       }),
     );
 
-    expect(screen.getByRole("button", { name: /more actions/i })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: /more ways to connect/i }),
+    ).toBeEnabled();
   });
 
   it("hides the actions panel when every action link is null", () => {
@@ -1213,7 +1253,7 @@ describe("PublicSmartCard", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: /request to connect/i }),
+      screen.getByRole("button", { name: /request to connect with me/i }),
     ).toBeEnabled();
   });
 
@@ -1247,7 +1287,7 @@ describe("PublicSmartCard", () => {
       screen.queryByRole("link", { name: /call/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /request to connect/i }),
+      screen.getByRole("button", { name: /request to connect with me/i }),
     ).toBeEnabled();
   });
 });
