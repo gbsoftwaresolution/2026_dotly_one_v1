@@ -27,6 +27,7 @@ export class ActionEnforcementService {
   async enforceAction(input: EnforceActionDto): Promise<ActionDecision> {
     const context = await this.identitiesService.resolveConversationContext({
       conversationId: input.conversationId,
+      currentUserId: input.currentUserId,
     });
     if (input.currentUserId) {
       await this.identitiesService.assertConversationActionAccessibleToUser({
@@ -37,11 +38,15 @@ export class ActionEnforcementService {
     }
     const staleCheck =
       await this.identitiesService.isConversationPermissionBindingStale(
-        input.conversationId,
+        {
+          conversationId: input.conversationId,
+          currentUserId: input.currentUserId,
+        },
       );
     const boundPermissions = staleCheck.stale
       ? await this.identitiesService.bindResolvedPermissionsToConversation({
           conversationId: input.conversationId,
+          currentUserId: input.currentUserId,
         })
       : null;
     const resolvedPermissions =

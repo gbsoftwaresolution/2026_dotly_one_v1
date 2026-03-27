@@ -1,5 +1,9 @@
 import type { CurrentUserAnalytics } from "@/types/analytics";
-import type { CurrentUserReferral, UserProfile } from "@/types/user";
+import type {
+  CurrentUserReferral,
+  UserActivationNudgeQueue,
+  UserProfile,
+} from "@/types/user";
 
 import { apiRequest } from "./client";
 
@@ -36,4 +40,14 @@ export const userApi = {
       baseUrl: "",
       credentials: "same-origin",
     }),
+
+  clearFirstResponseNudge: (queue: UserActivationNudgeQueue) =>
+    apiRequest<{ cleared: boolean; queue: UserActivationNudgeQueue }>(
+      `/api/users/me/activation/first-response-nudges/${queue}/clear`,
+      {
+        method: "POST",
+        baseUrl: "",
+        credentials: "same-origin",
+      },
+    ),
 };

@@ -17,6 +17,10 @@ import { PersonaSmartCardPrimaryAction } from "../../common/enums/persona-smart-
 import { AnalyticsService } from "../analytics/analytics.service";
 import { BlocksService } from "../blocks/blocks.service";
 import {
+  ActivationMilestonesService,
+  noopActivationMilestonesService,
+} from "../users/activation-milestones.service";
+import {
   type PublicPersonaRecord,
   publicPersonaSelect,
 } from "../personas/persona.presenter";
@@ -68,6 +72,11 @@ interface PublicVcardResult {
 const authenticatedRequestTargetSelect = {
   id: true,
   userId: true,
+  identity: {
+    select: {
+      handle: true,
+    },
+  },
   username: true,
   fullName: true,
   isPrimary: true,
@@ -137,16 +146,20 @@ export class ProfilesService {
     private readonly analyticsService: AnalyticsService,
     private readonly configService: ConfigService = defaultingConfigService as ConfigService,
     private readonly blocksService: BlocksService = failClosedBlocksService as BlocksService,
+    private readonly activationMilestonesService: Pick<
+      ActivationMilestonesService,
+      "markFirstShareCompletedForPersona"
+    > = noopActivationMilestonesService,
   ) {}
 
   async getPublicProfile(
-    username: string,
+    publicIdentifier: string,
     tracking?: {
       viewerUserId?: string | null;
       idempotencyKey?: string | null;
     },
   ) {
-    const publicProfile = await this.getCachedPublicProfile(username);
+    const publicProfile = await this.getCachedPublicProfile(publicIdentifier);
 
     if (tracking?.viewerUserId) {
       await this.blocksService.assertNoInteractionBlock(
@@ -155,17 +168,28 @@ export class ProfilesService {
       );
     }
 
-    void this.analyticsService.trackProfileView({
-      personaId: publicProfile.personaId,
-      viewerUserId: tracking?.viewerUserId ?? null,
-      idempotencyKey: tracking?.idempotencyKey ?? null,
-    });
+    void Promise.all([
+      this.analyticsService.trackProfileView({
+        personaId: publicProfile.personaId,
+        viewerUserId: tracking?.viewerUserId ?? null,
+        idempotencyKey: tracking?.idempotencyKey ?? null,
+      }),
+      this.activationMilestonesService.markFirstShareCompletedForPersona(
+        publicProfile.personaId,
+        {
+          actorUserId: tracking?.viewerUserId ?? null,
+        },
+      ),
+    ]);
 
     return publicProfile.response;
   }
 
-  async getPublicVcard(username: string, viewerUserId?: string | null) {
-    const persona = await this.findPublicPersonaBySlug(username);
+  async getPublicVcard(
+    publicIdentifier: string,
+    viewerUserId?: string | null,
+  ) {
+    const persona = await this.findPublicPersonaBySlug(publicIdentifier);
 
     if (viewerUserId) {
       await this.blocksService.assertNoInteractionBlock(
@@ -191,8 +215,8 @@ export class ProfilesService {
     } satisfies PublicVcardResult;
   }
 
-  async getRequestTarget(viewerUserId: string, username: string) {
-    const persona = await this.findRequestTargetBySlug(username);
+  async getRequestTarget(viewerUserId: string, publicIdentifier: string) {
+    const persona = await this.findRequestTargetBySlug(publicIdentifier);
 
     await this.blocksService.assertNoInteractionBlock(
       viewerUserId,
@@ -246,12 +270,12 @@ export class ProfilesService {
   }
 
   private async getCachedPublicProfile(
-    username: string,
+    publicIdentifier: string,
   ): Promise<CachedPublicProfile> {
-    const normalizedUsername = normalizePublicSlug(username);
+    const normalizedIdentifier = normalizePublicSlug(publicIdentifier);
     const cachedEntry = this.getCachedValue(
       this.publicProfileCache,
-      normalizedUsername,
+      normalizedIdentifier,
     );
 
     if (cachedEntry) {
@@ -259,7 +283,7 @@ export class ProfilesService {
     }
 
     const persona = await this.findPublicProfilePersonaBySlug(
-      normalizedUsername,
+      normalizedIdentifier,
     );
     const safeSmartCardConfig = toSafeSmartCardConfig(persona.smartCardConfig);
     const activeProfileQrCode =
@@ -293,7 +317,7 @@ export class ProfilesService {
 
     this.setCachedValue(
       this.publicProfileCache,
-      normalizedUsername,
+      normalizedIdentifier,
       nextCachedProfile,
     );
 

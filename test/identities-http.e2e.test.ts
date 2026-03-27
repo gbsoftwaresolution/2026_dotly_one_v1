@@ -537,8 +537,8 @@ const identitiesServiceMock = {
     bindPermissionCalls.push(payload);
     return { stale: false };
   },
-  isConversationPermissionBindingStale: async (conversationId: string) => {
-    staleCalls.push(conversationId);
+  isConversationPermissionBindingStale: async (payload: unknown) => {
+    staleCalls.push(payload);
     return { stale: false };
   },
   setContentAccessRule: async (payload: unknown) => {
@@ -1179,6 +1179,22 @@ describe("Identities HTTP E2E", () => {
     assert.equal(bindPermissionCalls.length, 1);
     assert.equal(staleCalls.length, 1);
     assert.equal(explainConversationContextCalls.length, 1);
+    assert.deepEqual(resolveConversationContextCalls[0], {
+      conversationId: "11111111-1111-4111-8111-111111111111",
+      currentUserId: TEST_USER_ID,
+    });
+    assert.deepEqual(bindPermissionCalls[0], {
+      conversationId: "11111111-1111-4111-8111-111111111111",
+      currentUserId: TEST_USER_ID,
+    });
+    assert.deepEqual(staleCalls[0], {
+      conversationId: "11111111-1111-4111-8111-111111111111",
+      currentUserId: TEST_USER_ID,
+    });
+    assert.deepEqual(explainConversationContextCalls[0], {
+      conversationId: "11111111-1111-4111-8111-111111111111",
+      currentUserId: TEST_USER_ID,
+    });
   });
 
   it("supports content rule and content permission endpoints", async () => {

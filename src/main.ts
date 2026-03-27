@@ -6,6 +6,7 @@ import { NestFactory } from "@nestjs/core";
 import { NextFunction, Request, Response } from "express";
 
 import { AppModule } from "./app.module";
+import { createHttpSecurityHeadersMiddleware } from "./common/http-security";
 import { ResponseEnvelopeInterceptor } from "./common/interceptors/response-envelope.interceptor";
 import {
   getClientIpAddress,
@@ -37,7 +38,9 @@ async function bootstrap(): Promise<void> {
   const logger = app.get(AppLoggerService);
   const cacheService = app.get(CacheService);
   const prismaService = app.get(PrismaService);
-  const verificationDiagnosticsService = app.get(VerificationDiagnosticsService);
+  const verificationDiagnosticsService = app.get(
+    VerificationDiagnosticsService,
+  );
   app.useLogger(logger);
   app.setGlobalPrefix("v1");
   const configService = app.get(ConfigService);
@@ -53,21 +56,12 @@ async function bootstrap(): Promise<void> {
   expressApp.set("trust proxy", trustProxy);
   expressApp.disable("x-powered-by");
 
+  app.use(createHttpSecurityHeadersMiddleware({ nodeEnv }));
   app.use((request: Request, response: Response, next: NextFunction) => {
     const requestId = resolveRequestId(request);
 
     request.headers["x-request-id"] = requestId;
     response.setHeader("x-request-id", requestId);
-    response.setHeader("x-content-type-options", "nosniff");
-    response.setHeader("x-frame-options", "DENY");
-    response.setHeader("referrer-policy", "same-origin");
-
-    if (nodeEnv === "production") {
-      response.setHeader(
-        "strict-transport-security",
-        "max-age=31536000; includeSubDomains",
-      );
-    }
 
     next();
   });
@@ -122,10 +116,22 @@ async function bootstrap(): Promise<void> {
 
   if (corsOrigins.length > 0) {
     app.enableCors({
-      origin: corsOrigins,
+      origin: (
+        origin: string | undefined,
+        callback: (error: Error | null, allow?: boolean) => void,
+      ) => {
+        if (!origin) {
+          callback(null, true);
+          return;
+        }
+
+        callback(null, corsOrigins.includes(origin));
+      },
+      credentials: false,
       methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "x-request-id"],
       exposedHeaders: ["x-request-id"],
+      optionsSuccessStatus: 204,
     });
   }
 

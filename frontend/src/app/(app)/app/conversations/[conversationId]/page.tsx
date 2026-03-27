@@ -1,17 +1,17 @@
-"use client";
-
-import { use } from "react";
-
 import { ConversationDetailRoute } from "@/components/connections/conversation-detail-route";
+import { requireServerSession } from "@/lib/auth/protected-route";
+import { routes } from "@/lib/constants/routes";
 
 interface ConversationDetailsPageProps {
   params: Promise<{ conversationId: string }>;
 }
 
-export default function ConversationDetailsPage({
+export default async function ConversationDetailsPage({
   params,
 }: ConversationDetailsPageProps) {
-  const { conversationId } = use(params);
+  const { conversationId } = await params;
 
-  return <ConversationDetailRoute conversationId={conversationId} variant="app" />;
+  await requireServerSession(routes.app.conversationDetail(conversationId));
+
+  return <ConversationDetailRoute conversationId={conversationId} />;
 }

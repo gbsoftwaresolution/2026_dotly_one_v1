@@ -1495,9 +1495,18 @@ export class IdentitiesService {
   async getConversationById(
     getConversationByIdDto: GetConversationByIdDto,
   ): Promise<IdentityConversationContext> {
-    return toIdentityConversationContext(
-      await this.requireConversation(getConversationByIdDto.conversationId),
+    const conversation = await this.requireConversation(
+      getConversationByIdDto.conversationId,
     );
+
+    if (getConversationByIdDto.currentUserId) {
+      await this.assertConversationActionAccessibleToUser({
+        userId: getConversationByIdDto.currentUserId,
+        conversation: toIdentityConversationContext(conversation),
+      });
+    }
+
+    return toIdentityConversationContext(conversation);
   }
 
   async listConversationsForIdentity(
@@ -1570,6 +1579,17 @@ export class IdentitiesService {
     actorIdentityId?: string;
   }): Promise<void> {
     const actorIdentityId = input.actorIdentityId;
+
+    // Persona-bound conversations must honor the routed target persona scope
+    // even when the caller supplies a participant identity for the action.
+    if (input.conversation.personaId !== null) {
+      await this.assertConversationIdentityAccessForUser(
+        input.userId,
+        input.conversation,
+        input.conversation.targetIdentityId,
+      );
+      return;
+    }
 
     if (
       actorIdentityId === input.conversation.sourceIdentityId ||
@@ -1944,6 +1964,7 @@ export class IdentitiesService {
   ) {
     const context = await this.resolveConversationContext({
       conversationId: explainDto.conversationId,
+      currentUserId: explainDto.currentUserId,
     });
 
     return {
@@ -2530,6 +2551,14 @@ export class IdentitiesService {
     bindDto: BindResolvedPermissionsToConversationDto,
   ): Promise<BoundConversationPermissions> {
     const conversation = await this.requireConversation(bindDto.conversationId);
+
+    if (bindDto.currentUserId) {
+      await this.assertConversationActionAccessibleToUser({
+        userId: bindDto.currentUserId,
+        conversation: toIdentityConversationContext(conversation),
+      });
+    }
+
     const resolvedPermissions = await this.resolveConnectionPermissions({
       connectionId: conversation.connectionId,
       persistSnapshot: false,
@@ -2617,9 +2646,25 @@ export class IdentitiesService {
   }
 
   async isConversationPermissionBindingStale(
-    conversationId: string,
+    input:
+      | string
+      | {
+          conversationId: string;
+          currentUserId?: string;
+        },
   ): Promise<ConversationBindingStalenessResult> {
+    const conversationId =
+      typeof input === "string" ? input : input.conversationId;
+    const currentUserId = typeof input === "string" ? undefined : input.currentUserId;
     const conversation = await this.requireConversation(conversationId);
+
+    if (currentUserId) {
+      await this.assertConversationActionAccessibleToUser({
+        userId: currentUserId,
+        conversation: toIdentityConversationContext(conversation),
+      });
+    }
+
     const resolvedPermissions = await this.resolveConnectionPermissions({
       connectionId: conversation.connectionId,
       persistSnapshot: false,
@@ -2645,6 +2690,14 @@ export class IdentitiesService {
     const conversation = await this.requireConversation(
       resolveDto.conversationId,
     );
+
+    if (resolveDto.currentUserId) {
+      await this.assertConversationActionAccessibleToUser({
+        userId: resolveDto.currentUserId,
+        conversation: toIdentityConversationContext(conversation),
+      });
+    }
+
     const cacheKey = createConversationContextCacheKey(
       resolveDto.conversationId,
     );

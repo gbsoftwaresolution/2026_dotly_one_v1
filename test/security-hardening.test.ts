@@ -15,6 +15,10 @@ import {
 import { JwtAuthGuard } from "../src/common/guards/jwt-auth.guard";
 import { QrService } from "../src/modules/qr/qr.service";
 
+const noopActivationMilestonesService = {
+  markFirstShareCompletedForPersona: async () => undefined,
+};
+
 describe("JwtAuthGuard hardening", () => {
   it("verifies tokens with issuer and audience constraints", async () => {
     let verifyOptions: Record<string, unknown> | null = null;
@@ -259,6 +263,7 @@ describe("QrService hardening", () => {
       {} as any,
       {} as any,
       {} as any,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => undefined,
       } as any,
@@ -337,6 +342,7 @@ describe("QrService hardening", () => {
         createSafe: async () => undefined,
       } as any,
       { trackQrScan: async () => true } as any,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => undefined,
       } as any,

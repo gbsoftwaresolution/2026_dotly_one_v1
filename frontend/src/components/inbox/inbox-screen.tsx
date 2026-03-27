@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowUpRight,
   Inbox,
   Layers3,
   MessagesSquare,
+  RotateCcw,
   ShieldCheck,
+  Archive,
 } from "lucide-react";
 
 import { IdentitySwitcher } from "@/components/identities/identity-switcher";
@@ -16,9 +19,11 @@ import { PageHeader } from "@/components/shared/page-header";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { showToast } from "@/components/shared/toast-viewport";
 import { useIdentityContext } from "@/context/IdentityContext";
 import { ApiError } from "@/lib/api/client";
 import { getIdentityInbox, getIdentityTeamAccess } from "@/lib/api/identities";
+import { updateConversationStatus } from "@/lib/api/connections";
 import { personaApi } from "@/lib/api/persona-api";
 import { routes } from "@/lib/constants/routes";
 import { useShareFastSnapshot } from "@/lib/share-fast-store";
@@ -42,12 +47,18 @@ interface PersonaGroup {
 }
 
 const STATUS_FILTERS: Array<{ value: StatusFilter; label: string }> = [
-  { value: "all", label: "All" },
-  { value: ConversationStatus.Active, label: "Active" },
+  { value: "all", label: "Everything" },
+  { value: ConversationStatus.Active, label: "Active queue" },
   { value: ConversationStatus.Archived, label: "Archived" },
   { value: ConversationStatus.Blocked, label: "Blocked" },
   { value: ConversationStatus.Locked, label: "Locked" },
 ];
+
+function parseStatusFilter(value: string | null): StatusFilter {
+  return STATUS_FILTERS.some((filter) => filter.value === value)
+    ? (value as StatusFilter)
+    : "all";
+}
 
 function formatDate(value: string) {
   try {
@@ -189,11 +200,49 @@ function personaFilterLabel(group: PersonaGroup) {
   return group.persona ? `@${group.persona.username}` : "Identity default";
 }
 
+function getGroupHeading(group: PersonaGroup) {
+  if (!group.persona) {
+    return "Identity inbox";
+  }
+
+  return `@${group.persona.username}`;
+}
+
+function getGroupDescription(group: PersonaGroup) {
+  if (!group.persona) {
+    return "Threads that stay on the identity-wide route instead of a specific persona destination.";
+  }
+
+  if (group.persona.routingKey) {
+    return `${group.persona.fullName || "Team route"} routed through #${group.persona.routingKey}.`;
+  }
+
+  return `${group.persona.fullName || "Persona route"} stays visible here when backend scope allows it.`;
+}
+
+function getConversationRouteLabel(conversation: IdentityConversationContext) {
+  return conversation.personaId ? "Persona route" : "Identity inbox";
+}
+
+function getConversationSupportCopy(conversation: IdentityConversationContext) {
+  switch (conversation.conversationStatus) {
+    case ConversationStatus.Archived:
+      return "Moved out of the active queue but still available for context and audit.";
+    case ConversationStatus.Blocked:
+      return "Restricted by backend protection or trust policy.";
+    case ConversationStatus.Locked:
+      return "Visible for context, with operational access still locked down.";
+    default:
+      return "Visible in the active queue for the current scoped inbox view.";
+  }
+}
+
 export function InboxScreen() {
   const {
     activeIdentity,
     isLoading: isIdentityLoading,
   } = useIdentityContext();
+  const searchParams = useSearchParams();
   const snapshot = useShareFastSnapshot();
   const [personas, setPersonas] = useState<PersonaSummary[]>([]);
   const [conversations, setConversations] = useState<
@@ -206,6 +255,8 @@ export function InboxScreen() {
     useState<TeamAccessState>("idle");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [personaFilter, setPersonaFilter] = useState<PersonaFilter>("all");
+  const [statusChangeByConversationId, setStatusChangeByConversationId] =
+    useState<Record<string, boolean>>({});
   const [reloadNonce, setReloadNonce] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -261,9 +312,17 @@ export function InboxScreen() {
   }, [activeIdentity, identityPersonas, snapshot.selectedPersonaId]);
 
   useEffect(() => {
-    setStatusFilter("all");
-    setPersonaFilter("all");
-  }, [activeIdentity?.id]);
+    if (!activeIdentity?.id) {
+      setStatusFilter("all");
+      setPersonaFilter("all");
+      return;
+    }
+
+    setStatusFilter(parseStatusFilter(searchParams.get("status")));
+
+    const requestedPersona = searchParams.get("persona");
+    setPersonaFilter(requestedPersona && requestedPersona.length > 0 ? requestedPersona : "all");
+  }, [activeIdentity?.id, searchParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -466,18 +525,64 @@ export function InboxScreen() {
 
   const emptyFilterDescription =
     statusFilter === "all" && personaFilter === "all"
-      ? "Threads routed to this identity will appear here once a conversation is opened."
+      ? "Threads routed to this identity will appear here once a conversation is opened or moved back into the queue."
       : `No threads match ${personaFilterTitle.toLowerCase()} with the current ${
           statusFilter === "all"
             ? "status view"
             : `${formatStatusLabel(statusFilter).toLowerCase()} status filter`
         }.`;
 
+  async function handleConversationStatusChange(
+    conversation: IdentityConversationContext,
+    nextStatus: ConversationStatus,
+  ) {
+    setStatusChangeByConversationId((current) => ({
+      ...current,
+      [conversation.conversationId]: true,
+    }));
+
+    try {
+      const updatedConversation = await updateConversationStatus(
+        conversation.conversationId,
+        nextStatus,
+      );
+
+      setConversations((current) =>
+        sortConversations(
+          current.map((entry) =>
+            entry.conversationId === conversation.conversationId
+              ? updatedConversation
+              : entry,
+          ),
+        ),
+      );
+
+      showToast(
+        nextStatus === ConversationStatus.Archived
+          ? "Thread moved to archived history"
+          : "Thread returned to the active queue",
+      );
+    } catch (statusError) {
+      showToast({
+        message:
+          statusError instanceof Error
+            ? statusError.message
+            : "Could not update thread status.",
+        tone: "error",
+      });
+    } finally {
+      setStatusChangeByConversationId((current) => ({
+        ...current,
+        [conversation.conversationId]: false,
+      }));
+    }
+  }
+
   return (
     <div className="space-y-5">
       <PageHeader
         title="Inbox"
-        description="Review conversation threads for the active identity, grouped by persona routing and current conversation state."
+        description="Review the active identity inbox with routed persona context, scoped team coverage, and cleaner queue views for operational triage."
         action={<IdentitySwitcher />}
         large
       />
@@ -501,8 +606,8 @@ export function InboxScreen() {
               </h2>
               <p className="max-w-[48ch] text-[15px] font-medium leading-relaxed text-muted">
                 {activePersona
-                  ? "The selected persona stays highlighted first, while the inbox keeps the broader identity conversation set organized underneath."
-                  : "No persona is selected for this identity yet, so the inbox falls back to identity-wide coverage."}
+                  ? "The highlighted persona stays first, while the rest of the identity inbox remains grouped underneath so team coverage is easier to scan."
+                  : "No persona is selected for this identity yet, so the inbox falls back to identity-wide coverage and default routing."}
               </p>
             </div>
           </div>
@@ -517,7 +622,7 @@ export function InboxScreen() {
               </p>
               <p className="mt-1 text-sm text-muted">
                 {conversations.length === visibleConversations.length
-                  ? "Across the current inbox scope"
+                  ? "Across the current scoped inbox"
                   : `${conversations.length} total before filters`}
               </p>
             </div>
@@ -614,7 +719,7 @@ export function InboxScreen() {
                   Assignment scope
                 </p>
                 <p className="text-sm leading-6 text-muted">
-                  Only threads available through the current backend assignment scope are shown here.
+                  Only threads allowed by the current backend persona and participant assignment scope are shown here.
                 </p>
 
                 {teamAccessState === "ready" ? (
@@ -634,15 +739,15 @@ export function InboxScreen() {
                   </div>
                 ) : teamAccessState === "locked" ? (
                   <p className="text-sm leading-6 text-muted">
-                    Persona coverage is managed by identity owners and admin operators.
+                    Persona coverage is managed by identity owners and admin operators, but the inbox still reflects the enforced scope.
                   </p>
                 ) : teamAccessState === "error" ? (
                   <p className="text-sm leading-6 text-muted">
-                    Assignment metadata is unavailable right now, but the thread list still reflects the backend scope.
+                    Assignment metadata is unavailable right now, but the visible queue still reflects the backend scope.
                   </p>
                 ) : teamAccessState === "loading" ? (
                   <p className="text-sm leading-6 text-muted">
-                    Checking team coverage...
+                    Checking team coverage and route assignments...
                   </p>
                 ) : null}
               </div>
@@ -655,11 +760,11 @@ export function InboxScreen() {
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">
                   {teamAccessState === "ready"
-                    ? "Manage team assignments"
-                    : "Review assignment scope"}
+                    ? "Manage team coverage"
+                    : "Review team scope"}
                 </p>
                 <p className="mt-1 text-sm text-muted">
-                  Owner and admin controls for persona-specific inbox coverage.
+                  Owner and admin controls for persona-specific inbox coverage and operator routing visibility.
                 </p>
               </div>
               <ArrowUpRight className="h-4 w-4 shrink-0 text-muted" strokeWidth={2} />
@@ -672,10 +777,10 @@ export function InboxScreen() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-              Status filters
+              Queue views
             </p>
             <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-              Keep the queue readable
+              Keep the queue operational
             </h2>
           </div>
 
@@ -709,19 +814,27 @@ export function InboxScreen() {
       {!isIdentityLoading && !activeIdentity ? (
         <EmptyState
           title="Choose an identity"
-          description="Select an identity to load routed conversations and persona coverage for this inbox."
+          description="Select an identity to load routed conversations, persona coverage, and team scope for this inbox."
           action={<IdentitySwitcher />}
         />
       ) : isLoading ? (
         <div className="space-y-3 rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
+          <div className="space-y-1 px-1 pb-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+              Loading queue
+            </p>
+            <p className="text-sm text-muted">
+              Pulling routed threads, current statuses, and team coverage for this inbox.
+            </p>
+          </div>
           {[...Array(4)].map((_, index) => (
             <SkeletonCard key={index} />
           ))}
         </div>
       ) : error ? (
         <EmptyState
-          title="Could not load inbox"
-          description={error}
+          title="Inbox temporarily unavailable"
+          description={`${error} Try the load again to refresh routed threads and team scope.`}
           action={
             <SecondaryButton
               type="button"
@@ -734,12 +847,12 @@ export function InboxScreen() {
         />
       ) : conversations.length === 0 ? (
         <EmptyState
-          title="No conversations yet"
-          description="Threads routed to this identity will appear here once a conversation is opened."
+          title="No threads in this inbox yet"
+          description="New routed threads will appear here once a conversation is opened for this identity or persona route."
         />
       ) : visibleGroups.length === 0 ? (
         <EmptyState
-          title="No threads match this view"
+          title="No threads match this queue view"
           description={emptyFilterDescription}
           action={
             <SecondaryButton
@@ -761,14 +874,10 @@ export function InboxScreen() {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div className="space-y-1">
                   <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-                    {group.persona
-                      ? `@${group.persona.username}`
-                      : "Identity default thread"}
+                    {getGroupHeading(group)}
                   </h2>
                   <p className="text-sm leading-6 text-muted">
-                    {group.persona?.routingKey
-                      ? `Routed via #${group.persona.routingKey}`
-                      : "General conversations not pinned to a persona route."}
+                    {getGroupDescription(group)}
                   </p>
                 </div>
 
@@ -789,43 +898,133 @@ export function InboxScreen() {
                       tone="cyan"
                     />
                   ) : null}
+                  {group.persona?.isDefaultRouting ? (
+                    <StatusBadge label="Default route" tone="violet" />
+                  ) : null}
                 </div>
               </div>
 
-              <div className="overflow-hidden rounded-[1.5rem] bg-foreground/[0.02] shadow-sm ring-[0.5px] ring-black/5 backdrop-blur-[40px] saturate-[200%] divide-y divide-black/5 dark:bg-white/[0.03] dark:ring-white/10 dark:divide-white/5">
-                {group.items.map((conversation) => (
-                  <Link
-                    key={conversation.conversationId}
-                    href={routes.app.conversationDetail(
-                      conversation.conversationId,
-                    )}
-                    className="flex items-center justify-between gap-4 p-4 transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.03]"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-[15px] font-semibold text-foreground">
-                          {formatConversationTitle(conversation)}
-                        </p>
-                        <StatusBadge
-                          label={formatStatusLabel(conversation.conversationStatus)}
-                          tone={statusTone(conversation.conversationStatus)}
-                          dot={conversation.conversationStatus === ConversationStatus.Active}
-                        />
-                        <span className="rounded-full border border-black/5 bg-black/[0.03] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted dark:border-white/10 dark:bg-white/[0.04]">
-                          {conversation.conversationType.replaceAll("_", " ")}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-sm font-medium text-muted">
-                        Updated {formatDate(conversation.updatedAt)}
-                      </p>
-                    </div>
+              <div className="space-y-3">
+                {[
+                  {
+                    key: "active-lane",
+                    title: "Active lane",
+                    description: "Threads still in the working queue for this route.",
+                    items: group.items.filter(
+                      (conversation) =>
+                        conversation.conversationStatus !== ConversationStatus.Archived,
+                    ),
+                  },
+                  {
+                    key: "archived-lane",
+                    title: "Archived history",
+                    description: "Threads moved out of the active lane but still retained for context.",
+                    items: group.items.filter(
+                      (conversation) =>
+                        conversation.conversationStatus === ConversationStatus.Archived,
+                    ),
+                  },
+                ]
+                  .filter((section) => section.items.length > 0)
+                  .map((section) => (
+                    <div key={section.key} className="space-y-2">
+                      {statusFilter === "all" && group.items.length !== section.items.length ? (
+                        <div className="flex flex-wrap items-center gap-2 px-1">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+                            {section.title}
+                          </p>
+                          <p className="text-sm text-muted">{section.description}</p>
+                        </div>
+                      ) : null}
 
-                    <div className="flex items-center gap-2 text-muted">
-                      <MessagesSquare className="h-4 w-4" strokeWidth={2} />
-                      <ArrowUpRight className="h-4 w-4" strokeWidth={2} />
+                      <div className="overflow-hidden rounded-[1.5rem] bg-foreground/[0.02] shadow-sm ring-[0.5px] ring-black/5 backdrop-blur-[40px] saturate-[200%] divide-y divide-black/5 dark:bg-white/[0.03] dark:ring-white/10 dark:divide-white/5">
+                        {section.items.map((conversation) => {
+                          const isUpdating =
+                            statusChangeByConversationId[conversation.conversationId] === true;
+                          const nextStatus =
+                            conversation.conversationStatus === ConversationStatus.Archived
+                              ? ConversationStatus.Active
+                              : conversation.conversationStatus === ConversationStatus.Active
+                                ? ConversationStatus.Archived
+                                : null;
+                          const detailHref = `${routes.app.conversationDetail(
+                            conversation.conversationId,
+                          )}?${new URLSearchParams({
+                            persona:
+                              personaFilter !== "all"
+                                ? personaFilter
+                                : group.key,
+                            ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+                          }).toString()}`;
+
+                          return (
+                            <div
+                              key={conversation.conversationId}
+                              className="flex flex-col gap-3 p-4 transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.03] sm:flex-row sm:items-center sm:justify-between"
+                            >
+                              <Link href={detailHref} className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="truncate text-[15px] font-semibold text-foreground">
+                                    {formatConversationTitle(conversation)}
+                                  </p>
+                                  <StatusBadge
+                                    label={formatStatusLabel(conversation.conversationStatus)}
+                                    tone={statusTone(conversation.conversationStatus)}
+                                    dot={conversation.conversationStatus === ConversationStatus.Active}
+                                  />
+                                  <StatusBadge
+                                    label={getConversationRouteLabel(conversation)}
+                                    tone={conversation.personaId ? "cyan" : "neutral"}
+                                  />
+                                  <span className="rounded-full border border-black/5 bg-black/[0.03] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted dark:border-white/10 dark:bg-white/[0.04]">
+                                    {conversation.conversationType.replaceAll("_", " ")}
+                                  </span>
+                                </div>
+                                <p className="mt-1 text-sm font-medium text-muted">
+                                  Updated {formatDate(conversation.updatedAt)}
+                                </p>
+                                <p className="mt-1 text-sm leading-6 text-muted">
+                                  {getConversationSupportCopy(conversation)}
+                                </p>
+                              </Link>
+
+                              <div className="flex items-center justify-between gap-2 sm:justify-end">
+                                <div className="flex items-center gap-2 text-muted">
+                                  <MessagesSquare className="h-4 w-4" strokeWidth={2} />
+                                  <ArrowUpRight className="h-4 w-4" strokeWidth={2} />
+                                </div>
+                                {nextStatus ? (
+                                  <SecondaryButton
+                                    type="button"
+                                    size="sm"
+                                    isLoading={isUpdating}
+                                    onClick={() =>
+                                      void handleConversationStatusChange(
+                                        conversation,
+                                        nextStatus,
+                                      )
+                                    }
+                                  >
+                                    {nextStatus === ConversationStatus.Archived ? (
+                                      <span className="inline-flex items-center gap-2">
+                                        <Archive className="h-4 w-4" />
+                                        Archive
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-2">
+                                        <RotateCcw className="h-4 w-4" />
+                                        Restore
+                                      </span>
+                                    )}
+                                  </SecondaryButton>
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </Link>
-                ))}
+                  ))}
               </div>
             </section>
           ))}

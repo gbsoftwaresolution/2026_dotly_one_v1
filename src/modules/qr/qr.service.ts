@@ -30,6 +30,10 @@ import type {
 import { PersonasService } from "../personas/personas.service";
 import { RelationshipsService } from "../relationships/relationships.service";
 import {
+  ActivationMilestonesService,
+  noopActivationMilestonesService,
+} from "../users/activation-milestones.service";
+import {
   userHasActiveTrustFactor,
   VerificationPolicyService,
 } from "../auth/verification-policy.service";
@@ -66,6 +70,10 @@ export class QrService {
     private readonly contactMemoryService: ContactMemoryService,
     private readonly notificationsService: NotificationsService = noopNotificationsService as NotificationsService,
     private readonly analyticsService: AnalyticsService = noopAnalyticsService as AnalyticsService,
+    private readonly activationMilestonesService: Pick<
+      ActivationMilestonesService,
+      "markFirstShareCompletedForPersona"
+    > = noopActivationMilestonesService,
     private readonly verificationPolicyService: VerificationPolicyService = failClosedVerificationPolicyService as VerificationPolicyService,
   ) {}
 
@@ -239,12 +247,20 @@ export class QrService {
         );
       }
 
-      void this.analyticsService.trackQrScan({
-        personaId: resolvedToken.persona.id,
-        scannerUserId: tracking?.scannerUserId ?? null,
-        qrTokenId: token.id,
-        idempotencyKey: tracking?.idempotencyKey ?? null,
-      });
+      void Promise.all([
+        this.analyticsService.trackQrScan({
+          personaId: resolvedToken.persona.id,
+          scannerUserId: tracking?.scannerUserId ?? null,
+          qrTokenId: token.id,
+          idempotencyKey: tracking?.idempotencyKey ?? null,
+        }),
+        this.activationMilestonesService.markFirstShareCompletedForPersona(
+          resolvedToken.persona.id,
+          {
+            actorUserId: tracking?.scannerUserId ?? null,
+          },
+        ),
+      ]);
 
       return toQrResolutionView(resolvedToken);
     });

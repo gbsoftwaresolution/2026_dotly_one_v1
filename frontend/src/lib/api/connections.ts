@@ -159,6 +159,21 @@ export const connectionsApi = {
     return normalizeConversationContext(data);
   },
 
+  updateConversationStatus: async (
+    conversationId: string,
+    status: ConversationStatus,
+  ): Promise<IdentityConversationContext> => {
+    const data = await apiRequest<any>(
+      `/identity-conversations/${conversationId}/status`,
+      {
+        method: "PATCH",
+        body: { status },
+      },
+    );
+
+    return normalizeConversationContext(data);
+  },
+
   updateConnectionType: (id: string, type: ConnectionType) =>
     apiRequest<IdentityConnection>(`/identity-connections/${id}/type`, {
       method: "PATCH",
@@ -233,6 +248,7 @@ export const {
   listConversationsForIdentity,
   createConversation,
   getOrCreateConversation,
+  updateConversationStatus,
   updateConnectionType,
   updateTrustState,
   getResolvedPermissions,

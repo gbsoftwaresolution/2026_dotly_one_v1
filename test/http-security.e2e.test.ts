@@ -7,6 +7,11 @@ import { NestFactory } from "@nestjs/core";
 import { JwtService } from "@nestjs/jwt";
 
 import { GlobalExceptionFilter } from "../src/common/filters/global-exception.filter";
+import {
+  createHttpSecurityHeadersMiddleware,
+  getApiContentSecurityPolicy,
+  getPermissionsPolicy,
+} from "../src/common/http-security";
 import { ResponseEnvelopeInterceptor } from "../src/common/interceptors/response-envelope.interceptor";
 import { ContactRequestSourceType } from "../src/common/enums/contact-request-source-type.enum";
 import { JwtAuthGuard } from "../src/common/guards/jwt-auth.guard";
@@ -24,6 +29,7 @@ import { ProfilesController } from "../src/modules/profiles/profiles.controller"
 import { ProfilesService } from "../src/modules/profiles/profiles.service";
 import { QrController } from "../src/modules/qr/qr.controller";
 import { QrService } from "../src/modules/qr/qr.service";
+import { ActivationMilestonesService } from "../src/modules/users/activation-milestones.service";
 
 const JWT_ISSUER = "dotly-backend";
 const JWT_AUDIENCE = "dotly-clients";
@@ -207,6 +213,25 @@ const prismaServiceMock = {
   },
 };
 
+const activationMilestonesServiceMock = {
+  getUserActivation: async () => ({
+    milestones: {
+      firstPersonaCreatedAt: null,
+      firstQrOpenedAt: null,
+      firstShareCompletedAt: null,
+      firstRequestReceivedAt: null,
+    },
+    completedCount: 0,
+    nextMilestoneKey: "firstPersonaCreated",
+    firstResponseNudge: null,
+  }),
+  markFirstPersonaCreated: async () => undefined,
+  markFirstQrOpened: async () => undefined,
+  markFirstShareCompletedForPersona: async () => undefined,
+  markFirstRequestReceived: async () => undefined,
+  clearFirstResponseNudge: async () => undefined,
+};
+
 const jwtService = new JwtService({
   secret: JWT_SECRET,
   signOptions: {
@@ -271,6 +296,10 @@ const jwtService = new JwtService({
       provide: PrismaService,
       useValue: prismaServiceMock,
     },
+    {
+      provide: ActivationMilestonesService,
+      useValue: activationMilestonesServiceMock,
+    },
   ],
 })
 class HttpSecurityTestModule {}
@@ -285,6 +314,7 @@ describe("HTTP Security E2E", () => {
     });
 
     app.setGlobalPrefix("v1");
+    app.use(createHttpSecurityHeadersMiddleware({ nodeEnv: "test" }));
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -464,6 +494,25 @@ describe("HTTP Security E2E", () => {
     assert.equal(response.status, 401);
     assert.equal(payload.success, false);
     assert.equal(payload.message, "Authentication token is required");
+  });
+
+  it("serves a hardened baseline header set on API responses", async () => {
+    const response = await fetch(`${baseUrl}/v1/alice`);
+
+    assert.equal(response.headers.get("content-security-policy"), getApiContentSecurityPolicy());
+    assert.equal(response.headers.get("permissions-policy"), getPermissionsPolicy());
+    assert.equal(
+      response.headers.get("referrer-policy"),
+      "strict-origin-when-cross-origin",
+    );
+    assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+    assert.equal(response.headers.get("x-dns-prefetch-control"), "off");
+    assert.equal(response.headers.get("x-frame-options"), "DENY");
+    assert.equal(
+      response.headers.get("x-permitted-cross-domain-policies"),
+      "none",
+    );
+    assert.equal(response.headers.get("strict-transport-security"), null);
   });
 
   it("serves authenticated persona share payloads with only share-safe fields", async () => {

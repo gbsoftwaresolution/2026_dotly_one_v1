@@ -11,6 +11,8 @@ import { routes } from "@/lib/constants/routes";
 import { buildRequestKey } from "@/lib/network/request-key";
 import { useNetworkStatus } from "@/lib/network/use-network-status";
 import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
+import { getCanonicalPublicSlug } from "@/lib/persona/public-profile-path";
+import { formatPublicHandle } from "@/lib/persona/routing-ux";
 import type { ConnectQuickConnectQrResult } from "@/types/persona";
 import type { PersonaSummary } from "@/types/persona";
 
@@ -20,6 +22,12 @@ interface QuickConnectFlowProps {
   hostName: string;
   hostJobTitle: string;
   hostCompany: string;
+}
+
+function getPersonaPublicHandle(persona: Pick<PersonaSummary, "publicUrl" | "username">) {
+  return formatPublicHandle(
+    getCanonicalPublicSlug(persona.publicUrl, persona.username),
+  );
 }
 
 function formatDateTime(value: string): string {
@@ -425,7 +433,7 @@ export function QuickConnectFlow({
                   {selectedPersona.fullName}
                 </p>
                 <p className="truncate font-mono text-xs text-muted">
-                  @{selectedPersona.username}
+                  {getPersonaPublicHandle(selectedPersona)}
                 </p>
               </div>
             </div>
@@ -463,7 +471,7 @@ export function QuickConnectFlow({
                         {persona.fullName}
                       </p>
                       <p className="truncate font-mono text-xs text-muted">
-                        @{persona.username} &middot;{" "}
+                        {getPersonaPublicHandle(persona)} &middot;{" "}
                         {persona.type.charAt(0).toUpperCase() +
                           persona.type.slice(1)}
                       </p>

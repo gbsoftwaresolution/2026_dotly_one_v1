@@ -96,6 +96,7 @@ export interface PersonaSummary {
 
 export interface PersonaFastSharePayload {
   personaId: string;
+  publicIdentifier?: string;
   username: string;
   fullName: string;
   profilePhotoUrl: string | null;
@@ -111,6 +112,7 @@ export interface PersonaFastSharePayload {
 export interface MyFastSharePayload {
   persona: {
     id: string;
+    publicIdentifier?: string;
     username: string;
     fullName: string;
     profilePhotoUrl: string | null;
@@ -188,6 +190,7 @@ export interface UpdatePersonaSharingInput {
 }
 
 export interface PublicProfile {
+  publicIdentifier?: string;
   username: string;
   publicUrl: string;
   fullName: string;
@@ -263,6 +266,7 @@ export interface ConnectQuickConnectQrResult {
 }
 
 export interface ResolvedQrPersonaPreview {
+  publicIdentifier?: string;
   username: string;
   fullName: string;
   jobTitle: string;

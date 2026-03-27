@@ -6,11 +6,26 @@ import { SecondaryButton } from "@/components/shared/secondary-button";
 import { routes } from "@/lib/constants/routes";
 
 export default function CreatePersonaPage() {
+  const setupSteps = [
+    {
+      title: "Choose the version of you to share",
+      description: "Start with one persona for the rooms, meetings, or events you are actually in this week.",
+    },
+    {
+      title: "Make recognition easy",
+      description: "Name, role, company, and one strong line are enough for a first useful impression.",
+    },
+    {
+      title: "Open the QR right after save",
+      description: "Dotly will take this persona straight into a share-ready flow so you can use it immediately.",
+    },
+  ] as const;
+
   return (
     <section className="space-y-5 sm:space-y-6">
       <PageHeader
         title="Create a persona"
-        description="Set up the version of you that people should remember after the conversation."
+        description="Set up the one Dotly profile you want to use first, then open the QR as your next step."
         action={
           <Link href={routes.app.personas}>
             <SecondaryButton className="w-full sm:w-auto">
@@ -22,12 +37,30 @@ export default function CreatePersonaPage() {
       <div className="flex flex-col gap-4">
         <div className="space-y-1.5 sm:space-y-1">
           <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-            Identity setup
+            First-share setup
           </h2>
           <p className="text-sm leading-6 text-muted sm:text-[15px] sm:leading-relaxed">
-            Usernames are unique. Your persona gives people a clearer first
-            impression before any deeper access is shared.
+            Keep this lightweight. One strong persona is enough to reach your
+            first useful moment.
           </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {setupSteps.map((step, index) => (
+            <div
+              key={step.title}
+              className="rounded-[1.5rem] border border-black/5 bg-black/[0.02] p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                Step {index + 1}
+              </p>
+              <h3 className="mt-2 text-sm font-semibold text-foreground">
+                {step.title}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                {step.description}
+              </p>
+            </div>
+          ))}
         </div>
         <PersonaForm />
       </div>

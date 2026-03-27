@@ -13,22 +13,25 @@ export class ProfilesController {
   constructor(private readonly profilesService: ProfilesService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Get(":username/request-target")
+  @Get(":publicIdentifier/request-target")
   getRequestTarget(
     @CurrentUser() user: AuthenticatedUser,
-    @Param("username") username: string,
+    @Param("publicIdentifier") publicIdentifier: string,
   ) {
-    return this.profilesService.getRequestTarget(user.id, username);
+    return this.profilesService.getRequestTarget(user.id, publicIdentifier);
   }
 
   @UseGuards(OptionalJwtAuthGuard)
-  @Get("personas/:username/vcard")
+  @Get("personas/:publicIdentifier/vcard")
   async getPublicVcard(
     @CurrentUser() user: AuthenticatedUser | undefined,
-    @Param("username") username: string,
+    @Param("publicIdentifier") publicIdentifier: string,
     @Res() response: Response,
   ) {
-    const vcard = await this.profilesService.getPublicVcard(username, user?.id);
+    const vcard = await this.profilesService.getPublicVcard(
+      publicIdentifier,
+      user?.id,
+    );
 
     response.setHeader("content-type", "text/vcard; charset=utf-8");
     response.setHeader(
@@ -39,35 +42,43 @@ export class ProfilesController {
   }
 
   @UseGuards(OptionalJwtAuthGuard)
-  @Get("personas/:username")
+  @Get("personas/:publicIdentifier")
   getPublicProfileByPersonaPath(
     @CurrentUser() user: AuthenticatedUser | undefined,
-    @Param("username") username: string,
+    @Param("publicIdentifier") publicIdentifier: string,
     @Req() request: Request,
   ) {
-    return this.getPublicProfileResponse(user?.id ?? null, username, request);
+    return this.getPublicProfileResponse(
+      user?.id ?? null,
+      publicIdentifier,
+      request,
+    );
   }
 
   @UseGuards(OptionalJwtAuthGuard)
-  @Get(":username")
+  @Get(":publicIdentifier")
   getPublicProfile(
     @CurrentUser() user: AuthenticatedUser | undefined,
-    @Param("username") username: string,
+    @Param("publicIdentifier") publicIdentifier: string,
     @Req() request: Request,
   ) {
-    return this.getPublicProfileResponse(user?.id ?? null, username, request);
+    return this.getPublicProfileResponse(
+      user?.id ?? null,
+      publicIdentifier,
+      request,
+    );
   }
 
   private async getPublicProfileResponse(
     viewerUserId: string | null,
-    username: string,
+    publicIdentifier: string,
     request: Request,
   ) {
-    return this.profilesService.getPublicProfile(username, {
+    return this.profilesService.getPublicProfile(publicIdentifier, {
       viewerUserId,
       idempotencyKey: buildAnalyticsRequestKey(
         request,
-        `public-profile:${username.trim().toLowerCase()}`,
+        `public-profile:${publicIdentifier.trim().toLowerCase()}`,
       ),
     });
   }

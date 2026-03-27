@@ -9,6 +9,7 @@ import { VerificationPrompt } from "@/components/auth/verification-prompt";
 import { ConnectionProgressNote } from "@/components/analytics/connection-progress-note";
 import { QrGeneratorPanel } from "@/components/qr/qr-generator-panel";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ExternalImage } from "@/components/shared/external-image";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { isApiError } from "@/lib/api/client";
 import { personaApi } from "@/lib/api/persona-api";
@@ -24,11 +25,12 @@ import type {
   PersonaFastSharePayload,
   PersonaSummary,
 } from "@/types/persona";
-import type { UserProfile } from "@/types/user";
+import type { CurrentUserReferral, UserProfile } from "@/types/user";
 
 interface InstantShareExperienceProps {
   initialFastShare?: MyFastSharePayload | null;
   initialUser?: UserProfile | null;
+  initialReferral?: CurrentUserReferral | null;
   initialAnalytics?: CurrentUserAnalytics | null;
 }
 
@@ -94,10 +96,12 @@ function FastQrShell({
         {sharePayload ? (
           <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-white/50 px-4 py-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 sm:px-5 relative z-10 backdrop-blur-md">
             {sharePayload.profilePhotoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <ExternalImage
                 src={sharePayload.profilePhotoUrl}
                 alt={sharePayload.fullName}
+                width={48}
+                height={48}
+                sizes="48px"
                 className="h-11 w-11 rounded-xl object-cover sm:h-12 sm:w-12"
               />
             ) : (
@@ -114,7 +118,9 @@ function FastQrShell({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="truncate text-[1.1rem] font-semibold tracking-tight text-foreground">
-                  {formatPublicHandle(sharePayload.username)}
+                  {formatPublicHandle(
+                    sharePayload.publicIdentifier ?? sharePayload.username,
+                  )}
                 </h1>
                 {isVerified ? (
                   <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400">
@@ -211,6 +217,7 @@ function FastQrShell({
 export function InstantShareExperience({
   initialFastShare = null,
   initialUser = null,
+  initialReferral = null,
   initialAnalytics = null,
 }: InstantShareExperienceProps) {
   const isOnline = useNetworkStatus();
@@ -219,6 +226,9 @@ export function InstantShareExperience({
       initialFastShare?.persona && initialFastShare.share
         ? {
             personaId: initialFastShare.persona.id,
+            publicIdentifier:
+              initialFastShare.persona.publicIdentifier ??
+              initialFastShare.persona.username,
             username: initialFastShare.persona.username,
             fullName: initialFastShare.persona.fullName,
             profilePhotoUrl: initialFastShare.persona.profilePhotoUrl,
@@ -330,6 +340,7 @@ export function InstantShareExperience({
     return (
       <QrGeneratorPanel
         initialFastShare={resolvedFastShare}
+        initialReferral={initialReferral}
         analytics={analytics}
         personas={personas}
         user={user}

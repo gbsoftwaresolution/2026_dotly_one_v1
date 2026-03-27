@@ -27,6 +27,7 @@ import type {
   PersonaAccessMode,
 } from "@/types/persona";
 import { BottomSheet } from "@/components/shared/bottom-sheet";
+import { showToast } from "@/components/shared/toast-viewport";
 import { personaApi } from "@/lib/api/persona-api";
 import { cn } from "@/lib/utils/cn";
 
@@ -98,8 +99,8 @@ export function DashboardContextHeader({
     try {
       const newFastShare = await personaApi.getFastShare(personaId);
       upsertPersonaFastShare(newFastShare, { selected: true });
-    } catch (e) {
-      console.error("Failed to switch persona", e);
+    } catch {
+      showToast({ message: "Could not switch persona right now", tone: "error" });
     }
   };
 
@@ -132,10 +133,9 @@ export function DashboardContextHeader({
 
     try {
       await personaApi.update(activePersonaId, { accessMode: mode });
-    } catch (error) {
-      console.error("Failed to update access mode", error);
-      // Revert on failure
-      personaApi.list().then(setPersonas);
+    } catch {
+      showToast({ message: "Could not update access mode", tone: "error" });
+      void personaApi.list().then(setPersonas);
     } finally {
       setIsUpdatingMode(false);
     }

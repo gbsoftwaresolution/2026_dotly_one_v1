@@ -13,6 +13,7 @@ describe("PublicQrPreviewCard", () => {
           type: "profile",
           code: "abc",
           persona: {
+            publicIdentifier: "acme",
             username: "jane",
             fullName: "Jane Doe",
             jobTitle: "Founder",
@@ -26,7 +27,7 @@ describe("PublicQrPreviewCard", () => {
 
     expect(screen.getByText(/^contact$/i)).toBeInTheDocument();
     expect(screen.getByText(/contact preview/i)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /^@jane$/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^@acme$/i })).toBeInTheDocument();
     expect(screen.getByText(/scan to view my contact/i)).toBeInTheDocument();
     expect(
       screen.getByText(/open this person's contact and choose the next step/i),
@@ -40,6 +41,7 @@ describe("PublicQrPreviewCard", () => {
           type: "quick_connect",
           code: "connect",
           persona: {
+            publicIdentifier: "acme",
             username: "jane",
             fullName: "Jane Doe",
             jobTitle: "Founder",
@@ -54,7 +56,7 @@ describe("PublicQrPreviewCard", () => {
     expect(
       screen.getByText(/^connect$/i, { selector: "span" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /^@jane$/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^@acme$/i })).toBeInTheDocument();
     expect(screen.getByText(/^ready to connect$/i)).toBeInTheDocument();
     expect(
       screen.getByText(/scan to open their profile, then tap connect/i),
@@ -65,5 +67,28 @@ describe("PublicQrPreviewCard", () => {
     expect(
       screen.getByText(/^connect$/i, { selector: "dd" }),
     ).toBeInTheDocument();
+  });
+
+  it("shows the canonical handle when QR payloads include a username alias", () => {
+    render(
+      React.createElement(PublicQrPreviewCard, {
+        qr: {
+          type: "profile",
+          code: "alias",
+          persona: {
+            publicIdentifier: "acme",
+            username: "acme-alias",
+            fullName: "Acme Team",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Context first.",
+            profilePhotoUrl: null,
+          },
+        },
+      }),
+    );
+
+    expect(screen.getByRole("heading", { name: /^@acme$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /^@acme-alias$/i })).not.toBeInTheDocument();
   });
 });

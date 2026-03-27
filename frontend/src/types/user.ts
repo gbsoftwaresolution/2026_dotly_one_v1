@@ -46,6 +46,34 @@ export interface CurrentUserReferral {
   referralCode: string;
 }
 
+export type UserActivationMilestoneKey =
+  | "firstPersonaCreated"
+  | "firstQrOpened"
+  | "firstShareCompleted"
+  | "firstRequestReceived";
+
+export type UserActivationNudgeQueue = "requests" | "inbox";
+
+export interface UserActivationFirstResponseNudge {
+  queue: UserActivationNudgeQueue;
+  triggeredAt: string;
+  clearedAt: string | null;
+}
+
+export interface UserActivationMilestones {
+  firstPersonaCreatedAt: string | null;
+  firstQrOpenedAt: string | null;
+  firstShareCompletedAt: string | null;
+  firstRequestReceivedAt: string | null;
+}
+
+export interface UserActivationState {
+  milestones: UserActivationMilestones;
+  completedCount: number;
+  nextMilestoneKey: UserActivationMilestoneKey | null;
+  firstResponseNudge?: UserActivationFirstResponseNudge | null;
+}
+
 export interface UserSecurityProfile {
   trustBadge: "verified" | "attention";
   maskedEmail: string;
@@ -67,4 +95,5 @@ export interface UserProfile {
   email: string;
   isVerified: boolean;
   security: UserSecurityProfile;
+  activation?: UserActivationState;
 }

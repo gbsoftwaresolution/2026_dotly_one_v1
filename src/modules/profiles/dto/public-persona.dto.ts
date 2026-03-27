@@ -11,7 +11,10 @@ import {
   toApiSharingMode,
 } from "../../personas/persona-sharing";
 import { buildPublicPersonaTrustSignals } from "../../personas/persona-trust";
-import { canonicalizePublicUrl } from "../../personas/public-url";
+import {
+  canonicalizePublicUrl,
+  resolveCanonicalPublicSlug,
+} from "../../personas/public-url";
 
 interface PublicPersonaSource {
   id?: string;
@@ -123,6 +126,8 @@ export class PublicPersonaSmartCardDto {
 }
 
 export class PublicPersonaDto {
+  publicIdentifier!: string;
+
   username!: string;
 
   publicUrl!: string;
@@ -162,7 +167,12 @@ export class PublicPersonaDto {
         : PersonaSharingMode.Controlled,
     );
     const sharingMode = toApiSharingMode(prismaSharingMode);
+    const publicIdentifier = resolveCanonicalPublicSlug({
+      username: persona.username,
+      handle: persona.identity?.handle,
+    });
     const publicSmartCardResponse = buildPublicSmartCardResponse({
+      publicIdentifier,
       username: persona.username,
       sharingMode: prismaSharingMode,
       smartCardConfig: persona.smartCardConfig,
@@ -189,6 +199,7 @@ export class PublicPersonaDto {
           );
 
     return {
+      publicIdentifier,
       username: persona.username,
       publicUrl,
       fullName: persona.fullName,

@@ -59,6 +59,7 @@ function createInitialFastShare(
   return {
     persona: {
       id: "persona-1",
+      publicIdentifier: "sender",
       username: "sender",
       fullName: "Sender Persona",
       profilePhotoUrl: null,
@@ -134,5 +135,41 @@ describe("InstantShareExperience", () => {
     expect(screen.getByText(/sender persona/i)).toBeInTheDocument();
     expect(screen.getByText(/scan to connect on dotly/i)).toBeInTheDocument();
     expect(screen.getByText(/verified/i)).toBeInTheDocument();
+  });
+
+  it("shows the canonical handle from fast-share payloads when username is an alias", () => {
+    render(
+      React.createElement(InstantShareExperience, {
+        initialFastShare: {
+          persona: {
+            id: "persona-1",
+            publicIdentifier: "acme",
+            username: "sender-alias",
+            fullName: "Sender Persona",
+            profilePhotoUrl: null,
+          },
+          share: {
+            shareUrl: "https://dotly.one/u/acme",
+            qrValue: "https://dotly.one/u/acme",
+            primaryAction: "request_access",
+            effectiveActions: {
+              canCall: false,
+              canWhatsapp: false,
+              canEmail: false,
+              canSaveContact: false,
+            },
+            preferredShareType: "smart_card",
+          },
+        },
+        initialAnalytics: {
+          totalConnections: 24,
+          connectionsThisMonth: 5,
+        },
+        initialUser: userFixture,
+      }),
+    );
+
+    expect(screen.getByText(/^@acme$/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^@sender-alias$/i)).not.toBeInTheDocument();
   });
 });

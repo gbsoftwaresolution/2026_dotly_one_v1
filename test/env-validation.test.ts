@@ -24,19 +24,26 @@ describe("validateEnvironment", () => {
           MAILGUN_DOMAIN: "",
           MAIL_FROM_EMAIL: "",
           FRONTEND_VERIFICATION_URL_BASE: "http://localhost:3001/verify-email",
-          FRONTEND_PASSWORD_RESET_URL_BASE: "http://localhost:3001/reset-password",
+          FRONTEND_PASSWORD_RESET_URL_BASE:
+            "http://localhost:3001/reset-password",
           TWILIO_ACCOUNT_SID: "",
           TWILIO_AUTH_TOKEN: "",
           TWILIO_FROM_PHONE_NUMBER: "",
           QR_BASE_URL: "http://localhost:3001/q",
         }),
       (error: unknown) => {
-        assert.match(String(error), /JWT_SECRET must be at least 32 characters/i);
+        assert.match(
+          String(error),
+          /JWT_SECRET must be at least 32 characters/i,
+        );
         assert.match(
           String(error),
           /CORS_ORIGINS must list at least one trusted HTTPS frontend origin|CORS_ORIGINS must use HTTPS/i,
         );
-        assert.match(String(error), /MAILGUN_API_KEY is required in production/i);
+        assert.match(
+          String(error),
+          /MAILGUN_API_KEY is required in production/i,
+        );
         assert.match(
           String(error),
           /FRONTEND_VERIFICATION_URL_BASE must use HTTPS in production/i,
@@ -65,13 +72,79 @@ describe("validateEnvironment", () => {
           MAILGUN_DOMAIN: "mg.dotly.one",
           MAIL_FROM_EMAIL: "noreply@dotly.one",
           FRONTEND_VERIFICATION_URL_BASE: "https://app.dotly.one/verify-email",
-          FRONTEND_PASSWORD_RESET_URL_BASE: "https://app.dotly.one/reset-password",
+          FRONTEND_PASSWORD_RESET_URL_BASE:
+            "https://app.dotly.one/reset-password",
           TWILIO_ACCOUNT_SID: "",
           TWILIO_AUTH_TOKEN: "",
           TWILIO_FROM_PHONE_NUMBER: "",
           QR_BASE_URL: "https://app.dotly.one/q",
         }),
       /TRUST_PROXY must be set explicitly in production/i,
+    );
+  });
+
+  it("rejects CORS origins that are not bare frontend origins in production", () => {
+    assert.throws(
+      () =>
+        validateEnvironment({
+          NODE_ENV: "production",
+          PORT: 3000,
+          TRUST_PROXY: 1,
+          DATABASE_URL: "postgresql://prod-user:prod-pass@db.dotly.one/dotly",
+          JWT_SECRET: "ThisIsAStrongProductionSecret123!",
+          HEALTH_ENDPOINT_TOKEN: "AnotherStrongHealthTokenValue123!",
+          JWT_EXPIRES_IN: "7d",
+          JWT_ISSUER: "dotly-backend",
+          JWT_AUDIENCE: "dotly-clients",
+          CORS_ORIGINS: "https://app.dotly.one/verify-email",
+          REDIS_ENABLED: true,
+          REDIS_URL: "redis://cache.dotly.one:6379",
+          STORAGE_BUCKET: "dotly-prod",
+          MAILGUN_API_KEY: "key-live-mailgun-secret-value",
+          MAILGUN_DOMAIN: "mg.dotly.one",
+          MAIL_FROM_EMAIL: "noreply@dotly.one",
+          FRONTEND_VERIFICATION_URL_BASE: "https://app.dotly.one/verify-email",
+          FRONTEND_PASSWORD_RESET_URL_BASE:
+            "https://app.dotly.one/reset-password",
+          TWILIO_ACCOUNT_SID: "",
+          TWILIO_AUTH_TOKEN: "",
+          TWILIO_FROM_PHONE_NUMBER: "",
+          QR_BASE_URL: "https://app.dotly.one/q",
+        }),
+      /CORS_ORIGINS entries must be bare origins without paths/i,
+    );
+  });
+
+  it("rejects frontend URLs whose origins are missing from CORS_ORIGINS in production", () => {
+    assert.throws(
+      () =>
+        validateEnvironment({
+          NODE_ENV: "production",
+          PORT: 3000,
+          TRUST_PROXY: 1,
+          DATABASE_URL: "postgresql://prod-user:prod-pass@db.dotly.one/dotly",
+          JWT_SECRET: "ThisIsAStrongProductionSecret123!",
+          HEALTH_ENDPOINT_TOKEN: "AnotherStrongHealthTokenValue123!",
+          JWT_EXPIRES_IN: "7d",
+          JWT_ISSUER: "dotly-backend",
+          JWT_AUDIENCE: "dotly-clients",
+          CORS_ORIGINS: "https://app.dotly.one",
+          REDIS_ENABLED: true,
+          REDIS_URL: "redis://cache.dotly.one:6379",
+          STORAGE_BUCKET: "dotly-prod",
+          MAILGUN_API_KEY: "key-live-mailgun-secret-value",
+          MAILGUN_DOMAIN: "mg.dotly.one",
+          MAIL_FROM_EMAIL: "noreply@dotly.one",
+          FRONTEND_VERIFICATION_URL_BASE:
+            "https://accounts.dotly.one/verify-email",
+          FRONTEND_PASSWORD_RESET_URL_BASE:
+            "https://app.dotly.one/reset-password",
+          TWILIO_ACCOUNT_SID: "",
+          TWILIO_AUTH_TOKEN: "",
+          TWILIO_FROM_PHONE_NUMBER: "",
+          QR_BASE_URL: "https://app.dotly.one/q",
+        }),
+      /FRONTEND_VERIFICATION_URL_BASE must use a frontend origin that is also present in CORS_ORIGINS/i,
     );
   });
 
@@ -128,9 +201,6 @@ describe("validateEnvironment", () => {
       QR_BASE_URL: "https://dotly.id/q",
     });
 
-    assert.equal(
-      result.MAIL_FROM_EMAIL,
-      "Dotly.one <noreply@dotly.one>",
-    );
+    assert.equal(result.MAIL_FROM_EMAIL, "Dotly.one <noreply@dotly.one>");
   });
 });

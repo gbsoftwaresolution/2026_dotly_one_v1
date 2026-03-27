@@ -5,6 +5,11 @@ export const qrResolutionSelect = {
     select: {
       id: true,
       userId: true,
+      identity: {
+        select: {
+          handle: true,
+        },
+      },
       username: true,
       fullName: true,
       jobTitle: true,
@@ -21,6 +26,9 @@ export interface QrResolutionRecord {
   persona: {
     id: string;
     userId: string;
+    identity?: {
+      handle: string | null;
+    } | null;
     username: string;
     fullName: string;
     jobTitle: string;
@@ -36,6 +44,9 @@ export function toQrLink(baseUrl: string, code: string): string {
 
 function toResolvedPersonaView(record: QrResolutionRecord) {
   return {
+    publicIdentifier:
+      record.persona.identity?.handle?.trim().toLowerCase() ??
+      record.persona.username,
     username: record.persona.username,
     fullName: record.persona.fullName,
     jobTitle: record.persona.jobTitle,

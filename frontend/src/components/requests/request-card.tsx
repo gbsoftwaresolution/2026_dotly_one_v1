@@ -1,4 +1,5 @@
 import { Card } from "@/components/shared/card";
+import { ExternalImage } from "@/components/shared/external-image";
 import { StatusBadge } from "@/components/shared/status-badge";
 import type { IncomingRequest, OutgoingRequest } from "@/types/request";
 
@@ -53,10 +54,12 @@ export function IncomingRequestCard({
     <Card className="space-y-4 transition-all duration-500 ease-[0.16,1,0.3,1] motion-safe:animate-[fade-in_420ms_ease-out] hover:scale-[0.995]">
       <div className="flex items-start gap-3">
         {request.fromPersona.profilePhotoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <ExternalImage
             src={request.fromPersona.profilePhotoUrl}
             alt={request.fromPersona.fullName}
+            width={48}
+            height={48}
+            sizes="48px"
             className="h-12 w-12 rounded-2xl object-cover"
           />
         ) : (
@@ -126,10 +129,12 @@ export function OutgoingRequestCard({ request }: OutgoingRequestCardProps) {
     <Card className="space-y-4 transition-all duration-500 ease-[0.16,1,0.3,1] motion-safe:animate-[fade-in_420ms_ease-out] hover:scale-[0.995]">
       <div className="flex items-start gap-3">
         {request.toPersona.profilePhotoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <ExternalImage
             src={request.toPersona.profilePhotoUrl}
             alt={request.toPersona.fullName}
+            width={48}
+            height={48}
+            sizes="48px"
             className="h-12 w-12 rounded-2xl object-cover"
           />
         ) : (

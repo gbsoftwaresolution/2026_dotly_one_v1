@@ -72,6 +72,7 @@ describe("PersonasService share mode", () => {
 
     assert.deepEqual(result, {
       personaId: "persona-1",
+      publicIdentifier: "alice",
       username: "alice",
       fullName: "Alice Demo",
       profilePhotoUrl: "https://cdn.dotly.one/alice.jpg",
@@ -380,6 +381,7 @@ describe("PersonasService share mode", () => {
     assert.deepEqual(result, {
       persona: {
         id: "persona-2",
+        publicIdentifier: "alice-ops",
         username: "alice-ops",
         fullName: "Alice Ops",
         profilePhotoUrl: null,

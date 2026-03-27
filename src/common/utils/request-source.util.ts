@@ -30,14 +30,7 @@ export function getClientIpAddress(request?: RequestLike): string | null {
     return null;
   }
 
-  const forwardedFor = getHeaderValue(request, "x-forwarded-for");
-
-  return (
-    request.ip?.trim() ||
-    request.socket?.remoteAddress?.trim() ||
-    forwardedFor?.split(",")[0]?.trim() ||
-    null
-  );
+  return request.ip?.trim() || request.socket?.remoteAddress?.trim() || null;
 }
 
 export function getForwardedProtocol(request?: RequestLike): string | null {
@@ -45,11 +38,5 @@ export function getForwardedProtocol(request?: RequestLike): string | null {
     return null;
   }
 
-  const forwardedProto = getHeaderValue(request, "x-forwarded-proto");
-
-  return (
-    request.protocol?.trim() ||
-    forwardedProto?.split(",")[0]?.trim() ||
-    (request.secure ? "https" : null)
-  );
+  return request.protocol?.trim() || (request.secure ? "https" : null);
 }

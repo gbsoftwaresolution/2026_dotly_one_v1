@@ -21,6 +21,10 @@ import { EventsService } from "../src/modules/events/events.service";
 import { ContactRequestSourceType } from "../src/common/enums/contact-request-source-type.enum";
 import { EventParticipantRole } from "../src/common/enums/event-participant-role.enum";
 
+const noopActivationMilestonesService = {
+  markFirstShareCompletedForPersona: async () => undefined,
+};
+
 function buildContactRequestsService(
   prismaService: any,
   personasService: any,
@@ -835,6 +839,7 @@ describe("Notification hooks", () => {
         },
       } as any,
       undefined,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => undefined,
       } as any,

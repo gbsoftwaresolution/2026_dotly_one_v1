@@ -38,16 +38,16 @@ export class RelationshipsController {
     );
   }
 
-  @Post("instant-connect/by-username/:username")
+  @Post("instant-connect/by-public-identifier/:publicIdentifier")
   @HttpCode(HttpStatus.OK)
   instantConnectByUsername(
     @CurrentUser() user: AuthenticatedUser,
-    @Param("username") username: string,
+    @Param("publicIdentifier") publicIdentifier: string,
     @Body() createInstantConnectDto: CreatePublicInstantConnectDto,
   ) {
     return this.relationshipsService.instantConnectByUsername(
       user.id,
-      username,
+      publicIdentifier,
       createInstantConnectDto,
     );
   }

@@ -15,12 +15,12 @@ import { useConversationDetailData } from "./use-conversation-detail-data";
 
 interface ConversationDetailRouteProps {
   conversationId: string;
-  variant: "app" | "app-old";
+  variant?: "app";
 }
 
 export function ConversationDetailRoute({
   conversationId,
-  variant,
+  variant = "app",
 }: ConversationDetailRouteProps) {
   const router = useRouter();
   const {

@@ -12,6 +12,7 @@ export default async function QrPage() {
   const initialFastShare = await personaApi
     .getMyFastShare(accessToken)
     .catch(() => null);
+  const initialReferral = await userApi.meReferral(accessToken).catch(() => null);
   const initialAnalytics = await userApi
     .meAnalytics(accessToken)
     .catch(() => null);
@@ -28,6 +29,7 @@ export default async function QrPage() {
       <InstantShareExperience
         initialUser={user}
         initialFastShare={initialFastShare}
+        initialReferral={initialReferral}
         initialAnalytics={initialAnalytics}
       />
     </section>

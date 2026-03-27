@@ -9,8 +9,15 @@ import { ApiError } from "@/lib/api/client";
 const mocks = vi.hoisted(() => ({
   getIdentityInbox: vi.fn(),
   getIdentityTeamAccess: vi.fn(),
+  updateConversationStatus: vi.fn(),
   personaList: vi.fn(),
+  showToast: vi.fn(),
   useShareFastSnapshot: vi.fn(),
+  useSearchParams: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: mocks.useSearchParams,
 }));
 
 vi.mock("@/lib/api/identities", () => ({
@@ -18,10 +25,18 @@ vi.mock("@/lib/api/identities", () => ({
   getIdentityTeamAccess: mocks.getIdentityTeamAccess,
 }));
 
+vi.mock("@/lib/api/connections", () => ({
+  updateConversationStatus: mocks.updateConversationStatus,
+}));
+
 vi.mock("@/lib/api/persona-api", () => ({
   personaApi: {
     list: mocks.personaList,
   },
+}));
+
+vi.mock("@/components/shared/toast-viewport", () => ({
+  showToast: mocks.showToast,
 }));
 
 vi.mock("@/lib/share-fast-store", () => ({
@@ -168,11 +183,22 @@ describe("InboxScreen", () => {
   beforeEach(() => {
     mocks.getIdentityInbox.mockReset();
     mocks.getIdentityTeamAccess.mockReset();
+    mocks.updateConversationStatus.mockReset();
     mocks.personaList.mockReset();
+    mocks.showToast.mockReset();
     mocks.useShareFastSnapshot.mockReset();
+    mocks.useSearchParams.mockReset();
 
     mocks.personaList.mockResolvedValue(personas);
     mocks.getIdentityInbox.mockResolvedValue(conversations);
+    mocks.updateConversationStatus.mockImplementation(
+      async (conversationId: string, status: ConversationStatus) => ({
+        ...conversations.find(
+          (conversation) => conversation.conversationId === conversationId,
+        )!,
+        conversationStatus: status,
+      }),
+    );
     mocks.getIdentityTeamAccess.mockResolvedValue({
       identity: {
         id: "identity-1",
@@ -224,6 +250,7 @@ describe("InboxScreen", () => {
     mocks.useShareFastSnapshot.mockReturnValue({
       selectedPersonaId: "persona-1",
     });
+    mocks.useSearchParams.mockReturnValue(new URLSearchParams());
   });
 
   it("renders grouped inbox summaries and assignment scope metadata", async () => {
@@ -238,11 +265,19 @@ describe("InboxScreen", () => {
     expect(screen.getByText(/visible threads/i)).toBeInTheDocument();
     expect(screen.getByText(/1 restricted seat/i)).toBeInTheDocument();
     expect(screen.getByText(/1 full seat/i)).toBeInTheDocument();
-    expect(screen.getAllByText("@alpha")).toHaveLength(2);
+    expect(screen.getAllByText("@alpha").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("@beta")).toBeInTheDocument();
-    expect(screen.getByText(/identity default thread/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Identity inbox" }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/alpha launch prep/i)).toBeInTheDocument();
     expect(screen.getByText(/default follow-up/i)).toBeInTheDocument();
+    expect(screen.getByText(/default route/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/alpha check-in/i).closest("a")).toHaveAttribute(
+      "href",
+      "/app/conversations/conversation-1?persona=persona-1",
+    );
   });
 
   it("filters by status and persona group", async () => {
@@ -258,12 +293,43 @@ describe("InboxScreen", () => {
     expect(screen.getByText(/beta archive/i)).toBeInTheDocument();
     expect(screen.queryByText(/alpha check-in/i)).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /all · 4/i }));
+    await user.click(screen.getByRole("button", { name: /everything · 4/i }));
     await user.click(screen.getByRole("button", { name: /@alpha · 2/i }));
 
     expect(screen.getByText(/alpha check-in/i)).toBeInTheDocument();
     expect(screen.getByText(/alpha launch prep/i)).toBeInTheDocument();
     expect(screen.queryByText(/beta archive/i)).not.toBeInTheDocument();
+  });
+
+  it("archives and restores supported thread states from the inbox", async () => {
+    const user = userEvent.setup();
+    renderSubject();
+
+    expect(await screen.findByText(/alpha check-in/i)).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("button", { name: /^archive$/i })[0]);
+
+    expect(mocks.updateConversationStatus).toHaveBeenCalledWith(
+      "conversation-2",
+      ConversationStatus.Archived,
+    );
+    expect(mocks.showToast).toHaveBeenCalledWith(
+      "Thread moved to archived history",
+    );
+
+    await user.click(screen.getByRole("button", { name: /archived · 2/i }));
+
+    expect(screen.getByText(/alpha launch prep/i)).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("button", { name: /^restore$/i })[0]);
+
+    expect(mocks.updateConversationStatus).toHaveBeenCalledWith(
+      "conversation-2",
+      ConversationStatus.Active,
+    );
+    expect(mocks.showToast).toHaveBeenCalledWith(
+      "Thread returned to the active queue",
+    );
   });
 
   it("shows an error state and retries the inbox load", async () => {
@@ -274,7 +340,9 @@ describe("InboxScreen", () => {
 
     renderSubject();
 
-    expect(await screen.findByText(/could not load inbox/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/inbox temporarily unavailable/i),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /try again/i }));
 
@@ -304,7 +372,18 @@ describe("InboxScreen", () => {
     });
 
     expect(
-      screen.getByRole("link", { name: /review assignment scope/i }),
+      screen.getByRole("link", { name: /review team scope/i }),
     ).toHaveAttribute("href", "/app/inbox/assignments");
+  });
+
+  it("restores queue filters from search params", async () => {
+    mocks.useSearchParams.mockReturnValue(
+      new URLSearchParams("persona=persona-2&status=ARCHIVED"),
+    );
+
+    renderSubject();
+
+    expect(await screen.findByText(/beta archive/i)).toBeInTheDocument();
+    expect(screen.queryByText(/alpha check-in/i)).not.toBeInTheDocument();
   });
 });

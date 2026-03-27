@@ -35,6 +35,10 @@ import {
   supportsRequestAccessFlow,
   toSafeSmartCardConfig,
 } from "../personas/persona-sharing";
+import {
+  ActivationMilestonesService,
+  noopActivationMilestonesService,
+} from "../users/activation-milestones.service";
 
 function normalizeSharingMode(
   sharingMode: unknown,
@@ -76,6 +80,10 @@ export class ContactRequestCreateService {
     private readonly notificationsService: NotificationsService,
     private readonly analyticsService: AnalyticsService,
     private readonly verificationPolicyService: VerificationPolicyService = failClosedVerificationPolicyService as VerificationPolicyService,
+    private readonly activationMilestonesService: Pick<
+      ActivationMilestonesService,
+      "markFirstRequestReceived"
+    > = noopActivationMilestonesService,
   ) {}
 
   async create(
@@ -185,6 +193,11 @@ export class ContactRequestCreateService {
         ),
         data: notificationData,
       });
+
+      await this.activationMilestonesService.markFirstRequestReceived(
+        targetPersona.userId,
+        contactRequest.createdAt,
+      );
 
       return {
         id: contactRequest.id,

@@ -8,6 +8,8 @@ import { routes } from "@/lib/constants/routes";
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   checkUsernameAvailability: vi.fn(),
+  getFastShare: vi.fn(),
+  upsertPersonaFastShare: vi.fn(),
   replace: vi.fn(),
   refresh: vi.fn(),
 }));
@@ -23,7 +25,12 @@ vi.mock("@/lib/api", () => ({
   personaApi: {
     create: mocks.create,
     checkUsernameAvailability: mocks.checkUsernameAvailability,
+    getFastShare: mocks.getFastShare,
   },
+}));
+
+vi.mock("@/lib/share-fast-store", () => ({
+  upsertPersonaFastShare: mocks.upsertPersonaFastShare,
 }));
 
 import { PersonaForm } from "./persona-form";
@@ -32,6 +39,8 @@ describe("PersonaForm", () => {
   beforeEach(() => {
     mocks.create.mockReset();
     mocks.checkUsernameAvailability.mockReset();
+    mocks.getFastShare.mockReset();
+    mocks.upsertPersonaFastShare.mockReset();
     mocks.replace.mockReset();
     mocks.refresh.mockReset();
     mocks.checkUsernameAvailability.mockImplementation(
@@ -46,6 +55,25 @@ describe("PersonaForm", () => {
         requiresClaim: username.length < 6,
       }),
     );
+    mocks.getFastShare.mockResolvedValue({
+      personaId: "persona-1",
+      publicIdentifier: "jane-doe",
+      username: "jane-doe",
+      fullName: "Jane Doe",
+      profilePhotoUrl: null,
+      shareUrl: "https://dotly.one/u/jane-doe",
+      qrValue: "https://dotly.one/u/jane-doe",
+      primaryAction: "request_access",
+      effectiveActions: {
+        canCall: false,
+        canWhatsapp: false,
+        canEmail: false,
+        canSaveContact: false,
+      },
+      preferredShareType: "smart_card",
+      hasQuickConnect: false,
+      quickConnectUrl: null,
+    });
   });
 
   it("shows a lightweight sharing summary after create succeeds", async () => {
@@ -112,12 +140,21 @@ describe("PersonaForm", () => {
     expect(
       await screen.findByText(/your persona is ready to share/i),
     ).toBeInTheDocument();
+    expect(mocks.getFastShare).toHaveBeenCalledWith("persona-1");
+    expect(mocks.upsertPersonaFastShare).toHaveBeenCalledWith(
+      expect.objectContaining({ personaId: "persona-1" }),
+      { selected: true },
+    );
     expect(screen.getByText(/sharing mode/i)).toBeInTheDocument();
     expect(screen.getByText(/requests only/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /open share qr/i })).toHaveAttribute(
+      "href",
+      routes.app.qr,
+    );
     expect(
       screen.getByRole("link", { name: /edit sharing settings/i }),
     ).toHaveAttribute("href", routes.app.personaSettings("persona-1"));
-    expect(mocks.replace).not.toHaveBeenCalledWith("/app-old/personas");
+    expect(mocks.replace).not.toHaveBeenCalled();
   });
 
   it("blocks premium short usernames and shows claim guidance", async () => {

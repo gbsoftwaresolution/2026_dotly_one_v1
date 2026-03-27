@@ -8,6 +8,7 @@ import { EventsModule } from "../events/events.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { PersonasModule } from "../personas/personas.module";
 import { RelationshipsModule } from "../relationships/relationships.module";
+import { UsersModule } from "../users/users.module";
 
 import { ContactRequestsController } from "./contact-requests.controller";
 import { ContactRequestCreateService } from "./contact-request-create.service";
@@ -28,6 +29,7 @@ import { RequestRateLimitService } from "./request-rate-limit.service";
     BlocksModule,
     EventsModule,
     NotificationsModule,
+    UsersModule,
   ],
   controllers: [ContactRequestsController],
   providers: [

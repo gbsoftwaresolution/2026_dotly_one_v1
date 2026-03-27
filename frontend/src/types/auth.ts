@@ -74,6 +74,7 @@ export interface SessionSnapshot {
 export interface AuthCredentials {
   email: string;
   password: string;
+  referralCode?: string;
 }
 
 export interface AuthUser {

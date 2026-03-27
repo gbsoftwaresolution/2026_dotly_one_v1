@@ -61,6 +61,7 @@ export type UserCountAggregateOutputType = {
   referredBy: number
   passwordHash: number
   lastUsedPersonaId: number
+  activationMilestonesJson: number
   isVerified: number
   phoneNumber: number
   pendingPhoneNumber: number
@@ -108,6 +109,7 @@ export type UserCountAggregateInputType = {
   referredBy?: true
   passwordHash?: true
   lastUsedPersonaId?: true
+  activationMilestonesJson?: true
   isVerified?: true
   phoneNumber?: true
   pendingPhoneNumber?: true
@@ -196,6 +198,7 @@ export type UserGroupByOutputType = {
   referredBy: string | null
   passwordHash: string
   lastUsedPersonaId: string | null
+  activationMilestonesJson: runtime.JsonValue | null
   isVerified: boolean
   phoneNumber: string | null
   pendingPhoneNumber: string | null
@@ -232,6 +235,7 @@ export type UserWhereInput = {
   referredBy?: Prisma.UuidNullableFilter<"User"> | string | null
   passwordHash?: Prisma.StringFilter<"User"> | string
   lastUsedPersonaId?: Prisma.UuidNullableFilter<"User"> | string | null
+  activationMilestonesJson?: Prisma.JsonNullableFilter<"User">
   isVerified?: Prisma.BoolFilter<"User"> | boolean
   phoneNumber?: Prisma.StringNullableFilter<"User"> | string | null
   pendingPhoneNumber?: Prisma.StringNullableFilter<"User"> | string | null
@@ -268,6 +272,7 @@ export type UserOrderByWithRelationInput = {
   referredBy?: Prisma.SortOrderInput | Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   lastUsedPersonaId?: Prisma.SortOrderInput | Prisma.SortOrder
+  activationMilestonesJson?: Prisma.SortOrderInput | Prisma.SortOrder
   isVerified?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   pendingPhoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -308,6 +313,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   referredBy?: Prisma.UuidNullableFilter<"User"> | string | null
   passwordHash?: Prisma.StringFilter<"User"> | string
   lastUsedPersonaId?: Prisma.UuidNullableFilter<"User"> | string | null
+  activationMilestonesJson?: Prisma.JsonNullableFilter<"User">
   isVerified?: Prisma.BoolFilter<"User"> | boolean
   pendingPhoneNumber?: Prisma.StringNullableFilter<"User"> | string | null
   phoneVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -343,6 +349,7 @@ export type UserOrderByWithAggregationInput = {
   referredBy?: Prisma.SortOrderInput | Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   lastUsedPersonaId?: Prisma.SortOrderInput | Prisma.SortOrder
+  activationMilestonesJson?: Prisma.SortOrderInput | Prisma.SortOrder
   isVerified?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   pendingPhoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -364,6 +371,7 @@ export type UserScalarWhereWithAggregatesInput = {
   referredBy?: Prisma.UuidNullableWithAggregatesFilter<"User"> | string | null
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
   lastUsedPersonaId?: Prisma.UuidNullableWithAggregatesFilter<"User"> | string | null
+  activationMilestonesJson?: Prisma.JsonNullableWithAggregatesFilter<"User">
   isVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   phoneNumber?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   pendingPhoneNumber?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -378,6 +386,7 @@ export type UserCreateInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -414,6 +423,7 @@ export type UserUncheckedCreateInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -448,6 +458,7 @@ export type UserUpdateInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -484,6 +495,7 @@ export type UserUncheckedUpdateInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -519,6 +531,7 @@ export type UserCreateManyInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -533,6 +546,7 @@ export type UserUpdateManyMutationInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -548,6 +562,7 @@ export type UserUncheckedUpdateManyInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -578,6 +593,7 @@ export type UserCountOrderByAggregateInput = {
   referredBy?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   lastUsedPersonaId?: Prisma.SortOrder
+  activationMilestonesJson?: Prisma.SortOrder
   isVerified?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrder
   pendingPhoneNumber?: Prisma.SortOrder
@@ -975,6 +991,7 @@ export type UserCreateWithoutReferralsInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1010,6 +1027,7 @@ export type UserUncheckedCreateWithoutReferralsInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1048,6 +1066,7 @@ export type UserCreateWithoutReferrerInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1082,6 +1101,7 @@ export type UserUncheckedCreateWithoutReferrerInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1137,6 +1157,7 @@ export type UserUpdateWithoutReferralsInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1172,6 +1193,7 @@ export type UserUncheckedUpdateWithoutReferralsInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1225,6 +1247,7 @@ export type UserScalarWhereInput = {
   referredBy?: Prisma.UuidNullableFilter<"User"> | string | null
   passwordHash?: Prisma.StringFilter<"User"> | string
   lastUsedPersonaId?: Prisma.UuidNullableFilter<"User"> | string | null
+  activationMilestonesJson?: Prisma.JsonNullableFilter<"User">
   isVerified?: Prisma.BoolFilter<"User"> | boolean
   phoneNumber?: Prisma.StringNullableFilter<"User"> | string | null
   pendingPhoneNumber?: Prisma.StringNullableFilter<"User"> | string | null
@@ -1239,6 +1262,7 @@ export type UserCreateWithoutOwnedAgencyProfilesInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1274,6 +1298,7 @@ export type UserUncheckedCreateWithoutOwnedAgencyProfilesInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1323,6 +1348,7 @@ export type UserUpdateWithoutOwnedAgencyProfilesInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1358,6 +1384,7 @@ export type UserUncheckedUpdateWithoutOwnedAgencyProfilesInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1391,6 +1418,7 @@ export type UserCreateWithoutEmailVerificationTokensInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1426,6 +1454,7 @@ export type UserUncheckedCreateWithoutEmailVerificationTokensInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1475,6 +1504,7 @@ export type UserUpdateWithoutEmailVerificationTokensInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1510,6 +1540,7 @@ export type UserUncheckedUpdateWithoutEmailVerificationTokensInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1543,6 +1574,7 @@ export type UserCreateWithoutPasswordResetTokensInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1578,6 +1610,7 @@ export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1627,6 +1660,7 @@ export type UserUpdateWithoutPasswordResetTokensInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1662,6 +1696,7 @@ export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1695,6 +1730,7 @@ export type UserCreateWithoutMobileOtpChallengesInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1730,6 +1766,7 @@ export type UserUncheckedCreateWithoutMobileOtpChallengesInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1779,6 +1816,7 @@ export type UserUpdateWithoutMobileOtpChallengesInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1814,6 +1852,7 @@ export type UserUncheckedUpdateWithoutMobileOtpChallengesInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1847,6 +1886,7 @@ export type UserCreateWithoutAuthSessionsInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1882,6 +1922,7 @@ export type UserUncheckedCreateWithoutAuthSessionsInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -1931,6 +1972,7 @@ export type UserUpdateWithoutAuthSessionsInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1966,6 +2008,7 @@ export type UserUncheckedUpdateWithoutAuthSessionsInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1999,6 +2042,7 @@ export type UserCreateWithoutPersonasInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2034,6 +2078,7 @@ export type UserUncheckedCreateWithoutPersonasInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2083,6 +2128,7 @@ export type UserUpdateWithoutPersonasInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2118,6 +2164,7 @@ export type UserUncheckedUpdateWithoutPersonasInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2151,6 +2198,7 @@ export type UserCreateWithoutCreatedEventsInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2186,6 +2234,7 @@ export type UserUncheckedCreateWithoutCreatedEventsInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2235,6 +2284,7 @@ export type UserUpdateWithoutCreatedEventsInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2270,6 +2320,7 @@ export type UserUncheckedUpdateWithoutCreatedEventsInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2303,6 +2354,7 @@ export type UserCreateWithoutEventParticipantsInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2338,6 +2390,7 @@ export type UserUncheckedCreateWithoutEventParticipantsInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2387,6 +2440,7 @@ export type UserUpdateWithoutEventParticipantsInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2422,6 +2476,7 @@ export type UserUncheckedUpdateWithoutEventParticipantsInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2455,6 +2510,7 @@ export type UserCreateWithoutOutgoingContactRequestsInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2490,6 +2546,7 @@ export type UserUncheckedCreateWithoutOutgoingContactRequestsInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2528,6 +2585,7 @@ export type UserCreateWithoutIncomingContactRequestsInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2563,6 +2621,7 @@ export type UserUncheckedCreateWithoutIncomingContactRequestsInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2612,6 +2671,7 @@ export type UserUpdateWithoutOutgoingContactRequestsInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2647,6 +2707,7 @@ export type UserUncheckedUpdateWithoutOutgoingContactRequestsInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2691,6 +2752,7 @@ export type UserUpdateWithoutIncomingContactRequestsInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2726,6 +2788,7 @@ export type UserUncheckedUpdateWithoutIncomingContactRequestsInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2759,6 +2822,7 @@ export type UserCreateWithoutOwnedRelationshipsInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2794,6 +2858,7 @@ export type UserUncheckedCreateWithoutOwnedRelationshipsInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2832,6 +2897,7 @@ export type UserCreateWithoutTargetRelationshipsInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2867,6 +2933,7 @@ export type UserUncheckedCreateWithoutTargetRelationshipsInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -2916,6 +2983,7 @@ export type UserUpdateWithoutOwnedRelationshipsInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2951,6 +3019,7 @@ export type UserUncheckedUpdateWithoutOwnedRelationshipsInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2995,6 +3064,7 @@ export type UserUpdateWithoutTargetRelationshipsInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3030,6 +3100,7 @@ export type UserUncheckedUpdateWithoutTargetRelationshipsInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3063,6 +3134,7 @@ export type UserCreateWithoutSentInteractionsInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -3098,6 +3170,7 @@ export type UserUncheckedCreateWithoutSentInteractionsInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -3147,6 +3220,7 @@ export type UserUpdateWithoutSentInteractionsInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3182,6 +3256,7 @@ export type UserUncheckedUpdateWithoutSentInteractionsInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3215,6 +3290,7 @@ export type UserCreateWithoutFollowUpsInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -3250,6 +3326,7 @@ export type UserUncheckedCreateWithoutFollowUpsInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -3299,6 +3376,7 @@ export type UserUpdateWithoutFollowUpsInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3334,6 +3412,7 @@ export type UserUncheckedUpdateWithoutFollowUpsInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3367,6 +3446,7 @@ export type UserCreateWithoutInitiatedBlocksInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -3402,6 +3482,7 @@ export type UserUncheckedCreateWithoutInitiatedBlocksInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -3440,6 +3521,7 @@ export type UserCreateWithoutReceivedBlocksInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -3475,6 +3557,7 @@ export type UserUncheckedCreateWithoutReceivedBlocksInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -3524,6 +3607,7 @@ export type UserUpdateWithoutInitiatedBlocksInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3559,6 +3643,7 @@ export type UserUncheckedUpdateWithoutInitiatedBlocksInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3603,6 +3688,7 @@ export type UserUpdateWithoutReceivedBlocksInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3638,6 +3724,7 @@ export type UserUncheckedUpdateWithoutReceivedBlocksInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3671,6 +3758,7 @@ export type UserCreateWithoutNotificationsInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -3706,6 +3794,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -3755,6 +3844,7 @@ export type UserUpdateWithoutNotificationsInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3790,6 +3880,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3823,6 +3914,7 @@ export type UserCreateWithoutResolvedSupportRequestsInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -3858,6 +3950,7 @@ export type UserUncheckedCreateWithoutResolvedSupportRequestsInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -3907,6 +4000,7 @@ export type UserUpdateWithoutResolvedSupportRequestsInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3942,6 +4036,7 @@ export type UserUncheckedUpdateWithoutResolvedSupportRequestsInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3975,6 +4070,7 @@ export type UserCreateWithoutAnalyticsEventsInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -4010,6 +4106,7 @@ export type UserUncheckedCreateWithoutAnalyticsEventsInput = {
   referredBy?: string | null
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -4059,6 +4156,7 @@ export type UserUpdateWithoutAnalyticsEventsInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4094,6 +4192,7 @@ export type UserUncheckedUpdateWithoutAnalyticsEventsInput = {
   referredBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4127,6 +4226,7 @@ export type UserCreateManyReferrerInput = {
   referralCode: string
   passwordHash: string
   lastUsedPersonaId?: string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: boolean
   phoneNumber?: string | null
   pendingPhoneNumber?: string | null
@@ -4141,6 +4241,7 @@ export type UserUpdateWithoutReferrerInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4175,6 +4276,7 @@ export type UserUncheckedUpdateWithoutReferrerInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4209,6 +4311,7 @@ export type UserUncheckedUpdateManyWithoutReferrerInput = {
   referralCode?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   lastUsedPersonaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activationMilestonesJson?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   isVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pendingPhoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4426,6 +4529,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   referredBy?: boolean
   passwordHash?: boolean
   lastUsedPersonaId?: boolean
+  activationMilestonesJson?: boolean
   isVerified?: boolean
   phoneNumber?: boolean
   pendingPhoneNumber?: boolean
@@ -4463,6 +4567,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   referredBy?: boolean
   passwordHash?: boolean
   lastUsedPersonaId?: boolean
+  activationMilestonesJson?: boolean
   isVerified?: boolean
   phoneNumber?: boolean
   pendingPhoneNumber?: boolean
@@ -4479,6 +4584,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   referredBy?: boolean
   passwordHash?: boolean
   lastUsedPersonaId?: boolean
+  activationMilestonesJson?: boolean
   isVerified?: boolean
   phoneNumber?: boolean
   pendingPhoneNumber?: boolean
@@ -4495,6 +4601,7 @@ export type UserSelectScalar = {
   referredBy?: boolean
   passwordHash?: boolean
   lastUsedPersonaId?: boolean
+  activationMilestonesJson?: boolean
   isVerified?: boolean
   phoneNumber?: boolean
   pendingPhoneNumber?: boolean
@@ -4503,7 +4610,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "referralCode" | "referredBy" | "passwordHash" | "lastUsedPersonaId" | "isVerified" | "phoneNumber" | "pendingPhoneNumber" | "phoneVerifiedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "referralCode" | "referredBy" | "passwordHash" | "lastUsedPersonaId" | "activationMilestonesJson" | "isVerified" | "phoneNumber" | "pendingPhoneNumber" | "phoneVerifiedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   emailVerificationTokens?: boolean | Prisma.User$emailVerificationTokensArgs<ExtArgs>
   passwordResetTokens?: boolean | Prisma.User$passwordResetTokensArgs<ExtArgs>
@@ -4567,6 +4674,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     referredBy: string | null
     passwordHash: string
     lastUsedPersonaId: string | null
+    activationMilestonesJson: runtime.JsonValue | null
     isVerified: boolean
     phoneNumber: string | null
     pendingPhoneNumber: string | null
@@ -5023,6 +5131,7 @@ export interface UserFieldRefs {
   readonly referredBy: Prisma.FieldRef<"User", 'String'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly lastUsedPersonaId: Prisma.FieldRef<"User", 'String'>
+  readonly activationMilestonesJson: Prisma.FieldRef<"User", 'Json'>
   readonly isVerified: Prisma.FieldRef<"User", 'Boolean'>
   readonly phoneNumber: Prisma.FieldRef<"User", 'String'>
   readonly pendingPhoneNumber: Prisma.FieldRef<"User", 'String'>

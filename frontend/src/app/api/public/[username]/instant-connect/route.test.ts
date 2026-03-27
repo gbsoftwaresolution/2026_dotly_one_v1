@@ -44,7 +44,7 @@ describe("POST /api/public/[username]/instant-connect", () => {
     );
   });
 
-  it("calls the username-based backend endpoint and returns server timing", async () => {
+  it("calls the public-identifier backend endpoint and returns server timing", async () => {
     mocks.getServerAccessToken.mockResolvedValue("token");
     mocks.apiRequest.mockResolvedValue({
       relationshipId: "rel-1",
@@ -67,7 +67,7 @@ describe("POST /api/public/[username]/instant-connect", () => {
 
     expect(response.status).toBe(201);
     expect(mocks.apiRequest).toHaveBeenCalledWith(
-      "/relationships/instant-connect/by-username/alice",
+      "/relationships/instant-connect/by-public-identifier/alice",
       {
         method: "POST",
         body: {

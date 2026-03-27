@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   BadgeInfo,
@@ -45,7 +46,7 @@ interface ProtectedConversationScreenProps {
   connectionId: string;
   conversation?: IdentityConversationContext | null;
   routingPersona?: PersonaSummary | null;
-  navigationVariant?: "app" | "app-old";
+  navigationVariant?: "app";
   prefetchedData?: {
     connection: IdentityConnection;
     permissions: ResolvedPermissionsMap | null;
@@ -105,6 +106,25 @@ function formatHashPreview(value: string | null | undefined) {
   return value.length > 16 ? `${value.slice(0, 8)}...${value.slice(-6)}` : value;
 }
 
+function buildInboxHref(input?: {
+  personaFilter?: string | null;
+  statusFilter?: string | null;
+}) {
+  const params = new URLSearchParams();
+
+  if (input?.personaFilter) {
+    params.set("persona", input.personaFilter);
+  }
+
+  if (input?.statusFilter) {
+    params.set("status", input.statusFilter);
+  }
+
+  const query = params.toString();
+
+  return query ? `${routes.app.inbox}?${query}` : routes.app.inbox;
+}
+
 export function ProtectedConversationScreen({
   connectionId,
   conversation,
@@ -112,6 +132,7 @@ export function ProtectedConversationScreen({
   navigationVariant = "app",
   prefetchedData,
 }: ProtectedConversationScreenProps) {
+  const searchParams = useSearchParams();
   const [connection, setConnection] = useState<IdentityConnection | null>(
     prefetchedData?.connection ?? null,
   );
@@ -215,9 +236,7 @@ export function ProtectedConversationScreen({
   const connectionTypeLabel = formatEnumLabel(connection.connectionType);
   const trustStateLabel = formatEnumLabel(connection.trustState);
   const routingLabel =
-    routingPersona
-      ? getInternalRouteHeadline(routingPersona)
-      : null ??
+    (routingPersona ? getInternalRouteHeadline(routingPersona) : null) ??
     (routingPersona?.username ? `@${routingPersona.username}` : null) ??
     getMetadataString(conversation?.metadataJson ?? null, [
       "personaRoutingDisplayName",
@@ -245,16 +264,37 @@ export function ProtectedConversationScreen({
       : conversation?.personaId
         ? "Persona route"
         : "Identity inbox";
-  const backLink =
-    navigationVariant === "app"
-      ? {
-          href: routes.app.inbox,
-          label: "Back to inbox",
-        }
-      : {
-          href: `/app-old/connections/${connectionId}`,
-          label: "Back to profile",
-        };
+  const inboxPersonaFilter =
+    searchParams.get("persona") ?? conversation?.personaId ?? null;
+  const inboxStatusFilter =
+    searchParams.get("status") ??
+    (conversation?.conversationStatus === "ARCHIVED"
+      ? conversation.conversationStatus
+      : null);
+  const inboxViewLabel =
+    inboxStatusFilter === "ARCHIVED"
+      ? "Archived lane"
+      : inboxStatusFilter === "ACTIVE"
+        ? "Active queue"
+        : "Inbox overview";
+  const inboxRouteLabel =
+    inboxPersonaFilter === "identity-default"
+      ? "Identity inbox"
+      : routingPersona?.username
+        ? `@${routingPersona.username}`
+        : inboxPersonaFilter
+          ? "Persona route"
+          : "All routes";
+  const backLink = {
+    href: buildInboxHref({
+      personaFilter: inboxPersonaFilter,
+      statusFilter: inboxStatusFilter,
+    }),
+    label:
+      inboxStatusFilter === "ARCHIVED"
+        ? "Back to archived inbox"
+        : "Back to inbox",
+  };
 
   const getExplanationText = (key: string, fallback: string) => {
     const match = permissionsExplanation?.permissions?.find(
@@ -289,7 +329,7 @@ export function ProtectedConversationScreen({
 
         <PageHeader
           title={conversation?.title || `Chat with ${connection.targetIdentity?.displayName || "Unknown"}`}
-          description="Review routed context, current policy posture, and protected-mode actions for this conversation without leaving the new inbox shell."
+          description="Review routed context, current policy posture, and protected-mode actions for this conversation without losing the inbox lane it came from."
         />
 
         <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
@@ -330,6 +370,10 @@ export function ProtectedConversationScreen({
                   <p className="mt-2 max-w-[54ch] text-[15px] font-medium leading-relaxed text-muted">
                     Conversation access still comes from backend persona and participant scope enforcement, so members and operators only see this thread when their assignment allows it.
                   </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <StatusBadge label={inboxViewLabel} tone="neutral" />
+                    <StatusBadge label={inboxRouteLabel} tone="cyan" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -393,6 +437,7 @@ export function ProtectedConversationScreen({
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <StatusBadge label={routingLabelText} tone="cyan" />
+                <StatusBadge label={inboxViewLabel} tone="neutral" />
                 {routingPersona?.username ? (
                   <StatusBadge label={`@${routingPersona.username}`} tone="neutral" />
                 ) : null}

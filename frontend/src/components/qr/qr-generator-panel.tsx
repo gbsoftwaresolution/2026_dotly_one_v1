@@ -7,6 +7,7 @@ import { BadgeCheck, Copy, RefreshCw, Share2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 import { CustomSelect } from "@/components/shared/custom-select";
+import { ExternalImage } from "@/components/shared/external-image";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { showToast } from "@/components/shared/toast-viewport";
@@ -31,13 +32,14 @@ import type {
   PersonaSummary,
   QrTokenSummary,
 } from "@/types/persona";
-import type { UserProfile } from "@/types/user";
+import type { CurrentUserReferral, UserProfile } from "@/types/user";
 
 import { VerificationPrompt } from "../auth/verification-prompt";
 import { ConnectionProgressNote } from "../analytics/connection-progress-note";
 
 interface QrGeneratorPanelProps {
   initialFastShare?: MyFastSharePayload | null;
+  initialReferral?: CurrentUserReferral | null;
   analytics?: import("@/types/analytics").CurrentUserAnalytics | null;
   personas: PersonaSummary[];
   user: UserProfile;
@@ -58,6 +60,7 @@ function toInitialSharePayload(
 
   return {
     personaId: value.persona.id,
+    publicIdentifier: value.persona.publicIdentifier ?? value.persona.username,
     username: value.persona.username,
     fullName: value.persona.fullName,
     profilePhotoUrl: value.persona.profilePhotoUrl,
@@ -79,7 +82,7 @@ function toShareQrSummary(
 ): QrTokenSummary {
   return {
     id: sharePayload.personaId,
-    code: sharePayload.username,
+    code: sharePayload.publicIdentifier ?? sharePayload.username,
     type:
       sharePayload.preferredShareType === "instant_connect"
         ? "quick_connect"
@@ -105,8 +108,21 @@ function getInitials(fullName: string): string {
   return letters || fullName.charAt(0).toUpperCase() || "D";
 }
 
+function buildReferralSignupUrl(referralCode: string): string {
+  const normalizedCode = referralCode.trim().toUpperCase();
+
+  if (typeof window === "undefined") {
+    return `${routes.public.signup}?ref=${encodeURIComponent(normalizedCode)}`;
+  }
+
+  const inviteUrl = new URL(routes.public.signup, window.location.origin);
+  inviteUrl.searchParams.set("ref", normalizedCode);
+  return inviteUrl.toString();
+}
+
 export function QrGeneratorPanel({
   initialFastShare = null,
+  initialReferral = null,
   analytics = null,
   personas,
   user,
@@ -170,14 +186,20 @@ export function QrGeneratorPanel({
     .map((value, index) => (index === 1 ? `@${value}` : value))
     .join(" • ");
   const isVerified = user.security.trustBadge === "verified";
+  const activationMilestones = user.activation?.milestones;
+  const hasShareCompleted = Boolean(activationMilestones?.firstShareCompletedAt);
+  const hasRequestReceived = Boolean(activationMilestones?.firstRequestReceivedAt);
   const shareTitle = selectedPersona
-    ? `${formatPublicHandle(selectedPersona.username)} on Dotly`
+    ? `${formatPublicHandle(sharePayload?.publicIdentifier ?? selectedPersona.username)} on Dotly`
     : "Dotly";
   const shareText = selectedPersona
     ? sharePayload?.preferredShareType === "instant_connect"
-      ? `Connect with ${formatPublicHandle(selectedPersona.username)} on Dotly.`
-      : `Open ${formatPublicHandle(selectedPersona.username)} on Dotly.`
+      ? `Connect with ${formatPublicHandle(sharePayload?.publicIdentifier ?? selectedPersona.username)} on Dotly.`
+      : `Open ${formatPublicHandle(sharePayload?.publicIdentifier ?? selectedPersona.username)} on Dotly.`
     : "Open this Dotly profile.";
+  const referralSignupUrl = initialReferral
+    ? buildReferralSignupUrl(initialReferral.referralCode)
+    : null;
   const personaOptions = personas.map((persona) => ({
     value: persona.id,
     label: persona.fullName,
@@ -356,6 +378,59 @@ export function QrGeneratorPanel({
     }
   }
 
+  async function handleCopyReferralCode() {
+    if (!initialReferral) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(initialReferral.referralCode);
+      setFeedback(null);
+      showToast("Referral code copied");
+    } catch {
+      setFeedback({
+        tone: "error",
+        message: "Could not copy the referral code right now.",
+      });
+    }
+  }
+
+  async function handleInviteShare() {
+    if (!initialReferral || !referralSignupUrl) {
+      return;
+    }
+
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: "Create your Dotly",
+          text: "Claim your Dotly and get your QR ready for the next introduction.",
+          url: referralSignupUrl,
+        });
+        setFeedback(null);
+        return;
+      } catch (shareError) {
+        if (
+          shareError instanceof DOMException &&
+          shareError.name === "AbortError"
+        ) {
+          return;
+        }
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(referralSignupUrl);
+      setFeedback(null);
+      showToast("Invite link copied");
+    } catch {
+      setFeedback({
+        tone: "error",
+        message: "Could not copy the invite link right now.",
+      });
+    }
+  }
+
   async function handleShare() {
     if (!generatedQr) {
       setFeedback({
@@ -436,10 +511,12 @@ export function QrGeneratorPanel({
             {selectedPersona ? (
               <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-white/50 px-4 py-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 sm:px-5 backdrop-blur-md">
                 {selectedPersona.profilePhotoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <ExternalImage
                     src={selectedPersona.profilePhotoUrl}
                     alt={selectedPersona.fullName}
+                    width={48}
+                    height={48}
+                    sizes="48px"
                     className="h-11 w-11 rounded-xl object-cover sm:h-12 sm:w-12"
                   />
                 ) : (
@@ -456,7 +533,9 @@ export function QrGeneratorPanel({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h1 className="truncate text-[1.1rem] font-semibold tracking-tight text-foreground">
-                      {formatPublicHandle(selectedPersona.username)}
+                      {formatPublicHandle(
+                        sharePayload?.publicIdentifier ?? selectedPersona.username,
+                      )}
                     </h1>
                     {isVerified ? (
                       <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400">
@@ -621,6 +700,120 @@ export function QrGeneratorPanel({
               </PrimaryButton>
             </div>
           </div>
+
+          <div className="rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                {hasShareCompleted ? "Share signal" : "Share flow"}
+              </p>
+              <h2 className="text-base font-semibold tracking-tight text-foreground">
+                {hasShareCompleted ? "Your QR is already working" : "Use this in the room"}
+              </h2>
+              <p className="text-sm leading-6 text-muted">
+                {hasShareCompleted
+                  ? hasRequestReceived
+                    ? "A real scan or profile open already happened. Keep requests and inbox close so you can respond while the context is still warm."
+                    : "A real scan or profile open already happened. The next job is follow-through: check requests and inbox before the thread cools down."
+                  : "Keep the first interaction simple: show the QR, let them choose the next action, then check what came in after the conversation."}
+              </p>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {[
+                {
+                  step: "01",
+                  title: "Show QR",
+                  description: "Use one large, clean share surface instead of explaining your profile.",
+                },
+                {
+                  step: "02",
+                  title: hasShareCompleted ? "Signal received" : "Let them choose",
+                  description: hasShareCompleted
+                    ? "Dotly has already seen a real open or scan from this share flow."
+                    : "Dotly can route them into request access, instant connect, or contact actions.",
+                },
+                {
+                  step: "03",
+                  title: hasRequestReceived ? "Reply while it is warm" : "Check follow-through",
+                  description: hasRequestReceived
+                    ? "A first incoming request already landed. Keep the response loop tight."
+                    : "Review the first reply in requests or inbox so the introduction becomes useful.",
+                },
+              ].map((item) => (
+                <div
+                  key={item.step}
+                  className="rounded-2xl bg-black/[0.03] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.04] dark:ring-white/10"
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    {item.step}
+                  </p>
+                  <h3 className="mt-2 text-sm font-semibold text-foreground">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-muted">
+                    {item.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <Link className="sm:flex-1" href={routes.app.requests}>
+                <SecondaryButton className="w-full" size="sm">
+                  Open requests
+                </SecondaryButton>
+              </Link>
+              <Link className="sm:flex-1" href={routes.app.inbox}>
+                <SecondaryButton className="w-full" size="sm">
+                  Open inbox
+                </SecondaryButton>
+              </Link>
+            </div>
+          </div>
+
+          {initialReferral ? (
+            <div className="rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                  Invite flow
+                </p>
+                <h2 className="text-base font-semibold tracking-tight text-foreground">
+                  Invite someone to create their own Dotly
+                </h2>
+                <p className="text-sm leading-6 text-muted">
+                  Share your signup link after the introduction so the next person can claim a Dotly with your referral attached.
+                </p>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-black/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.04] dark:ring-white/10">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+                    Referral code
+                  </p>
+                  <p className="mt-1 truncate font-mono text-base font-semibold tracking-[0.2em] text-foreground">
+                    {initialReferral.referralCode}
+                  </p>
+                </div>
+                <SecondaryButton
+                  type="button"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => void handleCopyReferralCode()}
+                >
+                  Copy code
+                </SecondaryButton>
+              </div>
+
+              <PrimaryButton
+                type="button"
+                size="sm"
+                className="mt-3 h-13 w-full rounded-2xl"
+                onClick={() => void handleInviteShare()}
+              >
+                Invite someone
+              </PrimaryButton>
+            </div>
+          ) : null}
 
           {!shareLocked && error && generatedQr ? (
             <button

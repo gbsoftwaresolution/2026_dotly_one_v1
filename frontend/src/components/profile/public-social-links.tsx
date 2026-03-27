@@ -11,12 +11,12 @@ import type { PublicProfile } from "@/types/persona";
 
 interface PublicSocialLinksProps {
   profile: PublicProfile;
-  username: string;
+  publicIdentifier: string;
 }
 
 export function PublicSocialLinks({
   profile,
-  username,
+  publicIdentifier,
 }: PublicSocialLinksProps) {
   const visibleLinks = getVisibleSocialLinks(
     profile.socialLinks ?? [],
@@ -39,7 +39,10 @@ export function PublicSocialLinks({
         </p>
         {hasOverflow ? (
           <Link
-            href={getCanonicalPublicLinksPath(profile.publicUrl, username)}
+            href={getCanonicalPublicLinksPath(
+              profile.publicUrl,
+              publicIdentifier,
+            )}
             className="text-xs font-semibold text-muted transition hover:text-foreground"
           >
             View all

@@ -238,7 +238,7 @@ export class RelationshipsService {
 
   async instantConnectByUsername(
     userId: string,
-    username: string,
+    publicIdentifier: string,
     createInstantConnectDto: CreatePublicInstantConnectDto,
   ) {
     await this.verificationPolicyService.assertUserIsVerified(
@@ -247,7 +247,7 @@ export class RelationshipsService {
     );
 
     return this.prismaService.$transaction(async (tx) => {
-      const normalizedSlug = normalizePublicSlug(username);
+      const normalizedSlug = normalizePublicSlug(publicIdentifier);
       const targetPersona =
         (await tx.persona.findFirst({
           where: {

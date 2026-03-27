@@ -418,6 +418,7 @@ describe("ProfilesService analytics hook", () => {
     });
 
     assert.deepEqual(result, {
+      publicIdentifier: "alice",
       username: "alice",
       publicUrl: "https://dotly.id/alice",
       fullName: "Alice Demo",
@@ -846,6 +847,89 @@ describe("ProfilesService analytics hook", () => {
       isStrongVerified: false,
       isBusinessVerified: false,
     });
+  });
+
+  it("returns the canonical public identifier while preserving username aliases", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findMany: async () => [],
+          findFirst: async () => ({
+            id: "persona-id",
+            userId: "target-user",
+            identity: {
+              handle: "acme",
+            },
+            username: "acme-alias",
+            publicUrl: "",
+            fullName: "Acme Team",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            sharingMode: "CONTROLLED",
+            smartCardConfig: null,
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+            qRAccessTokens: [],
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    const result = await service.getPublicProfile("acme-alias");
+
+    assert.equal(result.publicIdentifier, "acme");
+    assert.equal(result.username, "acme-alias");
+    assert.equal(result.publicUrl, "https://dotly.id/acme");
+  });
+
+  it("builds public vcards with canonical handle urls when username is an alias", async () => {
+    const service = new ProfilesService(
+      {
+        persona: {
+          findMany: async () => [],
+          findFirst: async () => ({
+            id: "persona-id",
+            identity: {
+              handle: "acme",
+            },
+            username: "acme-alias",
+            publicUrl: "",
+            fullName: "Acme Team",
+            jobTitle: "Founder",
+            companyName: "Dotly",
+            tagline: "Connect fast",
+            profilePhotoUrl: null,
+            accessMode: "OPEN",
+            verifiedOnly: false,
+            sharingMode: "SMART_CARD",
+            smartCardConfig: {
+              primaryAction: "contact_me",
+              allowCall: false,
+              allowWhatsapp: false,
+              allowEmail: false,
+              allowVcard: true,
+            },
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+          }),
+        },
+      } as any,
+      {
+        trackProfileView: async () => true,
+      } as any,
+    );
+
+    const result = await service.getPublicVcard("acme-alias");
+
+    assert.match(result.content, /URL:https:\/\/dotly.id\/acme/);
   });
 
   it("caches safe public profile payloads without skipping per-viewer block checks", async () => {
@@ -1391,6 +1475,10 @@ describe("ProfilesService analytics hook", () => {
 });
 
 describe("QrService analytics hook", () => {
+  const noopActivationMilestonesService = {
+    markFirstShareCompletedForPersona: async () => undefined,
+  };
+
   it("tracks qr scans when resolving a code", async () => {
     const tracked: unknown[] = [];
 
@@ -1458,6 +1546,7 @@ describe("QrService analytics hook", () => {
           return true;
         },
       } as any,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => undefined,
       } as any,
@@ -1528,6 +1617,7 @@ describe("QrService analytics hook", () => {
         createSafe: async () => undefined,
       } as any,
       { trackQrScan: async () => true } as any,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => undefined,
       } as any,
@@ -1542,6 +1632,7 @@ describe("QrService analytics hook", () => {
       type: "quick_connect",
       code: "qr-code",
       persona: {
+        publicIdentifier: "alice",
         username: "alice",
         fullName: "Alice Demo",
         jobTitle: "Founder",
@@ -1608,6 +1699,7 @@ describe("QrService analytics hook", () => {
         createSafe: async () => undefined,
       } as any,
       { trackQrScan: async () => true } as any,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => undefined,
       } as any,

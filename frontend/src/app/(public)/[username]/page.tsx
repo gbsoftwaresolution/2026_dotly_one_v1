@@ -7,5 +7,10 @@ export default async function CanonicalPublicUserPage({
 }) {
   const { username } = await params;
 
-  return <PublicUserPage username={username} />;
+  return (
+    <PublicUserPage
+      publicIdentifier={username}
+      forceCanonicalPath
+    />
+  );
 }

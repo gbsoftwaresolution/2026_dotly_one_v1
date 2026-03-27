@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { PublicUserInteractions } from "@/components/profile/public-user-interactions";
 import { PublicProfileOfflineCard } from "@/components/profile/public-profile-offline-card";
@@ -10,37 +10,64 @@ import {
   readSessionCache,
   writeSessionCache,
 } from "@/lib/client-session-cache";
-import { getCanonicalPublicProfilePath } from "@/lib/persona/public-profile-path";
+import {
+  getCanonicalPublicProfilePath,
+  getCanonicalPublicSlug,
+} from "@/lib/persona/public-profile-path";
 import type { PublicProfile } from "@/types/persona";
 
 const PUBLIC_PROFILE_CACHE_PREFIX = "dotly.public-profile";
 
 interface PublicUserPageProps {
-  username: string;
+  publicIdentifier: string;
+  forceCanonicalPath?: boolean;
 }
 
-function buildLoginHref(publicUrl: string, username: string): string {
+function buildLoginHref(publicUrl: string, publicIdentifier: string): string {
   return `/login?next=${encodeURIComponent(
-    getCanonicalPublicProfilePath(publicUrl, username),
+    getCanonicalPublicProfilePath(publicUrl, publicIdentifier),
   )}`;
 }
 
-export async function PublicUserPage({ username }: PublicUserPageProps) {
+export async function PublicUserPage({
+  publicIdentifier,
+  forceCanonicalPath = false,
+}: PublicUserPageProps) {
   try {
     const requestHeaders = await headers();
-    const profile = await publicApi.getProfile(username, {
+    const profile = await publicApi.getProfile(publicIdentifier, {
       "user-agent": requestHeaders.get("user-agent") ?? "",
       "accept-language": requestHeaders.get("accept-language") ?? "",
       "x-forwarded-for": requestHeaders.get("x-forwarded-for") ?? "",
       "x-idempotency-key": requestHeaders.get("x-idempotency-key") ?? "",
     });
-    writeSessionCache(`${PUBLIC_PROFILE_CACHE_PREFIX}:${username}`, profile);
+    writeSessionCache(
+      `${PUBLIC_PROFILE_CACHE_PREFIX}:${publicIdentifier}`,
+      profile,
+    );
+    const canonicalIdentifier =
+      profile.publicIdentifier?.trim().toLowerCase() ||
+      getCanonicalPublicSlug(profile.publicUrl, profile.username);
+
+    const canonicalPath = getCanonicalPublicProfilePath(
+      profile.publicUrl,
+      canonicalIdentifier,
+    );
+    const requestedIdentifier = publicIdentifier.trim().toLowerCase();
+
+    if (forceCanonicalPath || requestedIdentifier !== canonicalIdentifier) {
+      redirect(canonicalPath);
+    }
+
     const accessToken = await getServerAccessToken();
     const isAuthenticated = Boolean(accessToken);
 
     const isSmartCard = profile.sharingMode === "smart_card";
     const showRequestAccessPanel = profile.sharingMode === "controlled";
-    const loginHref = buildLoginHref(profile.publicUrl, profile.username);
+    const loginHref = buildLoginHref(
+      profile.publicUrl,
+      canonicalIdentifier,
+    );
 
     return (
       <main
@@ -71,7 +98,7 @@ export async function PublicUserPage({ username }: PublicUserPageProps) {
         : "We could not load this public profile right now.";
 
     const cachedProfile = readSessionCache<PublicProfile>(
-      `${PUBLIC_PROFILE_CACHE_PREFIX}:${username}`,
+      `${PUBLIC_PROFILE_CACHE_PREFIX}:${publicIdentifier}`,
     );
 
     return (

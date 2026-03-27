@@ -2,6 +2,20 @@ function normalizeFallbackSlug(value: string): string {
   return value.trim().toLowerCase();
 }
 
+function extractPublicSlug(pathname: string): string | null {
+  const segments = pathname.split("/").filter(Boolean);
+
+  if (segments.length === 0) {
+    return null;
+  }
+
+  if (segments[0] === "u" && segments[1]) {
+    return normalizeFallbackSlug(segments[1]);
+  }
+
+  return normalizeFallbackSlug(segments[0]);
+}
+
 function toUrlCandidate(publicUrl: string): URL | null {
   const trimmed = publicUrl.trim();
 
@@ -22,26 +36,26 @@ function toUrlCandidate(publicUrl: string): URL | null {
 
 export function getCanonicalPublicSlug(
   publicUrl: string,
-  fallbackUsername: string,
+  fallbackPublicIdentifier: string,
 ): string {
   const parsedUrl = toUrlCandidate(publicUrl);
-  const pathSlug = parsedUrl?.pathname.split("/").filter(Boolean)[0];
+  const pathSlug = parsedUrl ? extractPublicSlug(parsedUrl.pathname) : null;
 
-  return normalizeFallbackSlug(pathSlug ?? fallbackUsername);
+  return normalizeFallbackSlug(pathSlug ?? fallbackPublicIdentifier);
 }
 
 export function getCanonicalPublicProfilePath(
   publicUrl: string,
-  fallbackUsername: string,
+  fallbackPublicIdentifier: string,
 ): string {
-  return `/${encodeURIComponent(
-    getCanonicalPublicSlug(publicUrl, fallbackUsername),
+  return `/u/${encodeURIComponent(
+    getCanonicalPublicSlug(publicUrl, fallbackPublicIdentifier),
   )}`;
 }
 
 export function getCanonicalPublicLinksPath(
   publicUrl: string,
-  fallbackUsername: string,
+  fallbackPublicIdentifier: string,
 ): string {
-  return `${getCanonicalPublicProfilePath(publicUrl, fallbackUsername)}/links`;
+  return `${getCanonicalPublicProfilePath(publicUrl, fallbackPublicIdentifier)}/links`;
 }

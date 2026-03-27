@@ -8,12 +8,12 @@ import { apiRequest } from "./client";
 
 export const relationshipApi = {
   instantConnect: (
-    username: string,
+    publicIdentifier: string,
     payload: PublicInstantConnectInput,
     options?: { signal?: AbortSignal; requestKey?: string },
   ) =>
     apiRequest<InstantConnectResult>(
-      `/api/public/${encodeURIComponent(username)}/instant-connect`,
+      `/api/public/${encodeURIComponent(publicIdentifier)}/instant-connect`,
       {
         method: "POST",
         body: payload,

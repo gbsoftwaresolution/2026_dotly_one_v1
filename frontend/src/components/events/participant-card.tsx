@@ -1,5 +1,6 @@
 "use client";
 
+import { ExternalImage } from "@/components/shared/external-image";
 import { SecondaryButton } from "@/components/shared/secondary-button";
 import { cn } from "@/lib/utils/cn";
 import type { EventParticipant, EventParticipantRole } from "@/types/event";
@@ -49,10 +50,12 @@ export function ParticipantCard({
         {/* Avatar */}
         <div className="shrink-0">
           {participant.profilePhotoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <ExternalImage
               src={participant.profilePhotoUrl}
               alt={participant.fullName}
+              width={48}
+              height={48}
+              sizes="48px"
               className="h-12 w-12 rounded-2xl object-cover"
             />
           ) : (

@@ -4,20 +4,28 @@ import { act, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api/client";
+import { routes } from "@/lib/constants/routes";
 
 const mocks = vi.hoisted(() => ({
+  requireServerSession: vi.fn(),
   getConversationContext: vi.fn(),
   getConnection: vi.fn(),
   getResolvedPermissions: vi.fn(),
   explainResolvedPermissions: vi.fn(),
   getPersona: vi.fn(),
   replace: vi.fn(),
+  useSearchParams: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     replace: mocks.replace,
   }),
+  useSearchParams: mocks.useSearchParams,
+}));
+
+vi.mock("@/lib/auth/protected-route", () => ({
+  requireServerSession: mocks.requireServerSession,
 }));
 
 vi.mock("@/lib/api/connections", () => ({
@@ -37,12 +45,17 @@ import ConversationDetailsPage from "./page";
 
 describe("AppConversationDetailsPage", () => {
   beforeEach(() => {
+    mocks.requireServerSession.mockReset();
     mocks.getConversationContext.mockReset();
     mocks.getConnection.mockReset();
     mocks.getResolvedPermissions.mockReset();
     mocks.explainResolvedPermissions.mockReset();
     mocks.getPersona.mockReset();
     mocks.replace.mockReset();
+    mocks.useSearchParams.mockReset();
+
+    mocks.requireServerSession.mockResolvedValue({ accessToken: "token" });
+    mocks.useSearchParams.mockReturnValue(new URLSearchParams());
   });
 
   it("loads via conversation id and shows persona routing context inside the new app shell route", async () => {
@@ -129,20 +142,23 @@ describe("AppConversationDetailsPage", () => {
       permissions: [],
     });
 
+    const element = await ConversationDetailsPage({
+      params: Promise.resolve({ conversationId: "conversation-1" }),
+    });
+
     await act(async () => {
-      render(
-        <ConversationDetailsPage
-          params={Promise.resolve({ conversationId: "conversation-1" })}
-        />,
-      );
+      render(element);
     });
 
     expect(
       await screen.findByRole("heading", { name: "Chat with Mary Johnson" }),
     ).toBeInTheDocument();
+    expect(mocks.requireServerSession).toHaveBeenCalledWith(
+      routes.app.conversationDetail("conversation-1"),
+    );
     expect(screen.getByRole("link", { name: /back to inbox/i })).toHaveAttribute(
       "href",
-      "/app/inbox",
+      "/app/inbox?persona=persona-1",
     );
     expect(screen.getByText("Persona route")).toBeInTheDocument();
     expect(screen.getByText("Investor Desk")).toBeInTheDocument();
@@ -158,12 +174,12 @@ describe("AppConversationDetailsPage", () => {
       new ApiError("Forbidden resource", 403),
     );
 
+    const element = await ConversationDetailsPage({
+      params: Promise.resolve({ conversationId: "conversation-1" }),
+    });
+
     await act(async () => {
-      render(
-        <ConversationDetailsPage
-          params={Promise.resolve({ conversationId: "conversation-1" })}
-        />,
-      );
+      render(element);
     });
 
     expect(
@@ -179,12 +195,12 @@ describe("AppConversationDetailsPage", () => {
       new ApiError("Unauthorized", 401),
     );
 
+    const element = await ConversationDetailsPage({
+      params: Promise.resolve({ conversationId: "conversation-1" }),
+    });
+
     await act(async () => {
-      render(
-        <ConversationDetailsPage
-          params={Promise.resolve({ conversationId: "conversation-1" })}
-        />,
-      );
+      render(element);
     });
 
     expect(mocks.replace).toHaveBeenCalledWith(

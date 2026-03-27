@@ -14,6 +14,7 @@ import {
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import type { AuthenticatedUser } from "../../common/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { ActivationMilestonesService } from "../users/activation-milestones.service";
 
 import { CreatePersonaDto } from "./dto/create-persona.dto";
 import { UpdatePersonaSharingDto } from "./dto/update-persona-sharing.dto";
@@ -24,14 +25,24 @@ import { PersonasService } from "./personas.service";
 @UseGuards(JwtAuthGuard)
 @Controller("personas")
 export class PersonasController {
-  constructor(private readonly personasService: PersonasService) {}
+  constructor(
+    private readonly personasService: PersonasService,
+    private readonly activationMilestonesService: ActivationMilestonesService,
+  ) {}
 
   @Post()
-  create(
+  async create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() createPersonaDto: CreatePersonaDto,
   ) {
-    return this.personasService.create(user.id, createPersonaDto);
+    const persona = await this.personasService.create(user.id, createPersonaDto);
+
+    await this.activationMilestonesService.markFirstPersonaCreated(
+      user.id,
+      new Date(persona.createdAt),
+    );
+
+    return persona;
   }
 
   @Get("availability/username")
@@ -48,8 +59,14 @@ export class PersonasController {
   }
 
   @Get("me/share-fast")
-  findFastSharePayload(@CurrentUser() user: AuthenticatedUser) {
-    return this.personasService.getMyFastSharePayload(user.id);
+  async findFastSharePayload(@CurrentUser() user: AuthenticatedUser) {
+    const payload = await this.personasService.getMyFastSharePayload(user.id);
+
+    if (payload.persona) {
+      await this.activationMilestonesService.markFirstQrOpened(user.id);
+    }
+
+    return payload;
   }
 
   @Get(":id/share-fast")

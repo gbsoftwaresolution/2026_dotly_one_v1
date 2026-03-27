@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ExternalImage } from "@/components/shared/external-image";
 import { ExpiryBadge } from "@/components/shared/expiry-badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { routes } from "@/lib/constants/routes";
@@ -113,10 +114,12 @@ export function ContactCard({
     >
         <div className="flex items-start gap-4">
           {targetPersona.profilePhotoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <ExternalImage
               src={targetPersona.profilePhotoUrl}
               alt={targetPersona.fullName}
+              width={56}
+              height={56}
+              sizes="56px"
               className="h-14 w-14 rounded-2xl object-cover"
             />
           ) : (

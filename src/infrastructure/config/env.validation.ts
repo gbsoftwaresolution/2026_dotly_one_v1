@@ -170,6 +170,21 @@ export function validateEnvironment(config: EnvRecord): EnvRecord {
       );
     }
 
+    const trustedCorsOrigins = collectTrustedCorsOrigins(
+      value.CORS_ORIGINS,
+      errors,
+    );
+    const frontendVerificationUrl = parseTrustedUrl(
+      value.FRONTEND_VERIFICATION_URL_BASE,
+      "FRONTEND_VERIFICATION_URL_BASE",
+      errors,
+    );
+    const frontendPasswordResetUrl = parseTrustedUrl(
+      value.FRONTEND_PASSWORD_RESET_URL_BASE,
+      "FRONTEND_PASSWORD_RESET_URL_BASE",
+      errors,
+    );
+
     assertStrongSecret(
       value.JWT_SECRET,
       "JWT_SECRET must be at least 32 characters and use a non-placeholder high-entropy value in production.",
@@ -180,15 +195,16 @@ export function validateEnvironment(config: EnvRecord): EnvRecord {
       "HEALTH_ENDPOINT_TOKEN must be at least 32 characters and use a non-placeholder high-entropy value in production.",
       errors,
     );
-    assertTrustedOrigins(value.CORS_ORIGINS, errors);
-    assertTrustedUrl(
-      value.FRONTEND_VERIFICATION_URL_BASE,
+    assertOriginAllowedByCors(
+      frontendVerificationUrl,
       "FRONTEND_VERIFICATION_URL_BASE",
+      trustedCorsOrigins,
       errors,
     );
-    assertTrustedUrl(
-      value.FRONTEND_PASSWORD_RESET_URL_BASE,
+    assertOriginAllowedByCors(
+      frontendPasswordResetUrl,
       "FRONTEND_PASSWORD_RESET_URL_BASE",
+      trustedCorsOrigins,
       errors,
     );
     assertTrustedUrl(value.QR_BASE_URL, "QR_BASE_URL", errors);
@@ -273,6 +289,10 @@ function assertPlaceholderFreeSecret(
 }
 
 function assertTrustedOrigins(value: unknown, errors: string[]): void {
+  collectTrustedCorsOrigins(value, errors);
+}
+
+function collectTrustedCorsOrigins(value: unknown, errors: string[]): string[] {
   const origins = String(value ?? "")
     .split(",")
     .map((origin) => origin.trim())
@@ -282,12 +302,33 @@ function assertTrustedOrigins(value: unknown, errors: string[]): void {
     errors.push(
       "CORS_ORIGINS must list at least one trusted HTTPS frontend origin in production.",
     );
-    return;
+    return [];
   }
 
+  const trustedOrigins: string[] = [];
+
   for (const origin of origins) {
-    assertTrustedUrl(origin, "CORS_ORIGINS", errors);
+    const parsedOrigin = parseTrustedUrl(origin, "CORS_ORIGINS", errors);
+
+    if (!parsedOrigin) {
+      continue;
+    }
+
+    if (
+      (parsedOrigin.pathname && parsedOrigin.pathname !== "/") ||
+      parsedOrigin.search ||
+      parsedOrigin.hash
+    ) {
+      errors.push(
+        "CORS_ORIGINS entries must be bare origins without paths, query strings, or hashes in production.",
+      );
+      continue;
+    }
+
+    trustedOrigins.push(parsedOrigin.origin);
   }
+
+  return trustedOrigins;
 }
 
 function assertTrustedUrl(
@@ -295,13 +336,21 @@ function assertTrustedUrl(
   label: string,
   errors: string[],
 ): void {
+  parseTrustedUrl(value, label, errors);
+}
+
+function parseTrustedUrl(
+  value: unknown,
+  label: string,
+  errors: string[],
+): URL | null {
   const normalized = String(value ?? "").trim();
 
   if (!normalized) {
     errors.push(
       `${label} must be configured with a trusted HTTPS URL in production.`,
     );
-    return;
+    return null;
   }
 
   let parsed: URL;
@@ -310,7 +359,7 @@ function assertTrustedUrl(
     parsed = new URL(normalized);
   } catch {
     errors.push(`${label} must be a valid HTTPS URL in production.`);
-    return;
+    return null;
   }
 
   if (parsed.protocol !== "https:") {
@@ -320,6 +369,25 @@ function assertTrustedUrl(
   if (isLocalOrPlaceholderHost(parsed.hostname)) {
     errors.push(
       `${label} must not target localhost or a placeholder host in production.`,
+    );
+  }
+
+  return parsed;
+}
+
+function assertOriginAllowedByCors(
+  value: URL | null,
+  label: string,
+  corsOrigins: string[],
+  errors: string[],
+): void {
+  if (!value || corsOrigins.length === 0) {
+    return;
+  }
+
+  if (!corsOrigins.includes(value.origin)) {
+    errors.push(
+      `${label} must use a frontend origin that is also present in CORS_ORIGINS in production.`,
     );
   }
 }

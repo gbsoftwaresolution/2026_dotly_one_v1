@@ -213,6 +213,7 @@ model User {
   referredBy              String?               @db.Uuid
   passwordHash            String
   lastUsedPersonaId       String?               @db.Uuid
+  activationMilestonesJson Json?
   isVerified              Boolean               @default(false)
   phoneNumber             String?               @unique @db.VarChar(32)
   pendingPhoneNumber      String?               @db.VarChar(32)

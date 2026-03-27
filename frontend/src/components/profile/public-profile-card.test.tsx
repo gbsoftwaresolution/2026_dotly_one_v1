@@ -91,4 +91,33 @@ describe("PublicProfileCard", () => {
       "https://dotly.one",
     );
   });
+
+  it("shows the canonical public handle when username is an alias", () => {
+    render(
+      React.createElement(PublicProfileCard, {
+        profile: {
+          publicIdentifier: "acme",
+          username: "acme-alias",
+          publicUrl: "https://dotly.id/acme",
+          fullName: "Acme Team",
+          jobTitle: "Founder",
+          companyName: "Dotly",
+          tagline: "Trusted identity",
+          websiteUrl: null,
+          isVerified: false,
+          profilePhotoUrl: null,
+          sharingMode: "controlled",
+          smartCard: null,
+          trust: {
+            isVerified: false,
+            isStrongVerified: false,
+            isBusinessVerified: false,
+          },
+        },
+      }),
+    );
+
+    expect(screen.getByText(/^@acme$/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^@acme-alias$/i)).not.toBeInTheDocument();
+  });
 });

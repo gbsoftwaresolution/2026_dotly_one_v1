@@ -29,7 +29,7 @@ export async function POST(
     return response;
   }
 
-  const { username } = await params;
+  const { username: publicIdentifier } = await params;
 
   let payload: { fromPersonaId?: string } | null = null;
 
@@ -57,7 +57,7 @@ export async function POST(
 
   try {
     const result = await apiRequest<InstantConnectResult>(
-      `/relationships/instant-connect/by-username/${encodeURIComponent(username)}`,
+      `/relationships/instant-connect/by-public-identifier/${encodeURIComponent(publicIdentifier)}`,
       {
         method: "POST",
         body: {

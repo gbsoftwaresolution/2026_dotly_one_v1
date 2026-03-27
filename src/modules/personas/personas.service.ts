@@ -112,6 +112,7 @@ export type PersonaSharePreferredShareType = "smart_card" | "instant_connect";
 
 export interface FastSharePayload {
   personaId: string;
+  publicIdentifier: string;
   username: string;
   fullName: string;
   profilePhotoUrl: string | null;
@@ -127,6 +128,7 @@ export interface FastSharePayload {
 export interface FastShareSelectionResponse {
   persona: {
     id: string;
+    publicIdentifier: string;
     username: string;
     fullName: string;
     profilePhotoUrl: string | null;
@@ -533,6 +535,10 @@ export class PersonasService {
     const response = {
       persona: {
         id: selectedPersona.id,
+        publicIdentifier: resolveCanonicalPublicSlug({
+          username: selectedPersona.username,
+          handle: selectedPersona.identity?.handle,
+        }),
         username: selectedPersona.username,
         fullName: selectedPersona.fullName,
         profilePhotoUrl: selectedPersona.profilePhotoUrl,
@@ -1546,6 +1552,10 @@ export class PersonasService {
 
     return {
       personaId: persona.id,
+      publicIdentifier: resolveCanonicalPublicSlug({
+        username: persona.username,
+        handle: persona.identity?.handle,
+      }),
       username: persona.username,
       fullName: persona.fullName,
       profilePhotoUrl: persona.profilePhotoUrl,
@@ -1758,14 +1768,10 @@ export class PersonasService {
       "username" | "identity" | "isPrimary" | "isDefaultRouting"
     >,
   ): string {
-    const shareSlug =
-      persona.identity?.handle &&
-      (persona.isDefaultRouting || persona.isPrimary)
-        ? resolveCanonicalPublicSlug({
-            username: persona.username,
-            handle: persona.identity.handle,
-          })
-        : persona.username.trim().toLowerCase();
+    const shareSlug = resolveCanonicalPublicSlug({
+      username: persona.username,
+      handle: persona.identity?.handle,
+    });
 
     return `${this.getFrontendShareBaseUrl()}/u/${encodeURIComponent(shareSlug)}`;
   }

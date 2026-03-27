@@ -10,8 +10,8 @@ type InternalRouteSource = Pick<
   "fullName" | "routingDisplayName" | "routingKey" | "isDefaultRouting"
 >;
 
-export function formatPublicHandle(username: string): string {
-  return `@${username.trim()}`;
+export function formatPublicHandle(publicIdentifier: string): string {
+  return `@${publicIdentifier.trim()}`;
 }
 
 export function getPublicIdentityLine(source: PublicIdentitySource): string | null {

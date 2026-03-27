@@ -1,19 +1,39 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
+import {
+  getCanonicalPublicLinksPath,
+  getCanonicalPublicSlug,
+} from "@/lib/persona/public-profile-path";
 import { SocialLinkIcon } from "@/components/profile/social-link-icon";
 import { publicApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
+import { formatPublicHandle } from "@/lib/persona/routing-ux";
 import { resolveSocialLinks } from "@/lib/persona/social-links";
 
 interface PublicAllLinksPageProps {
-  username: string;
+  publicIdentifier: string;
+  forceCanonicalPath?: boolean;
 }
 
 export async function PublicAllLinksPage({
-  username,
+  publicIdentifier,
+  forceCanonicalPath = false,
 }: PublicAllLinksPageProps) {
   try {
-    const profile = await publicApi.getProfile(username);
+    const profile = await publicApi.getProfile(publicIdentifier);
+    const canonicalIdentifier =
+      profile.publicIdentifier?.trim().toLowerCase() ||
+      getCanonicalPublicSlug(profile.publicUrl, profile.username);
+
+    if (
+      forceCanonicalPath ||
+      publicIdentifier.trim().toLowerCase() !== canonicalIdentifier.trim().toLowerCase()
+    ) {
+      redirect(
+        getCanonicalPublicLinksPath(profile.publicUrl, canonicalIdentifier),
+      );
+    }
+
     const socialLinks = resolveSocialLinks((profile as any).socialLinks ?? []);
 
     if (!socialLinks.length) {
@@ -30,7 +50,9 @@ export async function PublicAllLinksPage({
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               {profile.fullName}
             </h1>
-            <p className="text-sm text-muted">@{profile.username}</p>
+            <p className="text-sm text-muted">
+              {formatPublicHandle(canonicalIdentifier)}
+            </p>
           </div>
 
           <div className="space-y-3">

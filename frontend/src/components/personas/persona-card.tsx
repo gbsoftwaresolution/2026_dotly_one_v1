@@ -42,7 +42,7 @@ export function PersonaCard({ persona }: PersonaCardProps) {
     persona.publicUrl,
     persona.username,
   );
-  const publicHandle = formatPublicHandle(persona.username);
+  const publicHandle = formatPublicHandle(publicSlug);
   const hasInternalRoutingContext = Boolean(
     persona.routingDisplayName || persona.routingKey || persona.isDefaultRouting,
   );

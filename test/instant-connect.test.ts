@@ -26,6 +26,9 @@ import { ContactRequestSourceType } from "../src/common/enums/contact-request-so
 const INSTANT_ACCESS_STATE = "INSTANT_ACCESS" as PrismaContactRelationshipState;
 const EXPIRED_STATE = "EXPIRED" as PrismaContactRelationshipState;
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const noopActivationMilestonesService = {
+  markFirstShareCompletedForPersona: async () => undefined,
+};
 
 describe("QrService.connectQuickConnectQr", () => {
   it("creates an instant access relationship from a quick connect QR", async () => {
@@ -114,6 +117,7 @@ describe("QrService.connectQuickConnectQr", () => {
       } as any,
       undefined,
       undefined,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => undefined,
       } as any,
@@ -182,6 +186,7 @@ describe("QrService.connectQuickConnectQr", () => {
       {} as any,
       undefined,
       undefined,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => undefined,
       } as any,
@@ -248,6 +253,7 @@ describe("QrService.connectQuickConnectQr", () => {
       {} as any,
       undefined,
       undefined,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => undefined,
       } as any,
@@ -315,6 +321,7 @@ describe("QrService.connectQuickConnectQr", () => {
       {} as any,
       undefined,
       undefined,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => undefined,
       } as any,
@@ -381,6 +388,7 @@ describe("QrService.connectQuickConnectQr", () => {
       {} as any,
       undefined,
       undefined,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => undefined,
       } as any,
@@ -419,6 +427,7 @@ describe("QrService verification enforcement", () => {
       {} as any,
       {} as any,
       {} as any,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => {
           throw new ForbiddenException(
@@ -456,6 +465,7 @@ describe("QrService verification enforcement", () => {
       {} as any,
       {} as any,
       {} as any,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => {
           throw new ForbiddenException(
@@ -490,6 +500,7 @@ describe("QrService verification enforcement", () => {
       {} as any,
       {} as any,
       {} as any,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => {
           throw new ForbiddenException(
@@ -587,6 +598,7 @@ describe("QrService verification enforcement", () => {
       } as any,
       undefined,
       undefined,
+      noopActivationMilestonesService as any,
       {
         assertUserIsVerified: async () => undefined,
       } as any,

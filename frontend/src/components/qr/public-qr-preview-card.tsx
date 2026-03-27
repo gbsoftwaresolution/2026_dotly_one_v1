@@ -19,9 +19,10 @@ function avatarGradient(name: string): string {
 export function PublicQrPreviewCard({ qr }: PublicQrPreviewCardProps) {
   const isQuickConnect = qr.type === "quick_connect";
   const fullName = qr.persona.fullName?.trim() || "Profile";
-  const publicHandle = formatPublicHandle(qr.persona.username);
+  const publicIdentifier = qr.persona.publicIdentifier ?? qr.persona.username;
+  const publicHandle = formatPublicHandle(publicIdentifier);
   const publicIdentityLine = getPublicIdentityLine({
-    username: qr.persona.username,
+    username: publicIdentifier,
     fullName,
     companyName: qr.persona.companyName,
   });

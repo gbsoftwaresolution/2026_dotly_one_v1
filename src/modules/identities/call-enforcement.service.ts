@@ -29,6 +29,7 @@ export class CallEnforcementService {
   async enforceCall(input: EnforceCallDto): Promise<CallPermissionDecision> {
     const context = await this.identitiesService.resolveConversationContext({
       conversationId: input.conversationId,
+      currentUserId: input.currentUserId,
     });
     if (input.currentUserId) {
       await this.identitiesService.assertConversationActionAccessibleToUser({
@@ -39,11 +40,15 @@ export class CallEnforcementService {
     }
     const staleCheck =
       await this.identitiesService.isConversationPermissionBindingStale(
-        input.conversationId,
+        {
+          conversationId: input.conversationId,
+          currentUserId: input.currentUserId,
+        },
       );
     const rebound = staleCheck.stale
       ? await this.identitiesService.bindResolvedPermissionsToConversation({
           conversationId: input.conversationId,
+          currentUserId: input.currentUserId,
         })
       : null;
     const resolvedPermissions =

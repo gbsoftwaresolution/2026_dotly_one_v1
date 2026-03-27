@@ -310,4 +310,165 @@ describe("QrGeneratorPanel", () => {
     ).toBeInTheDocument();
     expect(mocks.getFastShare).not.toHaveBeenCalled();
   });
+
+  it("renders the canonical public handle from fast-share payloads", () => {
+    render(
+      React.createElement(QrGeneratorPanel, {
+        initialFastShare: {
+          persona: {
+            id: "persona-1",
+            publicIdentifier: "acme",
+            username: "sender-alias",
+            fullName: "Sender Persona",
+            profilePhotoUrl: null,
+          },
+          share: {
+            shareUrl: "https://dotly.one/u/acme",
+            qrValue: "https://dotly.one/u/acme",
+            primaryAction: "request_access",
+            effectiveActions: {
+              canCall: false,
+              canWhatsapp: false,
+              canEmail: false,
+              canSaveContact: false,
+            },
+            preferredShareType: "smart_card",
+          },
+        },
+        personas: [personaFixture],
+        user: createUnlockedUser(),
+      }),
+    );
+
+    expect(screen.getByRole("heading", { name: /@acme/i })).toBeInTheDocument();
+  });
+
+  it("renders the referral invite module on the share surface", () => {
+    render(
+      React.createElement(QrGeneratorPanel, {
+        initialFastShare: {
+          persona: {
+            id: "persona-1",
+            publicIdentifier: "sender",
+            username: "sender",
+            fullName: "Sender Persona",
+            profilePhotoUrl: null,
+          },
+          share: {
+            shareUrl: "https://dotly.one/u/sender",
+            qrValue: "https://dotly.one/u/sender",
+            primaryAction: "request_access",
+            effectiveActions: {
+              canCall: false,
+              canWhatsapp: false,
+              canEmail: false,
+              canSaveContact: false,
+            },
+            preferredShareType: "smart_card",
+          },
+        },
+        initialReferral: {
+          id: "user-1",
+          referralCode: "SHARECODE1",
+        },
+        personas: [personaFixture],
+        user: createUnlockedUser(),
+      }),
+    );
+
+    expect(screen.getByText(/invite flow/i)).toBeInTheDocument();
+    expect(screen.getByText(/invite someone to create their own dotly/i)).toBeInTheDocument();
+    expect(screen.getByText("SHARECODE1")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /copy code/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /invite someone/i })).toBeInTheDocument();
+  });
+
+  it("renders the lightweight share guide and follow-through shortcuts", () => {
+    render(
+      React.createElement(QrGeneratorPanel, {
+        initialFastShare: {
+          persona: {
+            id: "persona-1",
+            publicIdentifier: "sender",
+            username: "sender",
+            fullName: "Sender Persona",
+            profilePhotoUrl: null,
+          },
+          share: {
+            shareUrl: "https://dotly.one/u/sender",
+            qrValue: "https://dotly.one/u/sender",
+            primaryAction: "request_access",
+            effectiveActions: {
+              canCall: false,
+              canWhatsapp: false,
+              canEmail: false,
+              canSaveContact: false,
+            },
+            preferredShareType: "smart_card",
+          },
+        },
+        personas: [personaFixture],
+        user: createUnlockedUser(),
+      }),
+    );
+
+    expect(screen.getByText(/share flow/i)).toBeInTheDocument();
+    expect(screen.getByText(/use this in the room/i)).toBeInTheDocument();
+    expect(screen.getByText(/show qr/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /open requests/i })).toHaveAttribute(
+      "href",
+      routes.app.requests,
+    );
+    expect(screen.getByRole("link", { name: /open inbox/i })).toHaveAttribute(
+      "href",
+      routes.app.inbox,
+    );
+  });
+
+  it("shows post-share follow-through guidance after the first real share success", () => {
+    render(
+      React.createElement(QrGeneratorPanel, {
+        initialFastShare: {
+          persona: {
+            id: "persona-1",
+            publicIdentifier: "sender",
+            username: "sender",
+            fullName: "Sender Persona",
+            profilePhotoUrl: null,
+          },
+          share: {
+            shareUrl: "https://dotly.one/u/sender",
+            qrValue: "https://dotly.one/u/sender",
+            primaryAction: "request_access",
+            effectiveActions: {
+              canCall: false,
+              canWhatsapp: false,
+              canEmail: false,
+              canSaveContact: false,
+            },
+            preferredShareType: "smart_card",
+          },
+        },
+        personas: [personaFixture],
+        user: {
+          ...createUnlockedUser(),
+          activation: {
+            milestones: {
+              firstPersonaCreatedAt: "2026-03-27T10:00:00.000Z",
+              firstQrOpenedAt: "2026-03-27T10:05:00.000Z",
+              firstShareCompletedAt: "2026-03-27T10:10:00.000Z",
+              firstRequestReceivedAt: null,
+            },
+            completedCount: 3,
+            nextMilestoneKey: "firstRequestReceived",
+          },
+        },
+      }),
+    );
+
+    expect(screen.getByText(/share signal/i)).toBeInTheDocument();
+    expect(screen.getByText(/your qr is already working/i)).toBeInTheDocument();
+    expect(screen.getByText(/signal received/i)).toBeInTheDocument();
+    expect(screen.getByText(/follow-through: check requests and inbox/i)).toBeInTheDocument();
+  });
 });

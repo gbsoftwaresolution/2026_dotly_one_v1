@@ -7,5 +7,5 @@ export default async function PublicAllLinksRoute({
 }) {
   const { username } = await params;
 
-  return <PublicAllLinksPage username={username} />;
+  return <PublicAllLinksPage publicIdentifier={username} />;
 }

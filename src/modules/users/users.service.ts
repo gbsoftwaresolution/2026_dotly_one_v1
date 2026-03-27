@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 
 import { MailService } from "../../infrastructure/mail/mail.service";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
@@ -16,6 +20,11 @@ import {
   VerificationPolicyService,
   VerificationRequirement,
 } from "../auth/verification-policy.service";
+import {
+  ActivationMilestonesService,
+  isActivationNudgeQueue,
+  noopActivationMilestonesService,
+} from "./activation-milestones.service";
 
 type UserTrustFactorStatus = "active" | "inactive" | "planned";
 
@@ -75,6 +84,10 @@ export class UsersService {
     private readonly smsService: SmsService,
     private readonly verificationPolicyService: VerificationPolicyService,
     private readonly authService: AuthService,
+    private readonly activationMilestonesService: Pick<
+      ActivationMilestonesService,
+      "getUserActivation" | "clearFirstResponseNudge"
+    > = noopActivationMilestonesService,
   ) {}
 
   private get prisma(): any {
@@ -102,6 +115,10 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException("User not found");
     }
+
+    const activation = await this.activationMilestonesService.getUserActivation(
+      userId,
+    );
 
     const activeMobileOtpEnrollment =
       await this.prisma.mobileOtpChallenge.findFirst({
@@ -161,6 +178,7 @@ export class UsersService {
 
     return {
       ...user,
+      activation,
       security: {
         trustBadge: hasActiveTrustFactor ? "verified" : "attention",
         maskedEmail: maskEmailAddress(user.email),
@@ -231,6 +249,22 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async clearFirstResponseNudge(userId: string, queue: string) {
+    if (!isActivationNudgeQueue(queue)) {
+      throw new BadRequestException("Unknown activation queue.");
+    }
+
+    await this.activationMilestonesService.clearFirstResponseNudge(
+      userId,
+      queue,
+    );
+
+    return {
+      cleared: true,
+      queue,
+    };
   }
 
   async resendVerificationEmail(userId: string, context?: AuthActionContext) {

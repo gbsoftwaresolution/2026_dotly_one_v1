@@ -25,6 +25,7 @@ interface AuthFormProps {
   mode: AuthMode;
   redirectTo?: string;
   initialEmail?: string;
+  referralCode?: string;
 }
 
 const INPUT_CLASSES =
@@ -86,6 +87,7 @@ export function AuthForm({
   mode,
   redirectTo = routes.app.home,
   initialEmail = "",
+  referralCode,
 }: AuthFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState(initialEmail);
@@ -159,6 +161,7 @@ export function AuthForm({
         const result = await authApi.signup({
           email: normalizedEmail,
           password,
+          ...(referralCode ? { referralCode } : {}),
         });
         const deliveryState = result.verificationEmailSent
           ? "sent"

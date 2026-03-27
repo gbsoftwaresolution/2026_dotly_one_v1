@@ -1,5 +1,6 @@
 import { ArrowUpRight, Check } from "lucide-react";
 
+import { ExternalImage } from "@/components/shared/external-image";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatPrimaryAction } from "@/lib/persona/labels";
 import { getPublicTrustPresentation } from "@/lib/persona/public-trust";
@@ -7,6 +8,7 @@ import { getPublicSmartCardDirectActions } from "@/lib/persona/smart-card";
 
 import { Card } from "@/components/shared/card";
 import { dotlyPositioning } from "@/lib/constants/positioning";
+import { getCanonicalPublicSlug } from "@/lib/persona/public-profile-path";
 import {
   formatPublicHandle,
   getPublicIdentityLine,
@@ -18,10 +20,13 @@ interface PublicProfileCardProps {
 }
 
 export function PublicProfileCard({ profile }: PublicProfileCardProps) {
-  const avatarHue = ((profile.username?.charCodeAt(0) ?? 72) * 137) % 360;
+  const publicIdentifier =
+    profile.publicIdentifier?.trim().toLowerCase() ||
+    getCanonicalPublicSlug(profile.publicUrl, profile.username);
+  const avatarHue = ((publicIdentifier.charCodeAt(0) ?? 72) * 137) % 360;
   const trustPresentation = getPublicTrustPresentation(profile.trust);
   const fullName = profile.fullName?.trim() || "Profile";
-  const publicHandle = formatPublicHandle(profile.username);
+  const publicHandle = formatPublicHandle(publicIdentifier);
   const publicIdentityLine = getPublicIdentityLine(profile);
   const tagline = profile.tagline?.trim() || null;
   const companyName = profile.companyName?.trim() || null;
@@ -97,10 +102,13 @@ export function PublicProfileCard({ profile }: PublicProfileCardProps) {
             </div>
           </div>
           {profile.profilePhotoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <ExternalImage
               src={profile.profilePhotoUrl}
               alt={profile.fullName}
+              width={80}
+              height={80}
+              sizes="80px"
+              priority
               className="h-20 w-20 rounded-3xl object-cover ring-2 ring-white/20"
             />
           ) : (

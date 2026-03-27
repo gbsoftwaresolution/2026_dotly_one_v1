@@ -26,6 +26,12 @@ const features = [
   },
 ];
 
+const onboardingSteps = [
+  "Create account",
+  "Set first persona",
+  "Open your QR",
+] as const;
+
 const fadeUp = {
   hidden: { opacity: 0, y: 15 },
   visible: {
@@ -46,10 +52,11 @@ const staggerContainer = {
 export default function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; ref?: string }>;
 }) {
   const resolvedSearchParams = use(searchParams);
   const redirectTo = resolvedSearchParams.next || routes.app.home;
+  const referralCode = resolvedSearchParams.ref?.trim().toUpperCase();
 
   return (
     <div className="relative w-full min-h-screen flex flex-col pt-20 pb-12 overflow-x-hidden md:pt-32">
@@ -78,6 +85,17 @@ export default function SignupPage({
               <p className="text-[17px] sm:text-[21px] text-muted font-medium leading-relaxed max-w-[32ch] md:max-w-[38ch] mx-auto lg:mx-0">
                 {dotlyPositioning.auth.signupDescription}
               </p>
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+                {onboardingSteps.map((step, index) => (
+                  <div
+                    key={step}
+                    className="inline-flex items-center gap-2 rounded-full border border-black/5 bg-black/[0.03] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground dark:border-white/10 dark:bg-white/[0.04]"
+                  >
+                    <span className="text-muted">0{index + 1}</span>
+                    <span>{step}</span>
+                  </div>
+                ))}
+              </div>
             </motion.div>
 
             {/* Feature List - Hidden on small mobile, visible on tablet/desktop to keep the form accessible instantly */}
@@ -129,10 +147,16 @@ export default function SignupPage({
                   Create your account
                 </h2>
                 <p className="text-[16px] md:text-[17px] text-muted font-medium">
-                  Join Dotly in seconds.
+                  {referralCode
+                    ? `Invite code ${referralCode} is already applied.`
+                    : "Create the account now. Persona setup and QR come next."}
                 </p>
               </div>
-              <AuthForm mode="signup" redirectTo={redirectTo} />
+              <AuthForm
+                mode="signup"
+                redirectTo={redirectTo}
+                referralCode={referralCode}
+              />
             </div>
 
             {/* Mobile-only feature scroll (shows below form on smallest screens) */}

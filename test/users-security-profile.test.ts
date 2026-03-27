@@ -59,6 +59,17 @@ describe("UsersService security profile", () => {
     assert.equal(result.security.maskedEmail, "us**@dotly.one");
     assert.equal(result.security.mailDeliveryAvailable, false);
     assert.equal(result.security.mobileOtpEnrollment, null);
+    assert.deepEqual(result.activation, {
+      milestones: {
+        firstPersonaCreatedAt: null,
+        firstQrOpenedAt: null,
+        firstShareCompletedAt: null,
+        firstRequestReceivedAt: null,
+      },
+      completedCount: 0,
+      nextMilestoneKey: "firstPersonaCreated",
+      firstResponseNudge: null,
+    });
     assert.deepEqual(result.security.unlockedActions, []);
     assert.deepEqual(result.security.restrictedActions, [
       "Send contact requests",

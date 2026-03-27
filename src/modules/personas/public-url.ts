@@ -4,6 +4,35 @@ export function normalizePublicSlug(value: string): string {
   return value.trim().toLowerCase();
 }
 
+function toUrlCandidate(publicUrl: string): URL | null {
+  const trimmedPublicUrl = publicUrl.trim();
+
+  if (!trimmedPublicUrl) {
+    return null;
+  }
+
+  try {
+    return new URL(trimmedPublicUrl);
+  } catch {
+    try {
+      return new URL(`https://${trimmedPublicUrl.replace(/^\/+/, "")}`);
+    } catch {
+      return null;
+    }
+  }
+}
+
+function buildCanonicalPathname(pathname: string, slug: string): string {
+  const segments = pathname.split("/").filter(Boolean);
+  const usesScopedPublicPath = segments[0] === "u";
+
+  if (usesScopedPublicPath) {
+    return `/u/${encodeURIComponent(slug)}`;
+  }
+
+  return `/${encodeURIComponent(slug)}`;
+}
+
 export function resolveCanonicalPublicSlug(options: {
   username: string;
   handle?: string | null;
@@ -22,23 +51,15 @@ export function canonicalizePublicUrl(
   username: string,
   handle?: string | null,
 ): string {
-  const trimmedPublicUrl = publicUrl.trim();
+  const slug = resolveCanonicalPublicSlug({
+    username,
+    handle,
+  });
+  const parsedUrl = toUrlCandidate(publicUrl);
 
-  if (
-    trimmedPublicUrl.startsWith("http://") ||
-    trimmedPublicUrl.startsWith("https://")
-  ) {
-    return trimmedPublicUrl;
+  if (parsedUrl) {
+    return `${parsedUrl.origin}${buildCanonicalPathname(parsedUrl.pathname, slug)}`;
   }
 
-  if (trimmedPublicUrl.length > 0) {
-    return `https://${trimmedPublicUrl.replace(/^\/+/, "")}`;
-  }
-
-  return buildPublicUrl(
-    resolveCanonicalPublicSlug({
-      username,
-      handle,
-    }),
-  );
+  return buildPublicUrl(slug);
 }

@@ -7,5 +7,5 @@ export default async function PublicUserPageRoute({
 }) {
   const { username } = await params;
 
-  return <PublicUserPage username={username} />;
+  return <PublicUserPage publicIdentifier={username} />;
 }

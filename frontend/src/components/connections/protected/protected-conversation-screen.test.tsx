@@ -17,6 +17,11 @@ const mocks = vi.hoisted(() => ({
   getConnection: vi.fn(),
   getResolvedPermissions: vi.fn(),
   explainResolvedPermissions: vi.fn(),
+  useSearchParams: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: mocks.useSearchParams,
 }));
 
 vi.mock("@/lib/api/connections", () => ({
@@ -32,6 +37,8 @@ describe("ProtectedConversationScreen", () => {
     mocks.getConnection.mockReset();
     mocks.getResolvedPermissions.mockReset();
     mocks.explainResolvedPermissions.mockReset();
+    mocks.useSearchParams.mockReset();
+    mocks.useSearchParams.mockReturnValue(new URLSearchParams());
   });
 
   it("uses backend explanation text for protected-mode messaging", async () => {
@@ -155,7 +162,7 @@ describe("ProtectedConversationScreen", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /back to inbox/i })).toHaveAttribute(
       "href",
-      "/app/inbox",
+      "/app/inbox?persona=persona-1",
     );
     expect(screen.getByText("Persona route")).toBeInTheDocument();
     expect(screen.getByText("Investor Desk")).toBeInTheDocument();

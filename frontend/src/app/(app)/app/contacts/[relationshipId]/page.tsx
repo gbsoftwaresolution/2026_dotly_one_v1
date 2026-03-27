@@ -5,6 +5,7 @@ import { QuickInteractionPanel } from "@/components/contacts/quick-interaction-p
 import { RelationshipActions } from "@/components/contacts/relationship-actions";
 import { ContactFollowUpForm } from "@/components/follow-ups/contact-follow-up-form";
 import { Card } from "@/components/shared/card";
+import { ExternalImage } from "@/components/shared/external-image";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ApiError, apiRequest } from "@/lib/api/client";
@@ -418,9 +419,12 @@ export default async function ContactDetailPage({
       <Card className="space-y-6">
         <div className="flex items-start gap-4 pt-1 sm:gap-5">
           {targetPersona.profilePhotoUrl ? (
-            <img
+            <ExternalImage
               src={targetPersona.profilePhotoUrl}
               alt={targetPersona.fullName}
+              width={96}
+              height={96}
+              sizes="(max-width: 640px) 80px, 96px"
               className="h-20 w-20 rounded-3xl object-cover shadow-sm sm:h-24 sm:w-24"
             />
           ) : (

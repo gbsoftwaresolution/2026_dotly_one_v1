@@ -11,6 +11,7 @@ import { SecondaryButton } from "@/components/shared/secondary-button";
 import { personaApi } from "@/lib/api";
 import { isApiError } from "@/lib/api/client";
 import { routes } from "@/lib/constants/routes";
+import { upsertPersonaFastShare } from "@/lib/share-fast-store";
 import {
   personaAccessModeOptions,
   personaTypeOptions,
@@ -64,6 +65,7 @@ export function PersonaForm() {
   const [createdPersona, setCreatedPersona] = useState<PersonaSummary | null>(
     null,
   );
+  const [shareQrPrepared, setShareQrPrepared] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [usernameAvailability, setUsernameAvailability] =
@@ -177,10 +179,23 @@ export function PersonaForm() {
         websiteUrl: formState.websiteUrl?.trim(),
       });
 
+      let preparedShare = false;
+
+      try {
+        const fastShare = await personaApi.getFastShare(persona.id);
+        upsertPersonaFastShare(fastShare, { selected: true });
+        preparedShare = true;
+      } catch {
+        preparedShare = false;
+      }
+
+      setShareQrPrepared(preparedShare);
       setCreatedPersona(persona);
     } catch (submissionError) {
       if (isApiError(submissionError) && submissionError.status === 401) {
-        router.replace("/login?next=/app-old/personas/create&reason=expired");
+        router.replace(
+          `${routes.public.login}?next=${encodeURIComponent(routes.app.createPersona)}&reason=expired`,
+        );
         return;
       }
 
@@ -227,8 +242,11 @@ export function PersonaForm() {
             Your persona is ready to share
           </h2>
           <p className="text-sm leading-6 text-muted">
-            We set up the sharing basics already, so you can start with a clear
-            first impression and refine it later.
+            Open the share QR next so this persona is ready for introductions,
+            events, and first follow-ups.{" "}
+            {shareQrPrepared
+              ? "Dotly already prepared the first live share for you."
+              : "If the QR still needs a refresh, Dotly will finish preparing it there."}
           </p>
         </section>
 
@@ -246,9 +264,9 @@ export function PersonaForm() {
         />
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Link className="sm:flex-1" href={routes.app.personas}>
+          <Link className="sm:flex-1" href={routes.app.qr}>
             <PrimaryButton className="min-h-[54px] sm:min-h-12" fullWidth>
-              View personas
+              Open share QR
             </PrimaryButton>
           </Link>
           <Link
@@ -258,6 +276,14 @@ export function PersonaForm() {
             <SecondaryButton className="min-h-[54px] sm:min-h-12" fullWidth>
               Edit sharing settings
             </SecondaryButton>
+          </Link>
+        </div>
+        <div className="px-1">
+          <Link
+            className="text-sm font-medium text-muted transition-colors hover:text-foreground"
+            href={routes.app.personas}
+          >
+            View all personas
           </Link>
         </div>
       </div>

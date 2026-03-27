@@ -12,8 +12,17 @@ Related docs:
 
 - Terminate external traffic over HTTPS only. Plain HTTP should be redirected at the edge and never exposed as a public origin.
 - Keep frontend and backend on explicitly trusted origins. Production values for `CORS_ORIGINS`, `FRONTEND_VERIFICATION_URL_BASE`, `FRONTEND_PASSWORD_RESET_URL_BASE`, `QR_BASE_URL`, and `NEXT_PUBLIC_API_BASE_URL` must all be HTTPS and must not point at localhost or placeholder hosts.
+- Keep `CORS_ORIGINS` to bare frontend origins only, such as `https://app.dotly.one`, without paths or query strings.
+- Ensure the origins used by `FRONTEND_VERIFICATION_URL_BASE` and `FRONTEND_PASSWORD_RESET_URL_BASE` are both present in `CORS_ORIGINS` so browser auth flows and API calls stay aligned.
 - Preserve `X-Forwarded-Proto` when TLS terminates at the load balancer or ingress so Dotly can distinguish secure transport correctly.
 - Preserve or inject `X-Request-Id` at the edge. Dotly accepts a bounded safe format and regenerates malformed values before they reach logs.
+
+## Browser Response Hardening
+
+- Backend and frontend should emit a shared baseline of browser-facing hardening headers: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and production-only `Strict-Transport-Security`.
+- The current frontend CSP is an intentionally compatible starting point. It locks down framing, plugins, base URI, and mixed-content upgrades in production, but still allows inline styles and inline scripts to avoid breaking the current Next.js runtime.
+- The next CSP phase should replace permissive `script-src` allowances with nonce- or hash-based enforcement once the app shell, analytics hooks, and any remaining inline runtime dependencies are inventoried.
+- Keep edge-managed security headers aligned with app-managed values. Avoid conflicting duplicate policies between CDN, ingress, Next.js, and NestJS.
 
 ## Reverse Proxy And Client IP Trust
 

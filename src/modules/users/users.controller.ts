@@ -4,6 +4,7 @@ import {
   Get,
   Headers,
   HttpCode,
+  Param,
   Post,
   Req,
   UseGuards,
@@ -54,6 +55,16 @@ export class UsersController {
   @Get("me/referral")
   getCurrentUserReferral(@CurrentUser() user: AuthenticatedUser) {
     return this.usersService.getCurrentUserReferral(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("me/activation/first-response-nudges/:queue/clear")
+  @HttpCode(200)
+  clearFirstResponseNudge(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("queue") queue: string,
+  ) {
+    return this.usersService.clearFirstResponseNudge(user.id, queue);
   }
 
   @UseGuards(JwtAuthGuard)

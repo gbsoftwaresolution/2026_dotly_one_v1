@@ -7,5 +7,10 @@ export default async function CanonicalPublicAllLinksRoute({
 }) {
   const { username } = await params;
 
-  return <PublicAllLinksPage username={username} />;
+  return (
+    <PublicAllLinksPage
+      publicIdentifier={username}
+      forceCanonicalPath
+    />
+  );
 }

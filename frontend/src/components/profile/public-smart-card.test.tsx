@@ -504,6 +504,102 @@ describe("PublicSmartCard", () => {
     );
   });
 
+  it("uses the canonical handle from publicUrl for instant connect and vcard actions", async () => {
+    const user = userEvent.setup();
+
+    fetchMock.mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue(
+        JSON.stringify({
+          success: true,
+          relationshipId: "relationship-1",
+          status: "connected",
+        }),
+      ),
+    });
+
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: createProfile({
+          username: "jane-alias",
+          publicUrl: "https://dotly.id/acme",
+          instantConnectUrl: "https://dotly.id/q/profile-qr-1",
+          smartCard: {
+            primaryAction: "instant_connect",
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: true,
+              contactMeEnabled: true,
+            },
+            actionLinks: {
+              call: null,
+              whatsapp: null,
+              email: null,
+              vcard: "/api/public/acme/vcard",
+            },
+          },
+        }),
+        initialPersonas: createPersonas(),
+      }),
+    );
+
+    await user.click(screen.getByRole("button", { name: /^connect$/i }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/public/acme/instant-connect",
+        expect.objectContaining({
+          method: "POST",
+        }),
+      );
+    });
+  });
+
+  it("shows canonical source persona handles in the public profile picker", async () => {
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(PublicSmartCard, {
+        profile: createProfile({
+          instantConnectUrl: "https://dotly.id/q/profile-qr-1",
+          smartCard: {
+            primaryAction: "instant_connect",
+            actionState: {
+              requestAccessEnabled: true,
+              instantConnectEnabled: true,
+              contactMeEnabled: false,
+            },
+            actionLinks: {
+              call: null,
+              whatsapp: null,
+              email: null,
+              vcard: null,
+            },
+          },
+        }),
+        initialPersonas: [
+          {
+            ...createPersonas()[0],
+            username: "sender-alias",
+            publicUrl: "https://dotly.id/acme",
+          },
+          {
+            ...createPersonas()[1],
+            username: "ops-alias",
+            publicUrl: "https://dotly.id/acme-ops",
+          },
+        ],
+      }),
+    );
+
+    await user.click(screen.getByRole("button", { name: /choose profile/i }));
+
+    expect(screen.getAllByText(/^@acme$/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole("option", { name: /jane work @acme-ops/i })).toBeInTheDocument();
+    expect(screen.queryByText(/^@sender-alias$/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /ops-alias/i })).not.toBeInTheDocument();
+  });
+
   it("shows an error instead of connecting when no persona is available", async () => {
     const user = userEvent.setup();
 

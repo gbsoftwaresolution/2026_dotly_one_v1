@@ -507,6 +507,173 @@ describe("conversation context binding", () => {
     assert.equal(result.conversationStatus, ConversationStatus.Archived);
   });
 
+  it("getConversationById rejects scoped members outside assigned persona threads", async () => {
+    const service = createBaseService({
+      identity: {
+        findFirst: async ({ where }: any) =>
+          where.id === "identity-target"
+            ? {
+                id: where.id,
+                personId: null,
+                members: [
+                  {
+                    id: "member-1",
+                    personaAssignments: [{ personaId: "persona-target" }],
+                  },
+                ],
+                operators: [],
+              }
+            : null,
+      },
+      identityConversation: {
+        findUnique: async () =>
+          createConversationRecord({ personaId: "persona-other" }),
+      },
+    });
+
+    await assert.rejects(
+      service.getConversationById({
+        conversationId: "conversation-1",
+        currentUserId: "user-member",
+      }),
+      (error: unknown) => error instanceof NotFoundException,
+    );
+  });
+
+  it("resolveConversationContext rejects scoped members outside assigned persona threads", async () => {
+    const service = createBaseService({
+      identity: {
+        findFirst: async ({ where }: any) =>
+          where.id === "identity-target"
+            ? {
+                id: where.id,
+                personId: null,
+                members: [
+                  {
+                    id: "member-1",
+                    personaAssignments: [{ personaId: "persona-target" }],
+                  },
+                ],
+                operators: [],
+              }
+            : null,
+      },
+      identityConversation: {
+        findUnique: async () =>
+          createConversationRecord({ personaId: "persona-other" }),
+      },
+    });
+
+    await assert.rejects(
+      service.resolveConversationContext({
+        conversationId: "conversation-1",
+        currentUserId: "user-member",
+      }),
+      (error: unknown) => error instanceof NotFoundException,
+    );
+  });
+
+  it("rejects source-actor action access when a persona-bound thread is outside target scope", async () => {
+    const service = createBaseService({
+      identity: {
+        findFirst: async ({ where }: any) => {
+          if (where.id === "identity-target") {
+            return null;
+          }
+
+          if (where.id === "identity-source") {
+            return {
+              id: where.id,
+              personId: null,
+              members: [
+                {
+                  id: "member-1",
+                  personaAssignments: [{ personaId: "persona-source" }],
+                },
+              ],
+              operators: [],
+            };
+          }
+
+          return null;
+        },
+      },
+    });
+
+    await assert.rejects(
+      service.assertConversationActionAccessibleToUser({
+        userId: "user-member",
+        actorIdentityId: "identity-source",
+        conversation: {
+          conversationId: "conversation-1",
+          connectionId: "connection-1",
+          sourceIdentityId: "identity-source",
+          targetIdentityId: "identity-target",
+          personaId: "persona-target",
+          conversationType: ConversationType.Direct,
+          conversationStatus: ConversationStatus.Active,
+          title: null,
+          metadataJson: null,
+          lastResolvedAt: null,
+          lastPermissionHash: null,
+          createdByIdentityId: "identity-source",
+          createdAt: new Date("2026-03-26T12:00:00.000Z"),
+          updatedAt: new Date("2026-03-26T12:00:00.000Z"),
+        },
+      }),
+      (error: unknown) => error instanceof NotFoundException,
+    );
+  });
+
+  it("preserves legacy persona-less fallback for source-scoped access", async () => {
+    const service = createBaseService({
+      identity: {
+        findFirst: async ({ where }: any) => {
+          if (where.id === "identity-target") {
+            return null;
+          }
+
+          if (where.id === "identity-source") {
+            return {
+              id: where.id,
+              personId: null,
+              members: [
+                {
+                  id: "member-1",
+                  personaAssignments: [{ personaId: "persona-source" }],
+                },
+              ],
+              operators: [],
+            };
+          }
+
+          return null;
+        },
+      },
+    });
+
+    await service.assertConversationActionAccessibleToUser({
+      userId: "user-member",
+      actorIdentityId: "identity-source",
+      conversation: {
+        conversationId: "conversation-1",
+        connectionId: "connection-1",
+        sourceIdentityId: "identity-source",
+        targetIdentityId: "identity-target",
+        personaId: null,
+        conversationType: ConversationType.Direct,
+        conversationStatus: ConversationStatus.Active,
+        title: null,
+        metadataJson: null,
+        lastResolvedAt: null,
+        lastPermissionHash: null,
+        createdByIdentityId: "identity-source",
+        createdAt: new Date("2026-03-26T12:00:00.000Z"),
+        updatedAt: new Date("2026-03-26T12:00:00.000Z"),
+      },
+    });
+  });
+
   it("protected conversation requires protected-capable permissions", async () => {
     const service = createBaseService({
       identityConversation: {
@@ -607,6 +774,39 @@ describe("conversation context binding", () => {
     assert.equal(result.stale, false);
   });
 
+  it("bindResolvedPermissionsToConversation rejects scoped members outside assigned persona threads", async () => {
+    const service = createBaseService({
+      identity: {
+        findFirst: async ({ where }: any) =>
+          where.id === "identity-target"
+            ? {
+                id: where.id,
+                personId: null,
+                members: [
+                  {
+                    id: "member-1",
+                    personaAssignments: [{ personaId: "persona-target" }],
+                  },
+                ],
+                operators: [],
+              }
+            : null,
+      },
+      identityConversation: {
+        findUnique: async () =>
+          createConversationRecord({ personaId: "persona-other" }),
+      },
+    });
+
+    await assert.rejects(
+      service.bindResolvedPermissionsToConversation({
+        conversationId: "conversation-1",
+        currentUserId: "user-member",
+      }),
+      (error: unknown) => error instanceof NotFoundException,
+    );
+  });
+
   it("isConversationPermissionBindingStale returns true when never bound", async () => {
     const service = createBaseService({
       identityConversation: {
@@ -655,6 +855,39 @@ describe("conversation context binding", () => {
       await service.isConversationPermissionBindingStale("conversation-1");
 
     assert.equal(result.stale, false);
+  });
+
+  it("isConversationPermissionBindingStale rejects scoped members outside assigned persona threads", async () => {
+    const service = createBaseService({
+      identity: {
+        findFirst: async ({ where }: any) =>
+          where.id === "identity-target"
+            ? {
+                id: where.id,
+                personId: null,
+                members: [
+                  {
+                    id: "member-1",
+                    personaAssignments: [{ personaId: "persona-target" }],
+                  },
+                ],
+                operators: [],
+              }
+            : null,
+      },
+      identityConversation: {
+        findUnique: async () =>
+          createConversationRecord({ personaId: "persona-other" }),
+      },
+    });
+
+    await assert.rejects(
+      service.isConversationPermissionBindingStale({
+        conversationId: "conversation-1",
+        currentUserId: "user-member",
+      }),
+      (error: unknown) => error instanceof NotFoundException,
+    );
   });
 
   it("stale becomes true after underlying permission-affecting change", async () => {
@@ -720,6 +953,39 @@ describe("conversation context binding", () => {
     assert.equal(result.resolvedPermissions.connectionId, "connection-1");
     assert.equal(result.stale, true);
     assert.equal(result.traceSummary.templateKey, "personal.trusted");
+  });
+
+  it("explainConversationPermissionContext rejects scoped members outside assigned persona threads", async () => {
+    const service = createBaseService({
+      identity: {
+        findFirst: async ({ where }: any) =>
+          where.id === "identity-target"
+            ? {
+                id: where.id,
+                personId: null,
+                members: [
+                  {
+                    id: "member-1",
+                    personaAssignments: [{ personaId: "persona-target" }],
+                  },
+                ],
+                operators: [],
+              }
+            : null,
+      },
+      identityConversation: {
+        findUnique: async () =>
+          createConversationRecord({ personaId: "persona-other" }),
+      },
+    });
+
+    await assert.rejects(
+      service.explainConversationPermissionContext({
+        conversationId: "conversation-1",
+        currentUserId: "user-member",
+      }),
+      (error: unknown) => error instanceof NotFoundException,
+    );
   });
 
   it("resolveConversationContext uses conversation cache when fresh", async () => {

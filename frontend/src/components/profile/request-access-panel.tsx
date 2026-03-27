@@ -17,7 +17,10 @@ import { buildRequestKey } from "@/lib/network/request-key";
 import { useNetworkStatus } from "@/lib/network/use-network-status";
 import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
 import { formatPrimaryAction } from "@/lib/persona/labels";
-import { getCanonicalPublicProfilePath } from "@/lib/persona/public-profile-path";
+import {
+  getCanonicalPublicProfilePath,
+  getCanonicalPublicSlug,
+} from "@/lib/persona/public-profile-path";
 import { formatPublicHandle } from "@/lib/persona/routing-ux";
 import {
   hasPublicSmartCardDirectActions,
@@ -41,10 +44,16 @@ interface RequestAccessPanelProps {
   personaLoadError?: string | null;
 }
 
-function buildLoginHref(publicUrl: string, username: string): string {
+function buildLoginHref(publicUrl: string, publicIdentifier: string): string {
   return `${routes.public.login}?next=${encodeURIComponent(
-    getCanonicalPublicProfilePath(publicUrl, username),
+    getCanonicalPublicProfilePath(publicUrl, publicIdentifier),
   )}`;
+}
+
+function getPersonaPublicHandle(persona: Pick<PersonaSummary, "publicUrl" | "username">) {
+  return formatPublicHandle(
+    getCanonicalPublicSlug(persona.publicUrl, persona.username),
+  );
 }
 
 function toFriendlyMessage(error: unknown): string {
@@ -99,6 +108,9 @@ export function RequestAccessPanel({
   currentUser = null,
   personaLoadError = null,
 }: RequestAccessPanelProps) {
+  const publicIdentifier =
+    profile.publicIdentifier?.trim().toLowerCase() ||
+    getCanonicalPublicSlug(profile.publicUrl, profile.username);
   const isOnline = useNetworkStatus();
   const [selectedPersonaId, setSelectedPersonaId] = useState(
     resolvePreferredPersonaId(initialPersonas),
@@ -113,17 +125,21 @@ export function RequestAccessPanel({
   const [showSlowHint, setShowSlowHint] = useState(false);
 
   const loginHref = useMemo(
-    () => buildLoginHref(profile.publicUrl, profile.username),
-    [profile.publicUrl, profile.username],
+    () => buildLoginHref(profile.publicUrl, publicIdentifier),
+    [profile.publicUrl, publicIdentifier],
   );
   const publicHandle = useMemo(
-    () => formatPublicHandle(profile.username),
-    [profile.username],
+    () => formatPublicHandle(publicIdentifier),
+    [publicIdentifier],
   );
   const isOwnProfile = useMemo(
     () =>
-      initialPersonas.some((persona) => persona.username === profile.username),
-    [initialPersonas, profile.username],
+      initialPersonas.some(
+        (persona) =>
+          getCanonicalPublicSlug(persona.publicUrl, persona.username) ===
+          publicIdentifier,
+      ),
+    [initialPersonas, publicIdentifier],
   );
   const smartCardPrimaryCta =
     profile.sharingMode === "smart_card"
@@ -183,7 +199,7 @@ export function RequestAccessPanel({
     setShowSlowHint(false);
     const requestKey = buildRequestKey(
       "request-access",
-      profile.username,
+      publicIdentifier,
       selectedPersonaId,
     );
     const slowHintTimeout = window.setTimeout(() => {
@@ -192,7 +208,7 @@ export function RequestAccessPanel({
 
     try {
       const target =
-        requestTarget ?? (await publicApi.getRequestTarget(profile.username));
+        requestTarget ?? (await publicApi.getRequestTarget(publicIdentifier));
 
       setRequestTarget(target);
 
@@ -380,7 +396,7 @@ export function RequestAccessPanel({
                       {selectedPersona.fullName}
                     </p>
                     <p className="text-sm text-muted">
-                      @{selectedPersona.username}
+                      {getPersonaPublicHandle(selectedPersona)}
                     </p>
                   </div>
                 ) : null}
@@ -392,7 +408,7 @@ export function RequestAccessPanel({
                   disabled={isSubmitting || Boolean(successMessage)}
                   options={initialPersonas.map((persona) => ({
                     value: persona.id,
-                    label: `${persona.fullName} - @${persona.username}`,
+                    label: `${persona.fullName} - ${getPersonaPublicHandle(persona)}`,
                   }))}
                 />
               </div>

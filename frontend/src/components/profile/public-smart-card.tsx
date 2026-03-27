@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { Card } from "@/components/shared/card";
+import { ExternalImage } from "@/components/shared/external-image";
 import { VerificationPrompt } from "@/components/auth/verification-prompt";
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { showToast } from "@/components/shared/toast-viewport";
@@ -21,6 +22,7 @@ import { hasUnlockedTrustRequirement } from "@/lib/auth/trust-requirements";
 import { dotlyPositioning } from "@/lib/constants/positioning";
 import { buildRequestKey } from "@/lib/network/request-key";
 import { useNetworkStatus } from "@/lib/network/use-network-status";
+import { getCanonicalPublicSlug } from "@/lib/persona/public-profile-path";
 import { resolvePreferredPersonaId } from "@/lib/persona/default-persona";
 import { getPublicTrustPresentation } from "@/lib/persona/public-trust";
 import {
@@ -62,6 +64,12 @@ interface SmartAction {
 
 function avatarHue(seed: string): number {
   return ((seed.charCodeAt(0) || 72) * 137) % 360;
+}
+
+function getPersonaPublicHandle(persona: Pick<PersonaSummary, "publicUrl" | "username">) {
+  return formatPublicHandle(
+    getCanonicalPublicSlug(persona.publicUrl, persona.username),
+  );
 }
 
 async function downloadVcard(href: string, username: string) {
@@ -456,7 +464,10 @@ export function PublicSmartCard({
     );
   }
 
-  const hue = avatarHue(profile.username);
+  const publicIdentifier =
+    profile.publicIdentifier?.trim().toLowerCase() ||
+    getCanonicalPublicSlug(profile.publicUrl, profile.username);
+  const hue = avatarHue(publicIdentifier);
   const hasDirectActions = hasPublicSmartCardDirectActions(profile);
   const actionLinks = getPublicSmartCardActionLinks(config);
   const directActionKeys = getPublicSmartCardDirectActions(config, profile);
@@ -535,7 +546,7 @@ export function PublicSmartCard({
   const trimmedCompanyName = profile.companyName?.trim() || null;
   const websiteUrl = getSafeExternalWebsiteUrl(profile.websiteUrl);
   const websiteLabel = websiteUrl ? getCompactWebsiteLabel(websiteUrl) : null;
-  const publicHandle = formatPublicHandle(profile.username);
+  const publicHandle = formatPublicHandle(publicIdentifier);
   const publicIdentityLine = getPublicIdentityLine(profile);
   const contextSummary =
     profile.tagline?.trim() || dotlyPositioning.shortExplainer;
@@ -620,7 +631,7 @@ export function PublicSmartCard({
     }
 
     instantConnectMeasureIdRef.current += 1;
-    const id = `public-smart-card-instant-connect-${profile.username}-${instantConnectMeasureIdRef.current}`;
+    const id = `public-smart-card-instant-connect-${publicIdentifier}-${instantConnectMeasureIdRef.current}`;
 
     performance.mark(`${id}-start`);
 
@@ -674,12 +685,12 @@ export function PublicSmartCard({
       requestAbortRef.current = controller;
       requestKeyRef.current ??= buildRequestKey(
         "request-access",
-        profile.username,
+        publicIdentifier,
         selectedPersonaId,
       );
 
       const target =
-        requestTarget ?? (await publicApi.getRequestTarget(profile.username));
+        requestTarget ?? (await publicApi.getRequestTarget(publicIdentifier));
 
       setRequestTarget(target);
 
@@ -793,12 +804,12 @@ export function PublicSmartCard({
       connectAbortRef.current = controller;
       connectKeyRef.current ??= buildRequestKey(
         "instant-connect",
-        profile.username,
+        publicIdentifier,
         selectedPersonaId,
       );
 
       await relationshipApi.instantConnect(
-        profile.username,
+        publicIdentifier,
         {
           fromPersonaId: selectedPersonaId,
         },
@@ -891,7 +902,7 @@ export function PublicSmartCard({
     setDirectActionLoadingState();
 
     try {
-      await downloadVcard(href, profile.username);
+      await downloadVcard(href, publicIdentifier);
       showToast("Saved to contacts");
       setDirectActionSuccessState("Saved to contacts");
     } catch {
@@ -929,10 +940,13 @@ export function PublicSmartCard({
       <div className="space-y-6 text-center sm:space-y-7">
         <div className="space-y-4">
           {profile.profilePhotoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <ExternalImage
               src={profile.profilePhotoUrl}
               alt={profile.fullName}
+              width={128}
+              height={128}
+              sizes="(max-width: 640px) 112px, 128px"
+              priority
               className="mx-auto h-28 w-28 rounded-full object-cover shadow-[0_24px_54px_rgba(15,23,42,0.18)] ring-4 ring-white/90 sm:h-32 sm:w-32 dark:ring-white/10"
             />
           ) : (
@@ -1089,7 +1103,7 @@ export function PublicSmartCard({
                     {selectedPersona.fullName}
                   </p>
                   <p className="truncate font-mono text-xs text-muted">
-                    {formatPublicHandle(selectedPersona.username)}
+                    {getPersonaPublicHandle(selectedPersona)}
                   </p>
                 </div>
               ) : null}
@@ -1104,7 +1118,7 @@ export function PublicSmartCard({
               >
                 {initialPersonas.map((persona) => (
                   <option key={persona.id} value={persona.id}>
-                    {persona.fullName} {formatPublicHandle(persona.username)}
+                    {persona.fullName} {getPersonaPublicHandle(persona)}
                   </option>
                 ))}
               </select>

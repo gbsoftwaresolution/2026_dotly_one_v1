@@ -67,6 +67,40 @@ describe("PersonasService sharing mode", () => {
     );
   });
 
+  it("prefers the canonical public identifier for vcard links when a username is an alias", () => {
+    assert.deepEqual(
+      buildPublicSmartCardActions({
+        publicIdentifier: "acme",
+        username: "alice-alias",
+        sharingMode: PrismaPersonaSharingMode.SMART_CARD,
+        smartCardConfig: {
+          primaryAction: PersonaSmartCardPrimaryAction.ContactMe,
+          allowCall: false,
+          allowWhatsapp: false,
+          allowEmail: false,
+          allowVcard: true,
+        },
+        publicPhone: null,
+        publicWhatsappNumber: null,
+        publicEmail: null,
+      }),
+      {
+        actions: {
+          call: false,
+          whatsapp: false,
+          email: false,
+          vcard: true,
+        },
+        actionLinks: {
+          call: null,
+          whatsapp: null,
+          email: null,
+          vcard: "/v1/public/personas/acme/vcard",
+        },
+      },
+    );
+  });
+
   it("fails closed with null direct-action links for malformed legacy values", () => {
     const persona = {
       smartCardConfig: {

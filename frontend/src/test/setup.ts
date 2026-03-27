@@ -18,6 +18,15 @@ vi.mock("next/link", () => ({
     ),
 }));
 
+vi.mock("next/image", () => ({
+  default: ({ alt, src, ...props }: any) =>
+    React.createElement("img", {
+      alt,
+      src: typeof src === "string" ? src : src?.src,
+      ...props,
+    }),
+}));
+
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn().mockImplementation((query: string) => ({

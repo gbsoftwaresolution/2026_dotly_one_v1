@@ -50,6 +50,7 @@ export interface PersonaPublicSmartCardResponse {
 }
 
 export interface PersonaPublicSmartCardActionSource extends PersonaSmartCardActionSource {
+  publicIdentifier?: string | null;
   username: string;
 }
 
@@ -437,16 +438,18 @@ export function buildEmailLink(
 export function buildVcardLink(
   persona: Pick<
     PersonaPublicSmartCardActionSource,
-    "sharingMode" | "smartCardConfig" | "username"
+    "sharingMode" | "smartCardConfig" | "publicIdentifier" | "username"
   >,
 ): string | null {
   if (!canExposeVcard(persona)) {
     return null;
   }
 
-  return `/v1/public/personas/${encodeURIComponent(
-    persona.username.trim().toLowerCase(),
-  )}/vcard`;
+  const publicIdentifier =
+    persona.publicIdentifier?.trim().toLowerCase() ||
+    persona.username.trim().toLowerCase();
+
+  return `/v1/public/personas/${encodeURIComponent(publicIdentifier)}/vcard`;
 }
 
 export function getSafePublicActions(

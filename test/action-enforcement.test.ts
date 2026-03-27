@@ -561,6 +561,92 @@ describe("action enforcement", () => {
     assert.equal(bindCalls, 1);
   });
 
+  it("threads currentUserId through context, staleness, and binding checks", async () => {
+    const calls: {
+      resolve?: unknown;
+      stale?: unknown;
+      bind?: unknown;
+      assert?: unknown;
+    } = {};
+    const service = createService({
+      resolveConversationContext: async (input: unknown) => {
+        calls.resolve = input;
+        return createConversationContext();
+      },
+      assertConversationActionAccessibleToUser: async (input: unknown) => {
+        calls.assert = input;
+      },
+      isConversationPermissionBindingStale: async (input: unknown) => {
+        calls.stale = input;
+        return {
+          stale: true,
+          currentHash: "hash-2",
+          storedHash: "hash-1",
+          lastResolvedAt: new Date("2026-03-26T12:00:00.000Z"),
+          currentResolvedAt: new Date("2026-03-26T12:01:00.000Z"),
+        };
+      },
+      bindResolvedPermissionsToConversation: async (input: unknown) => {
+        calls.bind = input;
+        return {
+          conversationId: "conversation-1",
+          connectionId: "connection-1",
+          sourceIdentityId: "identity-source",
+          targetIdentityId: "identity-target",
+          conversationType: ConversationType.Direct,
+          conversationStatus: ConversationStatus.Active,
+          resolvedConnectionPermissions: createResolvedPermissions(),
+          contentCapabilitySummary: {
+            protectedCapable: true,
+            vaultCapable: true,
+            aiCapable: true,
+          },
+          bindingSummary: {
+            storedHash: "hash-1",
+            currentHash: "hash-2",
+            lastResolvedAt: new Date("2026-03-26T12:00:00.000Z"),
+            currentResolvedAt: new Date("2026-03-26T12:01:00.000Z"),
+            stale: false,
+          },
+          traceSummary: {
+            templateKey: "personal.trusted",
+            policyVersion: 1,
+            trustState: "TRUSTED_BY_USER",
+            overrideCount: 0,
+            riskSignals: [],
+          },
+          resolvedAt: new Date("2026-03-26T12:01:00.000Z"),
+          stale: false,
+        } as any;
+      },
+    });
+
+    await service.enforceAction({
+      conversationId: "conversation-1",
+      currentUserId: "user-member",
+      actorIdentityId: "identity-source",
+      actionType: ActionType.SendText,
+    });
+
+    assert.deepEqual(calls.resolve, {
+      conversationId: "conversation-1",
+      currentUserId: "user-member",
+    });
+    assert.deepEqual(calls.stale, {
+      conversationId: "conversation-1",
+      currentUserId: "user-member",
+    });
+    assert.deepEqual(calls.bind, {
+      conversationId: "conversation-1",
+      currentUserId: "user-member",
+    });
+    assert.deepEqual(calls.assert, {
+      userId: "user-member",
+      conversation: createConversationContext().conversation,
+      actorIdentityId: "identity-source",
+    });
+  });
+
   it("denies unknown action fail-closed", async () => {
     const service = createService();
 

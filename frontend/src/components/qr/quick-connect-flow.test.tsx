@@ -178,4 +178,69 @@ describe("QuickConnectFlow", () => {
       screen.queryByRole("link", { name: /get your own dotly/i }),
     ).not.toBeInTheDocument();
   });
+
+  it("shows canonical source persona handles when usernames are aliases", async () => {
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(QuickConnectFlow, {
+        code: "qr-123",
+        hostName: "Jane Doe",
+        hostJobTitle: "Founder",
+        hostCompany: "Dotly",
+        personas: [
+          {
+            id: "persona-1",
+            identityId: "identity-1",
+            type: "professional",
+            fullName: "Alex Sender",
+            username: "alex-alias",
+            publicUrl: "https://dotly.id/acme",
+            jobTitle: "Operator",
+            companyName: "Dotly",
+            tagline: "Keeps relationships warm.",
+            profilePhotoUrl: null,
+            accessMode: "open",
+            verifiedOnly: false,
+            sharingMode: "controlled",
+            smartCardConfig: null,
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+            createdAt: "2026-03-20T00:00:00.000Z",
+            updatedAt: "2026-03-20T00:00:00.000Z",
+          },
+          {
+            id: "persona-2",
+            identityId: "identity-1",
+            type: "personal",
+            fullName: "Alex Side",
+            username: "alex-side-alias",
+            publicUrl: "https://dotly.id/acme-side",
+            jobTitle: "Advisor",
+            companyName: "Dotly",
+            tagline: "Keeps relationships warm.",
+            profilePhotoUrl: null,
+            accessMode: "open",
+            verifiedOnly: false,
+            sharingMode: "controlled",
+            smartCardConfig: null,
+            publicPhone: null,
+            publicWhatsappNumber: null,
+            publicEmail: null,
+            createdAt: "2026-03-20T00:00:00.000Z",
+            updatedAt: "2026-03-20T00:00:00.000Z",
+          },
+        ],
+      }),
+    );
+
+    expect(screen.getByText(/^@acme$/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^@alex-alias$/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /switch/i }));
+
+    expect(screen.getByText(/@acme-side/i)).toBeInTheDocument();
+    expect(screen.queryByText(/@alex-side-alias/i)).not.toBeInTheDocument();
+  });
 });

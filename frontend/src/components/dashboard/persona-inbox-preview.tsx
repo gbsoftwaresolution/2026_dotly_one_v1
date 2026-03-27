@@ -165,12 +165,29 @@ export function PersonaInboxPreview() {
               />
               <div>
                 <p className="text-[14px] font-semibold text-foreground">
-                  No routed threads yet.
+                  {activePersona
+                    ? "No routed threads yet."
+                    : "No persona selected yet."}
                 </p>
                 <p className="mt-1 text-[14px] font-medium leading-relaxed text-muted">
-                  Once this persona starts receiving routed conversations, they
-                  will show up here.
+                  {activePersona
+                    ? "After you share this persona, new requests and routed conversations will start showing up here."
+                    : "Create a persona first so Dotly has a profile and QR to route replies into."}
                 </p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <Link
+                    href={activePersona ? routes.app.qr : routes.app.createPersona}
+                    className="inline-flex items-center justify-center rounded-full border border-black/5 bg-black/[0.04] px-4 py-2 text-[13px] font-semibold text-foreground transition-colors hover:bg-black/[0.06] dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.06]"
+                  >
+                    {activePersona ? "Open share QR" : "Create persona"}
+                  </Link>
+                  <Link
+                    href={routes.app.requests}
+                    className="inline-flex items-center justify-center rounded-full border border-black/5 bg-transparent px-4 py-2 text-[13px] font-semibold text-foreground transition-colors hover:bg-black/[0.04] dark:border-white/10 dark:hover:bg-white/[0.06]"
+                  >
+                    Review requests
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

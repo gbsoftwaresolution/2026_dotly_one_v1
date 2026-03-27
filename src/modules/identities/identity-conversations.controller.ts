@@ -52,8 +52,14 @@ export class IdentityConversationsController {
   }
 
   @Get("identity-conversations/:conversationId")
-  getConversationById(@Param() params: ConversationIdParamDto) {
-    return this.identitiesService.getConversationById(params);
+  getConversationById(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: ConversationIdParamDto,
+  ) {
+    return this.identitiesService.getConversationById({
+      conversationId: params.conversationId,
+      currentUserId: user.id,
+    });
   }
 
   @Get("identities/:identityId/conversations")
@@ -84,30 +90,46 @@ export class IdentityConversationsController {
   }
 
   @Get("identity-conversations/:conversationId/context")
-  resolveConversationContext(@Param() params: ConversationIdParamDto) {
+  resolveConversationContext(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: ConversationIdParamDto,
+  ) {
     return this.identitiesService.resolveConversationContext({
       conversationId: params.conversationId,
+      currentUserId: user.id,
     });
   }
 
   @Post("identity-conversations/:conversationId/bind-permissions")
-  bindResolvedPermissions(@Param() params: ConversationIdParamDto) {
+  bindResolvedPermissions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: ConversationIdParamDto,
+  ) {
     return this.identitiesService.bindResolvedPermissionsToConversation({
       conversationId: params.conversationId,
+      currentUserId: user.id,
     });
   }
 
   @Get("identity-conversations/:conversationId/binding-staleness")
-  getBindingStaleness(@Param() params: ConversationIdParamDto) {
-    return this.identitiesService.isConversationPermissionBindingStale(
-      params.conversationId,
-    );
+  getBindingStaleness(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: ConversationIdParamDto,
+  ) {
+    return this.identitiesService.isConversationPermissionBindingStale({
+      conversationId: params.conversationId,
+      currentUserId: user.id,
+    });
   }
 
   @Get("identity-conversations/:conversationId/explain-context")
-  explainConversationContext(@Param() params: ConversationIdParamDto) {
+  explainConversationContext(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: ConversationIdParamDto,
+  ) {
     return this.identitiesService.explainConversationPermissionContext({
       conversationId: params.conversationId,
+      currentUserId: user.id,
     });
   }
 

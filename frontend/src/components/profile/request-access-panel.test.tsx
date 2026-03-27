@@ -83,7 +83,68 @@ describe("RequestAccessPanel", () => {
 
     expect(
       screen.getByRole("link", { name: /log in to continue/i }),
-    ).toHaveAttribute("href", "/login?next=%2Ftarget");
+    ).toHaveAttribute("href", "/login?next=%2Fu%2Ftarget");
+  });
+
+  it("uses the canonical handle from publicUrl for request routing when username is an alias", async () => {
+    mocks.getRequestTarget.mockResolvedValue({ username: "target-alias" });
+    mocks.sendRequest.mockResolvedValue({ id: "request-1" });
+
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(RequestAccessPanel, {
+        profile: {
+          ...profileFixture,
+          username: "target-alias",
+          publicUrl: "https://dotly.id/acme",
+        },
+        initialPersonas: [personaFixture],
+        isAuthenticated: true,
+        currentUser: {
+          id: "user-1",
+          email: "user@dotly.one",
+          isVerified: true,
+          security: {
+            trustBadge: "verified",
+            maskedEmail: "us**@dotly.one",
+            mailDeliveryAvailable: true,
+            passwordResetAvailable: true,
+            smsDeliveryAvailable: true,
+            maskedPhoneNumber: null,
+            phoneVerificationStatus: "not_enrolled",
+            mobileOtpEnrollment: null,
+            explanation: "",
+            unlockedActions: ["Send contact requests"],
+            restrictedActions: [],
+            requirements: [
+              {
+                key: "send_contact_request",
+                label: "Send contact requests",
+                unlocked: true,
+              },
+            ],
+            trustFactors: [],
+          },
+        },
+      }),
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /request to connect/i }),
+    );
+
+    await waitFor(() => {
+      expect(mocks.getRequestTarget).toHaveBeenCalledWith("acme");
+      expect(mocks.sendRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          toUsername: "target-alias",
+        }),
+        expect.objectContaining({
+          requestKey: expect.stringContaining("request-access:acme:persona-1"),
+        }),
+      );
+    });
   });
 
   it("shows the unavailable state for signed-out visitors when smart card config is missing", () => {

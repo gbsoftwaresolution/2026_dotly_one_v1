@@ -105,6 +105,39 @@ describe("AuthForm", () => {
     ).toBeInTheDocument();
   });
 
+  it("includes the referral code when signup was opened from an invite link", async () => {
+    mocks.signup.mockResolvedValue({
+      user: { id: "user-1", email: "new@dotly.one", isVerified: false },
+      verificationPending: true,
+      verificationEmailSent: true,
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(AuthForm, {
+        mode: "signup",
+        referralCode: "SHARECODE1",
+      }),
+    );
+
+    await user.type(screen.getByLabelText(/email/i), "new@dotly.one");
+    await user.type(screen.getByLabelText(/^password$/i), "SecurePass123!");
+    await user.type(
+      screen.getByLabelText(/^confirm password$/i),
+      "SecurePass123!",
+    );
+    await user.click(screen.getByRole("button", { name: signupButtonLabel }));
+
+    await waitFor(() => {
+      expect(mocks.signup).toHaveBeenCalledWith({
+        email: "new@dotly.one",
+        password: "SecurePass123!",
+        referralCode: "SHARECODE1",
+      });
+    });
+  });
+
   it("shows a friendly duplicate email message", async () => {
     mocks.signup.mockRejectedValue(
       new ApiError("User already exists", 409, {

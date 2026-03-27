@@ -54,6 +54,7 @@ function toNormalizedSharePayload(
 
   return {
     personaId: value.persona.id,
+    publicIdentifier: value.persona.publicIdentifier ?? value.persona.username,
     username: value.persona.username,
     fullName: value.persona.fullName,
     profilePhotoUrl: value.persona.profilePhotoUrl,
@@ -100,6 +101,8 @@ function toMyFastSharePayload(value: ShareFastSnapshot): MyFastSharePayload {
   return {
     persona: {
       id: value.sharePayload.personaId,
+      publicIdentifier:
+        value.sharePayload.publicIdentifier ?? value.sharePayload.username,
       username: value.sharePayload.username,
       fullName: value.sharePayload.fullName,
       profilePhotoUrl: value.sharePayload.profilePhotoUrl,
