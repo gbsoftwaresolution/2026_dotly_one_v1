@@ -13,7 +13,9 @@ export default async function PersonaSharingSettingsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { accessToken } = await requireServerSession(routes.app.personaSettings(id));
+  const { accessToken } = await requireServerSession(
+    routes.app.personaSettings(id),
+  );
 
   let persona: PersonaSummary | null = null;
   let loadError: string | null = null;
@@ -62,8 +64,8 @@ export default async function PersonaSharingSettingsPage({
   return (
     <section className="space-y-5 pb-24 sm:space-y-6">
       <PageHeader
-        title="How people can access you"
-        description={`Decide how ${persona.fullName} is introduced first, and what people can do from the public card.`}
+        title="Shape the first exchange"
+        description={`Decide how ${persona.fullName} is introduced first, and which actions belong on the public card.`}
       />
 
       <div className="flex flex-col gap-4">

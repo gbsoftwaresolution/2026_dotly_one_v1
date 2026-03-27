@@ -183,7 +183,7 @@ export function AuthForm({
 
         setSuccessMessage(
           result.verificationEmailSent
-            ? "Confirmation email sent. Redirecting you to sign in..."
+            ? "Verification email sent. Redirecting you to sign in..."
             : "Your Dotly is ready. Verification is still required, but email delivery is not configured in this environment.",
         );
         router.push(

@@ -407,8 +407,10 @@ export function PersonaSharingSettingsForm({
     }
   }
 
-  const inputCls = "w-full bg-transparent px-4 py-3.5 text-[17px] tracking-tight text-foreground outline-none placeholder:text-muted/50";
-  const sectionCls = "flex flex-col overflow-hidden rounded-[20px] bg-black/[0.03] dark:bg-white/[0.04] backdrop-blur-[40px] saturate-[200%]";
+  const inputCls =
+    "w-full bg-transparent px-4 py-3.5 text-[17px] tracking-tight text-foreground outline-none placeholder:text-muted/50";
+  const sectionCls =
+    "flex flex-col overflow-hidden rounded-[20px] bg-black/[0.03] dark:bg-white/[0.04] backdrop-blur-[40px] saturate-[200%]";
 
   const smartCardSelected = formState.sharingMode === "smart_card";
   const validationErrors = getValidationErrors(formState);
@@ -425,9 +427,8 @@ export function PersonaSharingSettingsForm({
       <form className="space-y-6" onSubmit={handleSubmit}>
         <section className={sectionCls}>
           <div className="space-y-1">
-            
             <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-              Current sharing posture
+              Current share posture
             </h2>
           </div>
 
@@ -461,9 +462,8 @@ export function PersonaSharingSettingsForm({
               <legend className="sr-only">How people can access you</legend>
 
               <div className="space-y-1">
-                
                 <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-                  Choose the introduction mode
+                  Choose the first-exchange mode
                 </h2>
               </div>
 
@@ -506,9 +506,8 @@ export function PersonaSharingSettingsForm({
             {smartCardSelected ? (
               <section className={sectionCls}>
                 <div className="space-y-1">
-                  
                   <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-                    Smart Card config
+                    Smart Card setup
                   </h2>
                   <p className="text-sm leading-6 text-muted">
                     Decide what someone sees first on your Smart Card. Only

@@ -32,7 +32,8 @@ vi.mock("@/components/identities/identity-switcher", () => ({
 }));
 
 vi.mock("@/components/dashboard/persona-inbox-preview", () => ({
-  PersonaInboxPreview: () => React.createElement("div", null, "PersonaInboxPreview"),
+  PersonaInboxPreview: () =>
+    React.createElement("div", null, "PersonaInboxPreview"),
 }));
 
 vi.mock("@/components/app-shell/theme-switcher", () => ({
@@ -79,13 +80,15 @@ describe("AppHomePage", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: /let’s get your first dotly ready, user/i,
+        name: /build your first premium contact identity, user/i,
       }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /create first persona/i }),
     ).toHaveAttribute("href", routes.app.createPersona);
-    expect(screen.getByText(/create a profile worth sharing/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/create an identity worth sharing/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/open your share qr/i)).toBeInTheDocument();
   });
 
@@ -122,9 +125,13 @@ describe("AppHomePage", () => {
     render(result);
 
     expect(
-      screen.getByRole("heading", { name: /your first intro landed, user/i }),
+      screen.getByRole("heading", {
+        name: /your first premium intro landed, user/i,
+      }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/your first share landed/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/your first premium share landed/i),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /review requests/i }),
     ).toHaveAttribute("href", routes.app.requests);

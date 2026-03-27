@@ -289,9 +289,13 @@ describe("QrGeneratorPanel", () => {
       screen.queryByRole("combobox", { name: /share persona/i }),
     ).not.toBeInTheDocument();
 
-    expect(screen.getByRole("heading", { name: /@sender/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /@sender/i }),
+    ).toBeInTheDocument();
     expect(screen.getAllByText(/sender persona/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/scan to view my contact/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/scan to instantly connect or share this profile/i),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: /@sender-ops/i }),
     ).not.toBeInTheDocument();
@@ -377,10 +381,16 @@ describe("QrGeneratorPanel", () => {
     );
 
     expect(screen.getByText(/invite flow/i)).toBeInTheDocument();
-    expect(screen.getByText(/invite someone to create their own dotly/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/invite someone to create their own dotly/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("SHARECODE1")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /copy code/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /invite someone/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /copy code/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /invite someone/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders the lightweight share guide and follow-through shortcuts", () => {
@@ -415,10 +425,9 @@ describe("QrGeneratorPanel", () => {
     expect(screen.getByText(/share flow/i)).toBeInTheDocument();
     expect(screen.getByText(/use this in the room/i)).toBeInTheDocument();
     expect(screen.getByText(/show qr/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /open requests/i })).toHaveAttribute(
-      "href",
-      routes.app.requests,
-    );
+    expect(
+      screen.getByRole("link", { name: /open requests/i }),
+    ).toHaveAttribute("href", routes.app.requests);
     expect(screen.getByRole("link", { name: /open inbox/i })).toHaveAttribute(
       "href",
       routes.app.inbox,
@@ -469,6 +478,8 @@ describe("QrGeneratorPanel", () => {
     expect(screen.getByText(/share signal/i)).toBeInTheDocument();
     expect(screen.getByText(/your qr is already working/i)).toBeInTheDocument();
     expect(screen.getByText(/signal received/i)).toBeInTheDocument();
-    expect(screen.getByText(/follow-through: check requests and inbox/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/follow-through: check requests and inbox/i),
+    ).toBeInTheDocument();
   });
 });

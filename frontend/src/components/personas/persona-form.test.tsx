@@ -110,7 +110,7 @@ describe("PersonaForm", () => {
     await user.type(screen.getByLabelText(/role/i), "Founder");
     await user.type(screen.getByLabelText(/^company$/i), "Dotly");
     await user.type(
-      screen.getByLabelText(/what should people remember\?/i),
+      screen.getByLabelText(/what should people remember first\?/i),
       "Trusted identity",
     );
     await user.type(screen.getByLabelText(/^website$/i), "https://dotly.one");
@@ -138,7 +138,7 @@ describe("PersonaForm", () => {
     });
 
     expect(
-      await screen.findByText(/your persona is ready to share/i),
+      await screen.findByText(/your contact identity is ready to share/i),
     ).toBeInTheDocument();
     expect(mocks.getFastShare).toHaveBeenCalledWith("persona-1");
     expect(mocks.upsertPersonaFastShare).toHaveBeenCalledWith(
@@ -147,10 +147,9 @@ describe("PersonaForm", () => {
     );
     expect(screen.getByText(/sharing mode/i)).toBeInTheDocument();
     expect(screen.getByText(/requests only/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /open share qr/i })).toHaveAttribute(
-      "href",
-      routes.app.qr,
-    );
+    expect(
+      screen.getByRole("link", { name: /open share qr/i }),
+    ).toHaveAttribute("href", routes.app.qr);
     expect(
       screen.getByRole("link", { name: /edit sharing settings/i }),
     ).toHaveAttribute("href", routes.app.personaSettings("persona-1"));

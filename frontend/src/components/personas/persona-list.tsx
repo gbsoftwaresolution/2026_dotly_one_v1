@@ -18,8 +18,8 @@ export function PersonaList({ personas }: PersonaListProps) {
         <div className="absolute -inset-1/2 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
         <div className="relative z-10 space-y-4">
           <EmptyState
-            title="Create your first persona"
-            description="Start with one clear profile for the next introduction. Dotly will prepare the share QR right after you save it."
+            title="Create your first contact identity"
+            description="Start with one clear persona for the next introduction. Dotly will prepare the share QR right after you save it."
             action={
               <Link href={routes.app.createPersona}>
                 <PrimaryButton fullWidth>Create first persona</PrimaryButton>

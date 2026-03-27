@@ -16,7 +16,7 @@ export default async function SettingsPage() {
     {
       href: routes.app.qr,
       label: "QR sharing",
-      description: "Generate a code when you are ready to share.",
+      description: "Open the share surface you use in the room.",
     },
     {
       href: routes.app.contacts,
@@ -26,7 +26,8 @@ export default async function SettingsPage() {
     {
       href: routes.app.notifications,
       label: "Notifications",
-      description: "Catch up on unread account activity.",
+      description:
+        "Catch up on unread activity across your identity workspace.",
     },
     {
       href: routes.app.analytics,
@@ -60,7 +61,7 @@ export default async function SettingsPage() {
     <section className="flex flex-col mx-auto w-full max-w-2xl gap-6 animate-fade-up [animation-duration:700ms] pb-safe">
       <PageHeader
         title="Settings"
-        description="Manage account trust, appearance, and the controls behind how you share your identity."
+        description="Manage account trust, appearance, and the controls behind your premium contact identity."
       />
 
       <ConnectionProgressNote analytics={analytics} />
@@ -73,7 +74,7 @@ export default async function SettingsPage() {
                 Step 1
               </p>
               <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                More tools
+                Identity workspace
               </h2>
               <p className="text-sm leading-6 text-muted">
                 Keep your main identity controls close. Reach the rest from
@@ -105,7 +106,7 @@ export default async function SettingsPage() {
                 Step 2
               </p>
               <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Account security
+                Identity protection
               </h2>
             </div>
 

@@ -239,7 +239,7 @@ export function PersonaForm() {
             Ready to share
           </p>
           <h2 className="text-xl font-semibold tracking-tight text-foreground">
-            Your persona is ready to share
+            Your contact identity is ready to share
           </h2>
           <p className="text-sm leading-6 text-muted">
             Open the share QR next so this persona is ready for introductions,
@@ -489,7 +489,7 @@ export function PersonaForm() {
 
         <div className="space-y-2 sm:space-y-1.5">
           <label className="label-xs" htmlFor="persona-tagline">
-            What should people remember?
+            What should people remember first?
           </label>
           <textarea
             id="persona-tagline"
@@ -501,7 +501,7 @@ export function PersonaForm() {
             onChange={(event) => updateField("tagline", event.target.value)}
           />
           <p className="text-sm leading-6 text-muted">
-            Keep it short enough that someone can recognize you later.
+            Keep it short enough that someone can place you later.
           </p>
         </div>
       </section>
@@ -531,7 +531,7 @@ export function PersonaForm() {
               }
             />
             <p className="text-sm leading-6 text-muted">
-              Optional. Adds one clean external link to your public card.
+              Optional. Adds one clean external link to your public identity.
             </p>
           </div>
 
@@ -541,7 +541,7 @@ export function PersonaForm() {
                 Show verified badge
               </span>
               <span className="block text-xs leading-5 text-muted">
-                Adds a visible trust cue to the public profile when enabled.
+                Adds a visible trust cue to the public identity when enabled.
               </span>
             </span>
             <input

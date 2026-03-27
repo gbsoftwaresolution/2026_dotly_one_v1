@@ -54,8 +54,9 @@ function getNextMilestoneKey(
   milestones: UserActivationMilestones,
 ): UserActivationMilestoneKey | null {
   return (
-    activationOrder.find((key) => !milestones[activationMilestoneFieldMap[key]]) ??
-    null
+    activationOrder.find(
+      (key) => !milestones[activationMilestoneFieldMap[key]],
+    ) ?? null
   );
 }
 
@@ -81,7 +82,8 @@ export default async function AppHomePage() {
     personaApi.list(accessToken).catch(() => [] as PersonaSummary[]),
   ]);
   const firstName = formatFirstName(user.email);
-  const primaryPersona = personas.find((persona) => persona.isPrimary) ?? personas[0] ?? null;
+  const primaryPersona =
+    personas.find((persona) => persona.isPrimary) ?? personas[0] ?? null;
   const personaCount = personas.length;
   const totalConnections = analytics?.totalConnections ?? 0;
   const activationMilestones = deriveActivationMilestones(
@@ -90,18 +92,21 @@ export default async function AppHomePage() {
     totalConnections,
   );
   const activationStage =
-    user.activation?.nextMilestoneKey ?? getNextMilestoneKey(activationMilestones);
+    user.activation?.nextMilestoneKey ??
+    getNextMilestoneKey(activationMilestones);
   const hasPersonas = Boolean(activationMilestones.firstPersonaCreatedAt);
   const hasOpenedQr = Boolean(activationMilestones.firstQrOpenedAt);
   const hasShareCompleted = Boolean(activationMilestones.firstShareCompletedAt);
-  const hasRequestReceived = Boolean(activationMilestones.firstRequestReceivedAt);
+  const hasRequestReceived = Boolean(
+    activationMilestones.firstRequestReceivedAt,
+  );
   const activationCopy =
     activationStage === "firstPersonaCreated"
       ? {
           badge: "Start here",
-          title: `Let’s get your first Dotly ready, ${firstName}.`,
+          title: `Build your first premium contact identity, ${firstName}.`,
           description:
-            "Start with one persona you can confidently share in the room. Dotly will prepare the QR and route the first replies after that.",
+            "Start with one persona you can share with confidence. Dotly will prepare the QR and catch the first replies from there.",
           primaryHref: routes.app.createPersona,
           primaryLabel: "Create first persona",
           secondaryHref: routes.app.personas,
@@ -110,70 +115,78 @@ export default async function AppHomePage() {
       : activationStage === "firstQrOpened"
         ? {
             badge: "Ready to share",
-            title: `Your first Dotly is ready to share, ${firstName}.`,
+            title: `Your first premium intro is ready, ${firstName}.`,
             description:
-              "Open your QR, show it once, and let Dotly turn that introduction into a routed request, connection, or conversation.",
+              "Open your QR once and let Dotly turn that first exchange into a routed request, connection, or conversation.",
             primaryHref: routes.app.qr,
             primaryLabel: "Open share QR",
             secondaryHref: routes.app.personas,
             secondaryLabel: "Refine personas",
           }
-          : activationStage === "firstShareCompleted"
+        : activationStage === "firstShareCompleted"
+          ? {
+              badge: "First signal",
+              title: `Your contact identity is now in the room, ${firstName}.`,
+              description:
+                "That first open matters. Stay close to requests and inbox so the conversation becomes a tracked next step while context is still fresh.",
+              primaryHref: routes.app.requests,
+              primaryLabel: "Check requests",
+              secondaryHref: routes.app.inbox,
+              secondaryLabel: "Open inbox",
+            }
+          : activationStage === "firstRequestReceived"
             ? {
-                badge: "First signal",
-                title: `Your QR is in the wild, ${firstName}.`,
+                badge: "Follow-through",
+                title: `Your first premium intro landed, ${firstName}.`,
                 description:
-                  "That first open matters. Stay close to requests and inbox so the conversation turns into a tracked next step while context is still fresh.",
+                  "The system is working. Review what came in, reply while the conversation is still warm, and keep the next action obvious.",
                 primaryHref: routes.app.requests,
-                primaryLabel: "Check requests",
+                primaryLabel: "Review requests",
                 secondaryHref: routes.app.inbox,
                 secondaryLabel: "Open inbox",
               }
-            : activationStage === "firstRequestReceived"
-              ? {
-                  badge: "Follow-through",
-                  title: `Your first intro landed, ${firstName}.`,
-                  description:
-                    "The system is working. Review what came in, reply while the conversation is still warm, and keep the next action obvious.",
-                  primaryHref: routes.app.requests,
-                  primaryLabel: "Review requests",
-                  secondaryHref: routes.app.inbox,
-                  secondaryLabel: "Open inbox",
-                }
-        : {
-            badge: "Keep momentum",
-            title: `Keep introductions moving, ${firstName}.`,
-            description:
-              "Your first setup is done. Stay close to inbox, requests, and QR so each introduction turns into a useful next step.",
-            primaryHref: routes.app.inbox,
-            primaryLabel: "Open inbox",
-            secondaryHref: routes.app.qr,
-            secondaryLabel: "Show QR again",
-          };
+            : {
+                badge: "Keep momentum",
+                title: `Keep premium introductions moving, ${firstName}.`,
+                description:
+                  "Your first setup is done. Stay close to inbox, requests, and QR so each introduction turns into a useful next step.",
+                primaryHref: routes.app.inbox,
+                primaryLabel: "Open inbox",
+                secondaryHref: routes.app.qr,
+                secondaryLabel: "Show QR again",
+              };
   const activationSteps = [
     {
       title: "Create one persona",
-      description: "Set up the name, role, and handle you want people to remember.",
+      description:
+        "Set up the name, role, and handle you want people to remember first.",
       href: routes.app.createPersona,
       status: hasPersonas ? "Done" : "Next",
     },
     {
       title: "Open your share QR",
-      description: "Bring up one clean share surface before the conversation starts moving.",
+      description:
+        "Bring up one clean share surface before the conversation starts moving.",
       href: routes.app.qr,
       status: hasOpenedQr ? "Done" : hasPersonas ? "Next" : "After persona",
     },
     {
       title: "Catch the first real signal",
-      description: "Let one real scan or profile open confirm that your Dotly is landing in the room.",
+      description:
+        "Let one real scan or profile open confirm that your Dotly is landing in the room.",
       href: routes.app.qr,
       status: hasShareCompleted ? "Done" : hasOpenedQr ? "Next" : "After QR",
     },
     {
       title: "Check requests and inbox",
-      description: "Review the first incoming request or reply before the thread cools down.",
+      description:
+        "Review the first incoming request or reply before the thread cools down.",
       href: routes.app.requests,
-      status: hasRequestReceived ? "Live" : hasShareCompleted ? "Next" : "After first share",
+      status: hasRequestReceived
+        ? "Live"
+        : hasShareCompleted
+          ? "Next"
+          : "After first share",
     },
   ] as const;
 
@@ -211,29 +224,29 @@ export default async function AppHomePage() {
             <div className="flex flex-col gap-5">
               <div className="space-y-2">
                 <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
-                  First useful moment
+                  First premium moment
                 </p>
                 <h2 className="text-[28px] font-bold tracking-tighter text-foreground sm:text-[32px]">
                   {activationStage === "firstPersonaCreated"
-                    ? "Create a profile worth sharing."
+                    ? "Create an identity worth sharing."
                     : activationStage === "firstQrOpened"
                       ? "Share once and let Dotly do the rest."
                       : activationStage === "firstShareCompleted"
                         ? "Now watch for the first reply."
                         : activationStage === "firstRequestReceived"
                           ? "Close the loop while context is fresh."
-                      : "Keep the next action obvious."}
+                          : "Keep the next action obvious."}
                 </h2>
                 <p className="max-w-[40ch] text-[15px] font-medium leading-relaxed text-muted sm:text-[16px]">
                   {activationStage === "firstPersonaCreated"
-                    ? "A single persona is enough to unlock your first QR, your first routed inbox lane, and a cleaner first impression."
+                    ? "A single persona is enough to unlock your first QR, your first routed inbox lane, and a stronger first exchange."
                     : activationStage === "firstQrOpened"
                       ? `Your next best move is simple: open ${primaryPersona ? `@${primaryPersona.username}` : "your"} QR and use it in the next conversation.`
                       : activationStage === "firstShareCompleted"
                         ? "Dotly has seen the first real interaction. Shift from setup to follow-through and check whether a request or reply came in."
                         : activationStage === "firstRequestReceived"
                           ? "Your first incoming signal is here. Confirm who reached out, respond quickly, and let Dotly keep the context organized."
-                      : "Your setup already works. Keep QR, inbox, and requests close so each introduction becomes a tracked relationship instead of a lost thread."}
+                          : "Your setup already works. Keep QR, inbox, and requests close so each introduction becomes a tracked relationship instead of a lost thread."}
                 </p>
               </div>
 
@@ -292,17 +305,21 @@ export default async function AppHomePage() {
               <div className="rounded-[1.75rem] border border-emerald-500/20 bg-emerald-500/[0.06] p-5 backdrop-blur-2xl dark:border-emerald-400/20 dark:bg-emerald-400/[0.08] sm:p-6">
                 <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-500/20 dark:bg-emerald-400/10 dark:ring-emerald-400/20">
-                    <Check className="h-5 w-5 text-emerald-700 dark:text-emerald-300" strokeWidth={2} />
+                    <Check
+                      className="h-5 w-5 text-emerald-700 dark:text-emerald-300"
+                      strokeWidth={2}
+                    />
                   </div>
                   <div className="space-y-2">
                     <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-emerald-700/70 dark:text-emerald-300/70">
                       Post-share signal
                     </p>
                     <h2 className="text-[24px] font-bold tracking-tighter text-foreground sm:text-[28px]">
-                      Your first share landed.
+                      Your first premium share landed.
                     </h2>
                     <p className="text-[15px] font-medium leading-relaxed text-muted">
-                      Now move from showing to following through. Requests and inbox are the next two places worth watching.
+                      Now move from showing to following through. Requests and
+                      inbox are the next two places worth watching.
                     </p>
                   </div>
                 </div>
@@ -313,17 +330,22 @@ export default async function AppHomePage() {
               <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
                 <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-black/[0.04] ring-1 ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
-                    <Check className="h-5 w-5 text-foreground" strokeWidth={2} />
+                    <Check
+                      className="h-5 w-5 text-foreground"
+                      strokeWidth={2}
+                    />
                   </div>
                   <div className="space-y-2">
                     <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
                       Setup path
                     </p>
                     <h2 className="text-[24px] font-bold tracking-tighter text-foreground sm:text-[28px]">
-                      One persona is enough to start.
+                      One premium identity is enough to start.
                     </h2>
                     <p className="text-[15px] font-medium leading-relaxed text-muted">
-                      You do not need a full profile system first. Create one persona, open the share QR, and let Dotly teach the rest through real use.
+                      You do not need a full identity system first. Create one
+                      persona, open the share QR, and let Dotly teach the rest
+                      through real use.
                     </p>
                   </div>
                 </div>
@@ -366,21 +388,32 @@ export default async function AppHomePage() {
           {[
             {
               title: "Personas",
-              description: "Create or refine the profile you want to share first.",
+              description:
+                "Create or refine the identity you want to share first.",
               href: routes.app.personas,
               status: hasPersonas ? `${personaCount} ready` : "Start here",
             },
             {
               title: "QR share",
-              description: "Open one large share surface for meetings, intros, and events.",
+              description:
+                "Open one large share surface for meetings, intros, and events.",
               href: routes.app.qr,
-              status: hasOpenedQr ? "Opened" : hasPersonas ? "Ready" : "Needs persona",
+              status: hasOpenedQr
+                ? "Opened"
+                : hasPersonas
+                  ? "Ready"
+                  : "Needs persona",
             },
             {
               title: "Requests and inbox",
-              description: "Catch the first reply after you share instead of losing the thread.",
+              description:
+                "Catch the first reply after you share instead of losing the thread.",
               href: routes.app.inbox,
-              status: hasRequestReceived ? "Active" : hasShareCompleted ? "Next" : "After first share",
+              status: hasRequestReceived
+                ? "Active"
+                : hasShareCompleted
+                  ? "Next"
+                  : "After first share",
             },
           ].map((item) => (
             <Link

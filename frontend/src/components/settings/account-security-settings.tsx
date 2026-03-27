@@ -1412,12 +1412,12 @@ export function AccountSecuritySettings({ user }: { user: UserProfile }) {
       <div className="rounded-[28px] bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
         <p className="label-xs text-muted">Account Trust</p>
         <h2 className="mt-2 text-xl font-bold tracking-tight text-foreground">
-          Dotly security center
+          Protect your Dotly identity
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
           Manage active verification factors, recover credentials, add mobile
-          verification, and review every active device from one coherent
-          security surface.
+          verification, and review every active device from one premium identity
+          protection surface.
         </p>
       </div>
 

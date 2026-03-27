@@ -8,16 +8,19 @@ import { routes } from "@/lib/constants/routes";
 export default function CreatePersonaPage() {
   const setupSteps = [
     {
-      title: "Choose the version of you to share",
-      description: "Start with one persona for the rooms, meetings, or events you are actually in this week.",
+      title: "Choose the version of you worth sharing",
+      description:
+        "Start with one persona for the rooms, meetings, or events where first impressions actually matter this week.",
     },
     {
-      title: "Make recognition easy",
-      description: "Name, role, company, and one strong line are enough for a first useful impression.",
+      title: "Make recognition immediate",
+      description:
+        "Name, role, company, and one strong line are enough for a premium first exchange.",
     },
     {
       title: "Open the QR right after save",
-      description: "Dotly will take this persona straight into a share-ready flow so you can use it immediately.",
+      description:
+        "Dotly will take this persona straight into a share-ready flow so you can use it immediately.",
     },
   ] as const;
 
@@ -25,7 +28,7 @@ export default function CreatePersonaPage() {
     <section className="space-y-5 sm:space-y-6">
       <PageHeader
         title="Create a persona"
-        description="Set up the one Dotly profile you want to use first, then open the QR as your next step."
+        description="Set up the one Dotly identity you want to use first, then open the QR as your next step."
         action={
           <Link href={routes.app.personas}>
             <SecondaryButton className="w-full sm:w-auto">
@@ -37,11 +40,11 @@ export default function CreatePersonaPage() {
       <div className="flex flex-col gap-4">
         <div className="space-y-1.5 sm:space-y-1">
           <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-            First-share setup
+            Premium-first setup
           </h2>
           <p className="text-sm leading-6 text-muted sm:text-[15px] sm:leading-relaxed">
             Keep this lightweight. One strong persona is enough to reach your
-            first useful moment.
+            first premium moment.
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">

@@ -75,7 +75,7 @@ describe("LoginPage", () => {
 
     expect(
       screen.getByText(
-        /password reset complete\. log in with your new password\./i,
+        /password reset complete\. sign in with your new password\./i,
       ),
     ).toBeInTheDocument();
     expect(mocks.resetSessionOnLoad).toHaveBeenCalledWith(false);

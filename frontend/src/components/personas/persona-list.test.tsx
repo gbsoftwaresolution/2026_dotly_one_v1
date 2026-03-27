@@ -12,10 +12,14 @@ describe("PersonaList", () => {
     render(React.createElement(PersonaList, { personas: [] }));
 
     expect(
-      screen.getByRole("heading", { name: /create your first persona/i }),
+      screen.getByRole("heading", {
+        name: /create your first contact identity/i,
+      }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/dotly will prepare the share qr right after you save it/i),
+      screen.getByText(
+        /dotly will prepare the share qr right after you save it/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /create first persona/i }),

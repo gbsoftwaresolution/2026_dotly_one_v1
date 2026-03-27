@@ -141,7 +141,9 @@ describe("AccountSecuritySettings", () => {
       React.createElement(AccountSecuritySettings, { user: createUser(false) }),
     );
 
-    expect(screen.getByText(/dotly security center/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/protect your dotly identity/i),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: /^change password$/i }),
     ).toBeInTheDocument();

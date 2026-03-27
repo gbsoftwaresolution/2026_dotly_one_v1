@@ -101,7 +101,7 @@ describe("AuthForm", () => {
       "/login?email=new%40dotly.one&created=1&delivery=sent",
     );
     expect(
-      screen.getByText(/confirmation email sent\. redirecting you to sign in/i),
+      screen.getByText(/verification email sent\. redirecting you to sign in/i),
     ).toBeInTheDocument();
   });
 
