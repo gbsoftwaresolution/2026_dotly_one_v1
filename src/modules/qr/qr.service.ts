@@ -2,8 +2,10 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
@@ -70,6 +72,8 @@ export class QrService {
     private readonly contactMemoryService: ContactMemoryService,
     private readonly notificationsService: NotificationsService = noopNotificationsService as NotificationsService,
     private readonly analyticsService: AnalyticsService = noopAnalyticsService as AnalyticsService,
+    @Optional()
+    @Inject(ActivationMilestonesService)
     private readonly activationMilestonesService: Pick<
       ActivationMilestonesService,
       "markFirstShareCompletedForPersona"

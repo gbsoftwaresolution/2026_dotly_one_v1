@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 
 import { MailService } from "../../infrastructure/mail/mail.service";
@@ -84,6 +86,8 @@ export class UsersService {
     private readonly smsService: SmsService,
     private readonly verificationPolicyService: VerificationPolicyService,
     private readonly authService: AuthService,
+    @Optional()
+    @Inject(ActivationMilestonesService)
     private readonly activationMilestonesService: Pick<
       ActivationMilestonesService,
       "getUserActivation" | "clearFirstResponseNudge"

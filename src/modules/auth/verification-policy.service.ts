@@ -1,5 +1,6 @@
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
   Optional,
@@ -140,6 +141,7 @@ export class VerificationPolicyService {
     @Optional()
     private readonly analyticsService: AnalyticsService = noopAnalyticsService as AnalyticsService,
     @Optional()
+    @Inject(SecurityAuditService)
     private readonly securityAuditService: Pick<SecurityAuditService, "log"> =
       noopSecurityAuditService,
     @Optional()

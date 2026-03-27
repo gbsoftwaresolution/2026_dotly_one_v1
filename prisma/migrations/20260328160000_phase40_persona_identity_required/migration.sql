@@ -14,9 +14,9 @@ SELECT
   gen_random_uuid(),
   p."userId",
   CASE p."type"
-    WHEN 'PERSONAL' THEN 'PERSONAL'::"IdentityType"
-    WHEN 'PROFESSIONAL' THEN 'PROFESSIONAL'::"IdentityType"
-    WHEN 'BUSINESS' THEN 'BUSINESS'::"IdentityType"
+  WHEN 'personal' THEN 'personal'::"IdentityType"
+  WHEN 'professional' THEN 'professional'::"IdentityType"
+  WHEN 'business' THEN 'business'::"IdentityType"
   END,
   p."fullName",
   NULL,
@@ -39,9 +39,9 @@ WHERE p."identityId" IS NULL
     FROM "Identity" i
     WHERE i."personId" = p."userId"
       AND i."identityType" = CASE p."type"
-        WHEN 'PERSONAL' THEN 'PERSONAL'::"IdentityType"
-        WHEN 'PROFESSIONAL' THEN 'PROFESSIONAL'::"IdentityType"
-        WHEN 'BUSINESS' THEN 'BUSINESS'::"IdentityType"
+        WHEN 'personal' THEN 'personal'::"IdentityType"
+        WHEN 'professional' THEN 'professional'::"IdentityType"
+        WHEN 'business' THEN 'business'::"IdentityType"
       END
   );
 
@@ -50,9 +50,9 @@ SET "identityId" = i."id"
 FROM "Identity" i
 WHERE i."personId" = p."userId"
   AND i."identityType" = CASE p."type"
-    WHEN 'PERSONAL' THEN 'PERSONAL'::"IdentityType"
-    WHEN 'PROFESSIONAL' THEN 'PROFESSIONAL'::"IdentityType"
-    WHEN 'BUSINESS' THEN 'BUSINESS'::"IdentityType"
+    WHEN 'personal' THEN 'personal'::"IdentityType"
+    WHEN 'professional' THEN 'professional'::"IdentityType"
+    WHEN 'business' THEN 'business'::"IdentityType"
   END
   AND (
     p."identityId" IS NULL

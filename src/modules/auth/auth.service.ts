@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   HttpException,
+  Inject,
   Injectable,
   Optional,
 } from "@nestjs/common";
@@ -121,6 +122,7 @@ export class AuthService {
       logWithMeta: () => undefined,
     } as unknown as AppLoggerService,
     @Optional()
+    @Inject(SecurityAuditService)
     private readonly securityAuditService: Pick<
       SecurityAuditService,
       "log"
