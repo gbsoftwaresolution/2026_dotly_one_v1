@@ -47,25 +47,26 @@ const FILTERS: Array<{
     key: "pending",
     label: "Next up",
     description:
-      "Keep the next conversation cue visible without turning this into work.",
+      "Keep the next relationship cue close, without letting it feel transactional.",
     emptyTitle: "Nothing to follow up right now",
     emptyDescription: dotlyPositioning.app.noFollowUps,
   },
   {
     key: "completed",
     label: "Done",
-    description: "A light history of follow-ups you already handled.",
+    description:
+      "A quiet record of the follow-ups you have already closed with care.",
     emptyTitle: "No finished follow-ups yet",
     emptyDescription:
-      "Finished follow-ups will show up here once you close the loop.",
+      "Completed follow-ups will gather here once each conversation is gracefully closed.",
   },
   {
     key: "cancelled",
     label: "Dismissed",
-    description: "Follow-ups you decided not to keep around.",
+    description: "Relationship reminders you chose not to keep in motion.",
     emptyTitle: "No dismissed follow-ups",
     emptyDescription:
-      "Dismissed follow-ups stay out of the way until you need the history.",
+      "Dismissed reminders stay tucked away until you want the history.",
   },
 ];
 
@@ -194,7 +195,7 @@ function getPendingSections(followUps: FollowUp[]) {
       key: "overdue",
       title: "Overdue",
       description:
-        "Start with the conversations that have been waiting longest.",
+        "Begin with the relationships that have waited the longest for your attention.",
       items: pending.filter(
         (followUp) => getPendingUrgency(followUp) === "overdue",
       ),
@@ -202,7 +203,7 @@ function getPendingSections(followUps: FollowUp[]) {
     {
       key: "due",
       title: "Ready now",
-      description: "These are ready for a quick follow-up right now.",
+      description: "These relationships are ready for a gentle touchpoint now.",
       items: pending.filter(
         (followUp) => getPendingUrgency(followUp) === "due",
       ),
@@ -210,7 +211,7 @@ function getPendingSections(followUps: FollowUp[]) {
     {
       key: "soon",
       title: "Coming up",
-      description: "These will be ready soon.",
+      description: "These will come into focus soon.",
       items: pending.filter(
         (followUp) => getPendingUrgency(followUp) === "soon",
       ),
@@ -218,7 +219,7 @@ function getPendingSections(followUps: FollowUp[]) {
     {
       key: "later",
       title: "Later",
-      description: "People you want to revisit later, without pressure.",
+      description: "People worth revisiting later, without pressure.",
       items: pending.filter(
         (followUp) => getPendingUrgency(followUp) === "later",
       ),
@@ -335,7 +336,7 @@ export function FollowUpsScreen() {
       setActionError(
         error instanceof ApiError
           ? error.message
-          : `Could not ${type} this follow-up right now.`,
+          : `Could not ${type} this follow-up just now.`,
       );
     } finally {
       setExitingIds((current) => {
@@ -360,7 +361,7 @@ export function FollowUpsScreen() {
   if (loadError) {
     return (
       <EmptyState
-        title="Follow-ups unavailable"
+        title="Follow-ups are unavailable"
         description={loadError}
         action={
           <PrimaryButton
@@ -383,10 +384,10 @@ export function FollowUpsScreen() {
         <div className="space-y-4">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-              Step 1
+              Member care
             </p>
             <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-              Follow-up lanes
+              Relationship rhythm
             </h2>
           </div>
 
@@ -428,7 +429,7 @@ export function FollowUpsScreen() {
             <div className="min-h-5">
               {isRefreshing ? (
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
-                  Syncing follow-ups...
+                  Refreshing quietly...
                 </p>
               ) : null}
             </div>
@@ -439,8 +440,9 @@ export function FollowUpsScreen() {
       {selectedStatus === "pending" && passiveReminderCount >= 6 ? (
         <div className="rounded-2xl bg-foreground/[0.03] px-4 py-3 ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <p className="text-sm leading-6 text-foreground/80">
-            {passiveReminderCount} passive reminders are grouped here. Focus on
-            the first few instead of clearing everything at once.
+            {passiveReminderCount} gentle reminders are grouped here. Start with
+            the first few relationships rather than trying to clear the whole
+            list.
           </p>
         </div>
       ) : null}
@@ -597,7 +599,7 @@ export function FollowUpsScreen() {
                               ? "Completing..."
                               : isPassiveReminder
                                 ? "Done"
-                                : "Mark done"}
+                                : "Mark complete"}
                           </PrimaryButton>
                           {isPassiveReminder ? (
                             <Link
@@ -606,7 +608,7 @@ export function FollowUpsScreen() {
                               )}
                               className="inline-flex min-h-[60px] w-full items-center justify-center rounded-2xl bg-foreground/[0.04] px-5 py-4 text-sm font-semibold text-foreground shadow-inner ring-1 ring-black/5 transition-all hover:bg-foreground/[0.06] active:scale-95 dark:bg-white/[0.05] dark:ring-white/10 dark:hover:bg-white/[0.07]"
                             >
-                              Set follow-up
+                              Plan a follow-up
                             </Link>
                           ) : (
                             <SecondaryButton
@@ -618,7 +620,7 @@ export function FollowUpsScreen() {
                               }
                             >
                               {isWorking && actionState?.type === "cancel"
-                                ? "Cancelling..."
+                                ? "Closing..."
                                 : "Dismiss"}
                             </SecondaryButton>
                           )}
@@ -709,7 +711,7 @@ export function FollowUpsScreen() {
                         ? getPassiveReminderScheduleLabel()
                         : followUp.status === "pending"
                           ? "Revisit on"
-                          : "Follow-up"}
+                          : "Relationship note"}
                     </p>
                     <p className="mt-1 text-sm font-medium text-foreground">
                       {formatReminder(followUp.remindAt)}
@@ -722,7 +724,7 @@ export function FollowUpsScreen() {
                     {resolutionLabel ? (
                       <p className="mt-1 text-xs text-muted">
                         {followUp.status === "completed"
-                          ? `Finished ${resolutionLabel}`
+                          ? `Completed ${resolutionLabel}`
                           : `Dismissed ${resolutionLabel}`}
                       </p>
                     ) : null}
@@ -753,7 +755,7 @@ export function FollowUpsScreen() {
                           ? "Completing..."
                           : isPassiveReminder
                             ? "Done"
-                            : "Mark done"}
+                            : "Mark complete"}
                       </PrimaryButton>
                       {isPassiveReminder ? (
                         <Link
@@ -762,7 +764,7 @@ export function FollowUpsScreen() {
                           )}
                           className="inline-flex min-h-[60px] w-full items-center justify-center rounded-2xl bg-foreground/[0.04] px-5 py-4 text-sm font-semibold text-foreground shadow-inner ring-1 ring-black/5 transition-all hover:bg-foreground/[0.06] active:scale-95 dark:bg-white/[0.05] dark:ring-white/10 dark:hover:bg-white/[0.07]"
                         >
-                          Set follow-up
+                          Plan a follow-up
                         </Link>
                       ) : (
                         <SecondaryButton
@@ -774,7 +776,7 @@ export function FollowUpsScreen() {
                           }
                         >
                           {isWorking && actionState?.type === "cancel"
-                            ? "Cancelling..."
+                            ? "Closing..."
                             : "Dismiss"}
                         </SecondaryButton>
                       )}

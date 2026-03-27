@@ -48,11 +48,13 @@ export function ConnectionDetailsPageRoute({
     setError(null);
 
     try {
-      const [connectionData, permissionData, overridesData] = await Promise.all([
-        getConnection(connectionId),
-        getResolvedPermissions(connectionId),
-        listPermissionOverrides(connectionId),
-      ]);
+      const [connectionData, permissionData, overridesData] = await Promise.all(
+        [
+          getConnection(connectionId),
+          getResolvedPermissions(connectionId),
+          listPermissionOverrides(connectionId),
+        ],
+      );
 
       setConnection(connectionData);
       setPermissions(permissionData);
@@ -61,7 +63,7 @@ export function ConnectionDetailsPageRoute({
       setError(
         loadError instanceof Error
           ? loadError.message
-          : "We could not load this connection.",
+          : "We couldn't load this connection.",
       );
     } finally {
       setIsLoading(false);
@@ -86,26 +88,26 @@ export function ConnectionDetailsPageRoute({
     return (
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-5">
         <Link
-          className="inline-flex items-center gap-2 text-base font-semibold text-sky-700"
+          className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 transition-colors hover:text-sky-800"
           href={routes.app.connections}
         >
           <ArrowLeft className="h-5 w-5" />
           Back to connections
         </Link>
-        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-center shadow-sm">
+        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-center shadow-sm transition-shadow duration-200">
           <ShieldAlert className="mx-auto mb-4 h-12 w-12 text-rose-500" />
           <h2 className="mb-2 text-xl font-bold text-rose-900">
-            Failed to load connection
+            We couldn&apos;t load this connection
           </h2>
           <p className="mb-6 text-rose-700">
-            {error || "This connection could not be found."}
+            {error || "This connection is not available right now."}
           </p>
           <button
             onClick={() => void loadData()}
             className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
           >
             <RefreshCw className="h-4 w-4" />
-            Try Again
+            Try again
           </button>
         </div>
       </div>
@@ -139,7 +141,7 @@ export function ConnectionDetailsPageRoute({
       setError(
         openError instanceof Error
           ? openError.message
-          : "We could not open this conversation.",
+          : "We couldn't open this conversation.",
       );
       setIsOpeningConversation(false);
     }
@@ -149,7 +151,7 @@ export function ConnectionDetailsPageRoute({
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-6 sm:px-5">
       <div className="space-y-5 rounded-3xl bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-6 shadow-sm ring-1 ring-slate-200">
         <Link
-          className="inline-flex items-center gap-2 text-base font-semibold text-sky-700"
+          className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 transition-colors hover:text-sky-800"
           href={routes.app.connections}
         >
           <ArrowLeft className="h-5 w-5" />
@@ -158,7 +160,7 @@ export function ConnectionDetailsPageRoute({
 
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Connection details
+            Connection overview
           </p>
           <h1 className="mt-2 text-4xl font-bold text-slate-950">
             {targetIdentity?.displayName ?? "Unknown contact"}
@@ -174,7 +176,7 @@ export function ConnectionDetailsPageRoute({
               onClick={() => void handleOpenConversation()}
               className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
             >
-              {isOpeningConversation ? "Opening..." : "Open Conversation"}
+              {isOpeningConversation ? "Opening..." : "Open conversation"}
             </button>
           </div>
           {connection.note ? (
@@ -189,7 +191,7 @@ export function ConnectionDetailsPageRoute({
         <div className="border-b border-slate-200 px-6 py-5">
           <h2 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
             <ShieldCheck className="h-6 w-6 text-sky-700" />
-            Status and trust
+            Status and privacy
           </h2>
         </div>
 

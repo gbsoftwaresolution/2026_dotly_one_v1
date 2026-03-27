@@ -151,19 +151,20 @@ describe("AppConversationDetailsPage", () => {
     });
 
     expect(
-      await screen.findByRole("heading", { name: "Chat with Mary Johnson" }),
+      await screen.findByRole("heading", {
+        name: "Conversation with Mary Johnson",
+      }),
     ).toBeInTheDocument();
     expect(mocks.requireServerSession).toHaveBeenCalledWith(
       routes.app.conversationDetail("conversation-1"),
     );
-    expect(screen.getByRole("link", { name: /back to inbox/i })).toHaveAttribute(
-      "href",
-      "/app/inbox?persona=persona-1",
-    );
+    expect(
+      screen.getByRole("link", { name: /back to inbox/i }),
+    ).toHaveAttribute("href", "/app/inbox?persona=persona-1");
     expect(screen.getByText("Persona route")).toBeInTheDocument();
     expect(screen.getByText("Investor Desk")).toBeInTheDocument();
-    expect(screen.getByText(/internal route #investor/i)).toBeInTheDocument();
-    expect(screen.getByText(/backend enforced/i)).toBeInTheDocument();
+    expect(screen.getByText(/route #investor/i)).toBeInTheDocument();
+    expect(screen.getByText(/privately scoped/i)).toBeInTheDocument();
     expect(mocks.getConversationContext).toHaveBeenCalledWith("conversation-1");
     expect(mocks.getPersona).toHaveBeenCalledWith("persona-1");
     expect(mocks.getConnection).toHaveBeenCalledWith("connection-1");
@@ -183,10 +184,10 @@ describe("AppConversationDetailsPage", () => {
     });
 
     expect(
-      await screen.findByText("Thread outside your scope"),
+      await screen.findByText("This conversation is not available to you"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/backend persona and participant access rules/i),
+      screen.getByText(/shared only with the people currently assigned to it/i),
     ).toBeInTheDocument();
   });
 

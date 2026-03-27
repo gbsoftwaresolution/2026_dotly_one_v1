@@ -158,15 +158,14 @@ describe("ProtectedConversationScreen", () => {
     });
 
     expect(
-      await screen.findByText("Chat with Mary Johnson"),
+      await screen.findByText("Conversation with Mary Johnson"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /back to inbox/i })).toHaveAttribute(
-      "href",
-      "/app/inbox?persona=persona-1",
-    );
+    expect(
+      screen.getByRole("link", { name: /back to inbox/i }),
+    ).toHaveAttribute("href", "/app/inbox?persona=persona-1");
     expect(screen.getByText("Persona route")).toBeInTheDocument();
     expect(screen.getByText("Investor Desk")).toBeInTheDocument();
-    expect(screen.getByText(/internal route #investor/i)).toBeInTheDocument();
+    expect(screen.getByText(/route #investor/i)).toBeInTheDocument();
     expect(
       screen.getAllByText(/restricted by backend policy resolution/i),
     ).toHaveLength(3);
@@ -198,7 +197,7 @@ describe("ProtectedConversationScreen", () => {
     });
 
     expect(
-      await screen.findByText("Failed to load environment"),
+      await screen.findByText("Unable to open this conversation"),
     ).toBeInTheDocument();
     expect(screen.getByText("API Timeout")).toBeInTheDocument();
 
@@ -219,7 +218,7 @@ describe("ProtectedConversationScreen", () => {
     await user.click(retryBtn);
 
     expect(
-      await screen.findByText("Chat with Mary Johnson"),
+      await screen.findByText("Conversation with Mary Johnson"),
     ).toBeInTheDocument();
     expect(mocks.getConnection).toHaveBeenCalledTimes(2);
   });

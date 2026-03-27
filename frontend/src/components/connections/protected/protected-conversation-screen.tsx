@@ -103,7 +103,9 @@ function formatHashPreview(value: string | null | undefined) {
     return "Not captured";
   }
 
-  return value.length > 16 ? `${value.slice(0, 8)}...${value.slice(-6)}` : value;
+  return value.length > 16
+    ? `${value.slice(0, 8)}...${value.slice(-6)}`
+    : value;
 }
 
 function buildInboxHref(input?: {
@@ -164,7 +166,9 @@ export function ProtectedConversationScreen({
       } catch (err) {
         if (cancelled) return;
         setError(
-          err instanceof Error ? err.message : "Failed to load conversation.",
+          err instanceof Error
+            ? err.message
+            : "We couldn't load this conversation.",
         );
       } finally {
         if (!cancelled) {
@@ -205,20 +209,20 @@ export function ProtectedConversationScreen({
   if (error || !connection) {
     return (
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-5">
-        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-center shadow-sm">
+        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-center shadow-sm transition-shadow duration-200">
           <ShieldAlert className="mx-auto h-12 w-12 text-rose-500 mb-4" />
           <h2 className="text-xl font-bold text-rose-900 mb-2">
-            Failed to load environment
+            Unable to open this conversation
           </h2>
           <p className="text-rose-700 mb-6">
-            {error || "Connection not found"}
+            {error || "This conversation is not available right now."}
           </p>
           <button
             onClick={() => void load()}
-            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 font-semibold text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
           >
             <RefreshCw className="h-4 w-4" />
-            Try Again
+            Try again
           </button>
         </div>
       </div>
@@ -255,12 +259,12 @@ export function ProtectedConversationScreen({
   const routingSummary = routingPersona
     ? getInternalRouteSummary(routingPersona)
     : conversation?.personaId
-      ? "Scoped through the persona route attached to this thread."
-      : "This thread stays with the identity-wide inbox.";
+      ? "This conversation is organized through the route attached to it."
+      : "This conversation stays in your main inbox.";
   const routingLabelText = routingPersona
-    ? getInternalRouteLabel(routingPersona)
+    ? getInternalRouteLabel(routingPersona).replace(/^Internal route/, "Route")
     : routingKey
-      ? `Internal route #${routingKey}`
+      ? `Route #${routingKey}`
       : conversation?.personaId
         ? "Persona route"
         : "Identity inbox";
@@ -276,7 +280,7 @@ export function ProtectedConversationScreen({
       ? "Archived lane"
       : inboxStatusFilter === "ACTIVE"
         ? "Active queue"
-        : "Inbox overview";
+        : "Inbox";
   const inboxRouteLabel =
     inboxPersonaFilter === "identity-default"
       ? "Identity inbox"
@@ -320,7 +324,7 @@ export function ProtectedConversationScreen({
     return (
       <div className="space-y-5">
         <Link
-          className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 hover:text-sky-800"
+          className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 transition-colors hover:text-sky-800"
           href={backLink.href}
         >
           <ArrowLeft className="h-5 w-5" />
@@ -328,15 +332,21 @@ export function ProtectedConversationScreen({
         </Link>
 
         <PageHeader
-          title={conversation?.title || `Chat with ${connection.targetIdentity?.displayName || "Unknown"}`}
-          description="Review routed context, current policy posture, and protected-mode actions for this conversation without losing the inbox lane it came from."
+          title={
+            conversation?.title ||
+            `Conversation with ${connection.targetIdentity?.displayName || "Unknown"}`
+          }
+          description="See who this conversation is with, how it is routed, and which actions are currently available without leaving your inbox flow."
         />
 
         <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-          <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] sm:p-6">
+          <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-2xl transition-shadow duration-200 dark:border-white/10 dark:bg-white/[0.02] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] sm:p-6">
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-black/[0.04] ring-1 ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
-                <MessagesSquare className="h-5 w-5 text-foreground" strokeWidth={2} />
+                <MessagesSquare
+                  className="h-5 w-5 text-foreground"
+                  strokeWidth={2}
+                />
               </div>
 
               <div className="min-w-0 space-y-3">
@@ -365,10 +375,12 @@ export function ProtectedConversationScreen({
 
                 <div>
                   <h2 className="text-[26px] font-bold tracking-tighter text-foreground">
-                    {connection.targetIdentity?.displayName || "Unknown contact"}
+                    {connection.targetIdentity?.displayName ||
+                      "Unknown contact"}
                   </h2>
                   <p className="mt-2 max-w-[54ch] text-[15px] font-medium leading-relaxed text-muted">
-                    Conversation access still comes from backend persona and participant scope enforcement, so members and operators only see this thread when their assignment allows it.
+                    Access stays private and intentional, so only the people
+                    assigned to this conversation can view it.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <StatusBadge label={inboxViewLabel} tone="neutral" />
@@ -396,7 +408,9 @@ export function ProtectedConversationScreen({
                 <p className="mt-2 text-sm font-semibold text-foreground">
                   {connectionTypeLabel || "Unknown"}
                 </p>
-                <p className="mt-1 text-sm text-muted">{trustStateLabel || "Trust state unavailable"}</p>
+                <p className="mt-1 text-sm text-muted">
+                  {trustStateLabel || "Trust state unavailable"}
+                </p>
               </div>
 
               <div className="rounded-[1.15rem] border border-black/5 bg-white/70 px-4 py-3 shadow-[0_4px_16px_rgba(0,0,0,0.03)] dark:border-white/10 dark:bg-black/20">
@@ -419,46 +433,59 @@ export function ProtectedConversationScreen({
                     : connection.targetIdentity?.displayName || "Unknown"}
                 </p>
                 <p className="mt-1 text-sm text-muted">
-                  {formatEnumLabel(connection.targetIdentity?.identityType) || "Identity"}
+                  {formatEnumLabel(connection.targetIdentity?.identityType) ||
+                    "Identity"}
                 </p>
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
+            <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl transition-shadow duration-200 dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
               <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
                 {conversation?.personaId ? "Persona route" : "Routing"}
               </p>
               <h2 className="mt-3 text-[22px] font-bold tracking-tighter text-foreground">
-                {conversation?.personaId ? routingLabel || "Persona-routed thread" : "Identity default thread"}
+                {conversation?.personaId
+                  ? routingLabel || "Persona-routed thread"
+                  : "Identity default thread"}
               </h2>
-              <p className="mt-2 text-sm leading-6 text-muted">{routingSummary}</p>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                {routingSummary}
+              </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <StatusBadge label={routingLabelText} tone="cyan" />
                 <StatusBadge label={inboxViewLabel} tone="neutral" />
                 {routingPersona?.username ? (
-                  <StatusBadge label={`@${routingPersona.username}`} tone="neutral" />
+                  <StatusBadge
+                    label={`@${routingPersona.username}`}
+                    tone="neutral"
+                  />
                 ) : null}
               </div>
             </div>
 
-            <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
+            <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl transition-shadow duration-200 dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
               <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
-                Access scope
+                Access
               </p>
               <h2 className="mt-3 text-[22px] font-bold tracking-tighter text-foreground">
-                Backend enforced
+                Privately scoped
               </h2>
               <p className="mt-2 text-sm leading-6 text-muted">
-                Owners keep full access. Scoped members and operators only see this thread when the backend confirms access to the routed persona or a valid participant on the conversation.
+                Owners keep full access. Everyone else sees this conversation
+                only when their assignment or participation allows it.
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <StatusBadge label="Assignment-safe UI" tone="neutral" />
+                <StatusBadge label="Assignment-aware view" tone="neutral" />
                 <StatusBadge
-                  label={restrictions.isProtected ? "Protected actions active" : "Standard actions active"}
+                  label={
+                    restrictions.isProtected
+                      ? "Protected actions on"
+                      : "Standard actions on"
+                  }
                   tone={restrictions.isProtected ? "cyan" : "success"}
                 />
               </div>
@@ -475,10 +502,10 @@ export function ProtectedConversationScreen({
           <div className="rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
             <div className="space-y-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                Thread canvas
+                Conversation view
               </p>
               <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-                Live conversation context without a fake transcript
+                A clear view of this conversation
               </h2>
             </div>
 
@@ -486,15 +513,20 @@ export function ProtectedConversationScreen({
               <div className="rounded-[1.25rem] border border-dashed border-black/10 bg-black/[0.025] px-4 py-4 dark:border-white/10 dark:bg-white/[0.03]">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-black/[0.04] ring-1 ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
-                    <MessagesSquare className="h-4 w-4 text-foreground" strokeWidth={2} />
+                    <MessagesSquare
+                      className="h-4 w-4 text-foreground"
+                      strokeWidth={2}
+                    />
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-foreground">
-                      Conversation timeline
+                      Conversation details
                     </p>
                     <p className="mt-1 text-sm leading-6 text-muted">
-                      Message events and the send composer are not exposed by the current frontend or backend contracts yet. This view stays truthful by showing the live route, scope, and permission state instead of synthetic chat content.
+                      Live messages are not available in this view yet. To keep
+                      things accurate, Dotly shows the current route, access
+                      protections, and action availability instead.
                     </p>
                   </div>
                 </div>
@@ -511,16 +543,18 @@ export function ProtectedConversationScreen({
 
                   <div className="rounded-[1rem] border border-black/5 bg-white/75 px-3 py-3 dark:border-white/10 dark:bg-black/20">
                     <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
-                      Last policy resolve
+                      Last access review
                     </p>
                     <p className="mt-2 text-sm font-semibold text-foreground">
-                      {formatConversationTimestamp(conversation?.lastResolvedAt)}
+                      {formatConversationTimestamp(
+                        conversation?.lastResolvedAt,
+                      )}
                     </p>
                   </div>
 
                   <div className="rounded-[1rem] border border-black/5 bg-white/75 px-3 py-3 dark:border-white/10 dark:bg-black/20">
                     <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
-                      Permission hash
+                      Protection reference
                     </p>
                     <p className="mt-2 break-all text-sm font-semibold text-foreground">
                       {formatHashPreview(conversation?.lastPermissionHash)}
@@ -577,12 +611,12 @@ export function ProtectedConversationScreen({
                   effect={restrictions.ai.effect}
                   reasonText={getExplanationText(
                     restrictions.ai.key,
-                    "Protected AI actions follow backend policy resolution.",
+                    "AI actions follow the current protection settings for this conversation.",
                   )}
                 >
                   <button className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 dark:bg-white/[0.06] dark:text-white/80 dark:ring-white/10 dark:hover:bg-white/[0.1]">
                     <BadgeInfo className="h-4 w-4" />
-                    Generate summary
+                    Create summary
                   </button>
                 </ProtectedActionState>
               </div>
@@ -590,12 +624,12 @@ export function ProtectedConversationScreen({
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
+            <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl transition-shadow duration-200 dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
               <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
-                Permission posture
+                Protection status
               </p>
               <h2 className="mt-3 text-[22px] font-bold tracking-tighter text-foreground">
-                Action visibility by policy
+                Available actions at a glance
               </h2>
               <div className="mt-4 flex flex-wrap gap-2">
                 <StatusBadge
@@ -613,7 +647,7 @@ export function ProtectedConversationScreen({
               </div>
               <p className="mt-4 text-sm leading-6 text-muted">
                 {permissionsExplanation?.summaryText ||
-                  "Protected restrictions are derived from backend policy resolution."}
+                  "These protections reflect the latest access and sharing rules for this conversation."}
               </p>
             </div>
 
@@ -630,7 +664,7 @@ export function ProtectedConversationScreen({
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-5">
       <Link
-        className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 hover:text-sky-800"
+        className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 transition-colors hover:text-sky-800"
         href={backLink.href}
       >
         <ArrowLeft className="h-5 w-5" />
@@ -642,7 +676,7 @@ export function ProtectedConversationScreen({
         explanation={permissionsExplanation}
       />
 
-      <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] sm:p-6">
+      <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-2xl transition-shadow duration-200 dark:border-white/10 dark:bg-white/[0.02] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] sm:p-6">
         <div className="flex flex-wrap items-center gap-2">
           {conversationTypeLabel ? (
             <span className="rounded-full border border-black/5 bg-black/[0.03] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-muted dark:border-white/10 dark:bg-white/[0.04]">
@@ -664,11 +698,12 @@ export function ProtectedConversationScreen({
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-[2rem]">
-              Chat with {connection.targetIdentity?.displayName || "Unknown"}
+              Conversation with{" "}
+              {connection.targetIdentity?.displayName || "Unknown"}
             </h1>
             <p className="mt-2 max-w-[48ch] text-sm leading-6 text-muted">
-              The thread keeps legacy protected-mode behavior, now with routing
-              context surfaced directly in the new app shell.
+              The same privacy protections stay in place here, with routing and
+              access details brought into view.
             </p>
           </div>
 
@@ -681,7 +716,9 @@ export function ProtectedConversationScreen({
                 {routingLabel || "Persona-routed thread"}
               </p>
               <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-200">
-                {routingKey ? `Routed via #${routingKey}` : "Persona route active"}
+                {routingKey
+                  ? `Route key #${routingKey}`
+                  : "Persona route active"}
               </p>
             </div>
           ) : null}
@@ -728,7 +765,7 @@ export function ProtectedConversationScreen({
                 {connection.targetIdentity?.displayName}
               </p>
               <p className="mt-1 text-slate-700">
-                Hi there, here is the secret document you requested.
+                Live message preview is not available in this view.
               </p>
               <div className="mt-3 flex gap-2">
                 <ProtectedActionState
@@ -755,7 +792,7 @@ export function ProtectedConversationScreen({
                 >
                   <button className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50">
                     <FileText className="h-3 w-3" />
-                    Save Attachment
+                    Save copy
                   </button>
                 </ProtectedActionState>
               </div>
@@ -765,7 +802,7 @@ export function ProtectedConversationScreen({
 
         <div className="mt-8 flex gap-3 border-t border-slate-100 pt-6">
           <button className="flex-1 rounded-xl bg-slate-100 px-4 py-3 text-left text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            Type a message...
+            Message composer unavailable in this preview
           </button>
 
           <ProtectedActionState

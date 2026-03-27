@@ -108,6 +108,8 @@ describe("AppConnectionDetailsPage", () => {
       routes.app.connectionDetail("connection-1"),
     );
     expect(await screen.findByText("Mary Johnson")).toBeInTheDocument();
+    expect(screen.getByText("Connection overview")).toBeInTheDocument();
+    expect(screen.getByText("Status and privacy")).toBeInTheDocument();
     expect(
       screen.getByText(/known through the neighborhood center/i),
     ).toBeInTheDocument();

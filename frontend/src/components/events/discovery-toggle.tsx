@@ -31,8 +31,8 @@ export function DiscoveryToggle({
         </div>
         <p className="text-xs text-muted">
           {enabled
-            ? "Broadcasting — you are visible to others at this event."
-            : "Stealth — you are hidden. Toggle on to appear in the participant list."}
+            ? "Visible now - other attendees can find you in this gathering."
+            : "Private for now - turn this on when you are ready to be discoverable."}
         </p>
       </div>
 
@@ -57,7 +57,7 @@ export function DiscoveryToggle({
           .filter(Boolean)
           .join(" ")}
       >
-        <span className="sr-only">Toggle discovery</span>
+        <span className="sr-only">Toggle discovery signal</span>
         <span
           className={[
             "pointer-events-none inline-block h-6 w-6 transform rounded-full shadow-md ring-0",

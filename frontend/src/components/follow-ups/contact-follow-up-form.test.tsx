@@ -237,9 +237,9 @@ describe("ContactFollowUpForm", () => {
       }),
     );
 
-    expect(screen.getByText(/reach out again/i)).toBeInTheDocument();
+    expect(screen.getByText(/reopen the conversation/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/you haven't interacted in a while/i),
+      screen.getByText(/it has been a little while since your last exchange/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/^gentle$/i)).toBeInTheDocument();
   });

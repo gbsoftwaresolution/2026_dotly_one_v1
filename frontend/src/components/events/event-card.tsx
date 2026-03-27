@@ -14,7 +14,7 @@ function statusBadgeProps(status: EventStatus): {
 } {
   switch (status) {
     case "live":
-      return { label: "Live", tone: "success" };
+      return { label: "Live now", tone: "success" };
     case "upcoming":
       return { label: "Upcoming", tone: "warning" };
     case "ended":
@@ -67,14 +67,14 @@ export function EventCard({ event }: EventCardProps) {
         {event.myParticipation ? (
           <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
             <p className="font-mono text-xs text-muted">
-              Attending as{" "}
+              Present as{" "}
               <span className="font-medium capitalize text-foreground">
                 {event.myParticipation.role}
               </span>
               {event.myParticipation.discoverable ? (
-                <span className="ml-2 text-foreground/80">· Broadcasting</span>
+                <span className="ml-2 text-foreground/80">· Visible</span>
               ) : (
-                <span className="ml-2 text-muted">· Stealth</span>
+                <span className="ml-2 text-muted">· Private</span>
               )}
             </p>
           </div>

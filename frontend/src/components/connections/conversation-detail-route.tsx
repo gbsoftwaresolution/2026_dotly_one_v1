@@ -47,19 +47,19 @@ export function ConversationDetailRoute({
   const appErrorCopy =
     error?.kind === "forbidden"
       ? {
-          title: "Thread outside your scope",
+          title: "This conversation is not available to you",
           description:
-            "This conversation is still protected by backend persona and participant access rules. Ask an owner or admin operator to expand your assignment if you should be able to open it.",
+            "This conversation is shared only with the people currently assigned to it. If you need access, ask an owner or workspace admin to update your coverage.",
         }
       : error?.kind === "not-found"
         ? {
-            title: "Conversation not found",
+            title: "This conversation could not be found",
             description:
-              "This thread may have been archived, removed, or moved outside the current inbox view.",
+              "It may have been archived, removed, or moved out of this inbox view.",
           }
         : {
-            title: "Could not load conversation",
-            description: error?.message ?? "Failed to load conversation.",
+            title: "We couldn't load this conversation",
+            description: error?.message ?? "Please try again in a moment.",
           };
 
   if (isLoading) {
@@ -67,7 +67,7 @@ export function ConversationDetailRoute({
       return (
         <div className="space-y-5">
           <Link
-            className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 hover:text-sky-800"
+            className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 transition-colors hover:text-sky-800"
             href={routes.app.inbox}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -111,7 +111,7 @@ export function ConversationDetailRoute({
       return (
         <div className="space-y-5">
           <Link
-            className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 hover:text-sky-800"
+            className="inline-flex items-center gap-2 text-base font-semibold text-sky-700 transition-colors hover:text-sky-800"
             href={routes.app.inbox}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -134,10 +134,10 @@ export function ConversationDetailRoute({
     return (
       <div className="rounded-[1.75rem] border border-rose-200 bg-rose-50 p-6 text-center shadow-sm dark:border-rose-500/20 dark:bg-rose-500/10 sm:p-8">
         <h1 className="text-xl font-bold text-rose-900 dark:text-rose-100">
-          Failed to load conversation
+          We couldn&apos;t load this conversation
         </h1>
         <p className="mt-2 text-sm font-medium text-rose-700 dark:text-rose-200">
-          {error?.message || "Conversation not found."}
+          {error?.message || "This conversation is not available right now."}
         </p>
       </div>
     );

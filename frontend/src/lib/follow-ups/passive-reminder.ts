@@ -10,17 +10,15 @@ type PassiveReminderLike = {
 export function isPassiveInactivityFollowUp(
   followUp: PassiveReminderLike | null | undefined,
 ) {
-  return Boolean(
-    followUp?.isSystemGenerated && followUp.type === "inactivity",
-  );
+  return Boolean(followUp?.isSystemGenerated && followUp.type === "inactivity");
 }
 
 export function getPassiveReminderBadgeLabel() {
-  return "Stay in touch";
+  return "Stay close";
 }
 
 export function getPassiveReminderHeadline() {
-  return "Reach out again";
+  return "Reopen the conversation";
 }
 
 export function getPassiveReminderScheduleLabel() {
@@ -28,11 +26,11 @@ export function getPassiveReminderScheduleLabel() {
 }
 
 export function getPassiveReminderBody() {
-  return "You haven't interacted in a while.";
+  return "It has been a little while since your last exchange.";
 }
 
 export function getPassiveReminderDetailTitle() {
-  return "Consider reconnecting";
+  return "Consider a thoughtful reconnect";
 }
 
 export function getPassiveReminderRelationshipIds(followUps: FollowUp[]) {

@@ -79,9 +79,7 @@ export function NotificationsScreen() {
 
         if (options?.clearError ?? true) {
           const message =
-            err instanceof Error
-              ? err.message
-              : "Unable to load notifications.";
+            err instanceof Error ? err.message : "Unable to load your updates.";
           setLoadError(message);
         }
 
@@ -102,17 +100,17 @@ export function NotificationsScreen() {
   function getMarkReadErrorMessage(error: unknown) {
     if (error instanceof ApiError) {
       if (error.status === 404) {
-        return "This notification is no longer available. Refreshing the list...";
+        return "This update is no longer available. Refreshing your list...";
       }
 
       if (error.status === 400) {
-        return "This notification link is invalid. Refreshing the list...";
+        return "This update link is invalid. Refreshing your list...";
       }
 
       return error.message;
     }
 
-    return "Could not mark this notification as read.";
+    return "Could not mark this update as reviewed.";
   }
 
   async function handleMarkRead(id: string) {
@@ -175,7 +173,9 @@ export function NotificationsScreen() {
       }
 
       setMarkAllError(
-        err instanceof Error ? err.message : "Could not mark all as read.",
+        err instanceof Error
+          ? err.message
+          : "Could not mark everything as reviewed.",
       );
     } finally {
       setIsMarkingAll(false);
@@ -195,7 +195,7 @@ export function NotificationsScreen() {
   if (loadError) {
     return (
       <EmptyState
-        title="Could not load notifications"
+        title="Could not open your updates"
         description={loadError}
         action={
           <PrimaryButton
@@ -212,8 +212,8 @@ export function NotificationsScreen() {
   if (notifications.length === 0) {
     return (
       <EmptyState
-        title="No notifications yet"
-        description="You will see contact requests, event updates, and connection alerts here."
+        title="Your updates are quiet for now"
+        description="Introductions, event notes, and member-care moments will arrive here."
       />
     );
   }
@@ -222,7 +222,7 @@ export function NotificationsScreen() {
     <div className="space-y-4">
       <div className="space-y-1">
         <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-          Read the stream
+          Recent updates
         </h2>
       </div>
 
@@ -231,7 +231,7 @@ export function NotificationsScreen() {
           {unreadCount > 0 ? (
             <div className="flex items-center justify-between">
               <p className="font-mono text-xs text-muted dark:text-zinc-500">
-                {unreadCount} unread
+                {unreadCount} awaiting review
               </p>
               <button
                 type="button"
@@ -239,7 +239,7 @@ export function NotificationsScreen() {
                 disabled={isMarkingAll}
                 className="font-mono text-xs font-medium text-foreground transition-opacity hover:opacity-70 disabled:opacity-40"
               >
-                {isMarkingAll ? "Marking…" : "Mark all as read"}
+                {isMarkingAll ? "Reviewing…" : "Mark all reviewed"}
               </button>
             </div>
           ) : null}

@@ -60,9 +60,11 @@ describe("PassiveReconnectHint", () => {
       }),
     );
 
-    expect(screen.getByText(/consider reconnecting/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/you haven't interacted in a while/i),
+      screen.getByText(/consider a thoughtful reconnect/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/it has been a little while since your last exchange/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/reconnect after 2 weeks/i)).toBeInTheDocument();
   });

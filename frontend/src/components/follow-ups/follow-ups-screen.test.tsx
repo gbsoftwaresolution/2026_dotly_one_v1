@@ -103,7 +103,7 @@ describe("FollowUpsScreen", () => {
     render(React.createElement(FollowUpsScreen));
 
     expect(
-      await screen.findByText(/follow-ups unavailable/i),
+      await screen.findByText(/follow-ups are unavailable/i),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /try again/i }),
@@ -133,7 +133,7 @@ describe("FollowUpsScreen", () => {
     expect(
       await screen.findByRole("heading", { name: /^next up$/i }),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /^mark done$/i }));
+    await user.click(screen.getByRole("button", { name: /^mark complete$/i }));
 
     await waitFor(() => {
       expect(mocks.complete).toHaveBeenCalledWith("follow-up-1");
@@ -156,7 +156,7 @@ describe("FollowUpsScreen", () => {
     await user.click(screen.getByRole("button", { name: /^dismiss$/i }));
 
     expect(
-      await screen.findByText(/could not cancel this follow-up right now/i),
+      await screen.findByText(/could not cancel this follow-up just now/i),
     ).toBeInTheDocument();
     expect(screen.getByText("Alice Demo")).toBeInTheDocument();
   });
@@ -183,7 +183,7 @@ describe("FollowUpsScreen", () => {
 
     expect(mocks.processDue).toHaveBeenCalledTimes(1);
 
-    expect(await screen.findByText(/finished apr/i)).toBeInTheDocument();
+    expect(await screen.findByText(/completed apr/i)).toBeInTheDocument();
   });
 
   it("groups pending reminders by urgency so due work stays near the top", async () => {
@@ -348,7 +348,7 @@ describe("FollowUpsScreen", () => {
     expect(await screen.findByText("Connected via QR")).toBeInTheDocument();
   });
 
-  it("renders system-generated follow-ups with softer copy and a set-follow-up action", async () => {
+  it("renders system-generated follow-ups with softer copy and a plan-follow-up action", async () => {
     mocks.list.mockResolvedValue([
       createFollowUp({
         isSystemGenerated: true,
@@ -359,14 +359,16 @@ describe("FollowUpsScreen", () => {
 
     render(React.createElement(FollowUpsScreen));
 
-    expect(await screen.findByText(/reach out again/i)).toBeInTheDocument();
-    expect(screen.getByText(/stay in touch/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/reopen the conversation/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/stay close/i)).toBeInTheDocument();
     expect(screen.getByText(/reconnect after 2 weeks/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/you haven't interacted in a while/i),
+      screen.getByText(/it has been a little while since your last exchange/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /set follow-up/i }),
+      screen.getByRole("link", { name: /plan a follow-up/i }),
     ).toHaveAttribute("href", routes.app.contactDetail("relationship-1"));
     expect(screen.getAllByRole("button", { name: /^done$/i })).toHaveLength(2);
   });

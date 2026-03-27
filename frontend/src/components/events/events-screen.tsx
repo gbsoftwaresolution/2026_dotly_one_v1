@@ -86,11 +86,11 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
     e.preventDefault();
     const trimmed = eventCode.trim();
     if (!trimmed) {
-      setError("Enter an event access code.");
+      setError("Enter the private event code.");
       return;
     }
     if (!selectedPersonaId) {
-      setError("Select a persona to attend as.");
+      setError("Choose the identity you would like to arrive as.");
       return;
     }
     setIsSubmitting(true);
@@ -103,7 +103,9 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
       setIsOpen(false);
       onJoined(event);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not join event.");
+      setError(
+        err instanceof Error ? err.message : "Could not join this gathering.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -113,8 +115,8 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
     return (
       <VerificationPrompt
         email={user.email}
-        title="Verify your account before joining events"
-        description="Dotly event networking only opens for accounts with a verified email or mobile verification. Add either one to join an event and participate in discovery safely."
+        title="Verify your account before joining gatherings"
+        description="Dotly event networking opens only for accounts with a verified email or mobile verification. Add either one to join a gathering and take part in discovery with confidence."
       />
     );
   }
@@ -126,9 +128,9 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
           onClick={() => setIsOpen(true)}
           className="flex w-full items-center justify-between rounded-3xl bg-foreground/[0.03] px-5 py-5 text-sm font-semibold text-muted shadow-inner ring-1 ring-inset ring-black/5 transition-all hover:bg-foreground/[0.05] hover:text-foreground dark:bg-white/[0.045] dark:ring-white/5 dark:hover:bg-white/[0.06] active:scale-[0.98]"
         >
-          <span>Join an event</span>
+          <span>Enter a private gathering</span>
           <span className="font-mono text-xs tracking-widest">
-            + Enter code
+            + Use invite code
           </span>
         </button>
       ) : (
@@ -136,7 +138,7 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <label htmlFor="event-code" className="label-xs text-muted">
-                Event Access Code
+                Private event code
               </label>
               <input
                 ref={inputRef}
@@ -144,7 +146,7 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
                 type="text"
                 value={eventCode}
                 onChange={(e) => setEventCode(e.target.value)}
-                placeholder="Paste the event access code"
+                placeholder="Paste the private invite code"
                 className={inputCls}
                 autoComplete="off"
                 spellCheck={false}
@@ -154,7 +156,7 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
             {/* Persona selector */}
             <div className="space-y-1.5">
               <label htmlFor="event-persona" className="label-xs text-muted">
-                Attend as
+                Arrive as
               </label>
               {personasLoading ? (
                 <div className="h-12 animate-pulse rounded-2xl bg-foreground/[0.03] dark:bg-white/[0.045]" />
@@ -190,7 +192,7 @@ function JoinPanel({ onJoined, user }: JoinPanelProps) {
                 disabled={isSubmitting || personasLoading}
                 className="flex-1"
               >
-                {isSubmitting ? "Joining…" : "Join Event"}
+                {isSubmitting ? "Joining…" : "Join gathering"}
               </PrimaryButton>
               <button
                 type="button"
@@ -256,7 +258,7 @@ export function EventsScreen({ user }: { user: UserProfile }) {
 
         if (!cancelled)
           setLoadError(
-            err instanceof Error ? err.message : "Unable to load events.",
+            err instanceof Error ? err.message : "Unable to load gatherings.",
           );
       })
       .finally(() => {
@@ -285,7 +287,9 @@ export function EventsScreen({ user }: { user: UserProfile }) {
   }
 
   if (loadError) {
-    return <EmptyState title="Could not load events" description={loadError} />;
+    return (
+      <EmptyState title="Could not load gatherings" description={loadError} />
+    );
   }
 
   return (
@@ -294,8 +298,8 @@ export function EventsScreen({ user }: { user: UserProfile }) {
 
       {events.length === 0 ? (
         <EmptyState
-          title="No events yet"
-          description="Join an event using the access code or link shared by the organizer."
+          title="No gatherings yet"
+          description="Join with the private code or invitation link shared by the host."
         />
       ) : (
         events.map((event) => <EventCard key={event.id} event={event} />)

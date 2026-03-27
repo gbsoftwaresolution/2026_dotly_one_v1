@@ -32,7 +32,7 @@ export function SupportInboxScreen() {
         setError(
           loadError instanceof Error
             ? loadError.message
-            : "Unable to load support requests.",
+            : "Unable to load member-care requests.",
         );
       } finally {
         setIsLoading(false);
@@ -58,7 +58,7 @@ export function SupportInboxScreen() {
       setError(
         updateError instanceof ApiError
           ? updateError.message
-          : "Unable to update support request.",
+          : "Unable to update this member-care request.",
       );
     } finally {
       setUpdatingId(null);
@@ -77,7 +77,7 @@ export function SupportInboxScreen() {
 
   if (error) {
     return (
-      <EmptyState title="Could not load support inbox" description={error} />
+      <EmptyState title="Could not open the care inbox" description={error} />
     );
   }
 
@@ -86,10 +86,10 @@ export function SupportInboxScreen() {
       <div className="rounded-[1.75rem] bg-foreground/[0.02] p-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.03] dark:ring-white/5 sm:rounded-3xl sm:p-5">
         <div className="mb-4 space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-            Concierge view
+            Member care
           </p>
           <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-            Keep support close to the relationship
+            Keep every request close to the relationship
           </h2>
         </div>
 
@@ -114,13 +114,13 @@ export function SupportInboxScreen() {
 
       {requests.length === 0 ? (
         <EmptyState
-          title="No support conversations"
+          title="No care conversations"
           description={
             filter === "resolved"
               ? "No resolved conversations match this view yet."
               : filter === "open"
-                ? "No active support conversations need attention right now."
-                : "New support conversations will appear here when someone reaches out."
+                ? "No active care conversations need attention right now."
+                : "New care conversations will appear here when a member reaches out."
           }
         />
       ) : (
@@ -178,8 +178,8 @@ export function SupportInboxScreen() {
                     {updatingId === request.id
                       ? "Updating..."
                       : request.status === "open"
-                        ? "Mark resolved"
-                        : "Reopen"}
+                        ? "Mark cared for"
+                        : "Reopen conversation"}
                   </button>
                 </div>
               </div>

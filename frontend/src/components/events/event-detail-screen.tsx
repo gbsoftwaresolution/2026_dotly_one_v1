@@ -94,9 +94,9 @@ function StealthShield() {
             <line x1="1" y1="1" x2="23" y2="23" />
           </svg>
         </div>
-        <p className="label-xs text-muted">Stealth Mode</p>
+        <p className="label-xs text-muted">Private presence</p>
         <p className="px-6 text-center text-xs text-muted">
-          Enable your Discovery Signal to see who else is here.
+          Turn on your Discovery Signal to see who is present here.
         </p>
       </div>
     </div>
@@ -151,7 +151,9 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
 
         if (!cancelled)
           setLoadError(
-            err instanceof Error ? err.message : "Unable to load event.",
+            err instanceof Error
+              ? err.message
+              : "Unable to load this gathering.",
           );
       })
       .finally(() => {
@@ -179,7 +181,7 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
         }
 
         setParticipantsError(
-          err instanceof Error ? err.message : "Unable to load participants.",
+          err instanceof Error ? err.message : "Unable to load attendees.",
         );
       })
       .finally(() => setParticipantsLoading(false));
@@ -236,7 +238,9 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
       }
 
       setDiscoveryError(
-        err instanceof Error ? err.message : "Could not update discovery.",
+        err instanceof Error
+          ? err.message
+          : "Could not update your visibility.",
       );
     } finally {
       setDiscoveryToggling(false);
@@ -256,8 +260,8 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
   if (loadError || !event) {
     return (
       <EmptyState
-        title="Could not load event"
-        description={loadError ?? "Event not found."}
+        title="Could not open this gathering"
+        description={loadError ?? "Gathering not found."}
       />
     );
   }
@@ -296,8 +300,8 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
       {/* ── Not joined ──────────────────────────────────────────────────── */}
       {!hasJoined ? (
         <EmptyState
-          title="You have not joined this event"
-          description="Use the event access code or link from the organizer to join."
+          title="You have not joined this gathering"
+          description="Use the private code or invitation link from the host to enter."
         />
       ) : null}
 
@@ -316,7 +320,7 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
                 compact
                 email={user.email}
                 title="Verify your account before enabling discovery"
-                description="Participant visibility and discovery signals stay behind accounts with a verified email or mobile verification. Add either one to enable event discovery."
+                description="Participant visibility and discovery stay reserved for accounts with a verified email or mobile verification. Add either one to turn on event discovery."
               />
             </div>
           ) : null}
@@ -329,7 +333,7 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
           ) : null}
           <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
             <p className="font-mono text-xs text-muted">
-              Attending as{" "}
+              Present as{" "}
               <span className="font-medium capitalize text-foreground">
                 {event.myParticipation?.role ?? "attendee"}
               </span>
@@ -341,14 +345,14 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
       {/* ── Participants section (live window only, joined only) ─────────── */}
       {hasJoined && event.status === "live" ? (
         <section className="flex flex-col gap-3">
-          <h3 className="label-xs text-muted">People here</h3>
+          <h3 className="label-xs text-muted">People present</h3>
 
           {!canViewParticipants ? (
             <VerificationPrompt
               compact
               email={user.email}
-              title="Verify your account to view participants"
-              description="Dotly only reveals discoverable event participants to accounts with a verified email or mobile verification."
+              title="Verify your account to view attendees"
+              description="Dotly only reveals discoverable event attendees to accounts with a verified email or mobile verification."
             />
           ) : !isDiscoverable ? (
             <StealthShield />
@@ -360,13 +364,13 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
             </div>
           ) : participantsError ? (
             <EmptyState
-              title="Could not load participants"
+              title="Could not load attendees"
               description={participantsError}
             />
           ) : participants.length === 0 ? (
             <EmptyState
-              title="No one else is broadcasting yet"
-              description="You are the first to enable discovery here. Others will appear as they turn on their signal."
+              title="No one else is visible yet"
+              description="You are the first to share your presence here. Others will appear as they turn on discovery."
             />
           ) : (
             <ParticipantsList
@@ -382,7 +386,7 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
       {hasJoined && event.status === "upcoming" ? (
         <div className="rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <p className="text-center font-mono text-xs text-muted">
-            Participant discovery opens when the event goes live.
+            Participant discovery opens once the gathering is live.
           </p>
         </div>
       ) : null}
@@ -391,7 +395,7 @@ export function EventDetailScreen({ eventId, user }: EventDetailScreenProps) {
       {hasJoined && event.status === "ended" ? (
         <div className="rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
           <p className="text-center font-mono text-xs text-muted">
-            This event has ended. Discovery is closed.
+            This gathering has ended. Discovery is now closed.
           </p>
         </div>
       ) : null}
