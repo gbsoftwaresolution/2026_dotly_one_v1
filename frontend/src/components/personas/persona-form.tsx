@@ -349,7 +349,7 @@ export function PersonaForm() {
             value={formState.username}
             onChange={(event) => updateField("username", event.target.value)}
           />
-          <div className="space-y-2 rounded-2xl bg-foreground/[0.02] px-4 py-3.5 ring-1 ring-inset ring-black/5 dark:ring-white/5 sm:hidden">
+          <div className="space-y-2 rounded-[20px] bg-white/50 backdrop-blur-md px-4 py-3.5 ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 sm:hidden">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm leading-6 text-muted">
@@ -363,7 +363,7 @@ export function PersonaForm() {
               <button
                 type="button"
                 onClick={() => setIsUsernameHelpExpanded((current) => !current)}
-                className="shrink-0 rounded-full bg-foreground/[0.04] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground shadow-inner ring-1 ring-black/5 dark:bg-white/[0.08] dark:ring-white/10"
+                className="shrink-0 rounded-full bg-white/60 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground shadow-sm ring-1 ring-inset ring-black/5 backdrop-blur-md transition-all hover:bg-white/80 dark:bg-zinc-800/60 dark:ring-white/10 dark:hover:bg-zinc-800/80"
               >
                 {isUsernameHelpExpanded ? "Less" : "Rules"}
               </button>
@@ -397,7 +397,7 @@ export function PersonaForm() {
               </div>
             ) : null}
           </div>
-          <div className="hidden space-y-1.5 rounded-2xl bg-foreground/[0.02] px-4 py-3 ring-1 ring-inset ring-black/5 dark:ring-white/5 sm:block">
+          <div className="hidden space-y-1.5 rounded-[20px] bg-white/50 backdrop-blur-md px-4 py-3 ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 sm:block">
             <p className="text-sm leading-6 text-muted">
               This becomes your public Dotly link when the persona is shareable.
             </p>
@@ -557,7 +557,7 @@ export function PersonaForm() {
       </section>
 
       {error ? (
-        <div className="rounded-2xl bg-rose-500/5 px-4 py-3.5 ring-1 ring-inset ring-rose-500/20">
+        <div className="rounded-[20px] bg-rose-500/5 px-4 py-3.5 ring-1 ring-inset ring-rose-500/20 backdrop-blur-sm">
           <p className="font-mono text-sm text-rose-600 dark:text-rose-400">
             {error}
           </p>
