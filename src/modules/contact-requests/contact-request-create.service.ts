@@ -1,7 +1,9 @@
 import {
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
+  Optional,
 } from "@nestjs/common";
 import {
   PersonaSharingMode as PrismaPersonaSharingMode,
@@ -80,6 +82,8 @@ export class ContactRequestCreateService {
     private readonly notificationsService: NotificationsService,
     private readonly analyticsService: AnalyticsService,
     private readonly verificationPolicyService: VerificationPolicyService = failClosedVerificationPolicyService as VerificationPolicyService,
+    @Optional()
+    @Inject(ActivationMilestonesService)
     private readonly activationMilestonesService: Pick<
       ActivationMilestonesService,
       "markFirstRequestReceived"

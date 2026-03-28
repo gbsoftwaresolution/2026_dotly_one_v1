@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils/cn";
 
@@ -17,7 +17,6 @@ export function BottomSheet({
   title,
   children,
 }: BottomSheetProps) {
-  // Prevent body scroll when open
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -33,17 +32,15 @@ export function BottomSheet({
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 z-[190] bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[190] bg-black/40 backdrop-blur-sm"
             onClick={onClose}
           />
 
-          {/* Sheet */}
           <motion.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
@@ -64,15 +61,13 @@ export function BottomSheet({
             }}
             className={cn(
               "fixed inset-x-0 bottom-0 z-[200] flex flex-col items-center",
-              "w-full max-w-[600px] mx-auto overflow-hidden rounded-t-[2.5rem]",
-              "bg-white/95 dark:bg-[#121212]/95 border-t border-white/20 dark:border-white/10 backdrop-blur-[40px] saturate-[180%]",
-              "shadow-[0_-8px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_40px_rgba(0,0,0,0.5)]",
+              "w-full max-w-[600px] mx-auto overflow-hidden rounded-t-[32px]",
+              "bg-white/60 backdrop-blur-3xl dark:bg-zinc-900/60 ring-1 ring-black/5 dark:ring-white/10",
+              "shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)]",
             )}
           >
-            {/* Inner highlight for 3D feel */}
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
 
-            {/* Drag Handle */}
             <div className="w-full flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing">
               <div className="w-12 h-1.5 rounded-full bg-black/15 dark:bg-white/20" />
             </div>

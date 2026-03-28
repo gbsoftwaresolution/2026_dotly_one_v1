@@ -38,10 +38,7 @@ type EntryKind = "member" | "operator";
 type TeamAccessFeedbackTone = "success" | "error" | "neutral";
 
 function isManageAccessError(error: unknown) {
-  return (
-    error instanceof ApiError &&
-    error.status === 403
-  );
+  return error instanceof ApiError && error.status === 403;
 }
 
 function entryKey(kind: EntryKind, entryId: string) {
@@ -105,13 +102,9 @@ function replaceEntry(
 }
 
 export function TeamAccessManager() {
-  const {
-    activeIdentity,
-    isLoading: isIdentityLoading,
-  } = useIdentityContext();
-  const [teamAccess, setTeamAccess] = useState<IdentityTeamAccessPayload | null>(
-    null,
-  );
+  const { activeIdentity, isLoading: isIdentityLoading } = useIdentityContext();
+  const [teamAccess, setTeamAccess] =
+    useState<IdentityTeamAccessPayload | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -155,7 +148,8 @@ export function TeamAccessManager() {
           const nextDrafts: Record<string, string[]> = {};
 
           for (const member of nextTeamAccess.members) {
-            nextDrafts[entryKey("member", member.id)] = member.assignedPersonaIds;
+            nextDrafts[entryKey("member", member.id)] =
+              member.assignedPersonaIds;
           }
 
           for (const operator of nextTeamAccess.operators) {
@@ -196,8 +190,7 @@ export function TeamAccessManager() {
     (teamAccess?.members.length ?? 0) > 0 ||
     (teamAccess?.operators.length ?? 0) > 0;
   const hasManageAccessError =
-    error !== null &&
-    error.includes("can manage persona inbox assignments");
+    error !== null && error.includes("can manage persona inbox assignments");
 
   const activeIdentityLabel = useMemo(() => {
     if (teamAccess?.identity) {
@@ -370,7 +363,7 @@ export function TeamAccessManager() {
     return (
       <article
         key={entry.id}
-        className="rounded-[1.5rem] border border-black/5 bg-black/[0.02] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] sm:p-5"
+        className="rounded-[32px] bg-white/60 backdrop-blur-3xl p-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-1 dark:bg-zinc-900/60 dark:ring-white/10"
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
@@ -379,7 +372,10 @@ export function TeamAccessManager() {
                 {entry.email ?? entry.personId}
               </p>
               <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge label={entry.role.replaceAll("_", " ")} tone={roleTone(entry.role)} />
+                <StatusBadge
+                  label={entry.role.replaceAll("_", " ")}
+                  tone={roleTone(entry.role)}
+                />
                 <StatusBadge
                   label={
                     entry.accessMode === "full"
@@ -448,7 +444,7 @@ export function TeamAccessManager() {
 
     return (
       <section className="space-y-4">
-        <div className="flex items-start gap-4 rounded-[1.5rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02]">
+        <div className="flex items-start gap-4 rounded-[32px] bg-white/60 backdrop-blur-3xl p-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-1 dark:bg-zinc-900/60 dark:ring-white/10">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black/[0.04] ring-1 ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
             <Icon className="h-5 w-5 text-foreground" strokeWidth={2} />
           </div>
@@ -469,7 +465,9 @@ export function TeamAccessManager() {
             description={config.emptyDescription}
           />
         ) : (
-          <div className="space-y-4">{entries.map((entry) => renderEntryCard(kind, entry))}</div>
+          <div className="space-y-4">
+            {entries.map((entry) => renderEntryCard(kind, entry))}
+          </div>
         )}
       </section>
     );
@@ -496,7 +494,7 @@ export function TeamAccessManager() {
       />
 
       <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] sm:p-6">
+        <div className="rounded-[32px] bg-white/60 backdrop-blur-3xl p-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-1 dark:bg-zinc-900/60 dark:ring-white/10">
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black/[0.04] ring-1 ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
               <Shield className="h-5 w-5 text-foreground" strokeWidth={2} />
@@ -516,21 +514,25 @@ export function TeamAccessManager() {
           </div>
         </div>
 
-        <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
+        <div className="rounded-[32px] bg-white/60 backdrop-blur-3xl p-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-1 dark:bg-zinc-900/60 dark:ring-white/10">
           <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
             Management scope
           </p>
           <div className="mt-4 space-y-3">
             <div className="flex items-start gap-3 rounded-[1.15rem] border border-black/5 bg-black/[0.03] px-4 py-3 dark:border-white/10 dark:bg-white/[0.04]">
               <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-black/[0.04] ring-1 ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
-                <ShieldCheck className="h-4 w-4 text-foreground" strokeWidth={2} />
+                <ShieldCheck
+                  className="h-4 w-4 text-foreground"
+                  strokeWidth={2}
+                />
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">
                   Owner and admin management only
                 </p>
                 <p className="mt-1 text-sm text-muted">
-                  Identity owners, owner-members, and admin operators can change assignment scope for each active seat.
+                  Identity owners, owner-members, and admin operators can change
+                  assignment scope for each active seat.
                 </p>
               </div>
             </div>
@@ -558,10 +560,16 @@ export function TeamAccessManager() {
         <div className="rounded-[1.35rem] border border-black/5 bg-black/[0.02] px-4 py-3 dark:border-white/10 dark:bg-white/[0.02]">
           <div className="flex items-center gap-3">
             <CheckCircle2
-              className={feedback.tone === "error" ? "h-4 w-4 text-rose-600 dark:text-status-error" : "h-4 w-4 text-emerald-600 dark:text-status-success"}
+              className={
+                feedback.tone === "error"
+                  ? "h-4 w-4 text-rose-600 dark:text-status-error"
+                  : "h-4 w-4 text-emerald-600 dark:text-status-success"
+              }
               strokeWidth={2.4}
             />
-            <p className="text-sm font-medium text-foreground">{feedback.text}</p>
+            <p className="text-sm font-medium text-foreground">
+              {feedback.text}
+            </p>
           </div>
         </div>
       ) : null}
@@ -599,10 +607,13 @@ export function TeamAccessManager() {
         />
       ) : (
         <div className="space-y-6">
-          <section className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
+          <section className="rounded-[32px] bg-white/60 backdrop-blur-3xl p-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-1 dark:bg-zinc-900/60 dark:ring-white/10">
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black/[0.04] ring-1 ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
-                <Waypoints className="h-5 w-5 text-foreground" strokeWidth={2} />
+                <Waypoints
+                  className="h-5 w-5 text-foreground"
+                  strokeWidth={2}
+                />
               </div>
               <div className="space-y-2">
                 <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
@@ -614,14 +625,16 @@ export function TeamAccessManager() {
                       No personas are attached to this identity yet.
                     </span>
                   ) : (
-                    availablePersonas.map((persona: IdentityTeamAccessPersona) => (
-                      <span
-                        key={persona.id}
-                        className="rounded-full border border-black/5 bg-black/[0.03] px-3 py-1 text-xs font-semibold text-foreground dark:border-white/10 dark:bg-white/[0.04]"
-                      >
-                        @{persona.username}
-                      </span>
-                    ))
+                    availablePersonas.map(
+                      (persona: IdentityTeamAccessPersona) => (
+                        <span
+                          key={persona.id}
+                          className="rounded-full border border-black/5 bg-black/[0.03] px-3 py-1 text-xs font-semibold text-foreground dark:border-white/10 dark:bg-white/[0.04]"
+                        >
+                          @{persona.username}
+                        </span>
+                      ),
+                    )
                   )}
                 </div>
               </div>

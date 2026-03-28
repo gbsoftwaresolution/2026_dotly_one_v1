@@ -13,6 +13,7 @@ import { AuthMetricsService } from "./auth-metrics.service";
 import { AuthService } from "./auth.service";
 import { DeviceSessionService } from "./device-session.service";
 import { PasswordPolicyService } from "./password-policy.service";
+import { PasskeysService } from "./passkeys.service";
 import { SecurityArtifactLifecycleService } from "./security-artifact-lifecycle.service";
 import { VerificationDiagnosticsService } from "./verification-diagnostics.service";
 import { VerificationPolicyService } from "./verification-policy.service";
@@ -44,6 +45,7 @@ import { VerificationPolicyService } from "./verification-policy.service";
     JwtAuthGuard,
     OptionalJwtAuthGuard,
     PasswordPolicyService,
+    PasskeysService,
     DeviceSessionService,
     SecurityArtifactLifecycleService,
     VerificationPolicyService,
@@ -56,6 +58,7 @@ import { VerificationPolicyService } from "./verification-policy.service";
     JwtAuthGuard,
     OptionalJwtAuthGuard,
     JwtModule,
+    PasskeysService,
     SecurityArtifactLifecycleService,
     VerificationPolicyService,
     VerificationDiagnosticsService,

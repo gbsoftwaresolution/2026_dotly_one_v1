@@ -89,7 +89,7 @@ export function ProtectedRestrictionsPanel({
   };
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <section className="rounded-3xl -slate-200 overflow-hidden rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1">
       <div className="border-b border-slate-200 px-6 py-5 bg-slate-50">
         <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
           <ShieldAlert className="h-5 w-5 text-slate-700" />

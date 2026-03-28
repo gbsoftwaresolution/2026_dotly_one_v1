@@ -4,11 +4,30 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@simplewebauthn/browser", () => ({
+  startRegistration: vi.fn(async () => ({
+    id: "credential-1",
+    rawId: "credential-1",
+    response: {
+      clientDataJSON: "client",
+      attestationObject: "attestation",
+    },
+    clientExtensionResults: {},
+    type: "public-key",
+  })),
+  startAuthentication: vi.fn(),
+}));
+
 const mocks = vi.hoisted(() => ({
   resendCurrentUserVerificationEmail: vi.fn(),
   changePassword: vi.fn(),
   requestMobileOtp: vi.fn(),
   verifyMobileOtp: vi.fn(),
+  beginPasskeyRegistration: vi.fn(),
+  verifyPasskeyRegistration: vi.fn(),
+  listPasskeys: vi.fn(),
+  renamePasskey: vi.fn(),
+  removePasskey: vi.fn(),
   listSessions: vi.fn(),
   revokeSession: vi.fn(),
   revokeOtherSessions: vi.fn(),
@@ -23,6 +42,11 @@ vi.mock("@/lib/api", () => ({
     changePassword: mocks.changePassword,
     requestMobileOtp: mocks.requestMobileOtp,
     verifyMobileOtp: mocks.verifyMobileOtp,
+    beginPasskeyRegistration: mocks.beginPasskeyRegistration,
+    verifyPasskeyRegistration: mocks.verifyPasskeyRegistration,
+    listPasskeys: mocks.listPasskeys,
+    renamePasskey: mocks.renamePasskey,
+    removePasskey: mocks.removePasskey,
     listSessions: mocks.listSessions,
     revokeSession: mocks.revokeSession,
     revokeOtherSessions: mocks.revokeOtherSessions,
@@ -54,6 +78,7 @@ function createUser(
       maskedPhoneNumber: isVerified ? "+14***99" : null,
       phoneVerificationStatus: isVerified ? "verified" : "not_enrolled",
       mobileOtpEnrollment: null,
+      passkeyCount: 0,
       explanation:
         "Email verification is the first trust factor for your Dotly identity.",
       unlockedActions: isVerified
@@ -78,6 +103,13 @@ function createUser(
             "Email verification is the first trust factor for your Dotly identity and unlocks current trust-sensitive actions.",
         },
         {
+          key: "passkey_verified",
+          label: "Passkey added",
+          status: "inactive",
+          description:
+            "Add a passkey for phishing-resistant sign-in and a stronger device-bound trust factor on this account.",
+        },
+        {
           key: "mobile_otp_verified",
           label: "Mobile OTP verified",
           status: isVerified ? "active" : "inactive",
@@ -85,6 +117,7 @@ function createUser(
             "Verify a mobile number to add a second live trust factor for step-up account protection and future phone-based sign-in.",
         },
       ],
+      passkeys: [],
       ...overrides,
     },
   };
@@ -92,6 +125,10 @@ function createUser(
 
 describe("AccountSecuritySettings", () => {
   beforeEach(() => {
+    Object.defineProperty(globalThis, "PublicKeyCredential", {
+      configurable: true,
+      value: class PublicKeyCredentialMock {},
+    });
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: {
@@ -104,6 +141,11 @@ describe("AccountSecuritySettings", () => {
     mocks.changePassword.mockReset();
     mocks.requestMobileOtp.mockReset();
     mocks.verifyMobileOtp.mockReset();
+    mocks.beginPasskeyRegistration.mockReset();
+    mocks.verifyPasskeyRegistration.mockReset();
+    mocks.listPasskeys.mockReset();
+    mocks.renamePasskey.mockReset();
+    mocks.removePasskey.mockReset();
     mocks.listSessions.mockReset();
     mocks.revokeSession.mockReset();
     mocks.revokeOtherSessions.mockReset();
@@ -130,6 +172,7 @@ describe("AccountSecuritySettings", () => {
         },
       ],
     });
+    mocks.listPasskeys.mockResolvedValue({ passkeys: [] });
     mocks.getCurrentReferral.mockResolvedValue({
       id: "user-1",
       referralCode: "SHARECODE1",
@@ -152,6 +195,9 @@ describe("AccountSecuritySettings", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(/active sessions and devices/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /passkey access and device trust/i }),
     ).toBeInTheDocument();
 
     await waitFor(() => {
@@ -198,6 +244,20 @@ describe("AccountSecuritySettings", () => {
     expect(screen.getAllByText(/^verified$/i).length).toBeGreaterThan(0);
   });
 
+  it("uses passkeyCount when the current user payload omits passkey details", async () => {
+    render(
+      React.createElement(AccountSecuritySettings, {
+        user: createUser(true, {
+          passkeyCount: 2,
+          passkeys: undefined,
+        }),
+      }),
+    );
+
+    expect(screen.getByText(/2 passkeys/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 enrolled/i)).toBeInTheDocument();
+  });
+
   it("shows planned mobile otp messaging before enrollment starts", async () => {
     render(
       React.createElement(AccountSecuritySettings, { user: createUser(false) }),
@@ -211,6 +271,52 @@ describe("AccountSecuritySettings", () => {
       screen.getAllByText(/send contact requests/i).length,
     ).toBeGreaterThan(0);
     expect(screen.getAllByText(/^restricted$/i).length).toBeGreaterThan(0);
+  });
+
+  it("adds, renames, and removes a passkey", async () => {
+    mocks.beginPasskeyRegistration.mockResolvedValue({
+      registrationId: "reg-1",
+      options: { challenge: "challenge" },
+    });
+    mocks.verifyPasskeyRegistration.mockResolvedValue({
+      verified: true,
+      passkey: {
+        id: "pk-1",
+        name: "MacBook Touch ID",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        lastUsedAt: null,
+        deviceType: "multiDevice",
+        backedUp: true,
+      },
+    });
+    mocks.renamePasskey.mockResolvedValue({ updated: true });
+    mocks.removePasskey.mockResolvedValue({ deleted: true });
+
+    const user = userEvent.setup();
+    render(
+      React.createElement(AccountSecuritySettings, { user: createUser(true) }),
+    );
+
+    await user.click(screen.getByRole("button", { name: /add a passkey/i }));
+
+    expect(
+      await screen.findByText(/passkey added\. macbook touch id is ready/i),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /rename/i }));
+    await user.clear(screen.getByLabelText(/passkey name/i));
+    await user.type(screen.getByLabelText(/passkey name/i), "Studio MacBook");
+    await user.click(screen.getByRole("button", { name: /save name/i }));
+
+    expect(
+      await screen.findByText(/passkey name updated/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Studio MacBook")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /remove/i }));
+
+    expect(await screen.findByText(/passkey removed/i)).toBeInTheDocument();
   });
 
   it("shows loading and success feedback when resend succeeds", async () => {

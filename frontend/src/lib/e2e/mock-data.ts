@@ -61,10 +61,27 @@ export function createMockUserProfile(): UserProfile {
           description: "Email trust is active.",
         },
         {
+          key: "passkey_verified",
+          label: "Passkey added",
+          status: "active",
+          description: "Passkey sign-in is active.",
+        },
+        {
           key: "mobile_otp",
           label: "Mobile OTP",
           status: "active",
           description: "Phone verification is active.",
+        },
+      ],
+      passkeys: [
+        {
+          id: "passkey-e2e-1",
+          name: "MacBook Touch ID",
+          createdAt: "2026-03-26T09:00:00.000Z",
+          updatedAt: "2026-03-27T09:30:00.000Z",
+          lastUsedAt: "2026-03-27T09:30:00.000Z",
+          deviceType: "multiDevice",
+          backedUp: true,
         },
       ],
     },

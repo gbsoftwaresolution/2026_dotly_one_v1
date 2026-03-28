@@ -40,11 +40,13 @@ describe("GET /api/users/me", () => {
         maskedPhoneNumber: null,
         phoneVerificationStatus: "verified",
         mobileOtpEnrollment: null,
+        passkeyCount: 1,
         explanation: "",
         unlockedActions: [],
         restrictedActions: [],
         requirements: [],
         trustFactors: [],
+        passkeys: [],
       },
     });
 

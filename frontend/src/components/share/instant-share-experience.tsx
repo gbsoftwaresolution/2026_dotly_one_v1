@@ -85,7 +85,7 @@ function FastQrShell({
 
   return (
     <div className="space-y-6 motion-safe:animate-[fade-in_420ms_ease-out]">
-      <div className="rounded-[2rem] bg-white/40 backdrop-blur-[40px] saturate-[200%] ring-1 ring-black/5 dark:bg-zinc-900/40 dark:ring-white/10 shadow-2xl p-5 sm:p-8 flex flex-col gap-8 relative overflow-hidden">
+      <div className="rounded-[2rem] bg-white/40 backdrop-blur-3xl p-6 sm:p-8 ring-1 ring-inset ring-black/5 dark:bg-black/40 dark:ring-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] flex flex-col gap-8 relative overflow-hidden transition-transform duration-500 hover:scale-[1.01]">
         {/* Subtle gradient glow behind the card content */}
         <div className="absolute -inset-1/2 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
 
@@ -99,7 +99,7 @@ function FastQrShell({
         </div>
 
         {sharePayload ? (
-          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-white/50 px-4 py-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 sm:px-5 relative z-10 backdrop-blur-md">
+          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-[1.5rem] bg-white/60 px-4 py-4 shadow-sm ring-1 ring-black/5 dark:bg-black/40 dark:ring-white/10 sm:px-5 relative z-10 backdrop-blur-xl">
             {sharePayload.profilePhotoUrl ? (
               <ExternalImage
                 src={sharePayload.profilePhotoUrl}
@@ -148,7 +148,7 @@ function FastQrShell({
           />
 
           <div className="mx-auto flex w-full flex-1 items-center justify-center">
-            <div className="relative w-full rounded-3xl bg-white px-4 py-5 shadow-xl ring-1 ring-black/10 dark:bg-zinc-950 dark:ring-white/10 sm:px-5 sm:py-6">
+            <div className="relative w-full rounded-[1.5rem] bg-white px-4 py-5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10 sm:px-5 sm:py-6 transition-transform duration-500 hover:scale-[1.02]">
               {sharePayload ? (
                 <div className="flex min-h-[26rem] items-center justify-center sm:min-h-[28rem]">
                   <QRCodeSVG
@@ -192,7 +192,7 @@ function FastQrShell({
         </div>
 
         {error ? (
-          <div className="rounded-2xl bg-amber-500/5 ring-1 ring-inset ring-amber-500/20 px-4 py-4 sm:px-5">
+          <div className="rounded-[20px] bg-amber-500/5 ring-1 ring-inset ring-amber-500/20 px-4 py-4 sm:px-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
@@ -356,7 +356,7 @@ export function InstantShareExperience({
   if (!isBootstrapping && user && personas && personas.length === 0) {
     return (
       <div className="flex w-full flex-col justify-center">
-        <div className="rounded-[2rem] bg-white/40 backdrop-blur-[40px] saturate-[200%] ring-1 ring-black/5 dark:bg-zinc-900/40 dark:ring-white/10 shadow-2xl p-6 sm:p-8 flex flex-col gap-8 relative overflow-hidden text-center">
+        <div className="rounded-[2rem] bg-white/40 backdrop-blur-3xl p-6 sm:p-8 ring-1 ring-inset ring-black/5 dark:bg-black/40 dark:ring-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] flex flex-col gap-8 relative overflow-hidden text-center transition-transform duration-500 hover:scale-[1.01]">
           <div className="absolute -inset-1/2 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
 
           <div className="space-y-2 relative z-10">
@@ -430,7 +430,7 @@ export function InstantShareExperience({
 
     return (
       <div className="flex w-full flex-col justify-center">
-        <div className="rounded-[2rem] bg-white/40 backdrop-blur-[40px] saturate-[200%] ring-1 ring-black/5 dark:bg-zinc-900/40 dark:ring-white/10 shadow-2xl p-6 sm:p-8 flex flex-col gap-8 relative overflow-hidden text-center">
+        <div className="rounded-[2rem] bg-white/40 backdrop-blur-3xl p-6 sm:p-8 ring-1 ring-inset ring-black/5 dark:bg-black/40 dark:ring-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] flex flex-col gap-8 relative overflow-hidden text-center transition-transform duration-500 hover:scale-[1.01]">
           <div className="absolute -inset-1/2 bg-gradient-to-br from-rose-500/10 via-orange-500/10 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
 
           <div className="space-y-2 relative z-10">
@@ -471,7 +471,7 @@ export function InstantShareExperience({
   ) {
     return (
       <div className="flex w-full flex-col justify-center">
-        <div className="rounded-[2rem] bg-white/40 backdrop-blur-[40px] saturate-[200%] ring-1 ring-black/5 dark:bg-zinc-900/40 dark:ring-white/10 shadow-2xl p-6 sm:p-8 flex flex-col gap-8 relative overflow-hidden text-center">
+        <div className="rounded-[2rem] bg-white/40 backdrop-blur-3xl p-6 sm:p-8 ring-1 ring-inset ring-black/5 dark:bg-black/40 dark:ring-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] flex flex-col gap-8 relative overflow-hidden text-center transition-transform duration-500 hover:scale-[1.01]">
           <div className="absolute -inset-1/2 bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
 
           <div className="space-y-2 relative z-10">

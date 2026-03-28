@@ -1,9 +1,11 @@
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
   Optional,
 } from "@nestjs/common";
+import { Prisma } from "../../generated/prisma/client";
 
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import {
@@ -19,11 +21,15 @@ import {
   noopAuthMetricsService,
 } from "./auth-metrics.service";
 
-export type TrustFactor = "email_verified" | "mobile_otp_verified";
+export type TrustFactor =
+  | "email_verified"
+  | "mobile_otp_verified"
+  | "passkey_verified";
 
 export interface TrustFactorSourceUser {
   isVerified: boolean;
   phoneVerifiedAt?: Date | null;
+  passkeyCount?: number;
 }
 
 export type VerificationRequirement =
@@ -54,6 +60,9 @@ const TRUST_FACTOR_CATALOG: Record<TrustFactor, { source: string }> = {
   mobile_otp_verified: {
     source: "mobile_otp",
   },
+  passkey_verified: {
+    source: "passkey",
+  },
 };
 
 export function buildUserTrustFactors(
@@ -62,6 +71,7 @@ export function buildUserTrustFactors(
   return {
     email_verified: user.isVerified,
     mobile_otp_verified: Boolean(user.phoneVerifiedAt),
+    passkey_verified: (user.passkeyCount ?? 0) > 0,
   };
 }
 
@@ -79,57 +89,80 @@ export function userHasActiveTrustFactor(user: TrustFactorSourceUser): boolean {
   );
 }
 
+export function isPasskeyStorageUnavailableError(error: unknown): boolean {
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    (error.code === "P2021" || error.code === "P2022")
+  ) {
+    return true;
+  }
+
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const normalizedMessage = error.message.toLowerCase();
+
+  return (
+    normalizedMessage.includes("passkeycredential") &&
+    (normalizedMessage.includes("does not exist") ||
+      normalizedMessage.includes("doesn't exist") ||
+      normalizedMessage.includes("relation") ||
+      normalizedMessage.includes("column"))
+  );
+}
+
 const VERIFICATION_POLICY: Record<
   VerificationRequirement,
   TrustRequirementDefinition
 > = {
   send_contact_request: {
     label: "Send contact requests",
-    anyOf: ["email_verified", "mobile_otp_verified"],
+    anyOf: ["email_verified", "mobile_otp_verified", "passkey_verified"],
     message:
-      "Verify your email or complete mobile OTP before sending connection requests.",
+      "Verify your email, complete mobile OTP, or add a passkey before sending connection requests.",
   },
   instant_connect: {
     label: "Use instant connect",
-    anyOf: ["email_verified", "mobile_otp_verified"],
+    anyOf: ["email_verified", "mobile_otp_verified", "passkey_verified"],
     message:
-      "Verify your email or complete mobile OTP before using instant connect.",
+      "Verify your email, complete mobile OTP, or add a passkey before using instant connect.",
   },
   create_profile_qr: {
     label: "Create profile QR codes",
-    anyOf: ["email_verified", "mobile_otp_verified"],
+    anyOf: ["email_verified", "mobile_otp_verified", "passkey_verified"],
     message:
-      "Verify your email or complete mobile OTP before creating shareable profile QR codes.",
+      "Verify your email, complete mobile OTP, or add a passkey before creating shareable profile QR codes.",
   },
   create_quick_connect_qr: {
     label: "Create Quick Connect QR codes",
-    anyOf: ["email_verified", "mobile_otp_verified"],
+    anyOf: ["email_verified", "mobile_otp_verified", "passkey_verified"],
     message:
-      "Verify your email or complete mobile OTP before creating Quick Connect QR codes.",
+      "Verify your email, complete mobile OTP, or add a passkey before creating Quick Connect QR codes.",
   },
   create_event: {
     label: "Create trust-based events",
-    anyOf: ["email_verified", "mobile_otp_verified"],
+    anyOf: ["email_verified", "mobile_otp_verified", "passkey_verified"],
     message:
-      "Verify your email or complete mobile OTP before creating trust-based events.",
+      "Verify your email, complete mobile OTP, or add a passkey before creating trust-based events.",
   },
   join_event: {
     label: "Join event networking",
-    anyOf: ["email_verified", "mobile_otp_verified"],
+    anyOf: ["email_verified", "mobile_otp_verified", "passkey_verified"],
     message:
-      "Verify your email or complete mobile OTP before joining Dotly event networking.",
+      "Verify your email, complete mobile OTP, or add a passkey before joining Dotly event networking.",
   },
   enable_event_discovery: {
     label: "Enable event discovery",
-    anyOf: ["email_verified", "mobile_otp_verified"],
+    anyOf: ["email_verified", "mobile_otp_verified", "passkey_verified"],
     message:
-      "Verify your email or complete mobile OTP before enabling event discovery.",
+      "Verify your email, complete mobile OTP, or add a passkey before enabling event discovery.",
   },
   view_event_participants: {
     label: "View discoverable participants",
-    anyOf: ["email_verified", "mobile_otp_verified"],
+    anyOf: ["email_verified", "mobile_otp_verified", "passkey_verified"],
     message:
-      "Verify your email or complete mobile OTP before viewing participants in Dotly event discovery.",
+      "Verify your email, complete mobile OTP, or add a passkey before viewing participants in Dotly event discovery.",
   },
 };
 
@@ -140,8 +173,11 @@ export class VerificationPolicyService {
     @Optional()
     private readonly analyticsService: AnalyticsService = noopAnalyticsService as AnalyticsService,
     @Optional()
-    private readonly securityAuditService: Pick<SecurityAuditService, "log"> =
-      noopSecurityAuditService,
+    @Inject(SecurityAuditService)
+    private readonly securityAuditService: Pick<
+      SecurityAuditService,
+      "log"
+    > = noopSecurityAuditService,
     @Optional()
     private readonly authMetricsService: AuthMetricsService = noopAuthMetricsService,
   ) {}
@@ -211,16 +247,19 @@ export class VerificationPolicyService {
   }
 
   private async getUserTrustState(userId: string): Promise<UserTrustState> {
-    const user = await (this.prismaService as any).user.findUnique({
-      where: {
-        id: userId,
-      },
-      select: {
-        id: true,
-        isVerified: true,
-        phoneVerifiedAt: true,
-      },
-    });
+    const [user, passkeyCount] = await Promise.all([
+      (this.prismaService as any).user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          isVerified: true,
+          phoneVerifiedAt: true,
+        },
+      }),
+      this.getPasskeyCount(userId),
+    ]);
 
     if (!user) {
       throw new NotFoundException("User not found");
@@ -228,8 +267,27 @@ export class VerificationPolicyService {
 
     return {
       userId: user.id,
-      factors: buildUserTrustFactors(user),
+      factors: buildUserTrustFactors({
+        ...user,
+        passkeyCount,
+      }),
     };
+  }
+
+  private async getPasskeyCount(userId: string): Promise<number> {
+    try {
+      return await (this.prismaService as any).passkeyCredential.count({
+        where: {
+          userId,
+        },
+      });
+    } catch (error) {
+      if (isPasskeyStorageUnavailableError(error)) {
+        return 0;
+      }
+
+      throw error;
+    }
   }
 
   private evaluateRequirement(

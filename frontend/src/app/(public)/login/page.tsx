@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { QrCode, Shield, Zap } from "lucide-react";
 
+import { LoginAuthPanel } from "@/components/auth/login-auth-panel";
 import { ResetSessionOnLoad } from "@/components/auth/reset-session-on-load";
-import { AuthForm } from "@/components/forms/auth-form";
 import { dotlyPositioning } from "@/lib/constants/positioning";
 import { routes } from "@/lib/constants/routes";
 
@@ -15,8 +15,9 @@ const features = [
   },
   {
     icon: Shield,
-    title: "Private by design.",
-    description: "Keep your personal number out of casual circulation.",
+    title: "Passkeys keep it calm.",
+    description:
+      "Unlock Dotly with the device you already trust, while password fallback stays available.",
   },
   {
     icon: Zap,
@@ -53,10 +54,7 @@ export default async function LoginPage({
   return (
     <div className="relative w-full min-h-[100dvh] flex flex-col pt-20 pb-12 overflow-x-hidden md:pt-32">
       {/* Immersive ambient background */}
-      <div className="fixed inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden">
-        <div className="absolute top-[-20%] right-[-10%] h-[1000px] w-[1000px] rounded-full bg-accent/10 blur-[150px] mix-blend-normal opacity-60" />
-        <div className="absolute bottom-[-10%] left-[-10%] h-[800px] w-[800px] rounded-full bg-accent/5 blur-[120px] mix-blend-normal opacity-40" />
-      </div>
+      <div className="fixed inset-0 z-[-1] pointer-events-none bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl" />
 
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col md:justify-center">
         <ResetSessionOnLoad enabled={shouldResetSession} />
@@ -142,7 +140,9 @@ export default async function LoginPage({
                       Your Dotly is ready. Check your inbox, including spam, for
                       your confirmation email. You can still sign in now, but
                       verified-only sharing stays limited until you confirm it.
-                      Need another link?{" "}
+                      Sign in with your password once and Dotly will guide you
+                      straight into passkey setup right after. Need another
+                      link?{" "}
                       <Link
                         href={resendHref}
                         className="underline underline-offset-4 hover:opacity-80 transition-opacity"
@@ -154,7 +154,9 @@ export default async function LoginPage({
                   ) : (
                     <p className="text-[14px] leading-relaxed font-medium text-status-warning">
                       Your Dotly is ready. Email confirmation is still required,
-                      but delivery is not configured in this environment. Use{" "}
+                      but delivery is not configured in this environment. Sign
+                      in with your password once and Dotly will guide you into
+                      passkey setup right after. Use{" "}
                       <Link
                         href={resendHref}
                         className="underline underline-offset-4 hover:opacity-80 transition-opacity"
@@ -168,19 +170,21 @@ export default async function LoginPage({
               ) : null}
             </div>
 
-            <div className="rounded-[2.5rem] md:rounded-[3rem] p-8 sm:p-10 md:p-14 border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
+            <div className="rounded-[32px] bg-white/60 backdrop-blur-3xl p-8 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10">
               <div className="mb-8 md:mb-10 space-y-2 text-center md:text-left">
                 <h2 className="text-[28px] md:text-[32px] font-bold tracking-tighter text-foreground leading-[1.1]">
-                  Sign in to Dotly
+                  Passkey-first sign in
                 </h2>
                 <p className="text-[16px] md:text-[17px] text-muted font-medium">
-                  Return to your premium identity and private share flow.
+                  {created
+                    ? "Start with a passkey. If you sign in with your password today, Dotly will guide you into passkey setup right after."
+                    : "Start with a passkey. Password sign-in stays right underneath."}
                 </p>
               </div>
-              <AuthForm
-                mode="login"
+              <LoginAuthPanel
                 redirectTo={redirectTo}
                 initialEmail={initialEmail}
+                shouldPromptPasskeyEnrollment={created}
               />
             </div>
 

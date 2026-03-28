@@ -628,7 +628,7 @@ export function InboxScreen() {
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
                 Visible threads
               </p>
-              <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+              <p className="mt-2 text-2xl font-bold tracking-tight tracking-tight tracking-tight text-foreground">
                 {visibleConversations.length}
               </p>
               <p className="mt-1 text-sm text-muted">
@@ -642,7 +642,7 @@ export function InboxScreen() {
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
                 Active now
               </p>
-              <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+              <p className="mt-2 text-2xl font-bold tracking-tight tracking-tight tracking-tight text-foreground">
                 {visibleActiveCount}
               </p>
               <p className="mt-1 text-sm text-muted">
@@ -654,7 +654,7 @@ export function InboxScreen() {
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
                 Archived
               </p>
-              <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+              <p className="mt-2 text-2xl font-bold tracking-tight tracking-tight tracking-tight text-foreground">
                 {visibleArchivedCount}
               </p>
               <p className="mt-1 text-sm text-muted">
@@ -666,7 +666,7 @@ export function InboxScreen() {
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">
                 Persona groups
               </p>
-              <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+              <p className="mt-2 text-2xl font-bold tracking-tight tracking-tight tracking-tight text-foreground">
                 {visibleGroups.length}
               </p>
               <p className="mt-1 text-sm text-muted">
@@ -997,7 +997,7 @@ export function InboxScreen() {
                           return (
                             <div
                               key={conversation.conversationId}
-                              className="flex flex-col gap-3 p-4 transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.03] sm:flex-row sm:items-center sm:justify-between"
+                              className="flex flex-col gap-3 p-4 transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.03] sm:flex-row sm:items-center sm:justify-between rounded-[20px] transition-all duration-300 hover:bg-white/40 dark:hover:bg-zinc-800/40"
                             >
                               <Link
                                 href={detailHref}

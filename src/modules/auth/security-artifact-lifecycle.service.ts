@@ -21,6 +21,9 @@ type SecurityArtifactCleanupStore = {
   mobileOtpChallenge: {
     deleteMany: (args: any) => Promise<{ count: number }>;
   };
+  passkeyChallenge: {
+    deleteMany: (args: any) => Promise<{ count: number }>;
+  };
   authSession: {
     deleteMany: (args: any) => Promise<{ count: number }>;
   };
@@ -30,6 +33,7 @@ export type SecurityArtifactCleanupSummary = {
   emailVerificationTokensDeleted: number;
   passwordResetTokensDeleted: number;
   mobileOtpChallengesDeleted: number;
+  passkeyChallengesDeleted: number;
   revokedSessionsDeleted: number;
   expiredSessionsDeleted: number;
   totalDeleted: number;
@@ -64,6 +68,7 @@ export class SecurityArtifactLifecycleService {
       emailVerificationTokensDeleted,
       passwordResetTokensDeleted,
       mobileOtpChallengesDeleted,
+      passkeyChallengesDeleted,
       revokedSessionsDeleted,
       expiredSessionsDeleted,
     ] = await Promise.all([
@@ -91,6 +96,14 @@ export class SecurityArtifactLifecycleService {
           ),
         })
         .then((result) => result.count),
+      store.passkeyChallenge
+        .deleteMany({
+          where: buildTokenCleanupWhere(
+            now,
+            SECURITY_ARTIFACT_RETENTION_POLICY.passkeyChallenges,
+          ),
+        })
+        .then((result) => result.count),
       store.authSession
         .deleteMany({
           where: buildRevokedSessionCleanupWhere(
@@ -113,12 +126,14 @@ export class SecurityArtifactLifecycleService {
       emailVerificationTokensDeleted,
       passwordResetTokensDeleted,
       mobileOtpChallengesDeleted,
+      passkeyChallengesDeleted,
       revokedSessionsDeleted,
       expiredSessionsDeleted,
       totalDeleted:
         emailVerificationTokensDeleted +
         passwordResetTokensDeleted +
         mobileOtpChallengesDeleted +
+        passkeyChallengesDeleted +
         revokedSessionsDeleted +
         expiredSessionsDeleted,
     } satisfies SecurityArtifactCleanupSummary;
@@ -141,6 +156,8 @@ export class SecurityArtifactLifecycleService {
   private getStore(
     store?: SecurityArtifactCleanupStore,
   ): SecurityArtifactCleanupStore {
-    return store ?? (this.prismaService as unknown as SecurityArtifactCleanupStore);
+    return (
+      store ?? (this.prismaService as unknown as SecurityArtifactCleanupStore)
+    );
   }
 }

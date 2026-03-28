@@ -210,9 +210,9 @@ export function PersonaForm() {
   }
 
   const inputCls =
-    "w-full bg-transparent px-4 py-3.5 text-[17px] text-foreground outline-none placeholder:text-muted/50 tracking-tight";
+    "min-h-[52px] w-full rounded-2xl bg-white/50 backdrop-blur-md px-4 py-3.5 text-[17px] text-foreground outline-none placeholder:text-muted/50 tracking-tight shadow-sm ring-1 ring-inset ring-black/5 focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/80 transition-all duration-500 hover:-translate-y-1";
   const sectionCls =
-    "flex flex-col overflow-hidden rounded-[20px] bg-black/[0.03] dark:bg-white/[0.04] backdrop-blur-[40px] saturate-[200%]";
+    "flex flex-col p-6 overflow-hidden rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1 gap-4";
   const usernameTone = getUsernameTone(usernameAvailability);
   const usernameInputCls =
     usernameTone === "success"
@@ -234,11 +234,11 @@ export function PersonaForm() {
   if (createdPersona) {
     return (
       <div className="space-y-4 sm:space-y-5">
-        <section className="space-y-2 rounded-[1.75rem] bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5 sm:rounded-3xl sm:p-6">
+        <section className="space-y-2 rounded-[32px] bg-white/60 backdrop-blur-3xl p-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-1 dark:bg-zinc-900/60 dark:ring-white/10 sm:p-8">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
             Ready to share
           </p>
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+          <h2 className="text-xl font-bold tracking-tight text-foreground">
             Your contact identity is ready to share
           </h2>
           <p className="text-sm leading-6 text-muted">
@@ -349,7 +349,7 @@ export function PersonaForm() {
             value={formState.username}
             onChange={(event) => updateField("username", event.target.value)}
           />
-          <div className="space-y-2 rounded-2xl bg-foreground/[0.02] px-4 py-3.5 ring-1 ring-inset ring-black/5 dark:ring-white/5 sm:hidden">
+          <div className="space-y-2 rounded-[20px] bg-white/50 backdrop-blur-md px-4 py-3.5 ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 sm:hidden">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm leading-6 text-muted">
@@ -363,7 +363,7 @@ export function PersonaForm() {
               <button
                 type="button"
                 onClick={() => setIsUsernameHelpExpanded((current) => !current)}
-                className="shrink-0 rounded-full bg-foreground/[0.04] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground shadow-inner ring-1 ring-black/5 dark:bg-white/[0.08] dark:ring-white/10"
+                className="shrink-0 rounded-full bg-white/60 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground shadow-sm ring-1 ring-inset ring-black/5 backdrop-blur-md transition-all hover:bg-white/80 dark:bg-zinc-800/60 dark:ring-white/10 dark:hover:bg-zinc-800/80"
               >
                 {isUsernameHelpExpanded ? "Less" : "Rules"}
               </button>
@@ -397,7 +397,7 @@ export function PersonaForm() {
               </div>
             ) : null}
           </div>
-          <div className="hidden space-y-1.5 rounded-2xl bg-foreground/[0.02] px-4 py-3 ring-1 ring-inset ring-black/5 dark:ring-white/5 sm:block">
+          <div className="hidden space-y-1.5 rounded-[20px] bg-white/50 backdrop-blur-md px-4 py-3 ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 sm:block">
             <p className="text-sm leading-6 text-muted">
               This becomes your public Dotly link when the persona is shareable.
             </p>
@@ -495,7 +495,7 @@ export function PersonaForm() {
             id="persona-tagline"
             maxLength={120}
             rows={3}
-            className="w-full bg-transparent px-4 py-3.5 text-[17px] tracking-tight text-foreground outline-none placeholder:text-muted/50 resize-none"
+            className="w-full rounded-2xl bg-white/50 backdrop-blur-md px-4 py-3.5 text-[17px] tracking-tight text-foreground shadow-sm ring-1 ring-inset ring-black/5 focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/80 outline-none placeholder:text-muted/50 resize-none transition-all duration-500 hover:-translate-y-1"
             placeholder="Designing thoughtful identity experiences for modern teams."
             value={formState.tagline}
             onChange={(event) => updateField("tagline", event.target.value)}
@@ -557,7 +557,7 @@ export function PersonaForm() {
       </section>
 
       {error ? (
-        <div className="rounded-2xl bg-rose-500/5 px-4 py-3.5 ring-1 ring-inset ring-rose-500/20">
+        <div className="rounded-[20px] bg-rose-500/5 px-4 py-3.5 ring-1 ring-inset ring-rose-500/20 backdrop-blur-sm">
           <p className="font-mono text-sm text-rose-600 dark:text-rose-400">
             {error}
           </p>

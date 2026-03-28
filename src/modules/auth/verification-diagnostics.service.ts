@@ -25,6 +25,7 @@ export interface VerificationRuntimeDiagnostics extends Record<
   mailConfigured: boolean;
   passwordResetConfigured: boolean;
   smsConfigured: boolean;
+  webauthnConfigured: boolean;
   missingMailSettings: string[];
   missingSmsSettings: string[];
   emailVerificationTableExists: boolean;
@@ -54,6 +55,7 @@ export interface PublicVerificationDiagnostics extends Record<string, unknown> {
   mailConfigured: boolean;
   passwordResetConfigured: boolean;
   smsConfigured: boolean;
+  webauthnConfigured: boolean;
   emailVerificationTableExists: boolean;
   verificationDependenciesOperational: boolean;
 }
@@ -126,6 +128,13 @@ export class VerificationDiagnosticsService {
 
     const trustFactors =
       this.verificationPolicyService.getAvailableTrustFactors();
+    const webauthnOrigins = this.configService.get<string[]>(
+      "webauthn.origins",
+      [],
+    );
+    const webauthnConfigured =
+      this.configService.get<string>("webauthn.rpId", "").trim().length > 0 &&
+      webauthnOrigins.length > 0;
     const requirements = Object.entries(
       this.verificationPolicyService.getRequirementCatalog(),
     ).map(([requirement, definition]) => ({
@@ -151,6 +160,7 @@ export class VerificationDiagnosticsService {
       mailConfigured: mailConfigurationStatus.configured,
       passwordResetConfigured,
       smsConfigured: smsConfigurationStatus.configured,
+      webauthnConfigured,
       missingMailSettings: mailConfigurationStatus.missingSettings,
       missingSmsSettings: smsConfigurationStatus.missingSettings,
       emailVerificationTableExists,
@@ -171,6 +181,7 @@ export class VerificationDiagnosticsService {
       mailConfigured: diagnostics.mailConfigured,
       passwordResetConfigured: diagnostics.passwordResetConfigured,
       smsConfigured: diagnostics.smsConfigured,
+      webauthnConfigured: diagnostics.webauthnConfigured,
       emailVerificationTableExists: diagnostics.emailVerificationTableExists,
       verificationDependenciesOperational:
         diagnostics.verificationDependenciesOperational,

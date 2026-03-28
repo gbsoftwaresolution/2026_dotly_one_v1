@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, PropsWithChildren } from "react";
-
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 type SecondaryButtonProps = PropsWithChildren<
@@ -32,31 +32,30 @@ export function SecondaryButton({
       disabled={disabled || isLoading}
       className={cn(
         // Base
-        "relative inline-flex items-center justify-center font-medium tracking-wide overflow-hidden backdrop-blur-xl",
+        "relative inline-flex items-center justify-center font-medium tracking-wide overflow-hidden",
+        "bg-white/60 backdrop-blur-3xl dark:bg-zinc-900/60 ring-1 ring-black/5 dark:ring-white/10",
+        "shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)]",
+        "transition-all duration-500 hover:-translate-y-0.5",
         "select-none no-select tap-feedback",
         // Size
         sizeClasses[size],
         // Width
         fullWidth && "w-full",
-        // Default state - Premium subtle card feel
+        // Default state
         !isSuccess &&
           !isLoading && [
-            "bg-foreground/[0.03] dark:bg-foreground/[0.05] text-foreground",
-            "ring-1 ring-black/5 dark:ring-white/10 shadow-sm",
-            "hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.08] hover:scale-[0.98]",
-            "transition-all duration-[140ms] ease-[0.16,1,0.3,1]",
+            "text-foreground",
             "active:scale-[0.96] active:shadow-none",
             "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:focus-visible:ring-offset-bgOnyx",
           ],
         // Loading state
         isLoading && [
-          "bg-foreground/[0.02] text-foreground/40 ring-1 ring-black/5 dark:ring-white/5",
+          "text-foreground/40",
           "cursor-not-allowed",
         ],
         // Success state
         isSuccess && [
-          "ring-1 ring-status-success/30 bg-status-success/10 text-status-success",
-          "transition-all duration-[180ms] ease-[0.16,1,0.3,1]",
+          "ring-status-success/30 bg-status-success/10 text-status-success",
         ],
         // Disabled
         disabled && !isLoading && "opacity-40 cursor-not-allowed",
@@ -66,7 +65,7 @@ export function SecondaryButton({
     >
       {isLoading ? (
         <span className="flex items-center gap-2">
-          <span className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
           <span>Processing…</span>
         </span>
       ) : (

@@ -49,7 +49,7 @@ export function PermissionControlCard({
   const selectedEffect = vm.overrideEffect ?? vm.effectiveEffect;
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 p-6 shadow-sm bg-slate-50/50">
+    <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 p-6 shadow-sm bg-slate-50/50 rounded-[20px] transition-all duration-300 hover:bg-white/40 dark:hover:bg-zinc-800/40">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3">
@@ -73,12 +73,12 @@ export function PermissionControlCard({
           <legend className="sr-only">Set permission for {vm.label}</legend>
 
           {isUpdating && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-slate-50/50 backdrop-blur-[1px]">
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[24px] bg-slate-50/50 backdrop-blur-[1px]">
               <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
             </div>
           )}
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 rounded-xl bg-slate-200/50 p-1.5 ring-1 ring-inset ring-slate-200">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 rounded-[24px] bg-slate-200/50 p-1.5 ring-1 ring-inset ring-slate-200">
             {OPTIONS.map((opt) => {
               const isSelected = selectedEffect === opt.effect;
 
@@ -86,7 +86,7 @@ export function PermissionControlCard({
                 <label
                   key={opt.effect}
                   className={`
-                    relative flex cursor-pointer items-center justify-center rounded-lg px-4 py-3 text-base font-bold transition-all
+                    relative flex cursor-pointer items-center justify-center rounded-[20px] px-4 py-3 text-base font-bold transition-all
                     focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2
                     ${
                       isSelected
@@ -137,7 +137,7 @@ export function PermissionControlCard({
           !isUpdating &&
           !isRefreshing &&
           !error && (
-            <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-amber-800 ring-1 ring-inset ring-amber-500/20">
+            <div className="flex items-start gap-2 rounded-[20px] bg-amber-50 p-3 text-amber-800 ring-1 ring-inset ring-amber-500/20">
               <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
               <div className="text-sm">
                 <span className="font-semibold block">

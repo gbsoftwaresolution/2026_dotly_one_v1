@@ -272,10 +272,8 @@ function getInstantConnectErrorMessage(error: ApiError): string {
 
 function SmartCardHeroShell({ children }: { children: React.ReactNode }) {
   return (
-    <Card className="overflow-hidden bg-white/95 p-0 shadow-[0_24px_80px_rgba(15,23,42,0.12)] dark:bg-zinc-950/95 dark:shadow-[0_28px_90px_rgba(0,0,0,0.42)]">
+    <Card className="rounded-[32px] overflow-hidden bg-white/60 backdrop-blur-3xl p-0 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10">
       <div className="relative overflow-hidden px-5 py-6 sm:px-6 sm:py-7">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.92),rgba(255,255,255,0.72)_45%,rgba(248,250,252,0.94)_100%)] dark:bg-[radial-gradient(circle_at_top,rgba(17,24,39,0.96),rgba(15,23,42,0.9)_48%,rgba(2,6,23,0.96)_100%)]" />
-        <div className="absolute inset-x-10 top-0 h-28 rounded-full bg-black/6 blur-3xl dark:bg-white/[0.08]" />
         <div className="relative z-10">{children}</div>
       </div>
     </Card>
@@ -524,11 +522,17 @@ export function PublicSmartCard({
     showLoginCta && displayedPrimaryAction !== "contact_me"
       ? "login"
       : displayedPrimaryAction;
-  const primaryCtaLabel = requestSucceeded
-    ? "Request sent ✓"
-    : isConnected
-      ? "Connected ✓"
-      : getPrimaryCtaLabel(primaryCtaAction);
+  const primaryCtaLabel = requestSucceeded ? (
+    <>
+      Request sent <Check className="ml-1 inline h-4 w-4" />
+    </>
+  ) : isConnected ? (
+    <>
+      Connected <Check className="ml-1 inline h-4 w-4" />
+    </>
+  ) : (
+    getPrimaryCtaLabel(primaryCtaAction)
+  );
   const cardActionSummary =
     displayedPrimaryAction === "instant_connect"
       ? `Tap Connect with me to save ${profile.fullName} without sharing numbers first.`
@@ -1026,7 +1030,13 @@ export function PublicSmartCard({
               void handlePrimaryAction();
             }}
           >
-            {isPrimaryCtaSettling ? "Connected ✓" : primaryCtaLabel}
+            {isPrimaryCtaSettling ? (
+              <>
+                Connected <Check className="ml-1 inline h-4 w-4" />
+              </>
+            ) : (
+              primaryCtaLabel
+            )}
           </PrimaryButton>
 
           {contextSummary && !profile.tagline ? (
@@ -1090,8 +1100,8 @@ export function PublicSmartCard({
                   : "Connect from"}
               </p>
               {selectedPersona ? (
-                <div className="rounded-[1.35rem] border border-black/8 bg-white/82 px-4 py-3.5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
-                  <p className="truncate text-sm font-semibold text-foreground">
+                <div className="rounded-[24px] bg-white/50 backdrop-blur-md px-4 py-3.5 ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10">
+                  <p className="truncate text-sm font-semibold tracking-tight text-foreground">
                     {selectedPersona.fullName}
                   </p>
                   <p className="truncate font-mono text-xs text-muted">
@@ -1106,7 +1116,7 @@ export function PublicSmartCard({
                   setSelectedPersonaId(event.target.value);
                   setShowCustomizeOptions(false);
                 }}
-                className="w-full rounded-[20px] bg-white/82 px-4 py-3 text-sm text-foreground shadow-inner ring-1 ring-inset ring-black/5 outline-none transition focus:bg-white/92 focus:ring-2 focus:ring-foreground/15 dark:bg-white/[0.04] dark:ring-white/10 dark:focus:bg-white/[0.07] dark:shadow-none"
+                className="w-full rounded-[24px] bg-white/50 backdrop-blur-md px-4 py-3 text-sm text-foreground ring-1 ring-inset ring-black/5 outline-none transition focus:bg-white/60 focus:ring-2 focus:ring-foreground/15 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/70"
               >
                 {initialPersonas.map((persona) => (
                   <option key={persona.id} value={persona.id}>
@@ -1181,8 +1191,8 @@ export function PublicSmartCard({
                     ? "Saving..."
                     : action.label;
                 const actionClassName = cn(
-                  "flex min-h-[88px] items-center justify-center rounded-[22px] bg-white/88 px-3 py-4 text-center shadow-inner ring-1 ring-inset ring-black/5 transition-transform duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] dark:bg-white/[0.04] dark:ring-white/10 dark:focus-visible:ring-offset-black",
-                  "hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(15,23,42,0.08)] dark:hover:shadow-[0_14px_28px_rgba(0,0,0,0.28)]",
+                  "flex min-h-[88px] items-center justify-center rounded-[24px] bg-white/50 backdrop-blur-md px-3 py-4 text-center ring-1 ring-inset ring-black/5 transition-all duration-500 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] dark:bg-zinc-800/50 dark:ring-white/10 dark:focus-visible:ring-offset-black",
+                  "hover:shadow-[0_16px_30px_rgba(15,23,42,0.08)] dark:hover:shadow-[0_14px_28px_rgba(0,0,0,0.28)]",
                 );
 
                 if (!isDownloadAction) {

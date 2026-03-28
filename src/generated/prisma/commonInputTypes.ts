@@ -314,6 +314,40 @@ export type IntWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedIntFilter<$PrismaModel>
 }
 
+export type EnumPasskeyChallengePurposeFilter<$PrismaModel = never> = {
+  equals?: $Enums.PasskeyChallengePurpose | Prisma.EnumPasskeyChallengePurposeFieldRefInput<$PrismaModel>
+  in?: $Enums.PasskeyChallengePurpose[] | Prisma.ListEnumPasskeyChallengePurposeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PasskeyChallengePurpose[] | Prisma.ListEnumPasskeyChallengePurposeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPasskeyChallengePurposeFilter<$PrismaModel> | $Enums.PasskeyChallengePurpose
+}
+
+export type EnumPasskeyChallengePurposeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PasskeyChallengePurpose | Prisma.EnumPasskeyChallengePurposeFieldRefInput<$PrismaModel>
+  in?: $Enums.PasskeyChallengePurpose[] | Prisma.ListEnumPasskeyChallengePurposeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PasskeyChallengePurpose[] | Prisma.ListEnumPasskeyChallengePurposeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPasskeyChallengePurposeWithAggregatesFilter<$PrismaModel> | $Enums.PasskeyChallengePurpose
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPasskeyChallengePurposeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPasskeyChallengePurposeFilter<$PrismaModel>
+}
+
+export type BytesFilter<$PrismaModel = never> = {
+  equals?: runtime.Bytes | Prisma.BytesFieldRefInput<$PrismaModel>
+  in?: runtime.Bytes[] | Prisma.ListBytesFieldRefInput<$PrismaModel>
+  notIn?: runtime.Bytes[] | Prisma.ListBytesFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBytesFilter<$PrismaModel> | runtime.Bytes
+}
+
+export type BytesWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: runtime.Bytes | Prisma.BytesFieldRefInput<$PrismaModel>
+  in?: runtime.Bytes[] | Prisma.ListBytesFieldRefInput<$PrismaModel>
+  notIn?: runtime.Bytes[] | Prisma.ListBytesFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBytesWithAggregatesFilter<$PrismaModel> | runtime.Bytes
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedBytesFilter<$PrismaModel>
+  _max?: Prisma.NestedBytesFilter<$PrismaModel>
+}
+
 export type EnumPersonaTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.PersonaType | Prisma.EnumPersonaTypeFieldRefInput<$PrismaModel>
   in?: $Enums.PersonaType[] | Prisma.ListEnumPersonaTypeFieldRefInput<$PrismaModel>
@@ -1195,6 +1229,40 @@ export type NestedFloatFilter<$PrismaModel = never> = {
   gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   not?: Prisma.NestedFloatFilter<$PrismaModel> | number
+}
+
+export type NestedEnumPasskeyChallengePurposeFilter<$PrismaModel = never> = {
+  equals?: $Enums.PasskeyChallengePurpose | Prisma.EnumPasskeyChallengePurposeFieldRefInput<$PrismaModel>
+  in?: $Enums.PasskeyChallengePurpose[] | Prisma.ListEnumPasskeyChallengePurposeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PasskeyChallengePurpose[] | Prisma.ListEnumPasskeyChallengePurposeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPasskeyChallengePurposeFilter<$PrismaModel> | $Enums.PasskeyChallengePurpose
+}
+
+export type NestedEnumPasskeyChallengePurposeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PasskeyChallengePurpose | Prisma.EnumPasskeyChallengePurposeFieldRefInput<$PrismaModel>
+  in?: $Enums.PasskeyChallengePurpose[] | Prisma.ListEnumPasskeyChallengePurposeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PasskeyChallengePurpose[] | Prisma.ListEnumPasskeyChallengePurposeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPasskeyChallengePurposeWithAggregatesFilter<$PrismaModel> | $Enums.PasskeyChallengePurpose
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPasskeyChallengePurposeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPasskeyChallengePurposeFilter<$PrismaModel>
+}
+
+export type NestedBytesFilter<$PrismaModel = never> = {
+  equals?: runtime.Bytes | Prisma.BytesFieldRefInput<$PrismaModel>
+  in?: runtime.Bytes[] | Prisma.ListBytesFieldRefInput<$PrismaModel>
+  notIn?: runtime.Bytes[] | Prisma.ListBytesFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBytesFilter<$PrismaModel> | runtime.Bytes
+}
+
+export type NestedBytesWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: runtime.Bytes | Prisma.BytesFieldRefInput<$PrismaModel>
+  in?: runtime.Bytes[] | Prisma.ListBytesFieldRefInput<$PrismaModel>
+  notIn?: runtime.Bytes[] | Prisma.ListBytesFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBytesWithAggregatesFilter<$PrismaModel> | runtime.Bytes
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedBytesFilter<$PrismaModel>
+  _max?: Prisma.NestedBytesFilter<$PrismaModel>
 }
 
 export type NestedEnumPersonaTypeFilter<$PrismaModel = never> = {

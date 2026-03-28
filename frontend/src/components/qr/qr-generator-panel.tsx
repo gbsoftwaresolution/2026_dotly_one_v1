@@ -108,18 +108,6 @@ function getInitials(fullName: string): string {
   return letters || fullName.charAt(0).toUpperCase() || "D";
 }
 
-function buildReferralSignupUrl(referralCode: string): string {
-  const normalizedCode = referralCode.trim().toUpperCase();
-
-  if (typeof window === "undefined") {
-    return `${routes.public.signup}?ref=${encodeURIComponent(normalizedCode)}`;
-  }
-
-  const inviteUrl = new URL(routes.public.signup, window.location.origin);
-  inviteUrl.searchParams.set("ref", normalizedCode);
-  return inviteUrl.toString();
-}
-
 export function QrGeneratorPanel({
   initialFastShare = null,
   initialReferral = null,
@@ -186,13 +174,6 @@ export function QrGeneratorPanel({
     .map((value, index) => (index === 1 ? `@${value}` : value))
     .join(" • ");
   const isVerified = user.security.trustBadge === "verified";
-  const activationMilestones = user.activation?.milestones;
-  const hasShareCompleted = Boolean(
-    activationMilestones?.firstShareCompletedAt,
-  );
-  const hasRequestReceived = Boolean(
-    activationMilestones?.firstRequestReceivedAt,
-  );
   const shareTitle = selectedPersona
     ? `${formatPublicHandle(sharePayload?.publicIdentifier ?? selectedPersona.username)} on Dotly`
     : "Dotly";
@@ -201,9 +182,6 @@ export function QrGeneratorPanel({
       ? `Connect with ${formatPublicHandle(sharePayload?.publicIdentifier ?? selectedPersona.username)} on Dotly.`
       : `Open ${formatPublicHandle(sharePayload?.publicIdentifier ?? selectedPersona.username)} on Dotly.`
     : "Open this Dotly profile.";
-  const referralSignupUrl = initialReferral
-    ? buildReferralSignupUrl(initialReferral.referralCode)
-    : null;
   const personaOptions = personas.map((persona) => ({
     value: persona.id,
     label: persona.fullName,
@@ -382,59 +360,6 @@ export function QrGeneratorPanel({
     }
   }
 
-  async function handleCopyReferralCode() {
-    if (!initialReferral) {
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(initialReferral.referralCode);
-      setFeedback(null);
-      showToast("Referral code copied");
-    } catch {
-      setFeedback({
-        tone: "error",
-        message: "Could not copy the referral code right now.",
-      });
-    }
-  }
-
-  async function handleInviteShare() {
-    if (!initialReferral || !referralSignupUrl) {
-      return;
-    }
-
-    if (typeof navigator.share === "function") {
-      try {
-        await navigator.share({
-          title: "Create your Dotly",
-          text: "Claim your Dotly and get your QR ready for the next introduction.",
-          url: referralSignupUrl,
-        });
-        setFeedback(null);
-        return;
-      } catch (shareError) {
-        if (
-          shareError instanceof DOMException &&
-          shareError.name === "AbortError"
-        ) {
-          return;
-        }
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(referralSignupUrl);
-      setFeedback(null);
-      showToast("Invite link copied");
-    } catch {
-      setFeedback({
-        tone: "error",
-        message: "Could not copy the invite link right now.",
-      });
-    }
-  }
-
   async function handleShare() {
     if (!generatedQr) {
       setFeedback({
@@ -479,7 +404,7 @@ export function QrGeneratorPanel({
 
   return (
     <div className="space-y-6 motion-safe:animate-[fade-in_420ms_ease-out]">
-      <div className="rounded-[2rem] bg-white/40 backdrop-blur-[40px] saturate-[200%] ring-1 ring-black/5 dark:bg-zinc-900/40 dark:ring-white/10 shadow-2xl p-5 sm:p-8 flex flex-col gap-8 relative overflow-hidden">
+      <div className="rounded-[2rem] bg-white/40 backdrop-blur-3xl p-6 sm:p-8 ring-1 ring-inset ring-black/5 dark:bg-black/40 dark:ring-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] flex flex-col gap-8 relative overflow-hidden transition-transform duration-500 hover:scale-[1.01]">
         {/* Subtle gradient glow behind the card content */}
         <div className="absolute -inset-1/2 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none" />
 
@@ -504,7 +429,7 @@ export function QrGeneratorPanel({
               </label>
               <CustomSelect
                 id="qr-persona-select"
-                className="min-h-[54px] w-full rounded-2xl bg-white/50 px-4 text-[15px] font-medium text-foreground shadow-sm ring-1 ring-inset ring-black/5 outline-none transition-all focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/50 dark:ring-white/10 dark:focus:bg-zinc-800/80 backdrop-blur-md"
+                className="min-h-[54px] w-full rounded-[20px] bg-white/60 px-4 text-[15px] font-medium text-foreground shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)] ring-1 ring-inset ring-black/5 outline-none transition-all focus:bg-white/80 focus:ring-black/10 dark:bg-zinc-800/60 dark:ring-white/10 dark:focus:bg-zinc-800/80 backdrop-blur-xl"
                 value={selectedPersonaId ?? ""}
                 onChange={(value) => setSelectedPersonaId(value)}
                 options={personaOptions}
@@ -514,7 +439,7 @@ export function QrGeneratorPanel({
 
           <div className="flex items-start gap-3 relative z-10">
             {selectedPersona ? (
-              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-white/50 px-4 py-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 sm:px-5 backdrop-blur-md">
+              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-[1.5rem] bg-white/60 px-4 py-4 shadow-sm ring-1 ring-black/5 dark:bg-black/40 dark:ring-white/10 sm:px-5 backdrop-blur-xl">
                 {selectedPersona.profilePhotoUrl ? (
                   <ExternalImage
                     src={selectedPersona.profilePhotoUrl}
@@ -615,7 +540,7 @@ export function QrGeneratorPanel({
                   </SecondaryButton>
                 </div>
               ) : (
-                <div className="relative w-full rounded-3xl bg-white px-4 py-5 shadow-xl ring-1 ring-black/10 dark:bg-zinc-950 dark:ring-white/10 sm:px-5 sm:py-6">
+                <div className="relative w-full rounded-[1.5rem] bg-white px-4 py-5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10 sm:px-5 sm:py-6 transition-all duration-500 hover:scale-[1.02]">
                   {isLoadingQr ? (
                     generatedQr ? (
                       <div className="flex min-h-[26rem] items-center justify-center sm:min-h-[28rem]">
@@ -678,7 +603,7 @@ export function QrGeneratorPanel({
         <div className="h-px bg-black/5 dark:bg-white/5 -mx-5 sm:-mx-8 relative z-10" />
 
         <div className="space-y-4 relative z-10">
-          <div className="rounded-2xl bg-white/50 p-2 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md relative z-10">
+          <div className="rounded-[1.5rem] bg-white/60 p-2 shadow-sm ring-1 ring-black/5 dark:bg-black/40 dark:ring-white/10 backdrop-blur-xl relative z-10">
             <div className="grid grid-cols-2 gap-2">
               <SecondaryButton
                 type="button"
@@ -707,127 +632,6 @@ export function QrGeneratorPanel({
               </PrimaryButton>
             </div>
           </div>
-
-          <div className="rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
-            <div className="space-y-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                {hasShareCompleted ? "Momentum signal" : "First exchange flow"}
-              </p>
-              <h2 className="text-base font-semibold tracking-tight text-foreground">
-                Guide the first exchange
-              </h2>
-              <p className="text-sm leading-6 text-muted">
-                {hasShareCompleted
-                  ? hasRequestReceived
-                    ? "Your Dotly is already landing. A real scan or profile open already happened, so keep requests and inbox close while the context is still warm."
-                    : "Your Dotly is already landing. A real scan or profile open already happened, and the next move is clean follow-through before the moment cools."
-                  : "Keep the introduction effortless: show the Dotly, let them choose their path in, and follow through while the relationship is still taking shape."}
-              </p>
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              {[
-                {
-                  step: "01",
-                  title: "Lead with Dotly",
-                  description:
-                    "Use one polished share surface instead of giving out your number or explaining your profile.",
-                },
-                {
-                  step: "02",
-                  title: hasShareCompleted
-                    ? "Momentum started"
-                    : "Let them choose",
-                  description: hasShareCompleted
-                    ? "Dotly has already seen a real open or scan from this introduction flow."
-                    : "Dotly can route them into curated access, instant connect, or the right next step.",
-                },
-                {
-                  step: "03",
-                  title: hasRequestReceived
-                    ? "Reply while it is warm"
-                    : "Protect the follow-through",
-                  description: hasRequestReceived
-                    ? "A first incoming request already landed. Keep the response loop personal and fast."
-                    : "Check requests or inbox so the introduction turns into a trusted relationship, not a missed moment.",
-                },
-              ].map((item) => (
-                <div
-                  key={item.step}
-                  className="rounded-2xl bg-black/[0.03] px-4 py-4 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.04] dark:ring-white/10"
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-                    {item.step}
-                  </p>
-                  <h3 className="mt-2 text-sm font-semibold text-foreground">
-                    {item.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-muted">
-                    {item.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-              <Link className="sm:flex-1" href={routes.app.requests}>
-                <SecondaryButton className="w-full" size="sm">
-                  Review requests
-                </SecondaryButton>
-              </Link>
-              <Link className="sm:flex-1" href={routes.app.inbox}>
-                <SecondaryButton className="w-full" size="sm">
-                  Review inbox
-                </SecondaryButton>
-              </Link>
-            </div>
-          </div>
-
-          {initialReferral ? (
-            <div className="rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 backdrop-blur-md">
-              <div className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                  Network invitation
-                </p>
-                <h2 className="text-base font-semibold tracking-tight text-foreground">
-                  Invite someone into the Dotly network
-                </h2>
-                <p className="text-sm leading-6 text-muted">
-                  Share your signup link after the introduction so the next
-                  person can claim a Dotly of their own with your referral
-                  attached.
-                </p>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-black/[0.03] px-4 py-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.04] dark:ring-white/10">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-                    Referral code
-                  </p>
-                  <p className="mt-1 truncate font-mono text-base font-semibold tracking-[0.2em] text-foreground">
-                    {initialReferral.referralCode}
-                  </p>
-                </div>
-                <SecondaryButton
-                  type="button"
-                  size="sm"
-                  className="shrink-0"
-                  onClick={() => void handleCopyReferralCode()}
-                >
-                  Copy code
-                </SecondaryButton>
-              </div>
-
-              <PrimaryButton
-                type="button"
-                size="sm"
-                className="mt-3 h-13 w-full rounded-2xl"
-                onClick={() => void handleInviteShare()}
-              >
-                Invite someone
-              </PrimaryButton>
-            </div>
-          ) : null}
 
           {!shareLocked && error && generatedQr ? (
             <button

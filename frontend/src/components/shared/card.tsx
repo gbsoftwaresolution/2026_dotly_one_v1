@@ -1,5 +1,4 @@
 import type { PropsWithChildren } from "react";
-
 import { cn } from "@/lib/utils/cn";
 
 interface CardProps extends PropsWithChildren {
@@ -19,12 +18,11 @@ export function Card({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-card bg-white/88 ring-1 ring-black/[0.05] dark:bg-zinc-950/88 dark:ring-white/[0.06]",
-        elevated &&
-          "shadow-[0_10px_34px_rgba(0,0,0,0.10)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.30)]",
-        !elevated && "shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
+        "relative overflow-hidden rounded-[24px]",
+        "bg-white/60 backdrop-blur-3xl dark:bg-zinc-900/60 ring-1 ring-black/5 dark:ring-white/10",
+        elevated ? "shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)]" : "shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)]",
         interactive &&
-          "cursor-pointer transition-all duration-300 ease-[0.16,1,0.3,1] hover:scale-[0.995] hover:shadow-[0_10px_24px_rgba(0,0,0,0.08)] active:scale-[0.99]",
+          "cursor-pointer transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] active:scale-[0.99]",
         "before:absolute before:inset-x-0 before:top-0 before:h-px",
         "before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent",
         "dark:before:via-white/[0.08]",

@@ -205,6 +205,14 @@ export const MobileOtpPurpose = {
 export type MobileOtpPurpose = (typeof MobileOtpPurpose)[keyof typeof MobileOtpPurpose]
 
 
+export const PasskeyChallengePurpose = {
+  REGISTRATION: 'REGISTRATION',
+  AUTHENTICATION: 'AUTHENTICATION'
+} as const
+
+export type PasskeyChallengePurpose = (typeof PasskeyChallengePurpose)[keyof typeof PasskeyChallengePurpose]
+
+
 export const IdentityType = {
   PERSONAL: 'PERSONAL',
   PROFESSIONAL: 'PROFESSIONAL',

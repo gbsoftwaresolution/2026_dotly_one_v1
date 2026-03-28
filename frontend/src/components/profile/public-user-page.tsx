@@ -64,19 +64,17 @@ export async function PublicUserPage({
 
     const isSmartCard = profile.sharingMode === "smart_card";
     const showRequestAccessPanel = profile.sharingMode === "controlled";
-    const loginHref = buildLoginHref(
-      profile.publicUrl,
-      canonicalIdentifier,
-    );
+    const loginHref = buildLoginHref(profile.publicUrl, canonicalIdentifier);
 
     return (
       <main
-        className={`mx-auto flex min-h-screen w-full px-4 sm:px-6 ${
+        className={`relative mx-auto flex min-h-screen w-full px-4 sm:px-6 ${
           isSmartCard
             ? "max-w-md items-start py-4 sm:items-center sm:py-8"
             : "max-w-xl items-center py-8"
         }`}
       >
+        <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl" />
         <div className="w-full space-y-4">
           <PublicUserInteractions
             profile={profile}
@@ -102,7 +100,8 @@ export async function PublicUserPage({
     );
 
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-xl items-center px-4 py-8 sm:px-6">
+      <main className="relative mx-auto flex min-h-screen w-full max-w-xl items-center px-4 py-8 sm:px-6">
+        <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl" />
         {cachedProfile ? (
           <PublicProfileOfflineCard profile={cachedProfile} />
         ) : (

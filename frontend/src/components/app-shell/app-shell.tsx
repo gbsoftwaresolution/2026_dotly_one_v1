@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { PropsWithChildren } from "react";
 
 import { Menu, QrCode } from "lucide-react";
@@ -7,7 +8,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
+import { PostSignupPasskeyPrompt } from "@/components/auth/post-signup-passkey-prompt";
 import { BottomNav } from "@/components/navigation/bottom-nav";
+import { SideMenu } from "@/components/navigation/side-menu";
 import { NotificationBadge } from "@/components/notifications/notification-badge";
 import { ActivationNudgeProvider } from "@/context/ActivationNudgeContext";
 import { AuthSessionProvider } from "@/context/AuthSessionContext";
@@ -26,6 +29,7 @@ interface AppShellProps extends PropsWithChildren {
 }
 
 export function AppShell({ children, session }: AppShellProps) {
+  const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
   const pathname = usePathname();
   const sectionLabel = getAppSectionLabel(pathname);
   const sectionDescription = getAppSectionDescription(pathname);
@@ -49,8 +53,8 @@ export function AppShell({ children, session }: AppShellProps) {
               <header
                 className={[
                   "sticky top-0 z-header",
-                  "dark:bg-bgOnyx/75 bg-white/75 backdrop-blur-2xl",
-                  "border-b dark:border-white/[0.06] border-black/[0.06]",
+                  "bg-white/60 dark:bg-zinc-950/60 backdrop-blur-3xl",
+                  "border-b border-black/5 dark:border-white/10 transition-all duration-300",
                 ].join(" ")}
               >
                 <div className="safe-pt" />
@@ -59,6 +63,7 @@ export function AppShell({ children, session }: AppShellProps) {
                   <div className="flex w-1/3 items-center justify-start gap-2">
                     <button
                       type="button"
+                      onClick={() => setIsSideMenuOpen(true)}
                       className="-ml-1 p-1 text-foreground/80 transition-colors hover:text-foreground"
                     >
                       <Menu className="h-6 w-6" />
@@ -111,10 +116,19 @@ export function AppShell({ children, session }: AppShellProps) {
                 className={cn(isShareRoute ? "min-h-screen-dvh" : "space-y-4")}
               >
                 {!isShareRoute ? <EmailVerificationBanner /> : null}
+                {!isShareRoute ? (
+                  <PostSignupPasskeyPrompt
+                    initialPasskeyCount={session.user?.security.passkeyCount}
+                  />
+                ) : null}
                 {children}
               </div>
             </main>
 
+            <SideMenu
+              isOpen={isSideMenuOpen}
+              onClose={() => setIsSideMenuOpen(false)}
+            />
             {!isShareRoute ? <BottomNav /> : null}
           </div>
         </IdentityProvider>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Repeat2 } from "lucide-react";
+import { Check, Repeat2 } from "lucide-react";
 
 import { PrimaryButton } from "@/components/shared/primary-button";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -24,7 +24,9 @@ interface QuickConnectFlowProps {
   hostCompany: string;
 }
 
-function getPersonaPublicHandle(persona: Pick<PersonaSummary, "publicUrl" | "username">) {
+function getPersonaPublicHandle(
+  persona: Pick<PersonaSummary, "publicUrl" | "username">,
+) {
   return formatPublicHandle(
     getCanonicalPublicSlug(persona.publicUrl, persona.username),
   );
@@ -285,7 +287,7 @@ export function QuickConnectFlow({
     const target = result.targetPersona;
 
     return (
-      <div className="rounded-3xl bg-white/82 p-6 space-y-6 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.05] dark:bg-zinc-950/82 dark:ring-white/[0.06]">
+      <div className="rounded-[32px] bg-white/60 backdrop-blur-3xl p-6 space-y-6 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10">
         <div className="flex flex-col items-center gap-3 pt-2 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-3xl border border-emerald-500/30 bg-emerald-500/10">
             <svg
@@ -316,7 +318,7 @@ export function QuickConnectFlow({
           </div>
         </div>
 
-        <div className="rounded-2xl bg-foreground/[0.03] p-4 space-y-3 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+        <div className="rounded-[24px] bg-white/50 backdrop-blur-md p-4 space-y-3 ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10">
           <p className="label-xs text-muted">Connection window</p>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="space-y-0.5">
@@ -346,7 +348,7 @@ export function QuickConnectFlow({
 
   if (flowState.type === "error") {
     return (
-      <div className="rounded-3xl bg-rose-500/5 p-6 space-y-4 ring-1 ring-inset ring-rose-500/20">
+      <div className="rounded-[32px] bg-rose-500/5 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] p-6 space-y-4 ring-1 ring-inset ring-rose-500/20">
         <div className="space-y-2">
           <h2 className="text-lg font-semibold text-rose-500 dark:text-rose-400">
             {flowState.title}
@@ -371,9 +373,9 @@ export function QuickConnectFlow({
   const isBusy = isConnecting || isSettling;
 
   return (
-    <div className="rounded-[2rem] bg-white/82 p-6 sm:p-7 space-y-7 shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.05] dark:bg-zinc-950/82 dark:ring-white/[0.06]">
+    <div className="rounded-[32px] bg-white/60 backdrop-blur-3xl p-6 sm:p-7 space-y-7 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10">
       <div className="space-y-5">
-        <div className="rounded-[30px] bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+        <div className="rounded-[24px] bg-white/50 backdrop-blur-md p-5 ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10">
           <div className="flex items-center gap-4 text-left">
             <div
               className="flex h-[3.75rem] w-[3.75rem] shrink-0 items-center justify-center rounded-[1.35rem] text-lg font-bold text-white"
@@ -396,7 +398,7 @@ export function QuickConnectFlow({
           </p>
         </div>
 
-        <div className="space-y-1 rounded-[1.4rem] bg-foreground/[0.03] px-4 py-3.5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+        <div className="space-y-1 rounded-[24px] bg-white/50 backdrop-blur-md px-4 py-3.5 ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10">
           <p className="label-xs text-muted">What Connect does</p>
           <p className="text-left text-sm leading-6 text-muted">
             Uses the selected profile below and saves this contact instantly.
@@ -420,7 +422,7 @@ export function QuickConnectFlow({
           ) : null}
         </div>
         {selectedPersona ? (
-          <div className="rounded-[1.4rem] bg-foreground/[0.03] px-4 py-3.5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5">
+          <div className="rounded-[24px] bg-white/50 backdrop-blur-md px-4 py-3.5 ring-1 ring-inset ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10">
             <div className="flex items-center gap-3">
               <div
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] text-sm font-bold text-white"
@@ -506,7 +508,13 @@ export function QuickConnectFlow({
         isSuccess={isSettling}
         loadingLabel="Connecting..."
       >
-        {isSettling ? "Connected ✓" : "Connect"}
+        {isSettling ? (
+          <>
+            Connected <Check className="ml-1 inline h-4 w-4" />
+          </>
+        ) : (
+          "Connect"
+        )}
       </PrimaryButton>
 
       {showSlowFeedback ? (

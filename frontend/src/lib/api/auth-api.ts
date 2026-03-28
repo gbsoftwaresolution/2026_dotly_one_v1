@@ -1,10 +1,16 @@
 import type {
   AuthCredentials,
+  BeginPasskeyAuthenticationInput,
+  BeginPasskeyAuthenticationResult,
+  BeginPasskeyRegistrationInput,
+  BeginPasskeyRegistrationResult,
   ChangePasswordInput,
+  DeletePasskeyResult,
   ForgotPasswordInput,
   ForgotPasswordResult,
   LoginResult,
   PasswordMutationResult,
+  RenamePasskeyInput,
   RequestMobileOtpInput,
   RequestMobileOtpResult,
   ResendVerificationEmailInput,
@@ -14,10 +20,15 @@ import type {
   RevokeSessionResult,
   SessionListResult,
   SignupResult,
+  VerifyPasskeyAuthenticationInput,
+  VerifyPasskeyAuthenticationResult,
+  VerifyPasskeyRegistrationInput,
+  VerifyPasskeyRegistrationResult,
   VerifyMobileOtpInput,
   VerifyMobileOtpResult,
   VerifyEmailResult,
 } from "@/types/auth";
+import type { UserPasskey } from "@/types/user";
 
 import { apiRequest } from "./client";
 
@@ -36,6 +47,26 @@ export const authApi = {
       baseUrl: "",
       credentials: "same-origin",
     }),
+  beginPasskeyAuthentication: (input?: BeginPasskeyAuthenticationInput) =>
+    apiRequest<BeginPasskeyAuthenticationResult>(
+      "/api/auth/passkeys/authenticate/options",
+      {
+        method: "POST",
+        body: input,
+        baseUrl: "",
+        credentials: "same-origin",
+      },
+    ),
+  verifyPasskeyAuthentication: (input: VerifyPasskeyAuthenticationInput) =>
+    apiRequest<VerifyPasskeyAuthenticationResult>(
+      "/api/auth/passkeys/authenticate/verify",
+      {
+        method: "POST",
+        body: input,
+        baseUrl: "",
+        credentials: "same-origin",
+      },
+    ),
   forgotPassword: (input: ForgotPasswordInput) =>
     apiRequest<ForgotPasswordResult>("/api/auth/forgot-password", {
       method: "POST",
@@ -97,6 +128,47 @@ export const authApi = {
     apiRequest<VerifyMobileOtpResult>("/api/users/me/mobile-otp/verify", {
       method: "POST",
       body: input,
+      baseUrl: "",
+      credentials: "same-origin",
+    }),
+  beginPasskeyRegistration: (input?: BeginPasskeyRegistrationInput) =>
+    apiRequest<BeginPasskeyRegistrationResult>(
+      "/api/users/me/passkeys/register/options",
+      {
+        method: "POST",
+        body: input,
+        baseUrl: "",
+        credentials: "same-origin",
+      },
+    ),
+  verifyPasskeyRegistration: (input: VerifyPasskeyRegistrationInput) =>
+    apiRequest<VerifyPasskeyRegistrationResult>(
+      "/api/users/me/passkeys/register/verify",
+      {
+        method: "POST",
+        body: input,
+        baseUrl: "",
+        credentials: "same-origin",
+      },
+    ),
+  listPasskeys: () =>
+    apiRequest<{ passkeys: UserPasskey[] }>("/api/users/me/passkeys", {
+      baseUrl: "",
+      credentials: "same-origin",
+    }),
+  renamePasskey: (passkeyId: string, input: RenamePasskeyInput) =>
+    apiRequest<{ passkey: UserPasskey }>(
+      `/api/users/me/passkeys/${passkeyId}`,
+      {
+        method: "PATCH",
+        body: input,
+        baseUrl: "",
+        credentials: "same-origin",
+      },
+    ),
+  removePasskey: (passkeyId: string) =>
+    apiRequest<DeletePasskeyResult>(`/api/users/me/passkeys/${passkeyId}`, {
+      method: "DELETE",
       baseUrl: "",
       credentials: "same-origin",
     }),

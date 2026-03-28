@@ -10,9 +10,9 @@ export function StatCard({ label, value, highlight }: StatCardProps) {
   return (
     <div
       className={cn(
-        "flex flex-col justify-between rounded-2xl bg-white/80 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 transition-all duration-300 hover:scale-[0.995] dark:bg-zinc-950/80 dark:ring-white/[0.06]",
+        "flex flex-col justify-between rounded-[24px] bg-white/50 backdrop-blur-md p-4 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-1 dark:bg-zinc-900/60 dark:ring-white/10",
         highlight &&
-          "bg-foreground/[0.04] ring-black/10 dark:bg-white/[0.06] dark:ring-white/10",
+          "bg-white/60 ring-black/10 dark:bg-zinc-800/60 dark:ring-white/10",
       )}
     >
       <p className="label-xs text-muted">{label}</p>

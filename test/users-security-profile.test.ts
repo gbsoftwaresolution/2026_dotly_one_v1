@@ -17,6 +17,9 @@ describe("UsersService security profile", () => {
         mobileOtpChallenge: {
           findFirst: async () => null,
         },
+        passkeyCredential: {
+          count: async () => 0,
+        },
       } as any,
       {
         isConfigured: () => false,
@@ -29,11 +32,19 @@ describe("UsersService security profile", () => {
         getRequirementCatalog: () => ({
           send_contact_request: {
             label: "Send contact requests",
-            anyOf: ["email_verified", "mobile_otp_verified"],
+            anyOf: [
+              "email_verified",
+              "mobile_otp_verified",
+              "passkey_verified",
+            ],
           },
           create_event: {
             label: "Create trust-based events",
-            anyOf: ["email_verified", "mobile_otp_verified"],
+            anyOf: [
+              "email_verified",
+              "mobile_otp_verified",
+              "passkey_verified",
+            ],
           },
         }),
         getAvailableTrustFactors: () => [
@@ -46,6 +57,11 @@ describe("UsersService security profile", () => {
             factor: "mobile_otp_verified",
             available: false,
             source: "mobile_otp",
+          },
+          {
+            factor: "passkey_verified",
+            available: true,
+            source: "passkey",
           },
         ],
       } as any,
@@ -90,6 +106,13 @@ describe("UsersService security profile", () => {
         description:
           "Verify a mobile number to add a second live trust factor for step-up account protection and future phone-based sign-in.",
       },
+      {
+        key: "passkey_verified",
+        label: "Passkey added",
+        status: "inactive",
+        description:
+          "Add a passkey for phishing-resistant sign-in and a stronger device-bound trust factor on this account.",
+      },
     ]);
   });
 
@@ -109,6 +132,9 @@ describe("UsersService security profile", () => {
         mobileOtpChallenge: {
           findFirst: async () => null,
         },
+        passkeyCredential: {
+          count: async () => 1,
+        },
       } as any,
       {
         isConfigured: () => false,
@@ -121,7 +147,11 @@ describe("UsersService security profile", () => {
         getRequirementCatalog: () => ({
           send_contact_request: {
             label: "Send contact requests",
-            anyOf: ["email_verified", "mobile_otp_verified"],
+            anyOf: [
+              "email_verified",
+              "mobile_otp_verified",
+              "passkey_verified",
+            ],
           },
         }),
         getAvailableTrustFactors: () => [
@@ -135,6 +165,11 @@ describe("UsersService security profile", () => {
             available: true,
             source: "mobile_otp",
           },
+          {
+            factor: "passkey_verified",
+            available: true,
+            source: "passkey",
+          },
         ],
       } as any,
       {} as any,
@@ -147,6 +182,70 @@ describe("UsersService security profile", () => {
       "Send contact requests",
     ]);
     assert.deepEqual(result.security.restrictedActions, []);
+  });
+
+  it("falls back to zero passkeys when passkey storage is not migrated yet", async () => {
+    const service = new UsersService(
+      {
+        user: {
+          findUnique: async () => ({
+            id: "user-1",
+            email: "user@dotly.one",
+            isVerified: true,
+            phoneNumber: null,
+            pendingPhoneNumber: null,
+            phoneVerifiedAt: null,
+          }),
+        },
+        mobileOtpChallenge: {
+          findFirst: async () => null,
+        },
+        passkeyCredential: {
+          count: async () => {
+            throw new Error(
+              "The table `public.PasskeyCredential` does not exist in the current database.",
+            );
+          },
+        },
+      } as any,
+      {
+        isConfigured: () => true,
+        isEmailVerificationConfigured: () => true,
+      } as any,
+      {
+        isConfigured: () => true,
+      } as any,
+      {
+        getRequirementCatalog: () => ({
+          send_contact_request: {
+            label: "Send contact requests",
+            anyOf: [
+              "email_verified",
+              "mobile_otp_verified",
+              "passkey_verified",
+            ],
+          },
+        }),
+        getAvailableTrustFactors: () => [
+          {
+            factor: "email_verified",
+            available: true,
+            source: "email",
+          },
+          {
+            factor: "passkey_verified",
+            available: true,
+            source: "passkey",
+          },
+        ],
+      } as any,
+      {} as any,
+    );
+
+    const result = await service.getCurrentUser("user-1");
+
+    assert.equal(result.security.passkeyCount, 0);
+    assert.equal(result.security.trustBadge, "verified");
   });
 
   it("returns the current user's referral code for sharing", async () => {
@@ -173,6 +272,9 @@ describe("UsersService security profile", () => {
         },
         mobileOtpChallenge: {
           findFirst: async () => null,
+        },
+        passkeyCredential: {
+          count: async () => 0,
         },
       } as any,
       {} as any,

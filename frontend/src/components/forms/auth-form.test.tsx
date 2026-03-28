@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   replace: vi.fn(),
   refresh: vi.fn(),
+  prefetch: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -17,6 +18,7 @@ vi.mock("next/navigation", () => ({
     push: mocks.push,
     replace: mocks.replace,
     refresh: mocks.refresh,
+    prefetch: mocks.prefetch,
   }),
 }));
 
@@ -41,6 +43,7 @@ describe("AuthForm", () => {
     mocks.push.mockReset();
     mocks.replace.mockReset();
     mocks.refresh.mockReset();
+    mocks.prefetch.mockReset();
   });
 
   it("blocks signup when the passwords do not match", async () => {
@@ -161,6 +164,58 @@ describe("AuthForm", () => {
       expect(
         screen.getByText(/that email is already registered/i),
       ).toBeInTheDocument();
+    });
+  });
+
+  it("renders login fallback copy when configured as collapsible", () => {
+    render(
+      React.createElement(AuthForm, {
+        mode: "login",
+        title: "Password fallback",
+        description: "Use your email and password if needed.",
+        collapsible: true,
+        defaultExpanded: false,
+      }),
+    );
+
+    expect(screen.getByText(/password fallback/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/use your email and password if needed/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
+  });
+
+  it("adds the one-time passkey enrollment flag after password login", async () => {
+    mocks.login.mockResolvedValue({
+      success: true,
+      sessionId: "session-1",
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      React.createElement(AuthForm, {
+        mode: "login",
+        redirectTo: "/app/requests?view=assigned",
+        shouldPromptPasskeyEnrollment: true,
+      }),
+    );
+
+    await user.type(screen.getByLabelText(/email/i), "ava@dotly.one");
+    await user.type(screen.getByLabelText(/^password$/i), "SecurePass123!");
+    await user.click(screen.getByRole("button", { name: /sign in to dotly/i }));
+
+    await waitFor(() => {
+      expect(mocks.login).toHaveBeenCalledWith({
+        email: "ava@dotly.one",
+        password: "SecurePass123!",
+      });
+    });
+
+    await waitFor(() => {
+      expect(mocks.replace).toHaveBeenCalledWith(
+        "/app/requests?view=assigned&enrollPasskey=1",
+      );
     });
   });
 });

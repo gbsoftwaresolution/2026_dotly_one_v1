@@ -20,7 +20,7 @@ export function OverrideStatusBadge({ vm }: OverrideStatusBadgeProps) {
       </div>
 
       {vm.hasGuardrailIntervention && (
-        <div className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 border border-amber-200">
+        <div className="flex items-start gap-3 rounded-[24px] bg-amber-50 p-4 border border-amber-200 rounded-[20px] transition-all duration-300 hover:bg-white/40 dark:hover:bg-zinc-800/40">
           <Info className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
           <p className="text-sm text-amber-900 leading-relaxed">
             This action is still blocked by safety protections. Effective state:{" "}

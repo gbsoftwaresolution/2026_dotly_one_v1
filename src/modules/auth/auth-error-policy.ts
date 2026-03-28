@@ -45,6 +45,13 @@ export const AUTH_ERROR_MESSAGES = {
     "Please wait before requesting another verification code.",
   mobileOtpRequestRateLimit:
     "Too many verification codes requested. Please try again later.",
+  passkeyChallengeInvalid: "This passkey request is invalid. Please try again.",
+  passkeyChallengeExpired: "This passkey request expired. Please start again.",
+  passkeyRegistrationFailed:
+    "Passkey registration could not be completed. Please try again.",
+  passkeyAlreadyRegistered:
+    "That passkey is already registered on this account.",
+  passkeyNotFound: "Passkey not found.",
   currentSessionRevokeBlocked:
     "Use sign out if you want to leave the current device.",
   sessionNotFound: "Session not found.",

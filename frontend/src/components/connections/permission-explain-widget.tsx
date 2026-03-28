@@ -76,7 +76,7 @@ export function PermissionExplainWidget({
       <div className="flex items-center justify-between">
         <button
           onClick={handleToggle}
-          className="flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 rounded-md"
+          className="flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 rounded-[16px]"
           aria-expanded={isOpen}
         >
           <HelpCircle className="h-4 w-4" />
@@ -96,7 +96,7 @@ export function PermissionExplainWidget({
 
       {isOpen && (
         <div
-          className={`mt-4 rounded-xl p-4 border text-sm transition-opacity duration-300 ${isRefreshing ? "bg-slate-50/50 border-slate-100 opacity-60" : "bg-slate-50 border-slate-100"}`}
+          className={`mt-4 rounded-[24px] p-4 border text-sm transition-opacity duration-300 ${isRefreshing ? "bg-slate-50/50 border-slate-100 opacity-60" : "bg-slate-50 border-slate-100"}`}
         >
           {isLoading ? (
             <div className="flex items-center gap-2 text-slate-500">

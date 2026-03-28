@@ -25,7 +25,13 @@ export default function CreatePersonaPage() {
   ] as const;
 
   return (
-    <section className="space-y-5 sm:space-y-6">
+    <section className="relative w-full space-y-5 sm:space-y-6">
+      {/* Ambient background matching Dashboard/QR */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] h-[50vh] w-[50vw] rounded-full bg-blue-500/10 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] h-[50vh] w-[50vw] rounded-full bg-purple-500/10 blur-[120px]" />
+      </div>
+
       <PageHeader
         title="Create a persona"
         description="Set up the one Dotly identity you want to use first, then open the QR as your next step."
@@ -51,7 +57,7 @@ export default function CreatePersonaPage() {
           {setupSteps.map((step, index) => (
             <div
               key={step.title}
-              className="rounded-[1.5rem] border border-black/5 bg-black/[0.02] p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]"
+              className="rounded-[24px] bg-white/60 backdrop-blur-xl p-5 shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)] ring-1 ring-inset ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1"
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
                 Step {index + 1}

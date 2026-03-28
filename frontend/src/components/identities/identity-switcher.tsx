@@ -14,22 +14,19 @@ export function IdentitySwitcher() {
   }
 
   return (
-    <label className="relative block min-w-[280px]">
-      <span className="mb-2 block text-sm font-semibold text-slate-700">
-        Active identity
-      </span>
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="pointer-events-none flex items-center gap-3 px-4 py-3 pr-12">
-          <UserCircle2 className="h-9 w-9 text-sky-600" />
-          <div className="min-w-0">
-            <p className="truncate text-base font-semibold text-slate-900">
+    <label className="relative block min-w-[200px]">
+      <div className="relative overflow-hidden rounded-full border border-black/5 bg-black/5 px-4 py-2 backdrop-blur-3xl transition-transform duration-300 active:scale-95 dark:border-white/10 dark:bg-white/5">
+        <div className="pointer-events-none flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <UserCircle2
+              className="h-5 w-5 text-foreground/70"
+              strokeWidth={2}
+            />
+            <p className="truncate text-[14px] font-semibold tracking-tight text-foreground">
               {activeIdentity.displayName}
             </p>
-            <p className="truncate text-sm text-slate-600">
-              {getIdentityTypeLabel(activeIdentity.identityType)}
-              {activeIdentity.handle ? ` - @${activeIdentity.handle}` : ""}
-            </p>
           </div>
+          <ChevronDown className="h-4 w-4 text-foreground/50" />
         </div>
 
         <select
@@ -45,8 +42,6 @@ export function IdentitySwitcher() {
             </option>
           ))}
         </select>
-
-        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
       </div>
     </label>
   );

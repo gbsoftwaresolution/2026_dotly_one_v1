@@ -35,6 +35,9 @@ export const envValidationSchema = Joi.object({
   JWT_EXPIRES_IN: Joi.string().pattern(JWT_EXPIRY_PATTERN).default("7d"),
   JWT_ISSUER: Joi.string().min(1).default("dotly-backend"),
   JWT_AUDIENCE: Joi.string().min(1).default("dotly-clients"),
+  WEBAUTHN_RP_ID: Joi.string().hostname().default("localhost"),
+  WEBAUTHN_RP_NAME: Joi.string().min(1).max(120).default("Dotly"),
+  WEBAUTHN_ORIGINS: Joi.string().allow("").default("http://localhost:3001"),
   CORS_ORIGINS: Joi.string().allow("").default(""),
   REDIS_ENABLED: Joi.boolean()
     .truthy("true")
@@ -174,6 +177,12 @@ export function validateEnvironment(config: EnvRecord): EnvRecord {
       value.CORS_ORIGINS,
       errors,
     );
+    const trustedWebAuthnOrigins = collectTrustedOrigins(
+      value.WEBAUTHN_ORIGINS,
+      "WEBAUTHN_ORIGINS",
+      errors,
+      true,
+    );
     const frontendVerificationUrl = parseTrustedUrl(
       value.FRONTEND_VERIFICATION_URL_BASE,
       "FRONTEND_VERIFICATION_URL_BASE",
@@ -205,6 +214,11 @@ export function validateEnvironment(config: EnvRecord): EnvRecord {
       frontendPasswordResetUrl,
       "FRONTEND_PASSWORD_RESET_URL_BASE",
       trustedCorsOrigins,
+      errors,
+    );
+    assertWebAuthnProductionConfiguration(
+      value.WEBAUTHN_RP_ID,
+      trustedWebAuthnOrigins,
       errors,
     );
     assertTrustedUrl(value.QR_BASE_URL, "QR_BASE_URL", errors);
@@ -288,11 +302,16 @@ function assertPlaceholderFreeSecret(
   }
 }
 
-function assertTrustedOrigins(value: unknown, errors: string[]): void {
-  collectTrustedCorsOrigins(value, errors);
+function collectTrustedCorsOrigins(value: unknown, errors: string[]): string[] {
+  return collectTrustedOrigins(value, "CORS_ORIGINS", errors, true);
 }
 
-function collectTrustedCorsOrigins(value: unknown, errors: string[]): string[] {
+function collectTrustedOrigins(
+  value: unknown,
+  label: string,
+  errors: string[],
+  requireBareOrigin: boolean = false,
+): string[] {
   const origins = String(value ?? "")
     .split(",")
     .map((origin) => origin.trim())
@@ -300,7 +319,9 @@ function collectTrustedCorsOrigins(value: unknown, errors: string[]): string[] {
 
   if (origins.length === 0) {
     errors.push(
-      "CORS_ORIGINS must list at least one trusted HTTPS frontend origin in production.",
+      label === "CORS_ORIGINS"
+        ? "CORS_ORIGINS must list at least one trusted HTTPS frontend origin in production."
+        : `${label} must list at least one trusted HTTPS origin in production.`,
     );
     return [];
   }
@@ -308,19 +329,20 @@ function collectTrustedCorsOrigins(value: unknown, errors: string[]): string[] {
   const trustedOrigins: string[] = [];
 
   for (const origin of origins) {
-    const parsedOrigin = parseTrustedUrl(origin, "CORS_ORIGINS", errors);
+    const parsedOrigin = parseTrustedUrl(origin, label, errors);
 
     if (!parsedOrigin) {
       continue;
     }
 
     if (
-      (parsedOrigin.pathname && parsedOrigin.pathname !== "/") ||
-      parsedOrigin.search ||
-      parsedOrigin.hash
+      requireBareOrigin &&
+      ((parsedOrigin.pathname && parsedOrigin.pathname !== "/") ||
+        parsedOrigin.search ||
+        parsedOrigin.hash)
     ) {
       errors.push(
-        "CORS_ORIGINS entries must be bare origins without paths, query strings, or hashes in production.",
+        `${label} entries must be bare origins without paths, query strings, or hashes in production.`,
       );
       continue;
     }
@@ -329,6 +351,52 @@ function collectTrustedCorsOrigins(value: unknown, errors: string[]): string[] {
   }
 
   return trustedOrigins;
+}
+
+function assertWebAuthnProductionConfiguration(
+  rpId: unknown,
+  trustedOrigins: string[],
+  errors: string[],
+): void {
+  const normalizedRpId = String(rpId ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (!normalizedRpId) {
+    errors.push("WEBAUTHN_RP_ID must be configured in production.");
+    return;
+  }
+
+  if (
+    normalizedRpId === "localhost" ||
+    normalizedRpId === "127.0.0.1" ||
+    normalizedRpId === "::1" ||
+    normalizedRpId.endsWith(".local") ||
+    normalizedRpId.endsWith(".example") ||
+    normalizedRpId.endsWith(".internal")
+  ) {
+    errors.push(
+      "WEBAUTHN_RP_ID must not target localhost or a placeholder host in production.",
+    );
+  }
+
+  if (
+    trustedOrigins.length > 0 &&
+    trustedOrigins.some((origin) => !originMatchesRpId(origin, normalizedRpId))
+  ) {
+    errors.push(
+      "WEBAUTHN_ORIGINS must all match WEBAUTHN_RP_ID or its subdomains in production.",
+    );
+  }
+}
+
+function originMatchesRpId(origin: string, rpId: string): boolean {
+  try {
+    const hostname = new URL(origin).hostname.toLowerCase();
+    return hostname === rpId || hostname.endsWith(`.${rpId}`);
+  } catch {
+    return false;
+  }
 }
 
 function assertTrustedUrl(

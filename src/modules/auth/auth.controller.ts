@@ -5,6 +5,8 @@ import {
   Get,
   Headers,
   HttpCode,
+  Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -17,7 +19,11 @@ import { getClientIpAddress } from "../../common/utils/request-source.util";
 
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
+import { FinishPasskeyAuthenticationDto } from "./dto/finish-passkey-authentication.dto";
+import { FinishPasskeyRegistrationDto } from "./dto/finish-passkey-registration.dto";
 import { LoginDto } from "./dto/login.dto";
+import { PasskeyIdParamDto } from "./dto/passkey-id-param.dto";
+import { RenamePasskeyDto } from "./dto/rename-passkey.dto";
 import { RequestMobileOtpDto } from "./dto/request-mobile-otp.dto";
 import { ResendVerificationEmailDto } from "./dto/resend-verification-email.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
@@ -27,6 +33,7 @@ import { VerifyEmailDto } from "./dto/verify-email.dto";
 import { VerifyMobileOtpDto } from "./dto/verify-mobile-otp.dto";
 
 import { AuthService } from "./auth.service";
+import { PasskeysService } from "./passkeys.service";
 
 type RequestLike = {
   ip?: string;
@@ -36,7 +43,10 @@ type RequestLike = {
 
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly passkeysService: PasskeysService,
+  ) {}
 
   private buildRequestContext(
     requestId?: string,
@@ -74,6 +84,30 @@ export class AuthController {
   ) {
     return this.authService.login(
       loginDto,
+      this.buildRequestContext(requestId, userAgent, request),
+    );
+  }
+
+  @Post("passkeys/authentication/start")
+  startPasskeyAuthentication(
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
+  ) {
+    return this.passkeysService.startAuthentication(
+      this.buildRequestContext(requestId, userAgent, request),
+    );
+  }
+
+  @Post("passkeys/authentication/finish")
+  finishPasskeyAuthentication(
+    @Body() body: FinishPasskeyAuthenticationDto,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
+  ) {
+    return this.passkeysService.finishAuthentication(
+      body.response as any,
       this.buildRequestContext(requestId, userAgent, request),
     );
   }
@@ -169,6 +203,66 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post("passkeys/registration/start")
+  startPasskeyRegistration(
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
+  ) {
+    return this.passkeysService.startRegistration(
+      user.id,
+      this.buildRequestContext(requestId, userAgent, request, user.sessionId),
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("passkeys/registration/finish")
+  finishPasskeyRegistration(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: FinishPasskeyRegistrationDto,
+    @Headers("x-request-id") requestId?: string,
+    @Headers("user-agent") userAgent?: string,
+    @Req() request?: RequestLike,
+  ) {
+    return this.passkeysService.finishRegistration(
+      user.id,
+      body.response as any,
+      body.name,
+      this.buildRequestContext(requestId, userAgent, request, user.sessionId),
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("passkeys")
+  listPasskeys(@CurrentUser() user: AuthenticatedUser) {
+    return this.passkeysService.listPasskeys(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch("passkeys/:passkeyId")
+  renamePasskey(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: PasskeyIdParamDto,
+    @Body() body: RenamePasskeyDto,
+  ) {
+    return this.passkeysService.renamePasskey(
+      user.id,
+      params.passkeyId,
+      body.name,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete("passkeys/:passkeyId")
+  deletePasskey(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param() params: PasskeyIdParamDto,
+  ) {
+    return this.passkeysService.deletePasskey(user.id, params.passkeyId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post("mobile-otp/verify")
   @HttpCode(200)
   verifyMobileOtp(
@@ -197,9 +291,13 @@ export class AuthController {
     @CurrentUser() user: AuthenticatedUser,
     @Headers("x-request-id") requestId?: string,
   ) {
-    return this.authService.revokeCurrentSession(user.id, user.sessionId ?? "", {
-      requestId,
-    });
+    return this.authService.revokeCurrentSession(
+      user.id,
+      user.sessionId ?? "",
+      {
+        requestId,
+      },
+    );
   }
 
   @UseGuards(JwtAuthGuard)

@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 
 import { MailService } from "../../infrastructure/mail/mail.service";
@@ -15,6 +17,7 @@ import { VerifyMobileOtpDto } from "../auth/dto/verify-mobile-otp.dto";
 import { AuthActionContext } from "../auth/auth-abuse-protection.service";
 import {
   buildUserTrustFactors,
+  isPasskeyStorageUnavailableError,
   userHasActiveTrustFactor,
   TrustFactor,
   VerificationPolicyService,
@@ -50,6 +53,8 @@ function getTrustFactorLabel(factor: TrustFactor): string {
       return "Email verified";
     case "mobile_otp_verified":
       return "Mobile OTP verified";
+    case "passkey_verified":
+      return "Passkey added";
   }
 }
 
@@ -59,6 +64,8 @@ function getTrustFactorDescription(factor: TrustFactor): string {
       return "Email verification is the first trust factor for your Dotly identity and unlocks current trust-sensitive actions.";
     case "mobile_otp_verified":
       return "Verify a mobile number to add a second live trust factor for step-up account protection and future phone-based sign-in.";
+    case "passkey_verified":
+      return "Add a passkey for phishing-resistant sign-in and a stronger device-bound trust factor on this account.";
   }
 }
 
@@ -84,6 +91,8 @@ export class UsersService {
     private readonly smsService: SmsService,
     private readonly verificationPolicyService: VerificationPolicyService,
     private readonly authService: AuthService,
+    @Optional()
+    @Inject(ActivationMilestonesService)
     private readonly activationMilestonesService: Pick<
       ActivationMilestonesService,
       "getUserActivation" | "clearFirstResponseNudge"
@@ -96,29 +105,31 @@ export class UsersService {
 
   async getCurrentUser(userId: string) {
     const now = new Date();
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-      select: {
-        id: true,
-        email: true,
-        isVerified: true,
-        referralCode: true,
-        referredBy: true,
-        phoneNumber: true,
-        pendingPhoneNumber: true,
-        phoneVerifiedAt: true,
-      },
-    });
+    const [user, passkeyCount] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          email: true,
+          isVerified: true,
+          referralCode: true,
+          referredBy: true,
+          phoneNumber: true,
+          pendingPhoneNumber: true,
+          phoneVerifiedAt: true,
+        },
+      }),
+      this.getPasskeyCount(userId),
+    ]);
 
     if (!user) {
       throw new NotFoundException("User not found");
     }
 
-    const activation = await this.activationMilestonesService.getUserActivation(
-      userId,
-    );
+    const activation =
+      await this.activationMilestonesService.getUserActivation(userId);
 
     const activeMobileOtpEnrollment =
       await this.prisma.mobileOtpChallenge.findFirst({
@@ -147,9 +158,14 @@ export class UsersService {
       this.verificationPolicyService.getRequirementCatalog();
     const trustFactorCatalog =
       this.verificationPolicyService.getAvailableTrustFactors();
-    const userFactors: Record<TrustFactor, boolean> =
-      buildUserTrustFactors(user);
-    const hasActiveTrustFactor = userHasActiveTrustFactor(user);
+    const userFactors: Record<TrustFactor, boolean> = buildUserTrustFactors({
+      ...user,
+      passkeyCount,
+    });
+    const hasActiveTrustFactor = userHasActiveTrustFactor({
+      ...user,
+      passkeyCount,
+    });
 
     const requirements = Object.entries(requirementCatalog).map(
       ([key, definition]) => ({
@@ -213,14 +229,23 @@ export class UsersService {
           (this.mailService as any).isPasswordResetConfigured?.() ??
           this.mailService.isConfigured(),
         smsDeliveryAvailable: this.smsService.isConfigured(),
+        passkeyCount,
         explanation:
-          user.isVerified && user.phoneVerifiedAt
-            ? "Email verification and mobile OTP are both active trust factors on this account. Current trust-sensitive actions accept either signal."
-            : user.phoneVerifiedAt
-              ? "Mobile OTP is active and currently satisfies Dotly trust checks for this account. Add email verification if you want a second recovery path."
-              : user.isVerified
-                ? "Email verification is active and currently satisfies Dotly trust checks for this account. Add mobile OTP next to strengthen recovery and future step-up checks."
-                : "Add a verified email or mobile OTP to unlock current trust-sensitive actions. Email verification is available now, and mobile OTP can be added in settings.",
+          user.isVerified && user.phoneVerifiedAt && passkeyCount > 0
+            ? "Email verification, mobile OTP, and passkeys are all active on this account. Current trust-sensitive actions accept any one of these stronger signals."
+            : passkeyCount > 0 && user.phoneVerifiedAt
+              ? "Passkeys and mobile OTP are active on this account. Add email verification if you want an additional recovery path."
+              : passkeyCount > 0 && user.isVerified
+                ? "Passkeys and email verification are active on this account. Add mobile OTP if you want a second live recovery channel."
+                : user.isVerified && user.phoneVerifiedAt
+                  ? "Email verification and mobile OTP are both active trust factors on this account. Current trust-sensitive actions accept either signal."
+                  : passkeyCount > 0
+                    ? "A passkey is active and currently satisfies Dotly trust checks for this account. Add email verification or mobile OTP if you want additional recovery options."
+                    : user.phoneVerifiedAt
+                      ? "Mobile OTP is active and currently satisfies Dotly trust checks for this account. Add email verification if you want a second recovery path."
+                      : user.isVerified
+                        ? "Email verification is active and currently satisfies Dotly trust checks for this account. Add mobile OTP next to strengthen recovery and future step-up checks."
+                        : "Add a verified email, mobile OTP, or a passkey to unlock current trust-sensitive actions. Email verification is available now, and stronger factors can be added in settings.",
         unlockedActions: requirements
           .filter((requirement) => requirement.unlocked)
           .map((requirement) => requirement.label),
@@ -231,6 +256,22 @@ export class UsersService {
         trustFactors,
       },
     };
+  }
+
+  private async getPasskeyCount(userId: string): Promise<number> {
+    try {
+      return await this.prisma.passkeyCredential.count({
+        where: {
+          userId,
+        },
+      });
+    } catch (error) {
+      if (isPasskeyStorageUnavailableError(error)) {
+        return 0;
+      }
+
+      throw error;
+    }
   }
 
   async getCurrentUserReferral(userId: string) {

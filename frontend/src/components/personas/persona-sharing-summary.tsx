@@ -161,7 +161,7 @@ export function PersonaSharingSummary({
   return (
     <section
       className={cn(
-        "space-y-4 rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5",
+        "space-y-4 rounded-[32px] bg-white/60 backdrop-blur-xl p-6 shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)] ring-1 ring-inset ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1",
         className,
       )}
     >
@@ -177,21 +177,21 @@ export function PersonaSharingSummary({
       </div>
 
       <dl className="space-y-2">
-        <div className="flex items-start justify-between gap-4 rounded-2xl bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06]">
+        <div className="flex items-start justify-between gap-4 rounded-[20px] bg-white/50 backdrop-blur-md px-4 py-3.5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 transition-colors hover:bg-white/60 dark:hover:bg-zinc-800/60">
           <dt className="text-sm text-muted">Sharing mode</dt>
           <dd className="text-right text-sm font-semibold text-foreground">
             {formatSharingMode(sharingMode)}
           </dd>
         </div>
 
-        <div className="flex items-start justify-between gap-4 rounded-2xl bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06]">
+        <div className="flex items-start justify-between gap-4 rounded-[20px] bg-white/50 backdrop-blur-md px-4 py-3.5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 transition-colors hover:bg-white/60 dark:hover:bg-zinc-800/60">
           <dt className="text-sm text-muted">{primaryActionTitle}</dt>
           <dd className="text-right text-sm font-semibold text-foreground">
             {primaryActionLabel}
           </dd>
         </div>
 
-        <div className="flex items-start justify-between gap-4 rounded-2xl bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/[0.06]">
+        <div className="flex items-start justify-between gap-4 rounded-[20px] bg-white/50 backdrop-blur-md px-4 py-3.5 shadow-sm ring-1 ring-black/5 dark:bg-zinc-800/50 dark:ring-white/10 transition-colors hover:bg-white/60 dark:hover:bg-zinc-800/60">
           <dt className="text-sm text-muted">Available actions</dt>
           <dd className="text-right text-sm font-semibold text-foreground">
             {availableActionsLabel}

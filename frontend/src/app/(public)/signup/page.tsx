@@ -17,9 +17,9 @@ const features = [
   },
   {
     icon: Shield,
-    title: "Private by default.",
+    title: "Passkeys come right after.",
     description:
-      "Share access without giving away your personal number too soon.",
+      "Create your account now, then add a passkey in seconds for a quieter sign-in experience.",
   },
   {
     icon: Zap,
@@ -64,10 +64,7 @@ export default function SignupPage({
   return (
     <div className="relative w-full min-h-screen flex flex-col pt-20 pb-12 overflow-x-hidden md:pt-32">
       {/* Immersive ambient background */}
-      <div className="fixed inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] h-[1000px] w-[1000px] rounded-full bg-accent/10 blur-[150px] mix-blend-normal opacity-60" />
-        <div className="absolute bottom-[-10%] right-[-10%] h-[800px] w-[800px] rounded-full bg-accent/5 blur-[120px] mix-blend-normal opacity-40" />
-      </div>
+      <div className="fixed inset-0 z-[-1] pointer-events-none bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl" />
 
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col md:justify-center">
         <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 lg:gap-24 items-start md:items-center flex-1">
@@ -98,6 +95,16 @@ export default function SignupPage({
                     <span>{step}</span>
                   </div>
                 ))}
+              </div>
+              <div className="mt-6 rounded-[1.6rem] border border-black/5 bg-black/[0.03] px-5 py-4 text-left dark:border-white/10 dark:bg-white/[0.04]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                  Premium next step
+                </p>
+                <p className="mt-2 text-sm leading-6 text-foreground/85">
+                  Account creation still starts with email and password. Right
+                  after that, Dotly will guide you into adding a passkey for the
+                  best ongoing sign-in experience.
+                </p>
               </div>
             </motion.div>
 
@@ -144,7 +151,7 @@ export default function SignupPage({
             }}
             className="w-full max-w-[480px] mx-auto lg:mx-0 lg:ml-auto relative z-10"
           >
-            <div className="rounded-[2.5rem] md:rounded-[3rem] p-8 sm:p-10 md:p-14 border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-black/[0.02] dark:bg-white/[0.02] backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
+            <div className="rounded-[32px] bg-white/60 backdrop-blur-3xl p-8 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10">
               <div className="mb-8 md:mb-10 space-y-2 text-center md:text-left">
                 <h2 className="text-[28px] md:text-[32px] font-bold tracking-tighter text-foreground leading-[1.1]">
                   Claim your Dotly
@@ -152,7 +159,7 @@ export default function SignupPage({
                 <p className="text-[16px] md:text-[17px] text-muted font-medium">
                   {referralCode
                     ? `Invite code ${referralCode} is already applied to your premium setup.`
-                    : "Create your account now. Your Dotly, share flow, and QR come next."}
+                    : "Create your account now. Then add a passkey to make every return to Dotly feel instant."}
                 </p>
               </div>
               <AuthForm

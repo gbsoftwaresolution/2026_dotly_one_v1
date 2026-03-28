@@ -742,6 +742,10 @@ export class PersonasService {
         data.routingDisplayName = routingSnapshot.routingDisplayName;
       }
 
+      if (updatePersonaDto.isPrimary !== undefined) {
+        data.isPrimary = updatePersonaDto.isPrimary;
+      }
+
       if (updatePersonaDto.isDefaultRouting !== undefined) {
         data.isDefaultRouting = routingSnapshot.isDefaultRouting;
       }
@@ -774,6 +778,16 @@ export class PersonasService {
       };
 
       const persona = await this.withPersonaTransaction(async (tx) => {
+        if (data.isPrimary === true) {
+          await tx.persona.updateMany({
+            where: {
+              userId,
+              id: { not: personaId },
+            },
+            data: { isPrimary: false },
+          });
+        }
+
         const updatedPersona = await tx.persona.update({
           where: {
             id: personaId,

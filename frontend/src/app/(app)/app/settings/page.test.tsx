@@ -73,6 +73,7 @@ describe("SettingsPage", () => {
           restrictedActions: [],
           requirements: [],
           trustFactors: [],
+          passkeys: [],
         },
       },
     });
@@ -83,7 +84,9 @@ describe("SettingsPage", () => {
 
     const element = await SettingsPage();
 
-    expect(mocks.requireServerSession).toHaveBeenCalledWith(routes.app.settings);
+    expect(mocks.requireServerSession).toHaveBeenCalledWith(
+      routes.app.settings,
+    );
     expect(mocks.meAnalytics).toHaveBeenCalledWith("token");
     expect(JSON.stringify(element)).toContain('"totalConnections":24');
     expect(JSON.stringify(element)).toContain('"connectionsThisMonth":5');

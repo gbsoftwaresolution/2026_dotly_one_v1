@@ -15,7 +15,7 @@ export function PermissionControlGroup({
   children,
 }: PermissionControlGroupProps) {
   return (
-    <div className="bg-white first:rounded-t-3xl last:rounded-b-3xl">
+    <div className="first:rounded-t-3xl last:rounded-b-3xl rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1">
       <button
         onClick={onToggle}
         aria-expanded={isOpen}

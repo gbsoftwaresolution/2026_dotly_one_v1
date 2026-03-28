@@ -78,8 +78,8 @@ export function BottomNav() {
       aria-label="Primary navigation"
       className={cn(
         "fixed bottom-0 inset-x-0 z-nav",
-        "dark:bg-bgOnyx/85 bg-white/85",
-        "border-t border-black/[0.06] backdrop-blur-2xl dark:border-white/[0.06]",
+        "bg-white/60 dark:bg-zinc-950/60 backdrop-blur-3xl",
+        "border-t border-black/5 dark:border-white/10 transition-all duration-300",
         "shadow-[0_-8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_-8px_32px_rgba(0,0,0,0.2)] safe-pb",
       )}
     >
@@ -100,12 +100,12 @@ export function BottomNav() {
                 <Link
                   href={item.href}
                   className={cn(
-                    "relative flex min-h-[60px] w-full flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2",
+                    "relative flex min-h-[60px] w-full flex-col items-center justify-center gap-1 rounded-[16px] px-2 py-2",
                     "transition-all duration-300 ease-[0.16,1,0.3,1] active:scale-[0.92] tap-feedback",
                     "no-select",
                     isActive
-                      ? "bg-foreground/[0.08] text-foreground shadow-[0_10px_24px_rgba(15,23,42,0.08)] dark:bg-white/[0.1] dark:text-white"
-                      : "text-muted hover:bg-black/[0.03] dark:hover:bg-white/[0.04] hover:text-foreground",
+                      ? "bg-black/5 text-foreground dark:bg-white/10 dark:text-white"
+                      : "text-muted hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5",
                   )}
                   aria-current={isActive ? "page" : undefined}
                   aria-label={item.label}

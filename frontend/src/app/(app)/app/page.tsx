@@ -1,64 +1,14 @@
-import { ArrowUpRight, Check, Plus, QrCode, Sparkles } from "lucide-react";
+import { QrCode, MessageCircle, Mail, Bell, Users, Plus } from "lucide-react";
 import Link from "next/link";
 
 import { IdentitySwitcher } from "@/components/identities/identity-switcher";
-import { PersonaInboxPreview } from "@/components/dashboard/persona-inbox-preview";
-import { ThemeSwitcher } from "@/components/app-shell/theme-switcher";
 import { personaApi } from "@/lib/api";
 import { requireServerSession } from "@/lib/auth/protected-route";
-import { userApi } from "@/lib/api/user-api";
 import { routes } from "@/lib/constants/routes";
+import { userApi } from "@/lib/api/user-api";
 import type { PersonaSummary } from "@/types/persona";
-import type {
-  UserActivationMilestoneKey,
-  UserActivationMilestones,
-} from "@/types/user";
-
-const activationOrder: UserActivationMilestoneKey[] = [
-  "firstPersonaCreated",
-  "firstQrOpened",
-  "firstShareCompleted",
-  "firstRequestReceived",
-];
-
-const activationMilestoneFieldMap: Record<
-  UserActivationMilestoneKey,
-  keyof UserActivationMilestones
-> = {
-  firstPersonaCreated: "firstPersonaCreatedAt",
-  firstQrOpened: "firstQrOpenedAt",
-  firstShareCompleted: "firstShareCompletedAt",
-  firstRequestReceived: "firstRequestReceivedAt",
-};
-
-function deriveActivationMilestones(
-  userMilestones: Partial<UserActivationMilestones> | undefined,
-  personas: PersonaSummary[],
-  totalConnections: number,
-): UserActivationMilestones {
-  const hasPersonas = personas.length > 0;
-  const hasConnections = totalConnections > 0;
-
-  return {
-    firstPersonaCreatedAt:
-      userMilestones?.firstPersonaCreatedAt ?? (hasPersonas ? "derived" : null),
-    firstQrOpenedAt: userMilestones?.firstQrOpenedAt ?? null,
-    firstShareCompletedAt:
-      userMilestones?.firstShareCompletedAt ??
-      (hasConnections ? "derived" : null),
-    firstRequestReceivedAt: userMilestones?.firstRequestReceivedAt ?? null,
-  };
-}
-
-function getNextMilestoneKey(
-  milestones: UserActivationMilestones,
-): UserActivationMilestoneKey | null {
-  return (
-    activationOrder.find(
-      (key) => !milestones[activationMilestoneFieldMap[key]],
-    ) ?? null
-  );
-}
+import { SetDefaultPersonaButton } from "@/components/dashboard/set-default-persona-button";
+import { DashboardQr } from "@/components/dashboard/dashboard-qr";
 
 function formatFirstName(email: string) {
   const localPart = email.split("@")[0] ?? "there";
@@ -74,367 +24,223 @@ function formatFirstName(email: string) {
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
 export default async function AppHomePage() {
   const { accessToken, user } = await requireServerSession("/app");
 
-  const [analytics, personas] = await Promise.all([
-    userApi.meAnalytics(accessToken).catch(() => null),
+  const [personas, myFastShare] = await Promise.all([
     personaApi.list(accessToken).catch(() => [] as PersonaSummary[]),
+    personaApi.getMyFastShare(accessToken).catch(() => null),
   ]);
   const firstName = formatFirstName(user.email);
-  const primaryPersona =
-    personas.find((persona) => persona.isPrimary) ?? personas[0] ?? null;
-  const personaCount = personas.length;
-  const totalConnections = analytics?.totalConnections ?? 0;
-  const activationMilestones = deriveActivationMilestones(
-    user.activation?.milestones,
-    personas,
-    totalConnections,
-  );
-  const activationStage =
-    user.activation?.nextMilestoneKey ??
-    getNextMilestoneKey(activationMilestones);
-  const hasPersonas = Boolean(activationMilestones.firstPersonaCreatedAt);
-  const hasOpenedQr = Boolean(activationMilestones.firstQrOpenedAt);
-  const hasShareCompleted = Boolean(activationMilestones.firstShareCompletedAt);
-  const hasRequestReceived = Boolean(
-    activationMilestones.firstRequestReceivedAt,
-  );
-  const activationCopy =
-    activationStage === "firstPersonaCreated"
-      ? {
-          badge: "Start here",
-          title: `Build your first premium contact identity, ${firstName}.`,
-          description:
-            "Start with one persona you can share with confidence. Dotly will prepare the QR and catch the first replies from there.",
-          primaryHref: routes.app.createPersona,
-          primaryLabel: "Create first persona",
-          secondaryHref: routes.app.personas,
-          secondaryLabel: "See persona workspace",
-        }
-      : activationStage === "firstQrOpened"
-        ? {
-            badge: "Ready to share",
-            title: `Your first premium intro is ready, ${firstName}.`,
-            description:
-              "Open your QR once and let Dotly turn that first exchange into a routed request, connection, or conversation.",
-            primaryHref: routes.app.qr,
-            primaryLabel: "Open share QR",
-            secondaryHref: routes.app.personas,
-            secondaryLabel: "Refine personas",
-          }
-        : activationStage === "firstShareCompleted"
-          ? {
-              badge: "First signal",
-              title: `Your contact identity is now in the room, ${firstName}.`,
-              description:
-                "That first open matters. Stay close to requests and inbox so the conversation becomes a tracked next step while context is still fresh.",
-              primaryHref: routes.app.requests,
-              primaryLabel: "Check requests",
-              secondaryHref: routes.app.inbox,
-              secondaryLabel: "Open inbox",
-            }
-          : activationStage === "firstRequestReceived"
-            ? {
-                badge: "Follow-through",
-                title: `Your first premium intro landed, ${firstName}.`,
-                description:
-                  "The system is working. Review what came in, reply while the conversation is still warm, and keep the next action obvious.",
-                primaryHref: routes.app.requests,
-                primaryLabel: "Review requests",
-                secondaryHref: routes.app.inbox,
-                secondaryLabel: "Open inbox",
-              }
-            : {
-                badge: "Keep momentum",
-                title: `Keep premium introductions moving, ${firstName}.`,
-                description:
-                  "Your first setup is done. Stay close to inbox, requests, and QR so each introduction turns into a useful next step.",
-                primaryHref: routes.app.inbox,
-                primaryLabel: "Open inbox",
-                secondaryHref: routes.app.qr,
-                secondaryLabel: "Show QR again",
-              };
-  const activationSteps = [
-    {
-      title: "Create one persona",
-      description:
-        "Set up the name, role, and handle you want people to remember first.",
-      href: routes.app.createPersona,
-      status: hasPersonas ? "Done" : "Next",
-    },
-    {
-      title: "Open your share QR",
-      description:
-        "Bring up one clean share surface before the conversation starts moving.",
-      href: routes.app.qr,
-      status: hasOpenedQr ? "Done" : hasPersonas ? "Next" : "After persona",
-    },
-    {
-      title: "Catch the first real signal",
-      description:
-        "Let one real scan or profile open confirm that your Dotly is landing in the room.",
-      href: routes.app.qr,
-      status: hasShareCompleted ? "Done" : hasOpenedQr ? "Next" : "After QR",
-    },
-    {
-      title: "Check requests and inbox",
-      description:
-        "Review the first incoming request or reply before the thread cools down.",
-      href: routes.app.requests,
-      status: hasRequestReceived
-        ? "Live"
-        : hasShareCompleted
-          ? "Next"
-          : "After first share",
-    },
-  ] as const;
+  const greeting = getGreeting();
+
+  const primaryPersona = personas.find((p) => p.isPrimary) ?? personas[0];
+  const otherPersonas = personas.filter((p) => p.id !== primaryPersona?.id);
 
   return (
-    <section className="relative min-h-[calc(100dvh-8rem)] overflow-hidden rounded-[2rem] border border-black/5 bg-transparent px-1 pb-4 pt-1 dark:border-white/10 sm:rounded-[2.5rem]">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
-        <div className="absolute inset-x-8 top-0 h-48 rounded-full bg-accent/10 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-64 w-64 rounded-full bg-foreground/[0.04] blur-3xl dark:bg-white/[0.05]" />
+    <section className="relative w-full flex flex-col items-center">
+      {/* Immersive Background */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] h-[50vh] w-[50vw] rounded-full bg-blue-500/10 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] h-[50vh] w-[50vw] rounded-full bg-purple-500/10 blur-[120px]" />
       </div>
 
-      <div className="relative space-y-4 rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)] sm:p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-3">
-            <span className="inline-flex items-center gap-2 rounded-full border border-black/5 bg-black/[0.03] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-foreground dark:border-white/10 dark:bg-white/[0.04]">
-              <Sparkles className="h-3.5 w-3.5" strokeWidth={2.3} />
-              {activationCopy.badge}
-            </span>
-            <div className="space-y-2">
-              <h1 className="max-w-[12ch] text-4xl font-bold tracking-tighter text-foreground sm:max-w-none sm:text-5xl">
-                {activationCopy.title}
-              </h1>
-              <p className="max-w-[34ch] text-[16px] font-medium leading-relaxed text-muted sm:text-[17px]">
-                {activationCopy.description}
-              </p>
-            </div>
-          </div>
-
-          <div className="hidden sm:block">
-            <ThemeSwitcher />
+      <div className="w-full max-w-4xl space-y-6 md:space-y-8 pt-2 pb-10">
+        {/* Top Floating Header */}
+        <div className="flex items-center justify-end">
+          <div className="flex items-center gap-4">
+            <IdentitySwitcher />
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-[1.75rem] border border-black/5 bg-white/55 p-5 shadow-[0_8px_30px_rgba(0,0,0,0.03)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#111111]/55 dark:shadow-[0_8px_30px_rgba(0,0,0,0.24)] sm:p-6">
-            <div className="flex flex-col gap-5">
-              <div className="space-y-2">
-                <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
-                  First premium moment
-                </p>
-                <h2 className="text-[28px] font-bold tracking-tighter text-foreground sm:text-[32px]">
-                  {activationStage === "firstPersonaCreated"
-                    ? "Create an identity worth sharing."
-                    : activationStage === "firstQrOpened"
-                      ? "Share once and let Dotly do the rest."
-                      : activationStage === "firstShareCompleted"
-                        ? "Now watch for the first reply."
-                        : activationStage === "firstRequestReceived"
-                          ? "Close the loop while context is fresh."
-                          : "Keep the next action obvious."}
-                </h2>
-                <p className="max-w-[40ch] text-[15px] font-medium leading-relaxed text-muted sm:text-[16px]">
-                  {activationStage === "firstPersonaCreated"
-                    ? "A single persona is enough to unlock your first QR, your first routed inbox lane, and a stronger first exchange."
-                    : activationStage === "firstQrOpened"
-                      ? `Your next best move is simple: open ${primaryPersona ? `@${primaryPersona.username}` : "your"} QR and use it in the next conversation.`
-                      : activationStage === "firstShareCompleted"
-                        ? "Dotly has seen the first real interaction. Shift from setup to follow-through and check whether a request or reply came in."
-                        : activationStage === "firstRequestReceived"
-                          ? "Your first incoming signal is here. Confirm who reached out, respond quickly, and let Dotly keep the context organized."
-                          : "Your setup already works. Keep QR, inbox, and requests close so each introduction becomes a tracked relationship instead of a lost thread."}
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href={activationCopy.primaryHref}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-foreground px-6 text-[15px] font-semibold text-background transition-transform hover:scale-[0.98] active:scale-95"
-                >
-                  {activationCopy.primaryLabel}
-                  <ArrowUpRight className="h-4 w-4" strokeWidth={2.2} />
-                </Link>
-                <Link
-                  href={activationCopy.secondaryHref}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-black/5 bg-black/[0.03] px-6 text-[15px] font-semibold text-foreground transition-colors hover:bg-black/[0.05] dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.05]"
-                >
-                  {activationCopy.secondaryLabel}
-                  <Plus className="h-4 w-4" strokeWidth={2.2} />
-                </Link>
-              </div>
-
-              <div className="grid gap-3 pt-1 sm:grid-cols-2 xl:grid-cols-4">
-                {activationSteps.map((step) => (
-                  <Link
-                    key={step.title}
-                    href={step.href}
-                    className="rounded-[1.4rem] border border-black/5 bg-black/[0.02] px-4 py-4 transition-colors hover:bg-black/[0.04] dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.05]"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-foreground">
-                        {step.title}
-                      </p>
-                      <span className="rounded-full border border-black/5 bg-black/[0.04] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted dark:border-white/10 dark:bg-white/[0.06]">
-                        {step.status}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-muted">
-                      {step.description}
-                    </p>
-                  </Link>
-                ))}
-              </div>
+        {personas.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/5 dark:bg-white/5 mb-6">
+              <Users className="h-8 w-8 text-foreground/40" />
             </div>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground mb-2">
+              No personas yet
+            </h2>
+            <p className="text-foreground/50 max-w-md mb-8">
+              Create your first persona to start sharing your identity and
+              connecting with others.
+            </p>
+            <Link
+              href={routes.app.createPersona}
+              className="group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-foreground px-8 text-[15px] font-semibold text-background transition-all hover:scale-105 active:scale-95 shadow-xl shadow-black/10 dark:shadow-white/5"
+            >
+              <Plus className="h-5 w-5" />
+              Create Persona
+            </Link>
           </div>
-
-          <div className="grid gap-4">
-            <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
-              <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
-                Active identity
-              </p>
-              <div className="mt-4">
-                <IdentitySwitcher />
-              </div>
-            </div>
-
-            {hasShareCompleted && !hasRequestReceived ? (
-              <div className="rounded-[1.75rem] border border-emerald-500/20 bg-emerald-500/[0.06] p-5 backdrop-blur-2xl dark:border-emerald-400/20 dark:bg-emerald-400/[0.08] sm:p-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-500/20 dark:bg-emerald-400/10 dark:ring-emerald-400/20">
-                    <Check
-                      className="h-5 w-5 text-emerald-700 dark:text-emerald-300"
-                      strokeWidth={2}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-emerald-700/70 dark:text-emerald-300/70">
-                      Post-share signal
-                    </p>
-                    <h2 className="text-[24px] font-bold tracking-tighter text-foreground sm:text-[28px]">
-                      Your first premium share landed.
-                    </h2>
-                    <p className="text-[15px] font-medium leading-relaxed text-muted">
-                      Now move from showing to following through. Requests and
-                      inbox are the next two places worth watching.
-                    </p>
-                  </div>
+        ) : (
+          <>
+            {/* Primary / Default Persona Section */}
+            {primaryPersona && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+                <div className="text-center space-y-2">
+                  <h1 className="text-3xl md:text-4xl font-bold tracking-tighter text-foreground">
+                    {greeting}, {firstName}.
+                  </h1>
                 </div>
-              </div>
-            ) : hasPersonas ? (
-              <PersonaInboxPreview />
-            ) : (
-              <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.02] sm:p-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-black/[0.04] ring-1 ring-black/5 dark:bg-white/[0.05] dark:ring-white/10">
-                    <Check
-                      className="h-5 w-5 text-foreground"
-                      strokeWidth={2}
-                    />
+
+                <div className="mx-auto rounded-[2rem] bg-white/40 p-6 md:p-8 ring-1 ring-inset ring-black/5 backdrop-blur-3xl dark:bg-black/40 dark:ring-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
+                  <div className="flex items-center justify-between gap-6">
+                    <div className="flex-1">
+                      <div className="inline-flex items-center gap-1.5 rounded-full bg-yellow-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400 mb-3">
+                        Default Persona
+                      </div>
+                      <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-1">
+                        @{primaryPersona.username}
+                      </h2>
+                      <p className="text-base font-medium text-foreground/60 capitalize">
+                        {primaryPersona.type.toLowerCase().replace("_", " ")}
+                      </p>
+                    </div>
+
+                    <Link
+                      href={routes.app.qr}
+                      className="group flex shrink-0 items-center justify-center rounded-[1.5rem] bg-white dark:bg-zinc-900 p-2 ring-1 ring-inset ring-black/5 dark:ring-white/10 shadow-sm transition-transform duration-300 hover:scale-[1.02] active:scale-95"
+                    >
+                      <div className="h-28 w-28 md:h-32 md:w-32 flex items-center justify-center text-foreground">
+                        {myFastShare?.share?.qrValue ? (
+                          <DashboardQr value={myFastShare.share.qrValue} />
+                        ) : (
+                          <QrCode
+                            className="h-10 w-10 text-foreground/20"
+                            strokeWidth={1.5}
+                          />
+                        )}
+                      </div>
+                    </Link>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-muted">
-                      Setup path
-                    </p>
-                    <h2 className="text-[24px] font-bold tracking-tighter text-foreground sm:text-[28px]">
-                      One premium identity is enough to start.
-                    </h2>
-                    <p className="text-[15px] font-medium leading-relaxed text-muted">
-                      You do not need a full identity system first. Create one
-                      persona, open the share QR, and let Dotly teach the rest
-                      through real use.
-                    </p>
+
+                  <hr className="my-6 border-black/5 dark:border-white/10" />
+
+                  <div className="grid grid-cols-4 gap-2">
+                    <Link
+                      href={routes.app.inbox}
+                      className="flex flex-col items-center gap-3 group rounded-2xl p-3 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                    >
+                      <div
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 text-foreground/70 group-hover:bg-foreground group-hover:text-background transition-all dark:bg-white/5 shadow-sm"
+                        title="Chat"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/50 group-hover:text-foreground transition-colors">
+                        Chat
+                      </span>
+                    </Link>
+                    <Link
+                      href={routes.app.inbox}
+                      className="flex flex-col items-center gap-3 group rounded-2xl p-3 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                    >
+                      <div
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 text-foreground/70 group-hover:bg-foreground group-hover:text-background transition-all dark:bg-white/5 shadow-sm"
+                        title="Mail"
+                      >
+                        <Mail className="h-4 w-4" />
+                      </div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/50 group-hover:text-foreground transition-colors">
+                        Mail
+                      </span>
+                    </Link>
+                    <Link
+                      href={routes.app.requests}
+                      className="flex flex-col items-center gap-3 group rounded-2xl p-3 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                    >
+                      <div
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 text-foreground/70 group-hover:bg-foreground group-hover:text-background transition-all dark:bg-white/5 shadow-sm"
+                        title="Requests"
+                      >
+                        <Bell className="h-4 w-4" />
+                      </div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/50 group-hover:text-foreground transition-colors">
+                        Requests
+                      </span>
+                    </Link>
+                    <Link
+                      href={routes.app.contacts}
+                      className="flex flex-col items-center gap-3 group rounded-2xl p-3 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                    >
+                      <div
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 text-foreground/70 group-hover:bg-foreground group-hover:text-background transition-all dark:bg-white/5 shadow-sm"
+                        title="Contacts"
+                      >
+                        <Users className="h-4 w-4" />
+                      </div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/50 group-hover:text-foreground transition-colors">
+                        Contacts
+                      </span>
+                    </Link>
                   </div>
                 </div>
               </div>
             )}
 
-            <div className="rounded-[1.75rem] border border-black/5 bg-foreground p-5 text-background shadow-[0_18px_40px_rgba(0,0,0,0.12)] dark:border-white/10 sm:p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-background/60">
-                    Snapshot
-                  </p>
-                  <p className="mt-3 text-3xl font-bold tracking-tighter">
-                    {analytics?.totalConnections ?? 0}
-                  </p>
-                  <p className="mt-1 text-[15px] font-medium text-background/70">
-                    {hasShareCompleted
-                      ? "connections across your current workspace"
-                      : hasPersonas
-                        ? "connections will appear after your first share"
-                        : "connections start after your first persona and share"}
-                  </p>
+            {/* Other Personas List */}
+            {otherPersonas.length > 0 && (
+              <div className="space-y-4 pt-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150 ease-out fill-mode-both">
+                <div className="flex items-center justify-between px-2">
+                  <h3 className="text-xl font-bold tracking-tight text-foreground">
+                    Your Other Personas
+                  </h3>
+                  <Link
+                    href={routes.app.personas}
+                    className="text-[13px] font-semibold text-foreground/60 hover:text-foreground transition-colors"
+                  >
+                    Manage
+                  </Link>
                 </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10">
-                  <QrCode className="h-6 w-6" strokeWidth={1.8} />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {otherPersonas.map((persona) => (
+                    <div
+                      key={persona.id}
+                      className="rounded-[1.5rem] bg-white/40 p-5 ring-1 ring-inset ring-black/5 backdrop-blur-3xl dark:bg-black/40 dark:ring-white/10 transition-transform duration-500 hover:scale-[1.02] flex flex-col justify-between group"
+                    >
+                      <div className="flex justify-between items-start mb-5">
+                        <div>
+                          <h4 className="text-lg font-bold tracking-tight text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            @{persona.username}
+                          </h4>
+                          <p className="text-[13px] font-medium text-foreground/50 mt-0.5 capitalize">
+                            {persona.type.toLowerCase().replace("_", " ")}
+                          </p>
+                        </div>
+                        <SetDefaultPersonaButton personaId={persona.id} />
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={routes.app.qr}
+                          className="flex h-9 w-9 items-center justify-center rounded-full bg-black/5 text-foreground/70 hover:bg-black/10 hover:text-foreground transition-colors dark:bg-white/5 dark:hover:bg-white/10"
+                          title="Show QR"
+                        >
+                          <QrCode className="h-4 w-4" />
+                        </Link>
+                        <Link
+                          href={routes.app.personaDetail(persona.id)}
+                          className="flex-1 inline-flex h-9 items-center justify-center rounded-full border border-black/5 bg-transparent text-[12px] font-semibold text-foreground/70 hover:bg-black/5 hover:text-foreground transition-all dark:border-white/10 dark:hover:bg-white/5"
+                        >
+                          View Details
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              <div className="mt-6 flex items-center justify-between rounded-[1.25rem] bg-white/8 px-4 py-3 text-[14px] font-medium text-background/75 ring-1 ring-white/10">
-                <span>New connections this month</span>
-                <span className="font-bold text-background">
-                  {analytics?.connectionsThisMonth ?? 0}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          {[
-            {
-              title: "Personas",
-              description:
-                "Create or refine the identity you want to share first.",
-              href: routes.app.personas,
-              status: hasPersonas ? `${personaCount} ready` : "Start here",
-            },
-            {
-              title: "QR share",
-              description:
-                "Open one large share surface for meetings, intros, and events.",
-              href: routes.app.qr,
-              status: hasOpenedQr
-                ? "Opened"
-                : hasPersonas
-                  ? "Ready"
-                  : "Needs persona",
-            },
-            {
-              title: "Requests and inbox",
-              description:
-                "Catch the first reply after you share instead of losing the thread.",
-              href: routes.app.inbox,
-              status: hasRequestReceived
-                ? "Active"
-                : hasShareCompleted
-                  ? "Next"
-                  : "After first share",
-            },
-          ].map((item) => (
-            <Link
-              key={item.title}
-              href={item.href}
-              className="group rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-5 backdrop-blur-2xl transition-transform duration-300 hover:scale-[0.99] dark:border-white/10 dark:bg-white/[0.02]"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-[18px] font-bold tracking-tight text-foreground">
-                  {item.title}
-                </p>
-                <span className="rounded-full border border-black/5 bg-black/[0.03] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-muted dark:border-white/10 dark:bg-white/[0.04]">
-                  {item.status}
-                </span>
-              </div>
-              <p className="mt-3 max-w-[28ch] text-[15px] font-medium leading-relaxed text-muted">
-                {item.description}
-              </p>
-            </Link>
-          ))}
-        </div>
+            )}
+          </>
+        )}
       </div>
     </section>
   );

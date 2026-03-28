@@ -36,7 +36,7 @@ function SummarySkeleton() {
       {Array.from({ length: 10 }).map((_, i) => (
         <div
           key={i}
-          className="skeleton rounded-2xl bg-foreground/[0.03] p-4 flex flex-col justify-between shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5"
+          className="skeleton flex flex-col justify-between rounded-[24px] bg-white/50 backdrop-blur-md p-4 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 transition-all duration-500 hover:-translate-y-1"
         >
           <div className="h-2.5 w-2/3 rounded-full bg-current opacity-10" />
           <div className="mt-3 h-6 w-1/2 rounded-full bg-current opacity-10" />
@@ -315,7 +315,7 @@ export function AnalyticsScreen() {
             {Array.from({ length: 2 }).map((_, i) => (
               <div
                 key={i}
-                className="skeleton rounded-3xl bg-foreground/[0.03] p-5 shadow-inner ring-1 ring-inset ring-black/5 dark:bg-white/[0.045] dark:ring-white/5"
+                className="skeleton rounded-[32px] bg-white/60 backdrop-blur-3xl p-5 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-inset ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10"
               >
                 <div className="mb-4 space-y-2">
                   <div className="h-4 w-1/3 rounded-full bg-current opacity-10" />
@@ -343,7 +343,7 @@ export function AnalyticsScreen() {
             description="Create a persona to start measuring how your Dotly identities perform in the real world."
           />
         ) : (
-          <div className="flex flex-col overflow-hidden rounded-[1.25rem] bg-foreground/[0.02] backdrop-blur-[40px] saturate-[200%] ring-[0.5px] ring-black/5 dark:bg-white/[0.03] dark:ring-white/10 shadow-sm divide-y divide-black/5 dark:divide-white/5">
+          <div className="flex flex-col overflow-hidden rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10 divide-y divide-black/5 dark:divide-white/5">
             {personaRows.map((row) => (
               <PersonaInsightRow
                 key={row.persona.id}

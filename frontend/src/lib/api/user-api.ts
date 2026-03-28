@@ -1,6 +1,7 @@
 import type { CurrentUserAnalytics } from "@/types/analytics";
 import type {
   CurrentUserReferral,
+  UserPasskey,
   UserActivationNudgeQueue,
   UserProfile,
 } from "@/types/user";
@@ -37,6 +38,12 @@ export const userApi = {
 
   getCurrentAnalytics: () =>
     apiRequest<CurrentUserAnalytics>("/api/users/me/analytics", {
+      baseUrl: "",
+      credentials: "same-origin",
+    }),
+
+  getCurrentPasskeys: () =>
+    apiRequest<{ passkeys: UserPasskey[] }>("/api/users/me/passkeys", {
       baseUrl: "",
       credentials: "same-origin",
     }),

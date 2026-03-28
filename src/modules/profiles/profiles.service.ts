@@ -1,7 +1,9 @@
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
@@ -146,6 +148,8 @@ export class ProfilesService {
     private readonly analyticsService: AnalyticsService,
     private readonly configService: ConfigService = defaultingConfigService as ConfigService,
     private readonly blocksService: BlocksService = failClosedBlocksService as BlocksService,
+    @Optional()
+    @Inject(ActivationMilestonesService)
     private readonly activationMilestonesService: Pick<
       ActivationMilestonesService,
       "markFirstShareCompletedForPersona"

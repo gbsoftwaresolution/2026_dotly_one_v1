@@ -27,7 +27,8 @@ export async function PublicAllLinksPage({
 
     if (
       forceCanonicalPath ||
-      publicIdentifier.trim().toLowerCase() !== canonicalIdentifier.trim().toLowerCase()
+      publicIdentifier.trim().toLowerCase() !==
+        canonicalIdentifier.trim().toLowerCase()
     ) {
       redirect(
         getCanonicalPublicLinksPath(profile.publicUrl, canonicalIdentifier),
@@ -41,7 +42,8 @@ export async function PublicAllLinksPage({
     }
 
     return (
-      <main className="mx-auto min-h-screen w-full max-w-2xl px-4 py-8 sm:px-6">
+      <main className="relative mx-auto min-h-screen w-full max-w-2xl px-4 py-8 sm:px-6">
+        <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl" />
         <div className="space-y-6">
           <div className="space-y-2 text-center sm:text-left">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
@@ -62,9 +64,9 @@ export async function PublicAllLinksPage({
                 href={link.url}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-4 rounded-[1.5rem] border border-black/8 bg-white/80 px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-white/[0.05]"
+                className="flex items-center gap-4 rounded-full border border-black/5 bg-white/60 backdrop-blur-md px-5 py-4 text-left shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)] transition-all duration-500 hover:-translate-y-1 hover:bg-white/80 hover:shadow-[0_12px_24px_-8px_rgba(0,0,0,0.1)] dark:border-white/10 dark:bg-zinc-900/60 dark:hover:bg-zinc-800/80"
               >
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-black/5 text-foreground dark:bg-white/10 dark:text-white">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/5 text-foreground dark:bg-white/10 dark:text-white">
                   <SocialLinkIcon
                     platform={link.platform}
                     className="h-5 w-5"

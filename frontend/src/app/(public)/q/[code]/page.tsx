@@ -69,7 +69,7 @@ function ErrorState({
 }) {
   return (
     <div className="w-full h-full flex items-center justify-center p-6">
-      <div className="w-full max-w-md rounded-[2rem] border border-rose-200 dark:border-rose-900/50 bg-rose-50/80 dark:bg-rose-950/20 text-center p-8 space-y-3">
+      <div className="w-full max-w-md rounded-[32px] border border-rose-200 dark:border-rose-900/50 bg-white/60 backdrop-blur-3xl dark:bg-zinc-900/60 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] text-center p-8 space-y-3 ring-1 ring-black/5 dark:ring-white/10">
         <h1 className="text-2xl font-bold tracking-tight text-rose-700 dark:text-rose-400">
           {title}
         </h1>
@@ -97,12 +97,12 @@ function LoginPrompt({
   const loginUrl = `${routes.public.login}?next=${encodeURIComponent(`/q/${code}`)}`;
 
   return (
-    <Card className="space-y-5 rounded-[2rem] shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+    <Card className="space-y-5 rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10">
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
           Connect
         </p>
-        <h2 className="font-sans text-xl font-bold text-foreground">
+        <h2 className="font-sans text-xl font-bold tracking-tight text-foreground">
           Continue with {hostName}
         </h2>
         <p className="font-sans text-sm text-muted">
@@ -136,12 +136,12 @@ function LoginPrompt({
 
 function NoPersonasPrompt() {
   return (
-    <Card className="space-y-4 rounded-[2rem] shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
+    <Card className="space-y-4 rounded-[32px] bg-white/60 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:bg-zinc-900/60 dark:ring-white/10">
       <div className="space-y-2">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted">
           Connect
         </p>
-        <h2 className="font-sans text-lg font-semibold text-foreground">
+        <h2 className="font-sans text-lg font-semibold tracking-tight text-foreground">
           Create your profile first
         </h2>
         <p className="font-sans text-sm leading-6 text-muted">
@@ -178,7 +178,8 @@ export default async function QrLandingPage({
     // For profile QRs preserve Phase 2 behavior unchanged
     if (!isQuickConnect) {
       return (
-        <main className="relative flex min-h-screen w-full flex-col bg-[#F8FAFC] dark:bg-[#050505] text-slate-900 dark:text-white selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
+        <main className="relative flex min-h-screen w-full flex-col text-slate-900 dark:text-white selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
+          <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl" />
           <div className="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-8">
             <div className="w-full max-w-lg">
               <PublicQrPreviewCard qr={qr} />
@@ -242,7 +243,8 @@ export default async function QrLandingPage({
       const errorCopy = getQrErrorCopy(error);
 
       return (
-        <main className="relative flex min-h-screen w-full flex-col bg-[#F8FAFC] dark:bg-[#050505]">
+        <main className="relative flex min-h-screen w-full flex-col">
+          <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent blur-3xl" />
           <ErrorState
             title={errorCopy.title}
             description={errorCopy.description}
